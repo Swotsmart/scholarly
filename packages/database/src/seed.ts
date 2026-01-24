@@ -106,7 +106,7 @@ async function main() {
   });
 
   // Create tutor profile
-  await prisma.tutorProfile.upsert({
+  const tutorProfile = await prisma.tutorProfile.upsert({
     where: { userId: tutorUser.id },
     update: {},
     create: {
@@ -128,31 +128,6 @@ async function main() {
         providesMaterials: true,
         keywords: ['patient', 'visual learning', 'step-by-step', 'real-world examples'],
       },
-      availability: {
-        timezone: 'Australia/Sydney',
-        regularSlots: [
-          { dayOfWeek: 1, startTime: '15:00', endTime: '20:00', sessionTypes: ['online_video'] },
-          { dayOfWeek: 2, startTime: '15:00', endTime: '20:00', sessionTypes: ['online_video'] },
-          { dayOfWeek: 3, startTime: '15:00', endTime: '20:00', sessionTypes: ['online_video'] },
-          { dayOfWeek: 4, startTime: '15:00', endTime: '20:00', sessionTypes: ['online_video'] },
-          { dayOfWeek: 5, startTime: '14:00', endTime: '18:00', sessionTypes: ['online_video', 'in_person_tutor_location'] },
-          { dayOfWeek: 6, startTime: '09:00', endTime: '15:00', sessionTypes: ['online_video', 'in_person_tutor_location'] },
-        ],
-        blockedDates: [],
-        advanceBookingDays: 30,
-        minimumNoticeHours: 24,
-      },
-      pricing: {
-        currency: 'AUD',
-        hourlyRate1to1: 65,
-        hourlyRateGroup: 45,
-        groupDiscountPerStudent: 10,
-        packagesOffered: [
-          { id: 'pkg_1', name: '5 Session Bundle', description: '5 one-hour sessions', sessionCount: 5, validityDays: 60, totalPrice: 290, savingsPercent: 11 },
-          { id: 'pkg_2', name: '10 Session Bundle', description: '10 one-hour sessions', sessionCount: 10, validityDays: 90, totalPrice: 550, savingsPercent: 15 },
-        ],
-        commissionRate: 0.15,
-      },
       metrics: {
         totalSessions: 234,
         totalHours: 312,
@@ -169,23 +144,69 @@ async function main() {
     },
   });
 
-  // Create tutor subjects
+  // Create availability slots (extracted from JSON in enhanced schema)
+  await prisma.tutorAvailabilitySlot.createMany({
+    skipDuplicates: true,
+    data: [
+      { profileId: tutorProfile.id, dayOfWeek: 1, startTime: '15:00', endTime: '20:00', timezone: 'Australia/Sydney' },
+      { profileId: tutorProfile.id, dayOfWeek: 2, startTime: '15:00', endTime: '20:00', timezone: 'Australia/Sydney' },
+      { profileId: tutorProfile.id, dayOfWeek: 3, startTime: '15:00', endTime: '20:00', timezone: 'Australia/Sydney' },
+      { profileId: tutorProfile.id, dayOfWeek: 4, startTime: '15:00', endTime: '20:00', timezone: 'Australia/Sydney' },
+      { profileId: tutorProfile.id, dayOfWeek: 5, startTime: '14:00', endTime: '18:00', timezone: 'Australia/Sydney' },
+      { profileId: tutorProfile.id, dayOfWeek: 6, startTime: '09:00', endTime: '15:00', timezone: 'Australia/Sydney' },
+    ],
+  });
+
+  // Create pricing tiers (extracted from JSON in enhanced schema)
+  await prisma.tutorPricingTier.createMany({
+    skipDuplicates: true,
+    data: [
+      { profileId: tutorProfile.id, sessionType: 'online_1to1', duration: 60, baseRate: 65, currency: 'AUD' },
+      { profileId: tutorProfile.id, sessionType: 'online_group', duration: 60, baseRate: 45, currency: 'AUD', groupDiscount: 10, maxGroupSize: 4 },
+      { profileId: tutorProfile.id, sessionType: 'in_person_1to1', duration: 60, baseRate: 75, currency: 'AUD' },
+    ],
+  });
+
+  // Create subjects first (reference table in enhanced schema)
+  const mathSubject = await prisma.subject.upsert({
+    where: { tenantId_code: { tenantId: tenant.id, code: 'MATH' } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      code: 'MATH',
+      name: 'Mathematics',
+      description: 'Study of numbers, quantities, and shapes',
+      learningArea: 'STEM',
+    },
+  });
+
+  const physicsSubject = await prisma.subject.upsert({
+    where: { tenantId_code: { tenantId: tenant.id, code: 'PHYS' } },
+    update: {},
+    create: {
+      tenantId: tenant.id,
+      code: 'PHYS',
+      name: 'Physics',
+      description: 'Study of matter, energy, and their interactions',
+      learningArea: 'STEM',
+    },
+  });
+
+  // Create tutor subjects (now with proper foreign key to Subject)
   await prisma.tutorSubject.createMany({
     skipDuplicates: true,
     data: [
       {
-        profileId: (await prisma.tutorProfile.findUnique({ where: { userId: tutorUser.id } }))!.id,
-        subjectId: 'mathematics',
-        subjectName: 'Mathematics',
+        profileId: tutorProfile.id,
+        subjectId: mathSubject.id,
         yearLevels: ['Year 7', 'Year 8', 'Year 9', 'Year 10', 'Year 11', 'Year 12'],
         confidenceLevel: 5,
         specializations: ['Algebra', 'Calculus', 'Statistics', 'Geometry'],
         examBoardsKnown: ['NSW HSC', 'VCE'],
       },
       {
-        profileId: (await prisma.tutorProfile.findUnique({ where: { userId: tutorUser.id } }))!.id,
-        subjectId: 'physics',
-        subjectName: 'Physics',
+        profileId: tutorProfile.id,
+        subjectId: physicsSubject.id,
         yearLevels: ['Year 11', 'Year 12'],
         confidenceLevel: 4,
         specializations: ['Mechanics', 'Electricity'],
@@ -260,7 +281,7 @@ async function main() {
     },
   });
 
-  // Create learner profile
+  // Create learner profile (fields extracted from JSON in enhanced schema)
   await prisma.learnerProfile.upsert({
     where: { userId: learnerUser.id },
     update: {},
@@ -269,23 +290,13 @@ async function main() {
       dateOfBirth: new Date('2011-05-15'),
       yearLevel: 'Year 8',
       parentIds: [parentUser.id],
-      learningPreferences: {
-        preferredSessionLength: 60,
-        preferredTimeOfDay: 'afternoon',
-        preferredDays: [1, 3, 5],
-        learningPace: 'moderate',
-        prefersHomework: true,
-        prefersGames: true,
-        attentionSpan: 'medium',
-        bestMotivators: ['progress_tracking', 'challenges'],
-      },
-      lisProfileSharing: {
-        shareStrengths: true,
-        shareWeaknesses: true,
-        shareAffectiveState: false,
-        shareGoals: true,
-        shareProgress: true,
-      },
+      // Learning preferences now individual columns instead of JSON
+      preferredSessionLength: 60,
+      preferredTimeOfDay: 'afternoon',
+      preferredDays: [1, 3, 5],
+      learningPace: 'moderate',
+      attentionSpan: 'medium',
+      bestMotivators: ['progress_tracking', 'challenges'],
       lisIntegrationEnabled: true,
     },
   });
@@ -432,7 +443,7 @@ async function main() {
 
   console.log('Created sample content');
 
-  // Create homeschool family
+  // Create homeschool family (simplified schema in enhanced version)
   const family = await prisma.homeschoolFamily.upsert({
     where: { id: 'family_demo_1' },
     update: {},
@@ -443,24 +454,13 @@ async function main() {
       primaryContactName: 'David Smith',
       primaryContactEmail: 'parent@scholarly.app',
       primaryContactPhone: '+61 412 345 678',
-      location: {
-        jurisdiction: 'AU_NSW',
-        suburb: 'Parramatta',
-        state: 'NSW',
-        postcode: '2150',
-        country: 'Australia',
-        coordinates: { lat: -33.8151, lng: 151.0011 },
-        travelRadiusKm: 30,
-      },
-      educationalProfile: {
-        primaryApproach: 'eclectic',
-        secondaryApproaches: ['charlotte_mason', 'project_based'],
-        structureLevel: 'moderately_structured',
-        typicalDailySchedule: '9am-3pm with breaks',
-        prioritySubjects: ['Mathematics', 'Science', 'English'],
-        enrichmentFocus: ['STEM', 'Music'],
-        assessmentStyle: 'portfolio',
-      },
+      // educationalProfile split into separate fields
+      educationalPhilosophy: 'Eclectic approach combining Charlotte Mason with project-based learning',
+      curriculumApproach: 'eclectic',
+      teachingCapabilities: [
+        { subject: 'Mathematics', yearLevels: ['Year 7', 'Year 8'], confidence: 'advanced', willingToTeachCoop: true, willingToTutor: false },
+        { subject: 'Science', yearLevels: ['Year 7', 'Year 8', 'Year 9'], confidence: 'intermediate', willingToTeachCoop: true, willingToTutor: false },
+      ],
       coopPreferences: {
         interestedInCoops: true,
         maxCoopsToJoin: 2,
@@ -474,10 +474,6 @@ async function main() {
         mustHave: ['outdoor activities'],
         dealBreakers: [],
       },
-      teachingCapabilities: [
-        { subject: 'Mathematics', yearLevels: ['Year 7', 'Year 8'], confidence: 'advanced', willingToTeachCoop: true, willingToTutor: false },
-        { subject: 'Science', yearLevels: ['Year 7', 'Year 8', 'Year 9'], confidence: 'intermediate', willingToTeachCoop: true, willingToTutor: false },
-      ],
       compliance: {
         jurisdiction: 'AU_NSW',
         registrationStatus: 'registered',
@@ -503,6 +499,20 @@ async function main() {
         lastAnalyzed: new Date(),
       },
       status: 'active',
+      // Create Address as nested relation
+      location: {
+        create: {
+          tenantId: tenant.id,
+          suburb: 'Parramatta',
+          city: 'Sydney',
+          state: 'NSW',
+          postcode: '2150',
+          country: 'Australia',
+          latitude: -33.8151,
+          longitude: 151.0011,
+          type: 'primary',
+        },
+      },
     },
   });
 
@@ -882,13 +892,15 @@ Consider areas such as:
   console.log('  👪 Parent:  parent@scholarly.app (David Smith)');
   console.log('  🎓 Learner: learner@scholarly.app (Emma Smith)');
   console.log('\n📚 Sample Data Created:');
+  console.log('  • 2 Subjects (Mathematics, Physics)');
+  console.log('  • 3 Curriculum Standards (ACARA Mathematics)');
+  console.log('  • 1 Content Resource (Fractions worksheet)');
+  console.log('  • 1 Homeschool Family with child and address');
+  console.log('  • 1 Tutor Profile with availability slots and pricing tiers');
   console.log('  • 2 Design Challenges (Sustainability, Wellness)');
   console.log('  • 1 Active Design Journey (Emma - EcoSip project)');
   console.log('  • 4 Design Artifacts (interviews, empathy maps, prototypes)');
   console.log('  • 1 Showcase Portfolio (published)');
-  console.log('  • 3 Curriculum Standards (ACARA Mathematics)');
-  console.log('  • 1 Content Resource (Fractions worksheet)');
-  console.log('  • 1 Homeschool Family with child');
 }
 
 main()

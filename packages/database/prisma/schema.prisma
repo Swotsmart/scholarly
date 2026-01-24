@@ -2218,3 +2218,301 @@ model DataMigration {
   @@index([status])
   @@index([createdAt])
 }
+
+// ============================================================================
+// DESIGN & PITCH AI MODELS
+// ============================================================================
+
+model DesignChallenge {
+  id       String @id @default(cuid())
+  tenantId String
+
+  title             String
+  description       String @db.Text
+  context           String @db.Text
+  complexity        String @default("intermediate")
+  estimatedDuration String
+
+  subject                   String?
+  yearLevels                String[] @default([])
+  curriculumCodes           String[] @default([])
+  generalCapabilities       String[] @default([])
+  crossCurriculumPriorities String[] @default([])
+
+  constraints   Json  @default("[]")
+  resourceLinks Json  @default("[]")
+  exemplars     Json  @default("[]")
+  rubric        Json?
+
+  status      String    @default("draft")
+  publishedAt DateTime?
+  createdBy   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  journeys DesignJourney[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([complexity])
+  @@index([subject])
+}
+
+model DesignJourney {
+  id          String          @id @default(cuid())
+  tenantId    String
+  challengeId String
+  challenge   DesignChallenge @relation(fields: [challengeId], references: [id])
+  userId      String
+
+  currentPhase String @default("empathize")
+  status       String @default("in_progress")
+
+  problemStatement  String? @db.Text
+  hmwStatement      String?
+  problemValidation Json?
+
+  empathizeData Json @default("{}")
+  defineData    Json @default("{}")
+  ideateData    Json @default("{}")
+  prototypeData Json @default("{}")
+  iterateData   Json @default("{}")
+  pitchData     Json @default("{}")
+
+  phaseProgress   Json @default("{}")
+  overallProgress Int  @default(0)
+  aiInteractions  Int  @default(0)
+
+  completedAt DateTime?
+  finalScore  Float?
+  feedback    String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  artifacts   DesignArtifact[]
+  peerReviews DesignPeerReview[]
+  pitchDeck   DesignPitchDeck?
+  showcase    ShowcasePortfolio?
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([challengeId])
+  @@index([status])
+  @@index([currentPhase])
+}
+
+model DesignArtifact {
+  id        String        @id @default(cuid())
+  tenantId  String
+  journeyId String
+  journey   DesignJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  userId    String
+
+  type        String
+  title       String
+  description String? @db.Text
+  phase       String
+
+  content      Json
+  fileUrl      String?
+  thumbnailUrl String?
+
+  version          Int     @default(1)
+  parentArtifactId String?
+
+  aiAnalysis   Json?
+  skillsTagged String[] @default([])
+  qualityScore Float?
+
+  status     String @default("draft")
+  visibility String @default("private")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([journeyId])
+  @@index([userId])
+  @@index([type])
+  @@index([phase])
+}
+
+model DesignPeerReview {
+  id        String        @id @default(cuid())
+  tenantId  String
+  journeyId String
+  journey   DesignJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  reviewerId   String
+  artifactIds  String[] @default([])
+  isAnonymous  Boolean  @default(true)
+  feedback     String   @db.Text
+  feedbackPins Json     @default("[]")
+  rubricScores Json?
+  overallScore Float?
+
+  status      String    @default("pending")
+  assignedAt  DateTime  @default(now())
+  dueAt       DateTime?
+  submittedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([journeyId, reviewerId])
+  @@index([tenantId])
+  @@index([journeyId])
+  @@index([reviewerId])
+  @@index([status])
+}
+
+model DesignPitchDeck {
+  id        String        @id @default(cuid())
+  tenantId  String
+  journeyId String        @unique
+  journey   DesignJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  userId    String
+
+  title             String
+  slides            Json
+  slideCount        Int    @default(0)
+  estimatedDuration Int    @default(0)
+  minFontSize       Int    @default(30)
+
+  aiCoachingNotes Json      @default("[]")
+  lastCoachingAt  DateTime?
+  readinessScore  Float?
+
+  practiceRuns     Json      @default("[]")
+  presentationDate DateTime?
+  presentedTo      String[]  @default([])
+
+  finalScore        Float?
+  evaluatorFeedback Json?
+  status            String @default("draft")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+}
+
+// ============================================================================
+// SHOWCASE PORTFOLIO MODELS
+// ============================================================================
+
+model ShowcasePortfolio {
+  id        String        @id @default(cuid())
+  tenantId  String
+  userId    String
+  journeyId String        @unique
+  journey   DesignJourney @relation(fields: [journeyId], references: [id])
+
+  title         String
+  headline      String
+  bio           String? @db.Text
+  avatarUrl     String?
+  coverImageUrl String?
+
+  customSlug String? @unique
+  vanityUrl  String?
+
+  visibility String @default("private")
+  theme      Json   @default("{}")
+  layout     String @default("standard")
+
+  executiveSummary String? @db.Text
+  growthNarrative  String? @db.Text
+  skillTags        Json    @default("[]")
+
+  totalViews        Int   @default(0)
+  uniqueViews       Int   @default(0)
+  averageTimeOnPage Float @default(0)
+
+  status      String    @default("draft")
+  publishedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items     ShowcaseItem[]
+  guestbook ShowcaseGuestbook[]
+  viewLogs  ShowcaseViewLog[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+  @@index([customSlug])
+}
+
+model ShowcaseItem {
+  id          String            @id @default(cuid())
+  portfolioId String
+  portfolio   ShowcasePortfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  artifactId  String?
+  title       String
+  description String? @db.Text
+  type        String
+
+  curatedContent    Json
+  mediaUrl          String?
+  thumbnailUrl      String?
+  curatorNotes      String?  @db.Text
+  skillsHighlighted String[] @default([])
+  orderIndex        Int      @default(0)
+  isVisible         Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([portfolioId])
+  @@index([artifactId])
+}
+
+model ShowcaseGuestbook {
+  id          String            @id @default(cuid())
+  portfolioId String
+  portfolio   ShowcasePortfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  authorName    String
+  authorEmail   String?
+  authorCompany String?
+  authorRole    String?
+
+  message String @db.Text
+  rating  Int?
+
+  isApproved Boolean @default(false)
+  isSpam     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([portfolioId])
+  @@index([isApproved])
+}
+
+model ShowcaseViewLog {
+  id          String            @id @default(cuid())
+  portfolioId String
+  portfolio   ShowcasePortfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  sessionId String
+  referrer  String?
+  userAgent String?
+  country   String?
+  city      String?
+
+  duration     Int      @default(0)
+  itemsViewed  String[] @default([])
+  interactions Json     @default("[]")
+
+  viewedAt DateTime @default(now())
+
+  @@index([portfolioId])
+  @@index([viewedAt])
+}
