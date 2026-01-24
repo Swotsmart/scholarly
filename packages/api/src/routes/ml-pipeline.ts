@@ -213,7 +213,7 @@ mlPipelineRouter.post('/models', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, modelId: result.data.id }, 'ML model created');
+    log.info('ML model created', { tenantId, modelId: result.data.id });
 
     res.status(201).json({
       success: true,
@@ -249,7 +249,7 @@ mlPipelineRouter.post('/models/:id/train', async (req, res) => {
     return res.status(error.statusCode).json(error.toResponse(requestId));
   }
 
-  log.info({ tenantId, modelId: id, jobId: result.data.id }, 'Model training started');
+  log.info('Model training started', { tenantId, modelId: id, jobId: result.data.id });
 
   res.json({
     success: true,
@@ -303,7 +303,7 @@ mlPipelineRouter.post('/automl', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, bestModelId: result.data.bestModel.id }, 'AutoML completed');
+    log.info('AutoML completed', { tenantId, bestModelId: result.data.bestModel.id });
 
     res.json({
       success: true,
@@ -342,7 +342,7 @@ mlPipelineRouter.post('/models/:id/deploy', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, modelId: id, endpoint: data.endpoint }, 'Model deployed');
+    log.info('Model deployed', { tenantId, modelId: id, endpoint: data.endpoint });
 
     res.json({
       success: true,
@@ -542,7 +542,7 @@ mlPipelineRouter.post('/feature-stores', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, featureStoreId: result.data.id }, 'Feature store created');
+    log.info('Feature store created', { tenantId, featureStoreId: result.data.id });
 
     res.status(201).json({
       success: true,

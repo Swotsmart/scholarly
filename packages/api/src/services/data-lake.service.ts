@@ -480,7 +480,7 @@ export class DataLakeService extends ScholarlyBaseService {
   private streamingPipelines: Map<string, StreamingPipeline> = new Map();
 
   constructor() {
-    super();
+    super('DataLakeService');
   }
 
   // ==========================================================================
@@ -530,7 +530,7 @@ export class DataLakeService extends ScholarlyBaseService {
 
       return success(dataSource);
     } catch (error) {
-      return failure('Failed to register data source', 'DATA_001');
+      return failure({ code: 'DATA_001', message: 'Failed to register data source' });
     }
   }
 
@@ -554,7 +554,7 @@ export class DataLakeService extends ScholarlyBaseService {
       }
       return success(true);
     } catch (error) {
-      return failure('Connection validation failed', 'DATA_002');
+      return failure({ code: 'DATA_002', message: 'Connection validation failed' });
     }
   }
 
@@ -589,7 +589,7 @@ export class DataLakeService extends ScholarlyBaseService {
         primaryKey: this.inferPrimaryKey(fields),
       });
     } catch (error) {
-      return failure('Schema inference failed', 'DATA_003');
+      return failure({ code: 'DATA_003', message: 'Schema inference failed' });
     }
   }
 
@@ -709,7 +709,7 @@ export class DataLakeService extends ScholarlyBaseService {
 
       return success(etlPipeline);
     } catch (error) {
-      return failure('Failed to create pipeline', 'ETL_003');
+      return failure({ code: 'ETL_003', message: 'Failed to create pipeline' });
     }
   }
 
@@ -750,7 +750,7 @@ export class DataLakeService extends ScholarlyBaseService {
 
     for (const stage of stages) {
       if (hasCycle(stage.id)) {
-        return failure('Circular dependency detected', 'ETL_005');
+        return failure({ code: 'ETL_005', message: 'Circular dependency detected' });
       }
     }
 
@@ -760,7 +760,7 @@ export class DataLakeService extends ScholarlyBaseService {
   async runPipeline(tenantId: string, pipelineId: string): Promise<Result<PipelineRunResult>> {
     const pipeline = this.pipelines.get(pipelineId);
     if (!pipeline || pipeline.tenantId !== tenantId) {
-      return failure('Pipeline not found', 'ETL_006');
+      return failure({ code: 'ETL_006', message: 'Pipeline not found' });
     }
 
     const startTime = Date.now();
@@ -807,7 +807,7 @@ export class DataLakeService extends ScholarlyBaseService {
         stageResults,
       });
     } catch (error) {
-      return failure('Pipeline execution failed', 'ETL_008');
+      return failure({ code: 'ETL_008', message: 'Pipeline execution failed' });
     }
   }
 
@@ -1090,7 +1090,7 @@ export class DataLakeService extends ScholarlyBaseService {
   async getDataLineage(tenantId: string, entryId: string): Promise<Result<DataLineage>> {
     const entry = this.catalog.get(entryId);
     if (!entry || entry.tenantId !== tenantId) {
-      return failure('Catalog entry not found', 'CAT_001');
+      return failure({ code: 'CAT_001', message: 'Catalog entry not found' });
     }
 
     // Build complete lineage graph
@@ -1106,7 +1106,7 @@ export class DataLakeService extends ScholarlyBaseService {
   async assessDataQuality(tenantId: string, entryId: string): Promise<Result<DataQualityMetrics>> {
     const entry = this.catalog.get(entryId);
     if (!entry || entry.tenantId !== tenantId) {
-      return failure('Catalog entry not found', 'CAT_002');
+      return failure({ code: 'CAT_002', message: 'Catalog entry not found' });
     }
 
     // Run data quality checks
@@ -1198,7 +1198,7 @@ export class DataLakeService extends ScholarlyBaseService {
   async startStreamingPipeline(tenantId: string, pipelineId: string): Promise<Result<StreamingPipeline>> {
     const pipeline = this.streamingPipelines.get(pipelineId);
     if (!pipeline || pipeline.tenantId !== tenantId) {
-      return failure('Streaming pipeline not found', 'STREAM_001');
+      return failure({ code: 'STREAM_001', message: 'Streaming pipeline not found' });
     }
 
     pipeline.status = 'running';
@@ -1208,7 +1208,7 @@ export class DataLakeService extends ScholarlyBaseService {
   async stopStreamingPipeline(tenantId: string, pipelineId: string): Promise<Result<StreamingPipeline>> {
     const pipeline = this.streamingPipelines.get(pipelineId);
     if (!pipeline || pipeline.tenantId !== tenantId) {
-      return failure('Streaming pipeline not found', 'STREAM_002');
+      return failure({ code: 'STREAM_002', message: 'Streaming pipeline not found' });
     }
 
     pipeline.status = 'stopped';
@@ -1244,7 +1244,7 @@ export class DataLakeService extends ScholarlyBaseService {
       });
 
       if (!schemaAnalysis.success) {
-        return failure('AI schema generation failed', 'AI_001');
+        return failure({ code: 'AI_001', message: 'AI schema generation failed' });
       }
 
       // Parse AI response into schema
@@ -1268,7 +1268,7 @@ export class DataLakeService extends ScholarlyBaseService {
 
       return success(schema);
     } catch (error) {
-      return failure('AI schema generation failed', 'AI_002');
+      return failure({ code: 'AI_002', message: 'AI schema generation failed' });
     }
   }
 
@@ -1295,7 +1295,7 @@ export class DataLakeService extends ScholarlyBaseService {
       });
 
       if (!suggestion.success) {
-        return failure('AI suggestion failed', 'AI_003');
+        return failure({ code: 'AI_003', message: 'AI suggestion failed' });
       }
 
       // Generate suggested stages
@@ -1342,7 +1342,7 @@ export class DataLakeService extends ScholarlyBaseService {
 
       return success(stages);
     } catch (error) {
-      return failure('AI suggestion failed', 'AI_004');
+      return failure({ code: 'AI_004', message: 'AI suggestion failed' });
     }
   }
 

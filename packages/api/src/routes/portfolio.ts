@@ -127,7 +127,7 @@ portfolioRouter.post('/', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ userId, portfolioId: result.data.id }, 'Portfolio created');
+    log.info('Portfolio created', { userId, portfolioId: result.data.id });
 
     res.status(201).json({
       success: true,
@@ -233,7 +233,7 @@ portfolioRouter.post('/artifacts', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ userId, artifactId: result.data.id }, 'Artifact added');
+    log.info('Artifact added', { userId, artifactId: result.data.id });
 
     res.status(201).json({
       success: true,
@@ -304,7 +304,7 @@ portfolioRouter.post('/artifacts/:id/reflection', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ userId, artifactId }, 'Reflection added');
+    log.info('Reflection added', { userId, artifactId });
 
     res.json({
       success: true,
@@ -343,7 +343,7 @@ portfolioRouter.post('/goals', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ userId, goalId: result.data.id }, 'Goal created');
+    log.info('Goal created', { userId, goalId: result.data.id });
 
     res.status(201).json({
       success: true,
@@ -379,7 +379,7 @@ portfolioRouter.patch('/goals/:id', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ userId, goalId, status: data.status, progress: data.progress }, 'Goal updated');
+    log.info('Goal updated', { userId, goalId, status: data.status, progress: data.progress });
 
     res.json({
       success: true,
@@ -418,7 +418,7 @@ portfolioRouter.post('/journeys', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ userId, journeyId: result.data.id }, 'Learning journey created');
+    log.info('Learning journey created', { userId, journeyId: result.data.id });
 
     res.status(201).json({
       success: true,
@@ -489,7 +489,7 @@ portfolioRouter.post('/journeys/:id/progress', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ userId, journeyId, nodeId: data.nodeId }, 'Journey progressed');
+    log.info('Journey progressed', { userId, journeyId, nodeId: data.nodeId });
 
     res.json({
       success: true,

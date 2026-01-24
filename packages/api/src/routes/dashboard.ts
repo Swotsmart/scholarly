@@ -251,6 +251,7 @@ dashboardRouter.get('/activity', async (req, res) => {
           user: { select: { displayName: true } },
         },
       },
+      subject: { select: { name: true } },
     },
   });
 
@@ -258,7 +259,7 @@ dashboardRouter.get('/activity', async (req, res) => {
     activities.push({
       type: 'booking',
       title: `Booking ${booking.status}`,
-      description: `Session with ${booking.tutor.user.displayName} for ${booking.subjectName}`,
+      description: `Session with ${booking.tutor.user.displayName} for ${booking.subject.name}`,
       timestamp: booking.createdAt,
       data: { bookingId: booking.id },
     });

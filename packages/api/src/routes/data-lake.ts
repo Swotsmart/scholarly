@@ -192,7 +192,7 @@ dataLakeRouter.post('/sources', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, sourceId: result.data.id }, 'Data source registered');
+    log.info('Data source registered', { tenantId, sourceId: result.data.id });
 
     res.status(201).json({
       success: true,
@@ -319,7 +319,7 @@ dataLakeRouter.post('/pipelines', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, pipelineId: result.data.id }, 'ETL pipeline created');
+    log.info('ETL pipeline created', { tenantId, pipelineId: result.data.id });
 
     res.status(201).json({
       success: true,
@@ -351,7 +351,7 @@ dataLakeRouter.post('/pipelines/:id/run', async (req, res) => {
     return res.status(error.statusCode).json(error.toResponse(requestId));
   }
 
-  log.info({ tenantId, pipelineId: id, runResult: result.data.status }, 'ETL pipeline executed');
+  log.info('ETL pipeline executed', { tenantId, pipelineId: id, runResult: result.data.status });
 
   res.json({
     success: true,
@@ -422,7 +422,7 @@ dataLakeRouter.post('/catalog', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, entryId: result.data.id }, 'Catalog entry created');
+    log.info('Catalog entry created', { tenantId, entryId: result.data.id });
 
     res.status(201).json({
       success: true,
@@ -506,7 +506,7 @@ dataLakeRouter.post('/streaming', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, pipelineId: result.data.id }, 'Streaming pipeline created');
+    log.info('Streaming pipeline created', { tenantId, pipelineId: result.data.id });
 
     res.status(201).json({
       success: true,
@@ -538,7 +538,7 @@ dataLakeRouter.post('/streaming/:id/start', async (req, res) => {
     return res.status(error.statusCode).json(error.toResponse(requestId));
   }
 
-  log.info({ tenantId, pipelineId: id }, 'Streaming pipeline started');
+  log.info('Streaming pipeline started', { tenantId, pipelineId: id });
 
   res.json({
     success: true,
@@ -563,7 +563,7 @@ dataLakeRouter.post('/streaming/:id/stop', async (req, res) => {
     return res.status(error.statusCode).json(error.toResponse(requestId));
   }
 
-  log.info({ tenantId, pipelineId: id }, 'Streaming pipeline stopped');
+  log.info('Streaming pipeline stopped', { tenantId, pipelineId: id });
 
   res.json({
     success: true,

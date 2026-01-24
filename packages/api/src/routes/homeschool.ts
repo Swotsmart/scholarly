@@ -80,9 +80,31 @@ homeschoolRouter.post('/family', async (req, res) => {
       id: `${tenantId}_${user?.id}`, // Use composite key
     },
     update: {
-      ...data,
+      primaryContactName: data.primaryContactName,
+      primaryContactEmail: data.primaryContactEmail,
+      primaryContactPhone: data.primaryContactPhone,
+      educationalPhilosophy: data.educationalProfile.primaryApproach,
+      curriculumApproach: data.educationalProfile.structureLevel,
+      coopPreferences: data.coopPreferences,
       updatedAt: new Date(),
       lastActiveAt: new Date(),
+      location: {
+        upsert: {
+          create: {
+            tenantId,
+            suburb: data.location.suburb,
+            state: data.location.state,
+            postcode: data.location.postcode,
+            country: data.location.country,
+          },
+          update: {
+            suburb: data.location.suburb,
+            state: data.location.state,
+            postcode: data.location.postcode,
+            country: data.location.country,
+          },
+        },
+      },
     },
     create: {
       tenant: { connect: { id: tenantId } },
@@ -90,8 +112,8 @@ homeschoolRouter.post('/family', async (req, res) => {
       primaryContactName: data.primaryContactName,
       primaryContactEmail: data.primaryContactEmail,
       primaryContactPhone: data.primaryContactPhone,
-      location: data.location,
-      educationalProfile: data.educationalProfile,
+      educationalPhilosophy: data.educationalProfile.primaryApproach,
+      curriculumApproach: data.educationalProfile.structureLevel,
       coopPreferences: data.coopPreferences,
       additionalContacts: [],
       teachingCapabilities: [],
@@ -118,9 +140,19 @@ homeschoolRouter.post('/family', async (req, res) => {
         lastAnalyzed: new Date(),
       },
       status: 'active',
+      location: {
+        create: {
+          tenantId,
+          suburb: data.location.suburb,
+          state: data.location.state,
+          postcode: data.location.postcode,
+          country: data.location.country,
+        },
+      },
     },
     include: {
       children: true,
+      location: true,
     },
   });
 
@@ -179,6 +211,10 @@ homeschoolRouter.get('/families/search', async (req, res) => {
   // Get current family
   const currentFamily = await prisma.homeschoolFamily.findFirst({
     where: { tenantId, primaryContactUserId: user?.id },
+    include: {
+      children: true,
+      location: true,
+    },
   });
 
   if (!currentFamily) {
@@ -193,27 +229,28 @@ homeschoolRouter.get('/families/search', async (req, res) => {
     },
     include: {
       children: true,
+      location: true,
     },
   });
 
   // Calculate match scores
   const matches = families.map(family => {
-    const currentLocation = currentFamily.location as { suburb: string; postcode: string; travelRadiusKm: number };
-    const familyLocation = family.location as { suburb: string; postcode: string; travelRadiusKm: number };
-    const currentProfile = currentFamily.educationalProfile as { primaryApproach: string };
-    const familyProfile = family.educationalProfile as { primaryApproach: string };
+    const currentLocation = currentFamily.location;
+    const familyLocation = family.location;
+    const currentApproach = currentFamily.educationalPhilosophy;
+    const familyApproach = family.educationalPhilosophy;
 
     let compatibilityScore = 50;
     const matchReasons: string[] = [];
 
     // Same suburb bonus
-    if (familyLocation.suburb === currentLocation.suburb) {
+    if (familyLocation?.suburb && currentLocation?.suburb && familyLocation.suburb === currentLocation.suburb) {
       compatibilityScore += 20;
       matchReasons.push('Same suburb');
     }
 
     // Same approach bonus
-    if (familyProfile.primaryApproach === currentProfile.primaryApproach) {
+    if (familyApproach && currentApproach && familyApproach === currentApproach) {
       compatibilityScore += 15;
       matchReasons.push('Same educational approach');
     }
@@ -340,7 +377,14 @@ homeschoolRouter.post('/coops', async (req, res) => {
       name: data.name,
       description: data.description,
       philosophy: data.philosophy,
-      primaryLocation: data.primaryLocation,
+      primaryLocation: {
+        create: {
+          tenantId,
+          label: data.primaryLocation.name,
+          streetAddress: data.primaryLocation.address,
+          type: 'venue',
+        },
+      },
       maxFamilies: data.maxFamilies,
       meetingSchedule: data.meetingSchedule,
       subjects: data.subjects,
@@ -369,6 +413,7 @@ homeschoolRouter.post('/coops', async (req, res) => {
           },
         },
       },
+      primaryLocation: true,
     },
   });
 

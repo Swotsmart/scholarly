@@ -120,7 +120,17 @@ microSchoolRouter.post('/', async (req, res) => {
       description: data.description,
       philosophy: data.philosophy,
       educationalModel: data.educationalModel,
-      location: data.location,
+      location: {
+        create: {
+          tenantId,
+          label: data.location.name,
+          streetAddress: data.location.address,
+          suburb: data.location.suburb,
+          state: data.location.state,
+          postcode: data.location.postcode,
+          type: data.location.type,
+        },
+      },
       enrollmentCapacity: data.enrollmentCapacity,
       curriculumFramework: data.curriculumFramework,
       subjects: data.subjects,
@@ -140,6 +150,9 @@ microSchoolRouter.post('/', async (req, res) => {
       },
       termDates: [],
       status: 'forming',
+    },
+    include: {
+      location: true,
     },
   });
 
@@ -300,7 +313,7 @@ microSchoolRouter.get('/:id/applications', async (req, res) => {
 
   const applications = await prisma.enrollmentApplication.findMany({
     where,
-    orderBy: { submittedAt: 'desc' },
+    orderBy: { createdAt: 'desc' },
   });
 
   res.json({ applications });

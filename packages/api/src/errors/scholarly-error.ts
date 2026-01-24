@@ -185,8 +185,14 @@ export class ScholarlyApiError extends Error {
   }
 
   // Not found errors
-  static notFound(details?: ErrorDetails) {
-    return new ScholarlyApiError('SYS_010', details);
+  static notFound(resourceTypeOrDetails?: string | ErrorDetails, resourceId?: string) {
+    if (typeof resourceTypeOrDetails === 'string') {
+      return new ScholarlyApiError('SYS_010', {
+        resourceType: resourceTypeOrDetails,
+        resourceId
+      });
+    }
+    return new ScholarlyApiError('SYS_010', resourceTypeOrDetails);
   }
 
   // System errors

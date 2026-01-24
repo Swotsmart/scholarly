@@ -470,7 +470,7 @@ export class MLPipelineService extends ScholarlyBaseService {
   private predictions: Map<string, unknown> = new Map();
 
   constructor() {
-    super();
+    super('MLPipelineService');
     this.initializeDefaultModels();
   }
 
@@ -506,18 +506,18 @@ export class MLPipelineService extends ScholarlyBaseService {
       this.models.set(mlModel.id, mlModel);
       return success(mlModel);
     } catch (error) {
-      return failure('Failed to create model', 'ML_002');
+      return failure({ code: 'ML_002', message: 'Failed to create model' });
     }
   }
 
   private validateFeatureConfig(config: FeatureConfig): Result<boolean> {
     if (!config.features || config.features.length === 0) {
-      return failure('At least one feature is required', 'ML_003');
+      return failure({ code: 'ML_003', message: 'At least one feature is required' });
     }
 
     for (const feature of config.features) {
       if (!feature.name || !feature.sourceField) {
-        return failure('Feature name and sourceField are required', 'ML_004');
+        return failure({ code: 'ML_004', message: 'Feature name and sourceField are required' });
       }
     }
 
@@ -527,7 +527,7 @@ export class MLPipelineService extends ScholarlyBaseService {
   async getModel(tenantId: string, modelId: string): Promise<Result<MLModel>> {
     const model = this.models.get(modelId);
     if (!model || model.tenantId !== tenantId) {
-      return failure('Model not found', 'ML_005');
+      return failure({ code: 'ML_005', message: 'Model not found' });
     }
     return success(model);
   }
@@ -554,7 +554,7 @@ export class MLPipelineService extends ScholarlyBaseService {
   async trainModel(tenantId: string, modelId: string): Promise<Result<TrainingJob>> {
     const model = this.models.get(modelId);
     if (!model || model.tenantId !== tenantId) {
-      return failure('Model not found', 'ML_006');
+      return failure({ code: 'ML_006', message: 'Model not found' });
     }
 
     // Create training job
@@ -701,7 +701,7 @@ export class MLPipelineService extends ScholarlyBaseService {
   async getTrainingJob(tenantId: string, jobId: string): Promise<Result<TrainingJob>> {
     const job = this.trainingJobs.get(jobId);
     if (!job || job.tenantId !== tenantId) {
-      return failure('Training job not found', 'ML_007');
+      return failure({ code: 'ML_007', message: 'Training job not found' });
     }
     return success(job);
   }
@@ -802,7 +802,7 @@ export class MLPipelineService extends ScholarlyBaseService {
         ],
       });
     } catch (error) {
-      return failure('AutoML failed', 'ML_008');
+      return failure({ code: 'ML_008', message: 'AutoML failed' });
     }
   }
 
@@ -916,7 +916,7 @@ export class MLPipelineService extends ScholarlyBaseService {
 
       return success(prediction);
     } catch (error) {
-      return failure('Risk prediction failed', 'ML_009');
+      return failure({ code: 'ML_009', message: 'Risk prediction failed' });
     }
   }
 
@@ -1093,7 +1093,7 @@ export class MLPipelineService extends ScholarlyBaseService {
         drivers,
       });
     } catch (error) {
-      return failure('Performance prediction failed', 'ML_010');
+      return failure({ code: 'ML_010', message: 'Performance prediction failed' });
     }
   }
 
@@ -1204,7 +1204,7 @@ export class MLPipelineService extends ScholarlyBaseService {
 
       return success(recommendation);
     } catch (error) {
-      return failure('Learning path recommendation failed', 'ML_011');
+      return failure({ code: 'ML_011', message: 'Learning path recommendation failed' });
     }
   }
 
@@ -1266,7 +1266,7 @@ export class MLPipelineService extends ScholarlyBaseService {
 
       return success(prediction);
     } catch (error) {
-      return failure('Engagement prediction failed', 'ML_012');
+      return failure({ code: 'ML_012', message: 'Engagement prediction failed' });
     }
   }
 
@@ -1298,7 +1298,7 @@ export class MLPipelineService extends ScholarlyBaseService {
   ): Promise<Result<Record<string, unknown>>> {
     const store = this.featureStores.get(featureStoreId);
     if (!store || store.tenantId !== tenantId) {
-      return failure('Feature store not found', 'ML_013');
+      return failure({ code: 'ML_013', message: 'Feature store not found' });
     }
 
     // Get feature values for entity
@@ -1341,11 +1341,11 @@ export class MLPipelineService extends ScholarlyBaseService {
   ): Promise<Result<MLModel>> {
     const model = this.models.get(modelId);
     if (!model || model.tenantId !== tenantId) {
-      return failure('Model not found', 'ML_014');
+      return failure({ code: 'ML_014', message: 'Model not found' });
     }
 
     if (!model.trainingMetrics) {
-      return failure('Model must be trained before deployment', 'ML_015');
+      return failure({ code: 'ML_015', message: 'Model must be trained before deployment' });
     }
 
     model.deploymentConfig = config;
@@ -1369,11 +1369,11 @@ export class MLPipelineService extends ScholarlyBaseService {
   ): Promise<Result<PredictionResult>> {
     const model = this.models.get(modelId);
     if (!model || model.tenantId !== tenantId) {
-      return failure('Model not found', 'ML_016');
+      return failure({ code: 'ML_016', message: 'Model not found' });
     }
 
     if (model.status !== 'deployed') {
-      return failure('Model is not deployed', 'ML_017');
+      return failure({ code: 'ML_017', message: 'Model is not deployed' });
     }
 
     const startTime = Date.now();

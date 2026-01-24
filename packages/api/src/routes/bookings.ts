@@ -145,7 +145,6 @@ const createBookingSchema = z.object({
   duration: z.number().min(30).max(180),
   sessionType: z.string(),
   subjectId: z.string(),
-  subjectName: z.string(),
   topicsNeedingHelp: z.array(z.string()).optional(),
   curriculumCodes: z.array(z.string()).optional(),
   learnerNotes: z.string().optional(),
@@ -165,6 +164,7 @@ bookingsRouter.post('/', async (req, res) => {
     },
     include: {
       user: true,
+      pricingTiers: true,
     },
   });
 
@@ -197,20 +197,21 @@ bookingsRouter.post('/', async (req, res) => {
     throw ApiError.conflict('Tutor is not available at the requested time');
   }
 
-  // Calculate pricing
-  const pricing = tutorProfile.pricing as {
-    hourlyRate1to1: number;
-    hourlyRateGroup: number;
-    commissionRate: number;
-    currency: string;
-  };
+  // Calculate pricing from pricing tiers
+  const sessionTypeForPricing = data.learnerIds.length === 1 ? 'one_on_one' : 'group';
+  const pricingTier = tutorProfile.pricingTiers.find(
+    (tier) => tier.sessionType === sessionTypeForPricing
+  ) || tutorProfile.pricingTiers[0];
+
+  const baseRate = pricingTier?.baseRate ?? 50;
+  const currency = pricingTier?.currency ?? 'AUD';
+  const commissionRate = 0.15; // Platform default commission
 
   const hours = data.duration / 60;
-  const baseRate = data.learnerIds.length === 1 ? pricing.hourlyRate1to1 : pricing.hourlyRateGroup;
   const subtotal = baseRate * hours;
   const groupDiscount = data.learnerIds.length > 1 ? subtotal * 0.1 * (data.learnerIds.length - 1) : 0;
   const discounted = subtotal - groupDiscount;
-  const platformFee = discounted * pricing.commissionRate;
+  const platformFee = discounted * commissionRate;
   const tutorEarnings = discounted - platformFee;
 
   const bookingPricing = {
@@ -220,7 +221,7 @@ bookingsRouter.post('/', async (req, res) => {
     subtotal: discounted,
     platformFee,
     total: discounted,
-    currency: pricing.currency,
+    currency,
     tutorEarnings,
     tokenRewards: Math.round(discounted * 0.01),
   };
@@ -237,7 +238,6 @@ bookingsRouter.post('/', async (req, res) => {
       timezone: 'Australia/Sydney',
       sessionType: data.sessionType,
       subjectId: data.subjectId,
-      subjectName: data.subjectName,
       topicsNeedingHelp: data.topicsNeedingHelp || [],
       curriculumCodes: data.curriculumCodes || [],
       learnerNotes: data.learnerNotes,
@@ -302,7 +302,6 @@ bookingsRouter.post('/:id/confirm', async (req, res) => {
         sessionType: booking.sessionType,
         isGroupSession: booking.isGroupSession,
         subjectId: booking.subjectId,
-        subjectName: booking.subjectName,
         topicsFocus: booking.topicsNeedingHelp,
         curriculumCodes: booking.curriculumCodes,
         status: 'confirmed',

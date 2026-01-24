@@ -761,7 +761,7 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
   private generatedReports: Map<string, GeneratedReport> = new Map();
 
   constructor() {
-    super();
+    super('AnalyticsReportingService');
     this.initializeDefaultMetrics();
   }
 
@@ -836,14 +836,14 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
       this.dashboards.set(newDashboard.id, newDashboard);
       return success(newDashboard);
     } catch (error) {
-      return failure('Failed to create dashboard', 'DASH_001');
+      return failure({ code: 'DASH_001', message: 'Failed to create dashboard' });
     }
   }
 
   async getDashboard(tenantId: string, dashboardId: string): Promise<Result<Dashboard>> {
     const dashboard = this.dashboards.get(dashboardId);
     if (!dashboard || dashboard.tenantId !== tenantId) {
-      return failure('Dashboard not found', 'DASH_002');
+      return failure({ code: 'DASH_002', message: 'Dashboard not found' });
     }
     return success(dashboard);
   }
@@ -1206,7 +1206,7 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
         insights,
       });
     } catch (error) {
-      return failure('Failed to get teacher dashboard data', 'DASH_003');
+      return failure({ code: 'DASH_003', message: 'Failed to get teacher dashboard data' });
     }
   }
 
@@ -1371,7 +1371,7 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
         insights,
       });
     } catch (error) {
-      return failure('Failed to get admin dashboard data', 'DASH_004');
+      return failure({ code: 'DASH_004', message: 'Failed to get admin dashboard data' });
     }
   }
 
@@ -1547,7 +1547,7 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
         insights,
       });
     } catch (error) {
-      return failure('Failed to get student dashboard data', 'DASH_005');
+      return failure({ code: 'DASH_005', message: 'Failed to get student dashboard data' });
     }
   }
 
@@ -1702,7 +1702,7 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
         insights,
       });
     } catch (error) {
-      return failure('Failed to get parent dashboard data', 'DASH_006');
+      return failure({ code: 'DASH_006', message: 'Failed to get parent dashboard data' });
     }
   }
 
@@ -1971,7 +1971,7 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
       this.reports.set(newReport.id, newReport);
       return success(newReport);
     } catch (error) {
-      return failure('Failed to create report', 'RPT_001');
+      return failure({ code: 'RPT_001', message: 'Failed to create report' });
     }
   }
 
@@ -1983,7 +1983,7 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
     try {
       const report = this.reports.get(reportId);
       if (!report || report.tenantId !== tenantId) {
-        return failure('Report not found', 'RPT_002');
+        return failure({ code: 'RPT_002', message: 'Report not found' });
       }
 
       const startTime = Date.now();
@@ -2027,7 +2027,7 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
 
       return success(generatedReport);
     } catch (error) {
-      return failure('Failed to generate report', 'RPT_003');
+      return failure({ code: 'RPT_003', message: 'Failed to generate report' });
     }
   }
 
@@ -2149,7 +2149,7 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
   ): Promise<Result<{ url: string; expiresAt: Date }>> {
     const dashboard = this.dashboards.get(dashboardId);
     if (!dashboard || dashboard.tenantId !== tenantId) {
-      return failure('Dashboard not found', 'EXP_001');
+      return failure({ code: 'EXP_001', message: 'Dashboard not found' });
     }
 
     // Simulate export URL generation
@@ -2183,7 +2183,7 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
   ): Promise<Result<{ value: number; trend: number; benchmark?: number }>> {
     const metric = this.metrics.get(metricId);
     if (!metric) {
-      return failure('Metric not found', 'MET_001');
+      return failure({ code: 'MET_001', message: 'Metric not found' });
     }
 
     // Simulate metric calculation

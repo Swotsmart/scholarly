@@ -625,7 +625,7 @@ export class DesignPitchAIService extends ScholarlyBaseService {
   private teams: Map<string, DesignTeam> = new Map();
 
   constructor() {
-    super();
+    super('DesignPitchAIService');
   }
 
   // ==========================================================================
@@ -661,14 +661,14 @@ export class DesignPitchAIService extends ScholarlyBaseService {
 
       return success(newChallenge);
     } catch (error) {
-      return failure('Failed to create challenge', 'DPA_001');
+      return failure({ code: 'DPA_001', message: 'Failed to create challenge' });
     }
   }
 
   async getChallenge(tenantId: string, challengeId: string): Promise<Result<DesignChallenge>> {
     const challenge = this.challenges.get(challengeId);
     if (!challenge || challenge.tenantId !== tenantId) {
-      return failure('Challenge not found', 'DPA_002');
+      return failure({ code: 'DPA_002', message: 'Challenge not found' });
     }
     return success(challenge);
   }
@@ -696,7 +696,7 @@ export class DesignPitchAIService extends ScholarlyBaseService {
   async activateChallenge(tenantId: string, challengeId: string): Promise<Result<DesignChallenge>> {
     const challenge = this.challenges.get(challengeId);
     if (!challenge || challenge.tenantId !== tenantId) {
-      return failure('Challenge not found', 'DPA_003');
+      return failure({ code: 'DPA_003', message: 'Challenge not found' });
     }
 
     challenge.status = 'active';
@@ -718,7 +718,7 @@ export class DesignPitchAIService extends ScholarlyBaseService {
     try {
       const challenge = this.challenges.get(challengeId);
       if (!challenge || challenge.tenantId !== tenantId) {
-        return failure('Challenge not found', 'DPA_004');
+        return failure({ code: 'DPA_004', message: 'Challenge not found' });
       }
 
       const journey: LearnerJourney = {
@@ -763,7 +763,7 @@ export class DesignPitchAIService extends ScholarlyBaseService {
 
       return success(journey);
     } catch (error) {
-      return failure('Failed to start journey', 'DPA_005');
+      return failure({ code: 'DPA_005', message: 'Failed to start journey' });
     }
   }
 
@@ -774,7 +774,7 @@ export class DesignPitchAIService extends ScholarlyBaseService {
   ): Promise<Result<LearnerJourney>> {
     const journey = this.journeys.get(journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_006');
+      return failure({ code: 'DPA_006', message: 'Journey not found' });
     }
 
     // Save current version to history
@@ -807,7 +807,7 @@ export class DesignPitchAIService extends ScholarlyBaseService {
   ): Promise<Result<AIValidation>> {
     const journey = this.journeys.get(journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_007');
+      return failure({ code: 'DPA_007', message: 'Journey not found' });
     }
 
     try {
@@ -898,7 +898,7 @@ Desired Outcome: ${journey.problemStatement.desiredOutcome}`,
 
       return success(validation);
     } catch (error) {
-      return failure('Validation failed', 'DPA_008');
+      return failure({ code: 'DPA_008', message: 'Validation failed' });
     }
   }
 
@@ -940,7 +940,7 @@ Desired Outcome: ${journey.problemStatement.desiredOutcome}`,
   ): Promise<Result<LearnerJourney>> {
     const journey = this.journeys.get(journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_009');
+      return failure({ code: 'DPA_009', message: 'Journey not found' });
     }
 
     journey.learningGoals.push({
@@ -963,7 +963,7 @@ Desired Outcome: ${journey.problemStatement.desiredOutcome}`,
   ): Promise<Result<UserPersona>> {
     const journey = this.journeys.get(journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_010');
+      return failure({ code: 'DPA_010', message: 'Journey not found' });
     }
 
     const newPersona: UserPersona = {
@@ -989,7 +989,7 @@ Desired Outcome: ${journey.problemStatement.desiredOutcome}`,
   ): Promise<Result<Partial<UserPersona>[]>> {
     const journey = this.journeys.get(journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_011');
+      return failure({ code: 'DPA_011', message: 'Journey not found' });
     }
 
     try {
@@ -1035,7 +1035,7 @@ Pain Points: ${journey.problemStatement.painPoints.join(', ')}`,
 
       return success(suggestions);
     } catch (error) {
-      return failure('Failed to generate persona suggestions', 'DPA_012');
+      return failure({ code: 'DPA_012', message: 'Failed to generate persona suggestions' });
     }
   }
 
@@ -1046,7 +1046,7 @@ Pain Points: ${journey.problemStatement.painPoints.join(', ')}`,
   ): Promise<Result<EvidenceItem>> {
     const journey = this.journeys.get(journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_013');
+      return failure({ code: 'DPA_013', message: 'Journey not found' });
     }
 
     const newEvidence: EvidenceItem = {
@@ -1081,7 +1081,7 @@ Pain Points: ${journey.problemStatement.painPoints.join(', ')}`,
   ): Promise<Result<VersionedArtifact>> {
     const journey = this.journeys.get(journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_014');
+      return failure({ code: 'DPA_014', message: 'Journey not found' });
     }
 
     const newArtifact: VersionedArtifact = {
@@ -1142,12 +1142,12 @@ Pain Points: ${journey.problemStatement.painPoints.join(', ')}`,
   ): Promise<Result<VersionedArtifact>> {
     const artifact = this.artifacts.get(artifactId);
     if (!artifact) {
-      return failure('Artifact not found', 'DPA_015');
+      return failure({ code: 'DPA_015', message: 'Artifact not found' });
     }
 
     const journey = this.journeys.get(artifact.journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_016');
+      return failure({ code: 'DPA_016', message: 'Journey not found' });
     }
 
     const newVersion: ArtifactVersion = {
@@ -1182,12 +1182,12 @@ Pain Points: ${journey.problemStatement.painPoints.join(', ')}`,
   ): Promise<Result<{ questions: string[]; suggestions: string[] }>> {
     const journey = this.journeys.get(journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_017');
+      return failure({ code: 'DPA_017', message: 'Journey not found' });
     }
 
     const artifact = this.artifacts.get(artifactId);
     if (!artifact) {
-      return failure('Artifact not found', 'DPA_018');
+      return failure({ code: 'DPA_018', message: 'Artifact not found' });
     }
 
     try {
@@ -1247,7 +1247,7 @@ Type: ${artifact.type}`,
 
       return success(coaching);
     } catch (error) {
-      return failure('Failed to generate coaching', 'DPA_019');
+      return failure({ code: 'DPA_019', message: 'Failed to generate coaching' });
     }
   }
 
@@ -1257,12 +1257,12 @@ Type: ${artifact.type}`,
   ): Promise<Result<ArtifactAIAnalysis>> {
     const artifact = this.artifacts.get(artifactId);
     if (!artifact) {
-      return failure('Artifact not found', 'DPA_020');
+      return failure({ code: 'DPA_020', message: 'Artifact not found' });
     }
 
     const journey = this.journeys.get(artifact.journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_021');
+      return failure({ code: 'DPA_021', message: 'Journey not found' });
     }
 
     // Generate AI analysis
@@ -1309,12 +1309,12 @@ Type: ${artifact.type}`,
   ): Promise<Result<VersionedArtifact>> {
     const artifact = this.artifacts.get(artifactId);
     if (!artifact) {
-      return failure('Artifact not found', 'DPA_022');
+      return failure({ code: 'DPA_022', message: 'Artifact not found' });
     }
 
     const journey = this.journeys.get(artifact.journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_023');
+      return failure({ code: 'DPA_023', message: 'Journey not found' });
     }
 
     artifact.status = 'review_ready';
@@ -1336,12 +1336,12 @@ Type: ${artifact.type}`,
   ): Promise<Result<PeerReview>> {
     const artifact = this.artifacts.get(artifactId);
     if (!artifact) {
-      return failure('Artifact not found', 'DPA_024');
+      return failure({ code: 'DPA_024', message: 'Artifact not found' });
     }
 
     const journey = this.journeys.get(artifact.journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_025');
+      return failure({ code: 'DPA_025', message: 'Journey not found' });
     }
 
     const review: PeerReview = {
@@ -1381,17 +1381,17 @@ Type: ${artifact.type}`,
   ): Promise<Result<PeerReview>> {
     const peerReview = this.peerReviews.get(reviewId);
     if (!peerReview) {
-      return failure('Review not found', 'DPA_026');
+      return failure({ code: 'DPA_026', message: 'Review not found' });
     }
 
     const artifact = this.artifacts.get(peerReview.artifactId);
     if (!artifact) {
-      return failure('Artifact not found', 'DPA_027');
+      return failure({ code: 'DPA_027', message: 'Artifact not found' });
     }
 
     const journey = this.journeys.get(artifact.journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_028');
+      return failure({ code: 'DPA_028', message: 'Journey not found' });
     }
 
     // Update review
@@ -1421,7 +1421,7 @@ Type: ${artifact.type}`,
   ): Promise<Result<FeedbackPin>> {
     const review = this.peerReviews.get(reviewId);
     if (!review) {
-      return failure('Review not found', 'DPA_029');
+      return failure({ code: 'DPA_029', message: 'Review not found' });
     }
 
     const newPin: FeedbackPin = {
@@ -1446,12 +1446,12 @@ Type: ${artifact.type}`,
   ): Promise<Result<FeedbackPin>> {
     const review = this.peerReviews.get(reviewId);
     if (!review) {
-      return failure('Review not found', 'DPA_030');
+      return failure({ code: 'DPA_030', message: 'Review not found' });
     }
 
     const pin = review.feedbackPins.find(p => p.id === pinId);
     if (!pin) {
-      return failure('Pin not found', 'DPA_031');
+      return failure({ code: 'DPA_031', message: 'Pin not found' });
     }
 
     pin.resolved = true;
@@ -1467,18 +1467,18 @@ Type: ${artifact.type}`,
   ): Promise<Result<ReviewAISynthesis>> {
     const artifact = this.artifacts.get(artifactId);
     if (!artifact) {
-      return failure('Artifact not found', 'DPA_032');
+      return failure({ code: 'DPA_032', message: 'Artifact not found' });
     }
 
     const journey = this.journeys.get(artifact.journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_033');
+      return failure({ code: 'DPA_033', message: 'Journey not found' });
     }
 
     const completedReviews = artifact.peerReviews.filter(r => r.status === 'completed');
 
     if (completedReviews.length === 0) {
-      return failure('No completed reviews to synthesize', 'DPA_034');
+      return failure({ code: 'DPA_034', message: 'No completed reviews to synthesize' });
     }
 
     try {
@@ -1546,7 +1546,7 @@ Be constructive and specific.`,
 
       return success(synthesis);
     } catch (error) {
-      return failure('Failed to synthesize feedback', 'DPA_035');
+      return failure({ code: 'DPA_035', message: 'Failed to synthesize feedback' });
     }
   }
 
@@ -1612,7 +1612,7 @@ Be constructive and specific.`,
   ): Promise<Result<PitchDeck>> {
     const journey = this.journeys.get(journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_036');
+      return failure({ code: 'DPA_036', message: 'Journey not found' });
     }
 
     const challenge = this.challenges.get(journey.challengeId);
@@ -1742,17 +1742,17 @@ Be constructive and specific.`,
   ): Promise<Result<PitchSlide>> {
     const deck = this.pitchDecks.get(pitchDeckId);
     if (!deck) {
-      return failure('Pitch deck not found', 'DPA_037');
+      return failure({ code: 'DPA_037', message: 'Pitch deck not found' });
     }
 
     const journey = this.journeys.get(deck.journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_038');
+      return failure({ code: 'DPA_038', message: 'Journey not found' });
     }
 
     const slideIndex = deck.slides.findIndex(s => s.id === slideId);
     if (slideIndex === -1) {
-      return failure('Slide not found', 'DPA_039');
+      return failure({ code: 'DPA_039', message: 'Slide not found' });
     }
 
     // Update slide
@@ -1783,12 +1783,12 @@ Be constructive and specific.`,
   ): Promise<Result<PitchDeck>> {
     const deck = this.pitchDecks.get(pitchDeckId);
     if (!deck) {
-      return failure('Pitch deck not found', 'DPA_040');
+      return failure({ code: 'DPA_040', message: 'Pitch deck not found' });
     }
 
     const journey = this.journeys.get(deck.journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_041');
+      return failure({ code: 'DPA_041', message: 'Journey not found' });
     }
 
     // Check slide limit
@@ -1833,12 +1833,12 @@ Be constructive and specific.`,
   ): Promise<Result<PitchDeck>> {
     const deck = this.pitchDecks.get(pitchDeckId);
     if (!deck) {
-      return failure('Pitch deck not found', 'DPA_043');
+      return failure({ code: 'DPA_043', message: 'Pitch deck not found' });
     }
 
     const journey = this.journeys.get(deck.journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_044');
+      return failure({ code: 'DPA_044', message: 'Journey not found' });
     }
 
     deck.slides = deck.slides.filter(s => s.id !== slideId);
@@ -1906,12 +1906,12 @@ Be constructive and specific.`,
   ): Promise<Result<PracticeRun>> {
     const deck = this.pitchDecks.get(pitchDeckId);
     if (!deck) {
-      return failure('Pitch deck not found', 'DPA_045');
+      return failure({ code: 'DPA_045', message: 'Pitch deck not found' });
     }
 
     const journey = this.journeys.get(deck.journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_046');
+      return failure({ code: 'DPA_046', message: 'Journey not found' });
     }
 
     const practiceRun: PracticeRun = {
@@ -1941,17 +1941,17 @@ Be constructive and specific.`,
   ): Promise<Result<PracticeRun>> {
     const deck = this.pitchDecks.get(pitchDeckId);
     if (!deck) {
-      return failure('Pitch deck not found', 'DPA_047');
+      return failure({ code: 'DPA_047', message: 'Pitch deck not found' });
     }
 
     const journey = this.journeys.get(deck.journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_048');
+      return failure({ code: 'DPA_048', message: 'Journey not found' });
     }
 
     const practiceRun = deck.practiceRuns.find(r => r.id === practiceRunId);
     if (!practiceRun) {
-      return failure('Practice run not found', 'DPA_049');
+      return failure({ code: 'DPA_049', message: 'Practice run not found' });
     }
 
     practiceRun.endedAt = new Date();
@@ -2042,11 +2042,11 @@ Be constructive and specific.`,
   ): Promise<Result<PitchScore>> {
     const journey = this.journeys.get(journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_050');
+      return failure({ code: 'DPA_050', message: 'Journey not found' });
     }
 
     if (!journey.pitchDeck) {
-      return failure('No pitch deck found', 'DPA_051');
+      return failure({ code: 'DPA_051', message: 'No pitch deck found' });
     }
 
     const totalScore = score.rubricScores.reduce((sum, s) => sum + s.score, 0);
@@ -2083,16 +2083,16 @@ Be constructive and specific.`,
   ): Promise<Result<{ synced: boolean; lmsGradeId?: string }>> {
     const journey = this.journeys.get(journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_052');
+      return failure({ code: 'DPA_052', message: 'Journey not found' });
     }
 
     if (!journey.pitchDeck?.finalScore) {
-      return failure('No grade to sync', 'DPA_053');
+      return failure({ code: 'DPA_053', message: 'No grade to sync' });
     }
 
     const challenge = this.challenges.get(journey.challengeId);
     if (!challenge?.ltiConfig?.gradesyncEnabled) {
-      return failure('LMS grade sync not enabled', 'DPA_054');
+      return failure({ code: 'DPA_054', message: 'LMS grade sync not enabled' });
     }
 
     // Simulate LMS sync
@@ -2115,7 +2115,7 @@ Be constructive and specific.`,
   ): Promise<Result<JourneyAnalytics>> {
     const journey = this.journeys.get(journeyId);
     if (!journey || journey.tenantId !== tenantId) {
-      return failure('Journey not found', 'DPA_055');
+      return failure({ code: 'DPA_055', message: 'Journey not found' });
     }
 
     const analytics: JourneyAnalytics = {
@@ -2162,7 +2162,7 @@ Be constructive and specific.`,
   ): Promise<Result<ChallengeAnalytics>> {
     const challenge = this.challenges.get(challengeId);
     if (!challenge || challenge.tenantId !== tenantId) {
-      return failure('Challenge not found', 'DPA_056');
+      return failure({ code: 'DPA_056', message: 'Challenge not found' });
     }
 
     const journeys = Array.from(this.journeys.values())
@@ -2219,13 +2219,13 @@ Be constructive and specific.`,
   ): Promise<Result<DesignTeam>> {
     const challenge = this.challenges.get(challengeId);
     if (!challenge || challenge.tenantId !== tenantId) {
-      return failure('Challenge not found', 'DPA_057');
+      return failure({ code: 'DPA_057', message: 'Challenge not found' });
     }
 
     // Create journey for team
     const journeyResult = await this.startJourney(tenantId, challengeId, members[0].userId);
     if (!journeyResult.success) {
-      return failure('Failed to create team journey', 'DPA_058');
+      return failure({ code: 'DPA_058', message: 'Failed to create team journey' });
     }
 
     const team: DesignTeam = {

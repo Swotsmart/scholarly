@@ -86,7 +86,7 @@ aiBuddyRouter.post('/message', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ userId, conversationId: result.data.conversationId }, 'AI Buddy message sent');
+    log.info('AI Buddy message sent', { userId, conversationId: result.data.conversationId });
 
     res.json({
       success: true,

@@ -102,7 +102,7 @@ standardsComplianceRouter.post('/audit', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, reportId: result.data.id }, 'Compliance audit completed');
+    log.info('Compliance audit completed', { tenantId, reportId: result.data.id });
 
     res.json({
       success: true,
@@ -268,7 +268,7 @@ standardsComplianceRouter.post('/aitsl/assess', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, teacherId: data.teacherId }, 'Teacher assessment completed');
+    log.info('Teacher assessment completed', { tenantId, teacherId: data.teacherId });
 
     res.json({
       success: true,
@@ -302,7 +302,7 @@ standardsComplianceRouter.post('/ai-ethics/assess', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, systemId: data.id }, 'AI ethics assessment completed');
+    log.info('AI ethics assessment completed', { tenantId, systemId: data.id });
 
     res.json({
       success: true,

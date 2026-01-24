@@ -315,7 +315,7 @@ designPitchRouter.post('/challenges', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, challengeId: result.data.id }, 'Design challenge created');
+    log.info('Design challenge created', { tenantId, challengeId: result.data.id });
 
     res.status(201).json({
       success: true,
@@ -347,7 +347,7 @@ designPitchRouter.post('/challenges/:id/activate', async (req, res) => {
     return res.status(error.statusCode).json(error.toResponse(requestId));
   }
 
-  log.info({ tenantId, challengeId: id }, 'Design challenge activated');
+  log.info('Design challenge activated', { tenantId, challengeId: id });
 
   res.json({
     success: true,
@@ -401,7 +401,7 @@ designPitchRouter.post('/challenges/:challengeId/journeys', async (req, res) => 
     return res.status(error.statusCode).json(error.toResponse(requestId));
   }
 
-  log.info({ tenantId, journeyId: result.data.id, challengeId }, 'Learner journey started');
+  log.info('Learner journey started', { tenantId, journeyId: result.data.id, challengeId });
 
   res.status(201).json({
     success: true,
@@ -626,7 +626,7 @@ designPitchRouter.post('/journeys/:journeyId/artifacts', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, artifactId: result.data.id, journeyId }, 'Artifact created');
+    log.info('Artifact created', { tenantId, artifactId: result.data.id, journeyId });
 
     res.status(201).json({
       success: true,
@@ -805,7 +805,7 @@ designPitchRouter.put('/reviews/:reviewId', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, reviewId }, 'Peer review submitted');
+    log.info('Peer review submitted', { tenantId, reviewId });
 
     res.json({
       success: true,
@@ -941,7 +941,7 @@ designPitchRouter.post('/journeys/:journeyId/pitch-deck', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, pitchDeckId: result.data.id, journeyId }, 'Pitch deck created');
+    log.info('Pitch deck created', { tenantId, pitchDeckId: result.data.id, journeyId });
 
     res.status(201).json({
       success: true,
@@ -1165,7 +1165,7 @@ designPitchRouter.post('/journeys/:journeyId/grade', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, journeyId, gradedBy }, 'Pitch graded');
+    log.info('Pitch graded', { tenantId, journeyId, gradedBy });
 
     res.json({
       success: true,
@@ -1197,7 +1197,7 @@ designPitchRouter.post('/journeys/:journeyId/sync-lms', async (req, res) => {
     return res.status(error.statusCode).json(error.toResponse(requestId));
   }
 
-  log.info({ tenantId, journeyId, synced: result.data.synced }, 'Grade synced to LMS');
+  log.info('Grade synced to LMS', { tenantId, journeyId, synced: result.data.synced });
 
   res.json({
     success: true,
@@ -1252,7 +1252,7 @@ designPitchRouter.post('/challenges/:challengeId/teams', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, teamId: result.data.id, challengeId }, 'Team created');
+    log.info('Team created', { tenantId, teamId: result.data.id, challengeId });
 
     res.status(201).json({
       success: true,
