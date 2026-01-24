@@ -1,0 +1,36 @@
+{
+  "name": "scholarly",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Scholarly - The Unified Learning Nexus: AI-Powered Education Platform",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "db:generate": "pnpm --filter @scholarly/database generate",
+    "db:push": "pnpm --filter @scholarly/database push",
+    "db:migrate": "pnpm --filter @scholarly/database migrate",
+    "db:seed": "pnpm --filter @scholarly/database seed",
+    "api:dev": "pnpm --filter @scholarly/api dev",
+    "web:dev": "pnpm --filter @scholarly/web dev",
+    "curriculum:ingest": "pnpm --filter @scholarly/curriculum-processor ingest",
+    "curriculum:validate": "pnpm --filter @scholarly/curriculum-processor -- ts-node src/cli.ts validate",
+    "curriculum:stats": "pnpm --filter @scholarly/curriculum-processor -- ts-node src/cli.ts stats"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

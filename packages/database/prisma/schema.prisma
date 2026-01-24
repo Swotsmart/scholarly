@@ -1,0 +1,2358 @@
+// Scholarly Database Schema
+// PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// TENANT & USER MODELS
+// ============================================================================
+
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  domain      String?
+  settings    Json     @default("{}")
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  bookings    Booking[]
+  sessions    TutoringSession[]
+  content     Content[]
+  standards   CurriculumStandard[]
+  families    HomeschoolFamily[]
+  coops       HomeschoolCoop[]
+  microSchools MicroSchool[]
+  reliefPools ReliefPool[]
+
+  @@index([slug])
+}
+
+model User {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  externalId       String?
+  email            String
+  phone            String?
+  passwordHash     String?
+  displayName      String
+  firstName        String
+  lastName         String
+  avatarUrl        String?
+  bio              String?
+
+  roles            String[] @default([])
+  jurisdiction     String   @default("AU_NSW")
+
+  emailVerified    Boolean  @default(false)
+  phoneVerified    Boolean  @default(false)
+  identityVerified Boolean  @default(false)
+
+  trustScore       Float    @default(50)
+  tokenBalance     Float    @default(0)
+
+  // Blockchain
+  walletAddress    String?  @unique
+  walletVerifiedAt DateTime?
+
+  status           String   @default("active")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  lastActiveAt     DateTime?
+  lastLoginAt      DateTime?
+
+  // Profiles
+  learnerProfile   LearnerProfile?
+  parentProfile    ParentProfile?
+  tutorProfile     TutorProfile?
+  creatorProfile   CreatorProfile?
+  reliefTeacher    ReliefTeacher?
+
+  // Relations
+  bookingsAsBooker Booking[]          @relation("BookedBy")
+  sessionsAsTutor  TutoringSession[]  @relation("SessionTutor")
+  createdContent   Content[]          @relation("ContentCreator")
+  contentPurchases ContentPurchase[]  @relation("ContentBuyer")
+  contentReviews   ContentReview[]
+
+  // Auth & Blockchain
+  refreshTokens     RefreshToken[]
+  credentialNFTs    CredentialNFT[]
+  onChainReputation OnChainReputation?
+  tokenTransactions TokenTransaction[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+  @@index([walletAddress])
+}
+
+// ============================================================================
+// PROFILE MODELS
+// ============================================================================
+
+model LearnerProfile {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  dateOfBirth          DateTime
+  yearLevel            String
+  parentIds            String[] @default([])
+  specialNeeds         String[] @default([])
+
+  learningPreferences  Json?
+  lisProfileSharing    Json     @default("{}")
+  lisProfileId         String?
+  lisIntegrationEnabled Boolean @default(false)
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  subjects             LearnerSubject[]
+  sessionParticipations SessionParticipant[]
+}
+
+model LearnerSubject {
+  id            String         @id @default(cuid())
+  profileId     String
+  profile       LearnerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  subjectId     String
+  subjectName   String
+  currentLevel  String
+  needsHelp     Boolean        @default(false)
+  canHelpOthers Boolean        @default(false)
+
+  @@unique([profileId, subjectId])
+}
+
+model ParentProfile {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  childIds              String[] @default([])
+  approvedTutorIds      String[] @default([])
+  paymentMethodOnFile   Boolean  @default(false)
+  monthlyBudget         Float?
+  isHomeschoolParent    Boolean  @default(false)
+
+  notificationPreferences Json   @default("{}")
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model TutorProfile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tutorType          String   @default("professional")
+  verificationStatus String   @default("pending")
+  verifiedAt         DateTime?
+  profileCompleteness Float   @default(0)
+
+  yearLevelsTeaching String[] @default([])
+  languages          String[] @default([])
+  sessionTypes       String[] @default([])
+  maxStudentsPerGroup Int     @default(1)
+
+  teachingStyle      Json     @default("{}")
+  availability       Json     @default("{}")
+  pricing            Json     @default("{}")
+  metrics            Json     @default("{}")
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  qualifications     TutorQualification[]
+  safeguardingChecks SafeguardingCheck[]
+  subjects           TutorSubject[]
+  bookings           Booking[]
+  sessions           TutoringSession[]     @relation("SessionTutor")
+}
+
+model TutorSubject {
+  id              String       @id @default(cuid())
+  profileId       String
+  profile         TutorProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  subjectId       String
+  subjectName     String
+  yearLevels      String[]     @default([])
+  confidenceLevel Int          @default(3)
+  specializations String[]     @default([])
+  examBoardsKnown String[]     @default([])
+  curriculumCodes String[]     @default([])
+
+  @@unique([profileId, subjectId])
+}
+
+model TutorQualification {
+  id                 String       @id @default(cuid())
+  profileId          String
+  profile            TutorProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  type               String
+  title              String
+  institution        String?
+  dateObtained       DateTime?
+  verified           Boolean      @default(false)
+  verificationMethod String?
+  documentUrl        String?
+
+  createdAt          DateTime     @default(now())
+}
+
+model SafeguardingCheck {
+  id                 String       @id @default(cuid())
+  profileId          String
+  profile            TutorProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  type               String
+  jurisdiction       String
+  checkNumber        String
+  verifiedAt         DateTime
+  expiresAt          DateTime?
+  status             String       @default("pending")
+  verificationMethod String       @default("manual")
+  documentUrl        String?
+
+  createdAt          DateTime     @default(now())
+}
+
+model CreatorProfile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  displayName        String
+  bio                String?
+  avatarUrl          String?
+  websiteUrl         String?
+
+  totalContent       Int      @default(0)
+  totalSales         Int      @default(0)
+  totalDownloads     Int      @default(0)
+  averageRating      Float    @default(0)
+  totalReviews       Int      @default(0)
+  totalEarnings      Float    @default(0)
+
+  level              String   @default("new")
+  badges             String[] @default([])
+  featuredSince      DateTime?
+
+  subjects           String[] @default([])
+  yearLevels         String[] @default([])
+
+  verificationStatus String   @default("pending")
+  verifiedAt         DateTime?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+// ============================================================================
+// BOOKING & SESSION MODELS
+// ============================================================================
+
+model Booking {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  tutorId           String
+  tutor             TutorProfile @relation(fields: [tutorId], references: [id])
+  bookedByUserId    String
+  bookedByUser      User     @relation("BookedBy", fields: [bookedByUserId], references: [id])
+
+  learnerIds        String[] @default([])
+  scheduledStart    DateTime
+  scheduledEnd      DateTime
+  timezone          String   @default("Australia/Sydney")
+
+  sessionType       String
+  subjectId         String
+  subjectName       String
+  topicsNeedingHelp String[] @default([])
+  curriculumCodes   String[] @default([])
+  learnerNotes      String?
+
+  isGroupSession    Boolean  @default(false)
+  openToOthers      Boolean  @default(false)
+  maxGroupSize      Int      @default(1)
+
+  pricing           Json
+
+  status            String   @default("pending")
+  cancellationReason String?
+  cancelledBy       String?
+  cancelledAt       DateTime?
+
+  paymentStatus     String   @default("pending")
+  paymentId         String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  session           TutoringSession?
+  escrowTransaction EscrowTransaction?
+
+  @@index([tenantId])
+  @@index([tutorId])
+  @@index([scheduledStart])
+}
+
+model TutoringSession {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  bookingId         String   @unique
+  booking           Booking  @relation(fields: [bookingId], references: [id])
+
+  tutorProfileId    String
+  tutorProfile      TutorProfile @relation("SessionTutor", fields: [tutorProfileId], references: [id])
+  tutorUserId       String
+  tutorUser         User     @relation("SessionTutor", fields: [tutorUserId], references: [id])
+
+  scheduledStart    DateTime
+  scheduledEnd      DateTime
+  actualStart       DateTime?
+  actualEnd         DateTime?
+  timezone          String
+
+  sessionType       String
+  isGroupSession    Boolean  @default(false)
+  location          Json?
+  videoRoomUrl      String?
+
+  subjectId         String
+  subjectName       String
+  topicsFocus       String[] @default([])
+  curriculumCodes   String[] @default([])
+
+  status            String   @default("scheduled")
+
+  preworkAssigned   String?
+  sessionNotes      String?
+  homeworkAssigned  String?
+  resourcesShared   String[] @default([])
+
+  tutorFeedback     Json?
+  learnerFeedback   Json?
+  parentFeedback    Json?
+  lisSessionReport  Json?
+
+  billingStatus     String   @default("pending")
+  amountCharged     Float    @default(0)
+  tutorEarnings     Float    @default(0)
+  platformCommission Float   @default(0)
+  tokenRewards      Float    @default(0)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  participants      SessionParticipant[]
+
+  @@index([tenantId])
+  @@index([tutorProfileId])
+  @@index([scheduledStart])
+}
+
+model SessionParticipant {
+  id              String          @id @default(cuid())
+  sessionId       String
+  session         TutoringSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  learnerProfileId String
+  learnerProfile  LearnerProfile  @relation(fields: [learnerProfileId], references: [id])
+
+  attended        Boolean         @default(false)
+  feedback        Json?
+
+  @@unique([sessionId, learnerProfileId])
+}
+
+// ============================================================================
+// CURRICULUM MODELS
+// ============================================================================
+
+model CurriculumStandard {
+  id                      String   @id @default(cuid())
+  tenantId                String
+  tenant                  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  framework               String
+  code                    String
+  externalId              String?
+  uri                     String?
+
+  type                    String
+  learningArea            String
+  subject                 String
+  strand                  String?
+  substrand               String?
+
+  yearLevels              String[] @default([])
+  bandDescriptor          String?
+
+  title                   String
+  description             String   @db.Text
+  elaborations            String[] @default([])
+  contentDescriptions     String[] @default([])
+
+  bloomsLevel             String?
+  cognitiveVerbs          String[] @default([])
+  skills                  String[] @default([])
+  concepts                String[] @default([])
+  keywords                String[] @default([])
+
+  prerequisites           String[] @default([])
+  relatedStandards        String[] @default([])
+  crossCurricularLinks    Json     @default("[]")
+  generalCapabilities     String[] @default([])
+  crossCurriculumPriorities String[] @default([])
+
+  embedding               Float[]  @default([])
+
+  source                  String
+  version                 String
+  effectiveFrom           DateTime?
+  effectiveTo             DateTime?
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  alignments              ContentAlignment[]
+  lessonPlans             LessonPlanStandard[]
+
+  @@unique([tenantId, framework, code])
+  @@index([tenantId])
+  @@index([framework])
+  @@index([learningArea])
+  @@index([subject])
+  @@index([yearLevels])
+}
+
+model LessonPlan {
+  id                      String   @id @default(cuid())
+  tenantId                String
+
+  title                   String
+  description             String   @db.Text
+  yearLevel               String
+  subject                 String
+  duration                Int
+
+  learningIntentions      String[] @default([])
+  successCriteria         String[] @default([])
+  generalCapabilities     String[] @default([])
+  crossCurriculumPriorities String[] @default([])
+
+  sections                Json
+  differentiation         Json
+  resources               Json     @default("[]")
+  assessmentOpportunities Json     @default("[]")
+  crossCurricularConnections Json  @default("[]")
+
+  generatedBy             String   @default("ai")
+  generationPrompt        String?
+  qualityScore            Float?
+
+  status                  String   @default("draft")
+  createdBy               String
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  standards               LessonPlanStandard[]
+
+  @@index([tenantId])
+  @@index([subject])
+  @@index([yearLevel])
+}
+
+model LessonPlanStandard {
+  id           String            @id @default(cuid())
+  lessonPlanId String
+  lessonPlan   LessonPlan        @relation(fields: [lessonPlanId], references: [id], onDelete: Cascade)
+  standardId   String
+  standard     CurriculumStandard @relation(fields: [standardId], references: [id])
+
+  @@unique([lessonPlanId, standardId])
+}
+
+// ============================================================================
+// CONTENT MARKETPLACE MODELS
+// ============================================================================
+
+model Content {
+  id                   String   @id @default(cuid())
+  tenantId             String
+  tenant               Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creatorId            String
+  creator              User     @relation("ContentCreator", fields: [creatorId], references: [id])
+
+  title                String
+  description          String   @db.Text
+  type                 String
+  thumbnailUrl         String?
+  previewUrl           String?
+
+  subjects             String[] @default([])
+  yearLevels           String[] @default([])
+  curriculumFrameworks String[] @default([])
+  curriculumCodes      String[] @default([])
+  generalCapabilities  String[] @default([])
+
+  format               String
+  fileSize             Int?
+  pageCount            Int?
+  duration             Int?
+
+  pricing              Json
+  license              Json
+
+  qualityScore         Float    @default(0)
+  reviewCount          Int      @default(0)
+  averageRating        Float    @default(0)
+  downloadCount        Int      @default(0)
+  purchaseCount        Int      @default(0)
+
+  tags                 String[] @default([])
+  keywords             String[] @default([])
+  searchableText       String   @db.Text
+  embedding            Float[]  @default([])
+
+  status               String   @default("draft")
+  publishedAt          DateTime?
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  alignments           ContentAlignment[]
+  reviews              ContentReview[]
+  purchases            ContentPurchase[]
+
+  @@index([tenantId])
+  @@index([creatorId])
+  @@index([type])
+  @@index([subjects])
+  @@index([yearLevels])
+  @@index([status])
+}
+
+model ContentAlignment {
+  id               String             @id @default(cuid())
+  contentId        String
+  content          Content            @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  standardId       String
+  standard         CurriculumStandard @relation(fields: [standardId], references: [id])
+
+  alignmentScore   Float
+  alignmentMethod  String
+  conceptsMatched  String[] @default([])
+  skillsMatched    String[] @default([])
+  confidence       Float
+
+  verifiedBy       String?
+  verifiedAt       DateTime?
+
+  createdAt        DateTime @default(now())
+
+  @@unique([contentId, standardId])
+}
+
+model ContentReview {
+  id              String   @id @default(cuid())
+  contentId       String
+  content         Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  reviewerId      String
+  reviewer        User     @relation(fields: [reviewerId], references: [id])
+
+  rating          Int
+  title           String?
+  comment         String?  @db.Text
+  helpfulCount    Int      @default(0)
+  notHelpfulCount Int      @default(0)
+  verified        Boolean  @default(false)
+  yearLevelUsed   String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([contentId, reviewerId])
+  @@index([contentId])
+}
+
+model ContentPurchase {
+  id              String   @id @default(cuid())
+  tenantId        String
+  contentId       String
+  content         Content  @relation(fields: [contentId], references: [id])
+  buyerId         String
+  buyer           User     @relation("ContentBuyer", fields: [buyerId], references: [id])
+
+  price           Float
+  currency        String
+  tokenAmount     Float    @default(0)
+  platformFee     Float
+  creatorEarnings Float
+  tokenRewards    Float    @default(0)
+
+  downloadCount   Int      @default(0)
+  maxDownloads    Int      @default(5)
+
+  status          String   @default("completed")
+
+  purchasedAt     DateTime @default(now())
+  lastDownloadedAt DateTime?
+
+  @@index([tenantId])
+  @@index([buyerId])
+  @@index([contentId])
+}
+
+model LearningAssetRequest {
+  id              String   @id @default(cuid())
+  tenantId        String
+  requesterId     String
+
+  title           String
+  description     String   @db.Text
+  type            String
+  subjects        String[] @default([])
+  yearLevels      String[] @default([])
+  curriculumCodes String[] @default([])
+  specifications  String[] @default([])
+  preferredFormat String?
+  budgetMin       Float?
+  budgetMax       Float?
+  deadline        DateTime?
+
+  voteCount       Int      @default(0)
+  votes           Json     @default("[]")
+
+  status          String   @default("open")
+  fulfilledByContentIds String[] @default([])
+  fulfilledAt     DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+// ============================================================================
+// HOMESCHOOL MODELS
+// ============================================================================
+
+model HomeschoolFamily {
+  id                   String   @id @default(cuid())
+  tenantId             String
+  tenant               Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  primaryContactUserId String
+  primaryContactName   String
+  primaryContactEmail  String
+  primaryContactPhone  String?
+
+  additionalContacts   Json     @default("[]")
+  location             Json
+  educationalProfile   Json
+  coopPreferences      Json
+  teachingCapabilities Json     @default("[]")
+  compliance           Json
+  aiProfile            Json     @default("{}")
+
+  status               String   @default("active")
+  joinedAt             DateTime @default(now())
+  lastActiveAt         DateTime @default(now())
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  children             HomeschoolChild[]
+  coopMemberships      CoopMember[]
+  excursionRegistrations ExcursionRegistration[]
+
+  @@index([tenantId])
+}
+
+model HomeschoolChild {
+  id                   String           @id @default(cuid())
+  familyId             String
+  family               HomeschoolFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  name                 String
+  dateOfBirth          DateTime
+  currentYearLevel     String
+
+  learningStyle        String?
+  interests            String[] @default([])
+  strengths            String[] @default([])
+  challengeAreas       String[] @default([])
+  specialNeeds         String[] @default([])
+
+  curriculumFramework  String   @default("ACARA")
+  subjectProgress      Json     @default("[]")
+
+  lisProfileId         String?
+  lisIntegrationEnabled Boolean @default(false)
+
+  friendConnections    String[] @default([])
+  coopParticipation    String[] @default([])
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([familyId])
+}
+
+model HomeschoolCoop {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name              String
+  description       String   @db.Text
+  philosophy        String
+
+  primaryLocation   Json
+  meetingLocations  Json     @default("[]")
+
+  maxFamilies       Int      @default(10)
+  membershipFee     Float?
+
+  meetingSchedule   Json
+  subjects          String[] @default([])
+  ageRange          Json
+  educationalApproaches String[] @default([])
+
+  structure         Json
+  roles             Json     @default("[]")
+
+  status            String   @default("forming")
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  members           CoopMember[]
+  excursions        Excursion[]
+
+  @@index([tenantId])
+}
+
+model CoopMember {
+  id               String           @id @default(cuid())
+  coopId           String
+  coop             HomeschoolCoop   @relation(fields: [coopId], references: [id], onDelete: Cascade)
+  familyId         String
+  family           HomeschoolFamily @relation(fields: [familyId], references: [id])
+
+  role             String           @default("member")
+  teachingSubjects String[]         @default([])
+  joinedAt         DateTime         @default(now())
+  status           String           @default("active")
+
+  @@unique([coopId, familyId])
+}
+
+model Excursion {
+  id                 String         @id @default(cuid())
+  tenantId           String
+  organizerId        String
+  coopId             String?
+  coop               HomeschoolCoop? @relation(fields: [coopId], references: [id])
+
+  title              String
+  description        String         @db.Text
+  venue              Json
+  curriculumConnections Json        @default("[]")
+  learningObjectives String[]       @default([])
+
+  date               DateTime
+  startTime          String
+  endTime            String
+  meetingPoint       String
+  transportation     String
+
+  minParticipants    Int
+  maxParticipants    Int
+  costPerChild       Float          @default(0)
+  costPerAdult       Float          @default(0)
+  paymentDeadline    DateTime?
+
+  waitlist           String[]       @default([])
+
+  preActivities      String[]       @default([])
+  postActivities     String[]       @default([])
+
+  status             String         @default("planning")
+
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  registrations      ExcursionRegistration[]
+
+  @@index([tenantId])
+  @@index([date])
+}
+
+model ExcursionRegistration {
+  id                String           @id @default(cuid())
+  excursionId       String
+  excursion         Excursion        @relation(fields: [excursionId], references: [id], onDelete: Cascade)
+  familyId          String
+  family            HomeschoolFamily @relation(fields: [familyId], references: [id])
+
+  childrenIds       String[]         @default([])
+  adultsAttending   Int              @default(1)
+  dietaryRequirements String?
+  medicalNotes      String?
+  emergencyContact  String
+
+  paymentStatus     String           @default("pending")
+  registeredAt      DateTime         @default(now())
+
+  @@unique([excursionId, familyId])
+}
+
+// ============================================================================
+// MICRO-SCHOOL MODELS
+// ============================================================================
+
+model MicroSchool {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name              String
+  description       String   @db.Text
+  philosophy        String
+  educationalModel  String
+
+  location          Json
+  facilities        Json     @default("[]")
+  legalEntity       Json?
+  compliance        Json
+
+  founderId         String
+  enrollmentCapacity Int     @default(20)
+
+  curriculumFramework String @default("ACARA")
+  subjects          String[] @default([])
+  yearLevelsOffered String[] @default([])
+
+  schedule          Json
+  termDates         Json     @default("[]")
+  tuitionFees       Json
+
+  healthAnalysis    Json?
+
+  status            String   @default("forming")
+  foundedDate       DateTime?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  staff             MicroSchoolStaff[]
+  students          MicroSchoolStudent[]
+  applications      EnrollmentApplication[]
+
+  @@index([tenantId])
+}
+
+model MicroSchoolStaff {
+  id                  String      @id @default(cuid())
+  schoolId            String
+  school              MicroSchool @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  userId              String
+
+  name                String
+  email               String
+  phone               String?
+  role                String
+  employmentType      String
+
+  qualifications      Json        @default("[]")
+  teachingSubjects    String[]    @default([])
+  yearLevelCapabilities String[]  @default([])
+
+  safeguardingCheck   Json?
+  firstAidCertification Json?
+  teachingRegistration Json?
+
+  status              String      @default("active")
+  startDate           DateTime
+  endDate             DateTime?
+
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  @@index([schoolId])
+}
+
+model MicroSchoolStudent {
+  id                String      @id @default(cuid())
+  schoolId          String
+  school            MicroSchool @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  familyId          String
+
+  name              String
+  dateOfBirth       DateTime
+  yearLevel         String
+
+  enrollmentStatus  String      @default("enrolled")
+  enrollmentDate    DateTime?
+  withdrawalDate    DateTime?
+
+  learningProfile   Json?
+  medicalInformation Json?
+  emergencyContacts Json        @default("[]")
+
+  lisProfileId      String?
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([schoolId])
+}
+
+model EnrollmentApplication {
+  id                 String      @id @default(cuid())
+  schoolId           String
+  school             MicroSchool @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  familyId           String
+
+  studentName        String
+  studentDob         DateTime
+  requestedYearLevel String
+  requestedStartDate DateTime
+
+  reasonForEnrolling String      @db.Text
+  previousSchooling  String      @db.Text
+  learningNeeds      String?
+  additionalInfo     String?
+
+  status             String      @default("submitted")
+
+  submittedAt        DateTime    @default(now())
+  reviewedAt         DateTime?
+  reviewedBy         String?
+  interviewDate      DateTime?
+  trialStartDate     DateTime?
+  trialEndDate       DateTime?
+  decisionDate       DateTime?
+  decisionNotes      String?
+
+  @@index([schoolId])
+  @@index([status])
+}
+
+// ============================================================================
+// RELIEF MARKETPLACE MODELS
+// ============================================================================
+
+model ReliefTeacher {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId          String
+
+  name              String
+  email             String
+  phone             String
+  avatarUrl         String?
+
+  location          Json
+  qualifications    Json     @default("[]")
+  teachingRegistration Json
+  safeguardingCheck Json
+
+  subjects          String[] @default([])
+  yearLevels        String[] @default([])
+  specializations   String[] @default([])
+
+  availability      Json
+  preferredSchools  String[] @default([])
+  excludedSchools   String[] @default([])
+
+  metrics           Json     @default("{}")
+  tier              String   @default("standard")
+  aiProfile         Json     @default("{}")
+
+  status            String   @default("pending_verification")
+  verifiedAt        DateTime?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  poolMemberships   ReliefPoolMember[]
+  assignments       ReliefAssignment[]
+  bookings          ReliefBooking[]
+
+  @@index([tenantId])
+}
+
+model ReliefPool {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  schoolId          String
+
+  name              String
+  config            Json
+  autonomousActions Json     @default("{}")
+  statistics        Json     @default("{}")
+
+  status            String   @default("active")
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  members           ReliefPoolMember[]
+
+  @@unique([tenantId, schoolId])
+}
+
+model ReliefPoolMember {
+  id               String        @id @default(cuid())
+  poolId           String
+  pool             ReliefPool    @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  reliefTeacherId  String
+  reliefTeacher    ReliefTeacher @relation(fields: [reliefTeacherId], references: [id])
+
+  tier             String        @default("standard")
+  priority         Int           @default(1)
+  schoolRating     Float?
+  lastBookedAt     DateTime?
+  joinedAt         DateTime      @default(now())
+
+  @@unique([poolId, reliefTeacherId])
+}
+
+model TeacherAbsence {
+  id                String   @id @default(cuid())
+  tenantId          String
+  schoolId          String
+  teacherId         String
+  teacherName       String
+
+  date              DateTime
+  startTime         String
+  endTime           String
+  isFullDay         Boolean  @default(true)
+  reason            String
+  notes             String?
+
+  coverageRequired  Json     @default("[]")
+  status            String   @default("reported")
+
+  wasPredicted      Boolean  @default(false)
+  predictionConfidence Float?
+
+  reportedAt        DateTime @default(now())
+  reportedBy        String
+  updatedAt         DateTime @updatedAt
+
+  assignments       ReliefAssignment[]
+  notifications     AbsenceNotification[]
+
+  @@index([tenantId])
+  @@index([schoolId])
+  @@index([date])
+}
+
+model ReliefAssignment {
+  id                    String         @id @default(cuid())
+  absenceId             String
+  absence               TeacherAbsence @relation(fields: [absenceId], references: [id], onDelete: Cascade)
+  reliefTeacherId       String
+  reliefTeacher         ReliefTeacher  @relation(fields: [reliefTeacherId], references: [id])
+
+  coverageRequirementIds String[]      @default([])
+
+  status                String         @default("offered")
+  offeredAt             DateTime       @default(now())
+  respondedAt           DateTime?
+  confirmedAt           DateTime?
+  completedAt           DateTime?
+
+  rating                Int?
+  feedback              String?
+
+  @@index([absenceId])
+  @@index([reliefTeacherId])
+}
+
+model ReliefBooking {
+  id                String        @id @default(cuid())
+  tenantId          String
+  schoolId          String
+  absenceId         String
+  reliefTeacherId   String
+  reliefTeacher     ReliefTeacher @relation(fields: [reliefTeacherId], references: [id])
+
+  date              DateTime
+  periods           Json
+  totalHours        Float
+
+  hourlyRate        Float
+  totalAmount       Float
+  paymentStatus     String        @default("pending")
+
+  status            String        @default("confirmed")
+
+  schoolRating      Int?
+  schoolFeedback    String?
+  teacherRating     Int?
+  teacherFeedback   String?
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  completedAt       DateTime?
+
+  @@index([tenantId])
+  @@index([date])
+}
+
+model AbsenceNotification {
+  id              String         @id @default(cuid())
+  absenceId       String
+  absence         TeacherAbsence @relation(fields: [absenceId], references: [id], onDelete: Cascade)
+
+  recipientId     String
+  recipientType   String
+  channel         String
+  type            String
+
+  status          String         @default("sent")
+  sentAt          DateTime       @default(now())
+  deliveredAt     DateTime?
+  readAt          DateTime?
+
+  @@index([absenceId])
+}
+
+model AbsencePrediction {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  schoolId           String
+  date               DateTime
+
+  predictedAbsences  Json
+  totalPredicted     Int
+  confidence         Float
+  factors            Json     @default("[]")
+  recommendations    Json     @default("[]")
+
+  generatedAt        DateTime @default(now())
+
+  @@unique([tenantId, schoolId, date])
+}
+
+// ============================================================================
+// AUTHENTICATION MODELS
+// ============================================================================
+
+model RefreshToken {
+  id            String   @id @default(cuid())
+  tokenFamily   String   // For detecting token reuse attacks
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  hashedToken   String   @unique
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  replacedBy    String?  // Partial hash of replacement token for audit
+
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([tokenFamily])
+  @@index([hashedToken])
+}
+
+// ============================================================================
+// BLOCKCHAIN MODELS
+// ============================================================================
+
+model CredentialNFT {
+  id              String   @id @default(cuid())
+  tenantId        String
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tokenId         BigInt   @unique  // On-chain token ID
+  contractAddress String
+  credentialType  String   // tutor_qualification, course_completion, achievement, safeguarding
+
+  // Off-chain metadata
+  metadata        Json     // Full credential details
+  dataHash        String   // Hash of metadata, stored on-chain
+
+  // Status
+  issuedAt        DateTime @default(now())
+  expiresAt       DateTime?
+  revokedAt       DateTime?
+  revocationReason String?
+
+  // Transaction info
+  mintTxHash      String
+  revokeTxHash    String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([credentialType])
+  @@index([tokenId])
+}
+
+model EscrowTransaction {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // On-chain reference
+  escrowId        String   @unique  // bytes32 hash on-chain
+  bookingId       String
+  booking         Booking  @relation(fields: [bookingId], references: [id])
+
+  // Parties
+  learnerId       String
+  tutorId         String
+  learnerWallet   String
+  tutorWallet     String
+
+  // Amounts (in token units, 18 decimals)
+  amount          Decimal  @db.Decimal(36, 18)
+  platformFeeBps  Int      @default(500)  // Basis points
+  platformFee     Decimal  @db.Decimal(36, 18)
+  tutorAmount     Decimal  @db.Decimal(36, 18)
+
+  // Status
+  status          String   @default("created")  // created, funded, released, refunded, disputed, resolved
+
+  // Transaction hashes
+  createTxHash    String?
+  fundTxHash      String?
+  releaseTxHash   String?
+  refundTxHash    String?
+
+  // Dispute info
+  disputeReason   String?
+  disputeRaisedAt DateTime?
+  disputeResolvedAt DateTime?
+  disputeResolution Json?  // { learnerPercentage, tutorPercentage, arbiter }
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([bookingId])
+  @@index([learnerId])
+  @@index([tutorId])
+  @@index([status])
+}
+
+model OnChainReputation {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  walletAddress       String   @unique
+
+  // On-chain data (cached)
+  onChainScore        Int      @default(0)  // 0-100
+  totalSessions       Int      @default(0)
+  completedSessions   Int      @default(0)
+  totalRatings        Int      @default(0)
+  ratingSum           Int      @default(0)  // Sum of 100-500 scale ratings
+  disputesWon         Int      @default(0)
+  disputesLost        Int      @default(0)
+
+  // Computed fields
+  completionRate      Float    @default(0)
+  averageRating       Decimal  @db.Decimal(3, 2) @default(0)
+
+  // Sync status
+  lastSyncedAt        DateTime @default(now())
+  lastSyncTxHash      String?
+  syncErrorCount      Int      @default(0)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([walletAddress])
+  @@index([onChainScore])
+}
+
+model TokenTransaction {
+  id          String   @id @default(cuid())
+  tenantId    String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  // Transaction details
+  type        String   // mint, transfer, burn, reward, purchase, payout
+  amount      Decimal  @db.Decimal(36, 18)
+  fromAddress String?
+  toAddress   String
+
+  // Reference
+  referenceType String?  // booking, content_purchase, session_reward, etc.
+  referenceId   String?
+
+  // Blockchain
+  txHash      String   @unique
+  blockNumber Int?
+  gasUsed     String?
+
+  // Status
+  status      String   @default("pending")  // pending, confirmed, failed
+
+  createdAt   DateTime @default(now())
+  confirmedAt DateTime?
+
+  @@index([userId])
+  @@index([txHash])
+  @@index([type])
+  @@index([status])
+}
+
+// ============================================================================
+// AI BUDDY MODELS
+// ============================================================================
+
+model AIBuddyConversation {
+  id             String   @id @default(cuid())
+  tenantId       String
+  userId         String
+
+  role           String   // student, teacher, parent
+  title          String
+  messages       Json     // Array of StoredMessage
+  context        Json     // ConversationContext
+
+  status         String   @default("active")  // active, archived
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  lastMessageAt  DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+  @@index([lastMessageAt])
+}
+
+model AIBuddySettings {
+  id                  String   @id @default(cuid())
+  userId              String
+  tenantId            String
+
+  responseStyle       String   @default("encouraging")  // encouraging, direct, socratic, playful
+  verbosityLevel      String   @default("concise")  // concise, detailed, comprehensive
+  useEmojis           Boolean  @default(true)
+  includeExamples     Boolean  @default(true)
+  provideChallenges   Boolean  @default(true)
+  reminderFrequency   String   @default("none")  // none, daily, weekly
+  parentNotifications Boolean  @default(false)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([userId, tenantId])
+}
+
+// ============================================================================
+// DIGITAL PORTFOLIO MODELS
+// ============================================================================
+
+model Portfolio {
+  id             String   @id @default(cuid())
+  tenantId       String
+  userId         String
+
+  displayName    String
+  bio            String?
+  avatarUrl      String?
+  coverImageUrl  String?
+
+  visibility     String   @default("private")  // private, parents, teachers, public
+  theme          Json     // PortfolioTheme
+  sections       Json     // Array of PortfolioSection
+  stats          Json     // PortfolioStats
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  artifacts      Artifact[]
+  goals          LearningGoal[]
+  achievements   Achievement[]
+  journeys       LearningJourney[]
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+}
+
+model Artifact {
+  id               String   @id @default(cuid())
+  portfolioId      String
+  portfolio        Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  tenantId         String
+  userId           String
+
+  title            String
+  description      String?  @db.Text
+  type             String   // document, image, video, audio, presentation, code, project, assessment, certificate, badge, reflection, goal, link
+
+  content          Json     // ArtifactContent
+  metadata         Json     // ArtifactMetadata
+  reflection       Json?    // ArtifactReflection
+  curriculumAlignment Json?  // Array of CurriculumAlignment
+  feedback         Json     @default("[]")  // Array of ArtifactFeedback
+
+  tags             String[] @default([])
+  status           String   @default("draft")  // draft, published, archived
+  visibility       String   @default("private")  // private, portfolio, shared
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  publishedAt      DateTime?
+
+  @@index([portfolioId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+}
+
+model LearningGoal {
+  id               String   @id @default(cuid())
+  portfolioId      String
+  portfolio        Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  tenantId         String
+  userId           String
+
+  title            String
+  description      String   @db.Text
+  category         String   // academic, skill, personal, project
+  subject          String?
+  targetDate       DateTime?
+
+  status           String   @default("not_started")  // not_started, in_progress, completed, abandoned
+  progress         Int      @default(0)  // 0-100
+
+  milestones       Json     @default("[]")  // Array of GoalMilestone
+  relatedArtifacts String[] @default([])
+  curriculumCodes  String[] @default([])
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  completedAt      DateTime?
+
+  @@index([portfolioId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+}
+
+model Achievement {
+  id              String   @id @default(cuid())
+  portfolioId     String
+  portfolio       Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  tenantId        String
+  userId          String
+
+  type            String   // badge, certificate, award, milestone
+  title           String
+  description     String
+  imageUrl        String
+
+  earnedAt        DateTime
+  issuedBy        String
+  criteria        String
+  evidence        String[] @default([])
+
+  // Optional blockchain verification
+  blockchain      Json?    // { tokenId, contractAddress, txHash }
+
+  createdAt       DateTime @default(now())
+
+  @@index([portfolioId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([type])
+}
+
+model LearningJourney {
+  id               String   @id @default(cuid())
+  portfolioId      String
+  portfolio        Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  tenantId         String
+  userId           String
+
+  title            String
+  description      String   @db.Text
+  subject          String?
+
+  startDate        DateTime
+  endDate          DateTime?
+  status           String   @default("active")  // active, completed, paused
+
+  path             Json     // Array of JourneyNode
+  currentNode      String
+  aiRecommendations Json?   // Array of JourneyRecommendation
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([portfolioId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+}
+
+// ============================================================================
+// CONTENT RESOURCES (for AI Buddy)
+// ============================================================================
+
+model ContentResource {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  title           String
+  description     String?  @db.Text
+  url             String
+  type            String   // video, article, interactive, worksheet, etc.
+
+  subjects        String[] @default([])
+  yearLevels      String[] @default([])
+  tags            String[] @default([])
+
+  source          String?  // Where the resource came from
+  quality         Float    @default(0)  // Quality score
+  popularity      Int      @default(0)  // Usage count
+
+  isActive        Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([subjects])
+  @@index([yearLevels])
+  @@index([tags])
+}
+
+// ============================================================================
+// LEARNER PROFILE EXTENSIONS
+// ============================================================================
+
+// Extend LearnerProfile for AI Buddy
+model LearnerProfileExtension {
+  id                     String         @id @default(cuid())
+  learnerProfileId       String         @unique
+
+  // Learning profile for AI
+  subjects               String[]       @default([])
+  strengths              String[]       @default([])
+  areasForGrowth         String[]       @default([])
+  learningStyles         String[]       @default([])
+  pace                   String         @default("standard")  // slower, standard, accelerated
+  interests              String[]       @default([])
+  accommodations         String[]       @default([])
+
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+}
+
+// ============================================================================
+// STANDARDS COMPLIANCE MODELS
+// ============================================================================
+
+model ComplianceCheck {
+  id                String   @id @default(cuid())
+  tenantId          String
+
+  entityType        String   // content, assessment, credential, ai_interaction, data_processing, teacher, course
+  entityId          String
+  framework         String   // HES, ACARA, ST4S, AITSL, AI_ETHICS
+  ruleId            String
+
+  status            String   // passed, failed, warning, not_applicable
+  details           String   @db.Text
+  evidence          Json?
+
+  checkedAt         DateTime @default(now())
+  checkedBy         String   // system, human
+  remediationRequired Boolean @default(false)
+  remediationDeadline DateTime?
+
+  createdAt         DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([entityType, entityId])
+  @@index([framework])
+  @@index([status])
+}
+
+model ComplianceReport {
+  id                String   @id @default(cuid())
+  tenantId          String
+
+  reportType        String   // comprehensive, framework_specific, entity_specific, audit
+  period            Json     // { from: Date, to: Date }
+  frameworks        String[] @default([])
+
+  summary           Json     // ComplianceSummary
+  checkIds          String[] @default([])  // References to ComplianceCheck
+  recommendations   Json     @default("[]")
+  certifications    Json     @default("[]")
+
+  generatedAt       DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([generatedAt])
+}
+
+model ACARACurriculumCode {
+  id                      String   @id @default(cuid())
+  code                    String   @unique
+  learningArea            String
+  subject                 String
+  yearLevel               String
+  strand                  String
+  subStrand               String?
+
+  description             String   @db.Text
+  elaborations            String[] @default([])
+  achievementStandard     String   @db.Text
+
+  generalCapabilities     String[] @default([])
+  crossCurriculumPriorities String[] @default([])
+
+  source                  String   @default("ACARA")
+  version                 String
+  effectiveFrom           DateTime?
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([learningArea])
+  @@index([subject])
+  @@index([yearLevel])
+}
+
+model AITSLTeacherAssessment {
+  id                String   @id @default(cuid())
+  tenantId          String
+  teacherId         String
+
+  currentStage      String   // graduate, proficient, highly_accomplished, lead
+  targetStage       String?
+  assessments       Json     // Array of focus area assessments
+  overallReadiness  Float    @default(0)
+  recommendedActions String[] @default([])
+  nextReviewDate    DateTime?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([tenantId, teacherId])
+  @@index([tenantId])
+}
+
+// ============================================================================
+// AI CONTENT STUDIO MODELS
+// ============================================================================
+
+model GeneratedLessonPlan {
+  id                String   @id @default(cuid())
+  tenantId          String
+  createdBy         String
+
+  subject           String
+  yearLevel         String
+  topic             String
+  duration          Int      // minutes
+
+  curriculumCodes   String[] @default([])
+  generalCapabilities String[] @default([])
+  crossCurriculumPriorities String[] @default([])
+  alignmentScore    Float    @default(0)
+
+  learningObjectives Json    // Array of LearningObjective
+  lessonStructure   Json     // Array of LessonPhase
+  resources         Json     @default("[]")
+  differentiation   Json     @default("[]")
+  assessment        Json?    // LessonAssessment
+  reflection        Json?    // Reflection prompts and notes
+
+  aiMetadata        Json?    // AI generation details
+  version           Int      @default(1)
+  status            String   @default("draft")  // draft, published, archived
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([createdBy])
+  @@index([subject])
+  @@index([yearLevel])
+  @@index([status])
+}
+
+model GeneratedAssessment {
+  id                String   @id @default(cuid())
+  tenantId          String
+  createdBy         String
+
+  subject           String
+  yearLevel         String
+  topic             String
+  assessmentType    String   // quiz, test, assignment, project, portfolio, practical, oral
+  duration          Int?     // minutes
+  totalMarks        Int
+
+  curriculumCodes   String[] @default([])
+  alignmentMatrix   Json     @default("[]")
+
+  instructions      String[] @default([])
+  sections          Json     // Array of AssessmentSection
+  rubric            Json?    // AssessmentRubric
+  markingGuide      Json?    // MarkingGuide
+
+  accessibility     Json?    // Accessibility info
+  differentiatedVersions Json? // Modified and extended versions
+
+  status            String   @default("draft")
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([createdBy])
+  @@index([subject])
+  @@index([assessmentType])
+}
+
+model GeneratedResource {
+  id                String   @id @default(cuid())
+  tenantId          String
+  createdBy         String
+
+  resourceType      String   // worksheet, flashcards, graphic_organizer, etc.
+  subject           String
+  yearLevel         String
+  topic             String
+
+  curriculumCodes   String[] @default([])
+  format            String   @default("digital")  // print, digital, interactive
+
+  content           Json     // ResourceContent
+  accessibility     Json?    // Accessibility info
+  teacherNotes      String[] @default([])
+  answerKey         Json?
+
+  status            String   @default("draft")
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([resourceType])
+  @@index([subject])
+}
+
+model ScaffoldedPathway {
+  id                String   @id @default(cuid())
+  tenantId          String
+  createdBy         String
+
+  subject           String
+  yearLevel         String
+  topic             String
+  startingLevel     String
+  targetLevel       String
+  estimatedDuration String
+
+  curriculumCodes   String[] @default([])
+  progressionPath   String[] @default([])
+
+  stages            Json     // Array of LearningStage
+  checkpoints       Json     // Array of LearningCheckpoint
+  supportMaterials  Json     @default("[]")
+  adaptiveRecommendations Json?
+
+  status            String   @default("draft")
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([subject])
+  @@index([topic])
+}
+
+// ============================================================================
+// PROJECT-BASED LEARNING MODELS
+// ============================================================================
+
+model ProjectTemplate {
+  id                 String   @id @default(cuid())
+  tenantId           String?  // null = global template
+
+  name               String
+  description        String   @db.Text
+  category           String   // stem, humanities, arts, cross_curricular, etc.
+
+  subjects           String[] @default([])
+  yearLevels         String[] @default([])
+  estimatedDuration  String
+  teamSizeMin        Int      @default(2)
+  teamSizeMax        Int      @default(4)
+
+  curriculumCodes    String[] @default([])
+  generalCapabilities String[] @default([])
+  crossCurriculumPriorities String[] @default([])
+
+  drivingQuestion    String   @db.Text
+  learningObjectives String[] @default([])
+
+  phases             Json     // Array of ProjectPhase
+  milestones         Json     // Array of MilestoneTemplate
+  deliverables       Json     // Array of DeliverableTemplate
+  assessmentCriteria Json     // Array of AssessmentCriteria
+  resources          Json     @default("[]")
+  scaffolds          Json     @default("[]")
+  teacherGuidance    Json?
+
+  // Metadata
+  createdBy          String
+  usageCount         Int      @default(0)
+  rating             Float    @default(0)
+  tags               String[] @default([])
+  difficulty         String   @default("intermediate")
+  isPublic           Boolean  @default(false)
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  projects           PBLProject[]
+
+  @@index([tenantId])
+  @@index([category])
+  @@index([subjects])
+  @@index([yearLevels])
+  @@index([isPublic])
+}
+
+model PBLProject {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  templateId         String?
+  template           ProjectTemplate? @relation(fields: [templateId], references: [id])
+
+  name               String
+  description        String   @db.Text
+  drivingQuestion    String   @db.Text
+
+  status             String   @default("planning")  // planning, in_progress, on_hold, completed, archived
+  startDate          DateTime
+  endDate            DateTime
+
+  teacherId          String
+  classId            String?
+
+  team               Json     // ProjectTeam
+  phases             Json     // Array of ActivePhase
+  milestones         Json     // Array of ActiveMilestone
+  deliverables       Json     // Array of ActiveDeliverable
+  reflections        Json     @default("[]")  // Array of ProjectReflection
+  feedback           Json     @default("[]")  // Array of ProjectFeedback
+  metrics            Json     // ProjectMetrics
+  portfolioLinks     String[] @default([])
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  collaborationActivities CollaborationActivity[]
+  teamMeetings       TeamMeeting[]
+
+  @@index([tenantId])
+  @@index([templateId])
+  @@index([teacherId])
+  @@index([classId])
+  @@index([status])
+  @@index([startDate])
+}
+
+model CollaborationActivity {
+  id                 String     @id @default(cuid())
+  projectId          String
+  project            PBLProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  teamId             String
+
+  type               String     // comment, edit, share, meeting, task_complete, milestone_submit
+  userId             String
+  targetId           String?
+  description        String     @db.Text
+  metadata           Json?
+
+  timestamp          DateTime   @default(now())
+
+  @@index([projectId])
+  @@index([teamId])
+  @@index([userId])
+  @@index([timestamp])
+}
+
+model TeamMeeting {
+  id                 String     @id @default(cuid())
+  projectId          String
+  project            PBLProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  teamId             String
+
+  scheduledAt        DateTime
+  duration           Int        // minutes
+  agenda             String[]   @default([])
+  attendees          String[]   @default([])
+  notes              String?    @db.Text
+  actionItems        Json       @default("[]")
+
+  status             String     @default("scheduled")  // scheduled, in_progress, completed, cancelled
+
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  @@index([projectId])
+  @@index([teamId])
+  @@index([scheduledAt])
+}
+
+// ============================================================================
+// SCHEDULING ENGINE MODELS
+// ============================================================================
+
+model Schedule {
+  id                 String   @id @default(cuid())
+  tenantId           String
+
+  name               String
+  type               String   @default("draft")  // master, draft, contingency, what_if
+  termId             String
+
+  validFrom          DateTime
+  validTo            DateTime
+
+  assignments        Json     // Array of ScheduleAssignment
+  metrics            Json     // ScheduleMetrics
+  generatedBy        Json?    // AlgorithmPipeline
+
+  status             String   @default("draft")  // draft, review, approved, active, archived
+
+  generatedAt        DateTime @default(now())
+  approvedAt         DateTime?
+  approvedBy         String?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([termId])
+  @@index([type])
+  @@index([status])
+}
+
+model ScheduleConstraint {
+  id                 String   @id @default(cuid())
+  tenantId           String
+
+  type               String   // teacher_qualification, room_capacity, no_double_booking, etc.
+  hardness           String   // hard, soft
+  weight             Float    @default(1)
+  description        String
+  entities           String[] @default([])
+  evaluator          Json     // ConstraintEvaluator
+
+  isActive           Boolean  @default(true)
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([hardness])
+}
+
+model ScheduleFeedback {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  scheduleId         String
+  assignmentId       String
+
+  feedbackType       String   // accepted, modified, rejected
+  reason             String?
+  modification       Json?    // ScheduleChange
+
+  timestamp          DateTime @default(now())
+  userId             String
+
+  @@index([tenantId])
+  @@index([scheduleId])
+  @@index([feedbackType])
+}
+
+// ============================================================================
+// DESIGN & PITCH AI MODELS
+// ============================================================================
+
+model DesignChallenge {
+  id                String   @id @default(cuid())
+  tenantId          String
+
+  // Basic info
+  title             String
+  description       String   @db.Text
+  context           String   @db.Text
+  complexity        String   @default("intermediate")  // beginner, intermediate, advanced
+  estimatedDuration String   // e.g., "2-3 weeks"
+
+  // Educational metadata
+  subject           String?
+  yearLevels        String[] @default([])
+  curriculumCodes   String[] @default([])
+  generalCapabilities String[] @default([])
+  crossCurriculumPriorities String[] @default([])
+
+  // Challenge structure
+  constraints       Json     @default("[]")  // Array of constraints
+  resourceLinks     Json     @default("[]")  // Array of resource links
+  exemplars         Json     @default("[]")  // Array of exemplar projects
+  rubric            Json?    // Evaluation rubric
+
+  // Status
+  status            String   @default("draft")  // draft, published, archived
+  publishedAt       DateTime?
+
+  // Creator
+  createdBy         String
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  journeys          DesignJourney[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([complexity])
+  @@index([subject])
+}
+
+model DesignJourney {
+  id                String   @id @default(cuid())
+  tenantId          String
+  challengeId       String
+  challenge         DesignChallenge @relation(fields: [challengeId], references: [id])
+  userId            String
+
+  // Journey state
+  currentPhase      String   @default("empathize")  // empathize, define, ideate, prototype, iterate, pitch
+  status            String   @default("in_progress")  // in_progress, completed, abandoned
+
+  // Problem validation
+  problemStatement  String?  @db.Text
+  hmwStatement      String?  // "How Might We..."
+  problemValidation Json?    // AI validation result
+
+  // Phase data
+  empathizeData     Json     @default("{}")  // Interviews, observations, empathy maps
+  defineData        Json     @default("{}")  // Problem analysis, insights
+  ideateData        Json     @default("{}")  // Ideas, brainstorming results
+  prototypeData     Json     @default("{}")  // Prototype iterations
+  iterateData       Json     @default("{}")  // Feedback and refinements
+  pitchData         Json     @default("{}")  // Pitch preparation
+
+  // Progress tracking
+  phaseProgress     Json     @default("{}")  // Per-phase progress %
+  overallProgress   Int      @default(0)  // 0-100
+  aiInteractions    Int      @default(0)
+
+  // Completion
+  completedAt       DateTime?
+  finalScore        Float?
+  feedback          String?  @db.Text
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  artifacts         DesignArtifact[]
+  peerReviews       DesignPeerReview[]
+  pitchDeck         DesignPitchDeck?
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([challengeId])
+  @@index([status])
+  @@index([currentPhase])
+}
+
+model DesignArtifact {
+  id                String   @id @default(cuid())
+  tenantId          String
+  journeyId         String
+  journey           DesignJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  userId            String
+
+  // Artifact info
+  type              String   // interview, observation, empathy_map, persona, insight, idea, sketch, prototype, wireframe, feedback, reflection
+  title             String
+  description       String?  @db.Text
+  phase             String   // Which design phase this belongs to
+
+  // Content
+  content           Json     // Type-specific content
+  fileUrl           String?
+  thumbnailUrl      String?
+
+  // Versioning
+  version           Int      @default(1)
+  parentArtifactId  String?  // For iterations
+
+  // AI analysis
+  aiAnalysis        Json?    // AI-generated insights
+  skillsTagged      String[] @default([])
+  qualityScore      Float?
+
+  // Status
+  status            String   @default("draft")  // draft, submitted, reviewed
+  visibility        String   @default("private")  // private, journey, public
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([journeyId])
+  @@index([userId])
+  @@index([type])
+  @@index([phase])
+}
+
+model DesignPeerReview {
+  id                String   @id @default(cuid())
+  tenantId          String
+  journeyId         String
+  journey           DesignJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  // Review assignment
+  reviewerId        String
+  artifactIds       String[] @default([])  // Artifacts being reviewed
+
+  // Review content (double-blind)
+  isAnonymous       Boolean  @default(true)
+  feedback          String   @db.Text
+  feedbackPins      Json     @default("[]")  // Context-aware feedback points
+  rubricScores      Json?    // If using a rubric
+  overallScore      Float?
+
+  // Status
+  status            String   @default("pending")  // pending, in_progress, submitted, acknowledged
+  assignedAt        DateTime @default(now())
+  dueAt             DateTime?
+  submittedAt       DateTime?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([journeyId])
+  @@index([reviewerId])
+  @@index([status])
+}
+
+model DesignPitchDeck {
+  id                String   @id @default(cuid())
+  tenantId          String
+  journeyId         String   @unique
+  journey           DesignJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  userId            String
+
+  // 10/20/30 Rule compliance
+  title             String
+  slides            Json     // Array of PitchSlide (max 10)
+  slideCount        Int      @default(0)
+  estimatedDuration Int      @default(0)  // minutes (target: 20)
+  minFontSize       Int      @default(30)  // minimum font size (target: 30pt)
+
+  // AI coaching
+  aiCoachingNotes   Json     @default("[]")  // AI feedback history
+  lastCoachingAt    DateTime?
+  readinessScore    Float?   // 0-100
+
+  // Practice & Presentation
+  practiceRuns      Json     @default("[]")  // Array of practice sessions
+  presentationDate  DateTime?
+  presentedTo       String[] @default([])
+
+  // Evaluation
+  finalScore        Float?
+  evaluatorFeedback Json?
+
+  // Status
+  status            String   @default("draft")  // draft, ready, presented, evaluated
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+}
+
+// ============================================================================
+// SHOWCASE PORTFOLIO MODELS
+// ============================================================================
+
+model ShowcasePortfolio {
+  id                String   @id @default(cuid())
+  tenantId          String
+  userId            String
+  journeyId         String   @unique  // Links to DesignJourney
+
+  // Display info
+  title             String
+  headline          String
+  bio               String?  @db.Text
+  avatarUrl         String?
+  coverImageUrl     String?
+
+  // Custom URL
+  customSlug        String?  @unique
+  vanityUrl         String?
+
+  // Settings
+  visibility        String   @default("private")  // private, unlisted, public
+  theme             Json     @default("{}")  // Theme customization
+  layout            String   @default("standard")  // standard, minimal, creative
+
+  // AI-generated content
+  executiveSummary  String?  @db.Text
+  growthNarrative   String?  @db.Text
+  skillTags         Json     @default("[]")  // AI-identified skills
+
+  // Analytics
+  totalViews        Int      @default(0)
+  uniqueViews       Int      @default(0)
+  averageTimeOnPage Float    @default(0)  // seconds
+
+  // Status
+  status            String   @default("draft")  // draft, published, archived
+  publishedAt       DateTime?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  items             ShowcaseItem[]
+  guestbook         ShowcaseGuestbook[]
+  viewLogs          ShowcaseViewLog[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+  @@index([customSlug])
+}
+
+model ShowcaseItem {
+  id                String   @id @default(cuid())
+  portfolioId       String
+  portfolio         ShowcasePortfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  // Item info
+  artifactId        String?  // Link to original artifact
+  title             String
+  description       String?  @db.Text
+  type              String   // Same as artifact types
+
+  // Curated content
+  curatedContent    Json     // Selected/edited content for showcase
+  mediaUrl          String?
+  thumbnailUrl      String?
+
+  // Curation metadata
+  curatorNotes      String?  @db.Text  // Learner's reflection on why included
+  skillsHighlighted String[] @default([])
+  orderIndex        Int      @default(0)
+
+  // Status
+  isVisible         Boolean  @default(true)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([portfolioId])
+  @@index([artifactId])
+}
+
+model ShowcaseGuestbook {
+  id                String   @id @default(cuid())
+  portfolioId       String
+  portfolio         ShowcasePortfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  // Entry info
+  authorName        String
+  authorEmail       String?
+  authorCompany     String?
+  authorRole        String?  // e.g., "Recruiter", "Educator", "Peer"
+
+  // Content
+  message           String   @db.Text
+  rating            Int?     // 1-5 stars optional
+
+  // Moderation
+  isApproved        Boolean  @default(false)
+  isSpam            Boolean  @default(false)
+
+  createdAt         DateTime @default(now())
+
+  @@index([portfolioId])
+  @@index([isApproved])
+}
+
+model ShowcaseViewLog {
+  id                String   @id @default(cuid())
+  portfolioId       String
+  portfolio         ShowcasePortfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  // Viewer info (anonymous)
+  sessionId         String
+  referrer          String?
+  userAgent         String?
+  country           String?
+  city              String?
+
+  // Engagement
+  duration          Int      @default(0)  // seconds
+  itemsViewed       String[] @default([])
+  interactions      Json     @default("[]")  // clicks, scrolls, etc.
+
+  viewedAt          DateTime @default(now())
+
+  @@index([portfolioId])
+  @@index([viewedAt])
+}

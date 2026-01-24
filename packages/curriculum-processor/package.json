@@ -1,0 +1,28 @@
+{
+  "name": "@scholarly/curriculum-processor",
+  "version": "1.0.0",
+  "description": "Machine Readable Australian Curriculum (MRAC) JSON-LD processor",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "ingest": "ts-node src/cli.ts ingest",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@scholarly/database": "workspace:*",
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "glob": "^10.3.10",
+    "jsonld": "^8.3.2",
+    "ora": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/jsonld": "^1.5.13",
+    "@types/node": "^20.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

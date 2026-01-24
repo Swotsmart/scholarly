@@ -1,0 +1,1655 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+	xmlns:skosxl="http://www.w3.org/2008/05/skos-xl#"
+	xmlns:owl="http://www.w3.org/2002/07/owl#"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:dcterms="http://purl.org/dc/terms/"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+	xmlns:tags="http://www.holygoat.co.uk/owl/redwood/0.1/tags/"
+	xmlns:cycAnnot="http://sw.cyc.com/CycAnnotations_v1#"
+	xmlns:foaf="http://xmlns.com/foaf/0.1/"
+	xmlns:csw="http://semantic-web.at/ontologies/csw.owl#"
+	xmlns:dbpedia="http://dbpedia.org/resource/"
+	xmlns:freebase="http://rdf.freebase.com/ns/"
+	xmlns:opencyc="http://sw.opencyc.org/concept/"
+	xmlns:cyc="http://sw.cyc.com/concept/"
+	xmlns:ctag="http://commontag.org/ns#">
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/19679b09-cfba-4cd0-a02e-366ace2f3d83">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">root</statementNotation>
+	<dcterms:description xml:lang="en-au">Corrected html tags</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2024-04-22T01:16:51.365Z</dcterms:modified>
+	<dcterms:rights xml:lang="en-au">©Copyright Australian Curriculum, Assessment and Reporting Authority</dcterms:rights>
+	<dcterms:rightsHolder xml:lang="en-au">Australian Curriculum, Assessment and Reporting Authority</dcterms:rightsHolder>
+	<dcterms:title xml:lang="en-au">Corrected html tags</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/7ed453eb-571b-4f97-994b-d4b19c06b58d"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/7ed453eb-571b-4f97-994b-d4b19c06b58d">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">GC</statementNotation>
+	<dcterms:description xml:lang="en-au">General Capabilities</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">General Capabilities</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/c596aced-6c39-41cd-b072-4a64489312b7"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/19679b09-cfba-4cd0-a02e-366ace2f3d83"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/c596aced-6c39-41cd-b072-4a64489312b7">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">General Capability</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EU</statementNotation>
+	<dcterms:description xml:lang="en-au">Ethical Understanding</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Ethical Understanding</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/204f507c-21a5-449a-8f96-179de566d998"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3524986c-6be1-430b-a030-0655c03b4192"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/7ed453eb-571b-4f97-994b-d4b19c06b58d"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/204f507c-21a5-449a-8f96-179de566d998">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<listID xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">1</listID>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Element</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUND</statementNotation>
+	<dcterms:description xml:lang="en-au">&lt;p&gt;The Understanding ethical concepts and perspectives element includes 3 sub-elements:&lt;/p&gt;
+&lt;p&gt;These sub-elements are:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Explore ethical concepts&lt;/li&gt;
+&lt;li&gt;Examine values, rights and responsibilities and ethical norms&lt;/li&gt;
+&lt;li&gt;Recognise influences on ethical behaviour and perspectives.&lt;/li&gt;
+&lt;/ul&gt;</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Understanding ethical concepts and perspectives</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ae71c927-5212-44ea-869f-722a77999316"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/87f2f114-a97e-4da3-81b4-055426d9e60b"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bdabb059-d4d9-4e4c-af29-4aacc7aeb5b6"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/c596aced-6c39-41cd-b072-4a64489312b7"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ae71c927-5212-44ea-869f-722a77999316">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Sub-Element</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA</statementNotation>
+	<dcterms:description xml:lang="en-au">&lt;p&gt;This sub-element supports students to identify and examine ethical concepts. They discuss and examine the dimensions of ethical concepts and how they relate to the actions we take in a range of situations.&lt;/p&gt;</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Explore ethical concepts</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e9840aa5-aff6-4cb6-8ca5-82b167790c83"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/2c545ad5-6e27-45fc-9962-bf0b3f7ff591"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/eac6b2f7-c090-4a1e-b152-145c4e7d87c6"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/0e605b7b-0a17-4685-a6c9-046e5d4cc3ed"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/6dccf1f1-d9d8-4ee0-a894-d919585b50e8"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3e9da791-bf60-45f0-a0cc-d616169157ab"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/204f507c-21a5-449a-8f96-179de566d998"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e9840aa5-aff6-4cb6-8ca5-82b167790c83">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/1"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA1</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 1 (Foundation)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/0"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 1 (Foundation)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/774691fa-c86a-49f5-9a72-37140234a390"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ae71c927-5212-44ea-869f-722a77999316"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Foundation Year</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/progressionLevel/1">
+	<skos:prefLabel xml:lang="en-au">1</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/schoolLevel/0">
+	<skos:prefLabel xml:lang="en-au">Foundation Year</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/774691fa-c86a-49f5-9a72-37140234a390">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/1"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA1_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify examples of ethical concepts such as right and wrong</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/0"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify examples of ethical concepts such as right and wrong</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e9840aa5-aff6-4cb6-8ca5-82b167790c83"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Foundation Year</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/2c545ad5-6e27-45fc-9962-bf0b3f7ff591">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/2"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA2</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 2 (Years 1-2)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/1"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/2"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 2 (Years 1-2)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/a6da7b11-5e4d-44af-8c88-06e10e5d2536"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ae71c927-5212-44ea-869f-722a77999316"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 1</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/progressionLevel/2">
+	<skos:prefLabel xml:lang="en-au">2</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/schoolLevel/1">
+	<skos:prefLabel xml:lang="en-au">Year 1</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/schoolLevel/2">
+	<skos:prefLabel xml:lang="en-au">Year 2</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/a6da7b11-5e4d-44af-8c88-06e10e5d2536">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/2"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA2_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify ethical concepts, such as honesty and fairness, and describe actions and behaviours associated with these   </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/1"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/2"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify ethical concepts, such as honesty and fairness, and describe actions and behaviours associated with these   </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/2c545ad5-6e27-45fc-9962-bf0b3f7ff591"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 1</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/eac6b2f7-c090-4a1e-b152-145c4e7d87c6">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/3"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA3</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 3 (Years 3-4)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/3"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/4"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 3 (Years 3-4)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/67654c86-1c64-426d-977a-976089a050d5"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ae71c927-5212-44ea-869f-722a77999316"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 3</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/progressionLevel/3">
+	<skos:prefLabel xml:lang="en-au">3</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/schoolLevel/3">
+	<skos:prefLabel xml:lang="en-au">Year 3</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/schoolLevel/4">
+	<skos:prefLabel xml:lang="en-au">Year 4</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/67654c86-1c64-426d-977a-976089a050d5">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/3"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA3_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify ethical concepts, such as respect and tolerance, and describe how a situation or context affects actions and behaviour </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/3"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/4"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify ethical concepts, such as respect and tolerance, and describe how a situation or context affects actions and behaviour </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/eac6b2f7-c090-4a1e-b152-145c4e7d87c6"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 3</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/0e605b7b-0a17-4685-a6c9-046e5d4cc3ed">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/4"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA4</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 4 (Years 5-6)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/5"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/6"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 4 (Years 5-6)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/91f6ac59-3d76-4d22-afcb-5cc5c061986f"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ae71c927-5212-44ea-869f-722a77999316"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 5</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/progressionLevel/4">
+	<skos:prefLabel xml:lang="en-au">4</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/schoolLevel/5">
+	<skos:prefLabel xml:lang="en-au">Year 5</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/schoolLevel/6">
+	<skos:prefLabel xml:lang="en-au">Year 6</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/91f6ac59-3d76-4d22-afcb-5cc5c061986f">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/4"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA4_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify and describe ethical concepts, such as truth and justice, and explain how perspectives may vary according to the situation or context   </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/5"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/6"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify and describe ethical concepts, such as truth and justice, and explain how perspectives may vary according to the situation or context   </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/0e605b7b-0a17-4685-a6c9-046e5d4cc3ed"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 5</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/6dccf1f1-d9d8-4ee0-a894-d919585b50e8">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/5"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA5</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 5 (Years 7-8)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/7"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/8"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 5 (Years 7-8)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/cb9573cd-f1f6-4d79-a794-057aad78ebbd"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ae71c927-5212-44ea-869f-722a77999316"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 7</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/progressionLevel/5">
+	<skos:prefLabel xml:lang="en-au">5</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/schoolLevel/7">
+	<skos:prefLabel xml:lang="en-au">Year 7</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/schoolLevel/8">
+	<skos:prefLabel xml:lang="en-au">Year 8</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/cb9573cd-f1f6-4d79-a794-057aad78ebbd">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/5"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA5_1</statementNotation>
+	<dcterms:description xml:lang="en-au">analyse the similarities and differences between ethical concepts, such as integrity, loyalty and equality, in a range of situations and contexts</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/7"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/8"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">analyse the similarities and differences between ethical concepts, such as integrity, loyalty and equality, in a range of situations and contexts</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/6dccf1f1-d9d8-4ee0-a894-d919585b50e8"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 7</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3e9da791-bf60-45f0-a0cc-d616169157ab">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/6"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA6</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 6 (Years 9-10)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/9"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/10"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 6 (Years 9-10)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/19f3cac8-1d4b-43e4-90ca-8b0af3276c33"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ae71c927-5212-44ea-869f-722a77999316"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 10</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/progressionLevel/6">
+	<skos:prefLabel xml:lang="en-au">6</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/schoolLevel/9">
+	<skos:prefLabel xml:lang="en-au">Year 9</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/schoolLevel/10">
+	<skos:prefLabel xml:lang="en-au">Year 10</skos:prefLabel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/19f3cac8-1d4b-43e4-90ca-8b0af3276c33">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/6"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDA6_1</statementNotation>
+	<dcterms:description xml:lang="en-au">evaluate the consistency in meaning of ethical concepts, such as trust, freedom and rights and responsibilities, in a range of situations and contexts </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/9"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/10"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">evaluate the consistency in meaning of ethical concepts, such as trust, freedom and rights and responsibilities, in a range of situations and contexts </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3e9da791-bf60-45f0-a0cc-d616169157ab"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 10</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/87f2f114-a97e-4da3-81b4-055426d9e60b">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Sub-Element</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDB</statementNotation>
+	<dcterms:description xml:lang="en-au">&lt;p&gt;This sub-element supports students to understand the role that values, rights and responsibilities and norms have in ethical decisions. They consider how a range of values relate to established norms of ethical behaviour.&lt;/p&gt;</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Examine values, rights and responsibilities and ethical norms</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/7b187682-544b-4078-9020-7186dfb21991"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/64237a25-e8dc-4b67-ac2d-41949915a43f"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/8c3e0cbf-5c38-4956-bdcd-b417563a8f6a"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/7e51da36-1c78-4ea9-bbdb-ed225ca26ca5"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/346a59cf-7e45-4883-8fdc-3c0b5bde1ba5"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/df5b3ee0-0c62-4be1-990f-ee8d0a389069"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/204f507c-21a5-449a-8f96-179de566d998"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/7b187682-544b-4078-9020-7186dfb21991">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/1"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDB1</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 1 (Foundation)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/0"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-10-24T10:20:06.844Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 1 (Foundation)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/6c2690ef-2a07-47f4-b3a7-4ac966a7c801"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/87f2f114-a97e-4da3-81b4-055426d9e60b"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Foundation Year</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/6c2690ef-2a07-47f4-b3a7-4ac966a7c801">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/1"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNB1_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify examples of values, rights and responsibilities  </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/0"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify examples of values, rights and responsibilities  </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/7b187682-544b-4078-9020-7186dfb21991"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Foundation Year</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/64237a25-e8dc-4b67-ac2d-41949915a43f">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/2"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDB2</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 2 (Years 1-2)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/1"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/2"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-10-24T10:23:26.537Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 2 (Years 1-2)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/f2643d18-6c63-43dd-8236-35d56a7d3bc8"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/87f2f114-a97e-4da3-81b4-055426d9e60b"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 1</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/f2643d18-6c63-43dd-8236-35d56a7d3bc8">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/2"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNB2_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify values, rights and responsibilities and shared expectations, and explain why they are important</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/1"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/2"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify values, rights and responsibilities and shared expectations, and explain why they are important</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/64237a25-e8dc-4b67-ac2d-41949915a43f"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 1</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/8c3e0cbf-5c38-4956-bdcd-b417563a8f6a">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/3"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDB3</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 3 (Years 3-4)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/3"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/4"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-10-24T10:26:27.255Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 3 (Years 3-4)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ead7c9e3-3d4e-4b99-9ca8-2e6a617043b8"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/87f2f114-a97e-4da3-81b4-055426d9e60b"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 3</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ead7c9e3-3d4e-4b99-9ca8-2e6a617043b8">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/3"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNB3_1</statementNotation>
+	<dcterms:description xml:lang="en-au">describe how values, rights and responsibilities, and shared expectations influence responses and decision-making</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/3"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/4"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">describe how values, rights and responsibilities, and shared expectations influence responses and decision-making</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/8c3e0cbf-5c38-4956-bdcd-b417563a8f6a"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 3</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/7e51da36-1c78-4ea9-bbdb-ed225ca26ca5">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/4"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDB4</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 4 (Years 5-6)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/5"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/6"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-10-24T10:31:31.761Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 4 (Years 5-6)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/52628d6e-d517-46b0-b60b-ada513f85a75"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/87f2f114-a97e-4da3-81b4-055426d9e60b"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 5</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/52628d6e-d517-46b0-b60b-ada513f85a75">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/4"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNB4_1</statementNotation>
+	<dcterms:description xml:lang="en-au">describe how the relationships between values, rights and responsibilities, and ethical norms influence responses and decisions related to ethical issues</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/5"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/6"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">describe how the relationships between values, rights and responsibilities, and ethical norms influence responses and decisions related to ethical issues</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/7e51da36-1c78-4ea9-bbdb-ed225ca26ca5"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 5</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/346a59cf-7e45-4883-8fdc-3c0b5bde1ba5">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/5"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDB5</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 5 (Years 7-8)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/7"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/8"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-10-24T10:47:46.033Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 5 (Years 7-8)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/d220c6c4-874a-4eac-a470-c3cc07ea3764"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/87f2f114-a97e-4da3-81b4-055426d9e60b"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 7</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/d220c6c4-874a-4eac-a470-c3cc07ea3764">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/5"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNB5_1</statementNotation>
+	<dcterms:description xml:lang="en-au">describe the relationship between the role of individual and community values, rights and responsibilities, and ethical norms when responding to ethical issues</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/7"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/8"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">describe the relationship between the role of individual and community values, rights and responsibilities, and ethical norms when responding to ethical issues</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/346a59cf-7e45-4883-8fdc-3c0b5bde1ba5"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 7</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/df5b3ee0-0c62-4be1-990f-ee8d0a389069">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/6"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDB6</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 6 (Years 9-10)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/9"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/10"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-10-24T11:13:46.138Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 6 (Years 9-10)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/a11288c5-b2d1-4412-8681-be8adc1dd24e"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/87f2f114-a97e-4da3-81b4-055426d9e60b"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 10</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/a11288c5-b2d1-4412-8681-be8adc1dd24e">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/6"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNB6_1</statementNotation>
+	<dcterms:description xml:lang="en-au">describe the importance of values, rights and responsibilities when reaching a position on an ethical issue, and evaluate their role in challenging and defending ethical norms </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/9"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/10"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">describe the importance of values, rights and responsibilities when reaching a position on an ethical issue, and evaluate their role in challenging and defending ethical norms </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/df5b3ee0-0c62-4be1-990f-ee8d0a389069"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 10</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bdabb059-d4d9-4e4c-af29-4aacc7aeb5b6">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Sub-Element</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC</statementNotation>
+	<dcterms:description xml:lang="en-au">&lt;p&gt;This sub-element supports students to recognise the interrelationship of factors that impact their ethical behaviour and perspectives. They consider how factors such as reason, emotions, habits of behaviour, character traits, obligations and duties impact ethically considered responses.&lt;/p&gt;</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Recognise influences on ethical behaviour and perspectives</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bacdd6d0-8e15-4509-ac68-f6519e6adad3"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/10d73ad9-f1d0-45cb-b83c-64a14f64eb68"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/eae48a1a-c0e4-4ee1-8008-9b1dfa918554"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/986940be-d225-4a3b-ae24-52fb8ef5d5fb"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/76e511c6-6862-415b-aed6-7992d97a72a3"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/7d5e8698-5817-4802-985d-36f227d271ce"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/204f507c-21a5-449a-8f96-179de566d998"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bacdd6d0-8e15-4509-ac68-f6519e6adad3">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/1"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC1</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 1 (Foundation)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/0"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 1 (Foundation)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/cf9db9d0-48be-464b-b5ba-eba6272c335b"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bdabb059-d4d9-4e4c-af29-4aacc7aeb5b6"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Foundation Year</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/cf9db9d0-48be-464b-b5ba-eba6272c335b">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/1"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC1_1</statementNotation>
+	<dcterms:description xml:lang="en-au">Identify examples of how emotions affect behaviour</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/0"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Identify examples of how emotions affect behaviour</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bacdd6d0-8e15-4509-ac68-f6519e6adad3"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Foundation Year</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/10d73ad9-f1d0-45cb-b83c-64a14f64eb68">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/2"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC2</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 2 (Years 1-2)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/1"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/2"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 2 (Years 1-2)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/8a480312-4d15-40c6-90b7-ef1a7b645393"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bdabb059-d4d9-4e4c-af29-4aacc7aeb5b6"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 1</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/8a480312-4d15-40c6-90b7-ef1a7b645393">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/2"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC2_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify how emotions and behaviour interact, and share examples of when they match and when they do not</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/1"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/2"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify how emotions and behaviour interact, and share examples of when they match and when they do not</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/10d73ad9-f1d0-45cb-b83c-64a14f64eb68"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 1</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/eae48a1a-c0e4-4ee1-8008-9b1dfa918554">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/3"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC3</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 3 (Years 3-4)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/3"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/4"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 3 (Years 3-4)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/d596728c-ab55-48d6-82fa-d02752f8b8e3"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bdabb059-d4d9-4e4c-af29-4aacc7aeb5b6"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 3</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/d596728c-ab55-48d6-82fa-d02752f8b8e3">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/3"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC3_1</statementNotation>
+	<dcterms:description xml:lang="en-au">explain how emotions can affect behaviour and decision-making in different situations    </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/3"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/4"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">explain how emotions can affect behaviour and decision-making in different situations    </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/eae48a1a-c0e4-4ee1-8008-9b1dfa918554"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 3</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/986940be-d225-4a3b-ae24-52fb8ef5d5fb">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/4"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC4</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 4 (Years 5-6)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/5"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/6"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 4 (Years 5-6)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3d2d2b31-da78-4102-af8d-1d33860906bb"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bdabb059-d4d9-4e4c-af29-4aacc7aeb5b6"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 5</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3d2d2b31-da78-4102-af8d-1d33860906bb">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/4"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC4_1</statementNotation>
+	<dcterms:description xml:lang="en-au">explain how habits and behaviour shape character and examine how they inform ethical perspectives  </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/5"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/6"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">explain how habits and behaviour shape character and examine how they inform ethical perspectives  </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/986940be-d225-4a3b-ae24-52fb8ef5d5fb"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 5</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/76e511c6-6862-415b-aed6-7992d97a72a3">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/5"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC5</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 5 (Years 7-8)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/7"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/8"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 5 (Years 7-8)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/f651fc4a-98b4-4e61-8a83-b5b9f141d492"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bdabb059-d4d9-4e4c-af29-4aacc7aeb5b6"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 7</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/f651fc4a-98b4-4e61-8a83-b5b9f141d492">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/5"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC5_1</statementNotation>
+	<dcterms:description xml:lang="en-au">explain how different traits, such as honesty, trust, courage and selfishness interact with responsibilities or duties to determine ethically appropriate responses</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/7"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/8"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">explain how different traits, such as honesty, trust, courage and selfishness interact with responsibilities or duties to determine ethically appropriate responses</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/76e511c6-6862-415b-aed6-7992d97a72a3"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 7</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/7d5e8698-5817-4802-985d-36f227d271ce">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/6"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC6</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 6 (Years 9-10)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/9"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/10"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 6 (Years 9-10)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/090fede0-7e9b-4979-9a50-07e16ccd3764"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bdabb059-d4d9-4e4c-af29-4aacc7aeb5b6"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 10</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/090fede0-7e9b-4979-9a50-07e16ccd3764">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/6"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EUUNDC6_1</statementNotation>
+	<dcterms:description xml:lang="en-au">explore and analyse examples of the tensions between conflicting positions on issues of personal, social and global importance   </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/9"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/10"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">explore and analyse examples of the tensions between conflicting positions on issues of personal, social and global importance   </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/7d5e8698-5817-4802-985d-36f227d271ce"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 10</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3524986c-6be1-430b-a030-0655c03b4192">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<listID xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">2</listID>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Element</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURES</statementNotation>
+	<dcterms:description xml:lang="en-au">&lt;p&gt;The Responding to ethical issues element includes 3 sub-elements: &lt;/p&gt;
+&lt;p&gt;These sub-elements are:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Explore ethical perspectives and frameworks&lt;/li&gt;
+&lt;li&gt;Explore ethical issues&lt;/li&gt;
+&lt;li&gt;Make and reflect on ethical decisions.&lt;/li&gt;
+&lt;/ul&gt;</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Responding to ethical issues</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ec7398ea-851e-4122-96ab-d53dc7ac355d"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9dea1707-d961-440c-bdac-4757294fbe34"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e49dd90e-e0c0-4ecf-9447-edf1f66fa153"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/c596aced-6c39-41cd-b072-4a64489312b7"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ec7398ea-851e-4122-96ab-d53dc7ac355d">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Sub-Element</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA</statementNotation>
+	<dcterms:description xml:lang="en-au">&lt;p&gt;This sub-element supports students to develop an understanding of different ethical frameworks and how these inform ethical perspectives and decision-making. Ethical frameworks include approaches that address the role of consequences on ethical actions; approaches that deal with issues of duty, justice and fairness; and approaches that focus on virtues in the ethical decision-making process.&lt;/p&gt;</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Explore ethical perspectives and  frameworks</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9965d38e-6cc0-46ec-867f-012aca9fffaf"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e1a3dcf1-204b-4b4d-b059-721c3bd35822"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3e46b904-82b2-4d1f-b363-b8bfb68e2949"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/85bbc01f-bda7-4bdc-8922-e99b947c4bda"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bfa1f15a-fb36-40df-835a-d02d3fef35e3"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/6602f54a-9dd1-4318-bef7-e33fdbd43716"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3524986c-6be1-430b-a030-0655c03b4192"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9965d38e-6cc0-46ec-867f-012aca9fffaf">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/1"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA1</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 1 (Foundation)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/0"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 1 (Foundation)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/cf031659-6fc8-454b-9792-613282ff61c5"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ec7398ea-851e-4122-96ab-d53dc7ac355d"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Foundation Year</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/cf031659-6fc8-454b-9792-613282ff61c5">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/1"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA1_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify examples of different consequences and explain how these might affect the way people behave or act</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/0"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify examples of different consequences and explain how these might affect the way people behave or act</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9965d38e-6cc0-46ec-867f-012aca9fffaf"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Foundation Year</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e1a3dcf1-204b-4b4d-b059-721c3bd35822">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/2"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA2</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 2 (Years 1-2)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/1"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/2"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 2 (Years 1-2)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/7051d1d5-f988-48ba-b550-270a6d3564af"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ec7398ea-851e-4122-96ab-d53dc7ac355d"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 1</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/7051d1d5-f988-48ba-b550-270a6d3564af">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/2"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA2_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify the similarities and differences between values such as caring, compassion and empathy </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/1"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/2"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify the similarities and differences between values such as caring, compassion and empathy </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e1a3dcf1-204b-4b4d-b059-721c3bd35822"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 1</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3e46b904-82b2-4d1f-b363-b8bfb68e2949">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/3"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA3</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 3 (Years 3-4)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/3"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/4"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 3 (Years 3-4)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/0948a924-69e6-4e14-b874-1aa244ea72ca"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ec7398ea-851e-4122-96ab-d53dc7ac355d"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 3</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/0948a924-69e6-4e14-b874-1aa244ea72ca">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/3"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA3_1</statementNotation>
+	<dcterms:description xml:lang="en-au">describe the differences and connections between rights and responsibilities, and care and respect, and how these affect decision-making  </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/3"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/4"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">describe the differences and connections between rights and responsibilities, and care and respect, and how these affect decision-making  </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3e46b904-82b2-4d1f-b363-b8bfb68e2949"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 3</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/85bbc01f-bda7-4bdc-8922-e99b947c4bda">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/4"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA4</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 4 (Years 5-6)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/5"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/6"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 4 (Years 5-6)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/4573200d-5172-41e0-b979-c80b7622b060"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ec7398ea-851e-4122-96ab-d53dc7ac355d"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 5</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/4573200d-5172-41e0-b979-c80b7622b060">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/4"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA4_1</statementNotation>
+	<dcterms:description xml:lang="en-au">describe how ethical frameworks that use consequences, virtues and duties guide ethical decision-making </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/5"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/6"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">describe how ethical frameworks that use consequences, virtues and duties guide ethical decision-making </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/85bbc01f-bda7-4bdc-8922-e99b947c4bda"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 5</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bfa1f15a-fb36-40df-835a-d02d3fef35e3">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/5"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA5</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 5 (Years 7-8)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/7"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/8"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 5 (Years 7-8)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/99742d7f-9323-45fa-a3ee-3d23fed3ddf3"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ec7398ea-851e-4122-96ab-d53dc7ac355d"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 7</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/99742d7f-9323-45fa-a3ee-3d23fed3ddf3">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/5"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA5_1</statementNotation>
+	<dcterms:description xml:lang="en-au">explain how different ethical frameworks support developing ethical perspectives and inform ethical decision-making</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/7"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/8"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">explain how different ethical frameworks support developing ethical perspectives and inform ethical decision-making</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/bfa1f15a-fb36-40df-835a-d02d3fef35e3"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 7</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/6602f54a-9dd1-4318-bef7-e33fdbd43716">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/6"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA6</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 6 (Years 9-10)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/9"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/10"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 6 (Years 9-10)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/dbeef303-ae02-43d6-bbb7-59a92218e3d8"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ec7398ea-851e-4122-96ab-d53dc7ac355d"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 10</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/dbeef303-ae02-43d6-bbb7-59a92218e3d8">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/6"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESA6_1</statementNotation>
+	<dcterms:description xml:lang="en-au">analyse and utilise different ethical frameworks when responding to ethical issues and making ethical decisions</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/9"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/10"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">analyse and utilise different ethical frameworks when responding to ethical issues and making ethical decisions</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/6602f54a-9dd1-4318-bef7-e33fdbd43716"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 10</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9dea1707-d961-440c-bdac-4757294fbe34">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Sub-Element</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB</statementNotation>
+	<dcterms:description xml:lang="en-au">&lt;p&gt;This sub-element supports students to bring together their understanding of the first 4 sub-elements of the Ethical Understanding learning continuum to investigate ethical issues. They apply their understanding of ethical concepts, values, rights and responsibilities, norms, ethical frameworks and perspectives to curriculum-related ethical contexts.&lt;/p&gt;</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Explore ethical issues</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ddfc37e9-a22d-47c7-8848-4308e1455bee"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ad3315c0-6281-43a8-b4d6-b526bace23b2"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/d12fd236-013f-4cb6-bfab-3bb6f6b1c1ea"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e875b641-e4a3-482f-9f44-c595528e0ed9"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/8ed50b08-7fa5-4f05-9229-a4882f9662f0"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/15f5e20a-6b9a-4fb2-98c3-cc8620fc0ed0"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3524986c-6be1-430b-a030-0655c03b4192"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ddfc37e9-a22d-47c7-8848-4308e1455bee">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/1"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB1</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 1 (Foundation)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/0"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 1 (Foundation)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/87f86fa7-195a-46fd-930d-943ea5d62882"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9dea1707-d961-440c-bdac-4757294fbe34"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Foundation Year</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/87f86fa7-195a-46fd-930d-943ea5d62882">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/1"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB1_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify different ethical problems or issues from examples such as stories</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/0"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify different ethical problems or issues from examples such as stories</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ddfc37e9-a22d-47c7-8848-4308e1455bee"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Foundation Year</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ad3315c0-6281-43a8-b4d6-b526bace23b2">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/2"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB2</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 2 (Years 1-2)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/1"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/2"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 2 (Years 1-2)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/807cfadc-8f1a-44b9-9af2-085576fc471c"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9dea1707-d961-440c-bdac-4757294fbe34"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 1</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/807cfadc-8f1a-44b9-9af2-085576fc471c">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/2"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB2_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify different perspectives and approaches when discussing ethical issues from a given example</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/1"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/2"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify different perspectives and approaches when discussing ethical issues from a given example</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/ad3315c0-6281-43a8-b4d6-b526bace23b2"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 1</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/d12fd236-013f-4cb6-bfab-3bb6f6b1c1ea">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/3"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB3</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 3 (Years 3-4)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/3"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/4"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 3 (Years 3-4)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/98678268-d2bc-48fe-8d68-ae2f46e55c1b"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9dea1707-d961-440c-bdac-4757294fbe34"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 3</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/98678268-d2bc-48fe-8d68-ae2f46e55c1b">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/3"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB3_1</statementNotation>
+	<dcterms:description xml:lang="en-au">use examples to describe how people may have different values and perspectives that they apply to an ethical issue</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/3"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/4"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">use examples to describe how people may have different values and perspectives that they apply to an ethical issue</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/d12fd236-013f-4cb6-bfab-3bb6f6b1c1ea"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 3</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e875b641-e4a3-482f-9f44-c595528e0ed9">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/4"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB4</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 4 (Years 5-6)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/5"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/6"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 4 (Years 5-6)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/0a71e529-e286-4e12-9fea-625965c32f27"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9dea1707-d961-440c-bdac-4757294fbe34"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 5</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/0a71e529-e286-4e12-9fea-625965c32f27">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/4"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB4_1</statementNotation>
+	<dcterms:description xml:lang="en-au">describe how ethical perspectives or approaches to ethical issues may vary in different situations  </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/5"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/6"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">describe how ethical perspectives or approaches to ethical issues may vary in different situations  </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e875b641-e4a3-482f-9f44-c595528e0ed9"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 5</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/8ed50b08-7fa5-4f05-9229-a4882f9662f0">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/5"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB5</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 5 (Years 7-8)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/7"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/8"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 5 (Years 7-8)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/c7528e51-8b39-4a85-9180-c61476410be0"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9dea1707-d961-440c-bdac-4757294fbe34"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 7</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/c7528e51-8b39-4a85-9180-c61476410be0">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/5"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB5_1</statementNotation>
+	<dcterms:description xml:lang="en-au">analyse the relationships between values, ethical perspectives and ethical frameworks when responding to ethical issues</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/7"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/8"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">analyse the relationships between values, ethical perspectives and ethical frameworks when responding to ethical issues</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/8ed50b08-7fa5-4f05-9229-a4882f9662f0"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 7</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/15f5e20a-6b9a-4fb2-98c3-cc8620fc0ed0">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/6"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB6</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 6 (Years 9-10)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/9"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/10"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 6 (Years 9-10)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/5ca09831-9f2d-45a4-a1cd-d0f51d98f463"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9dea1707-d961-440c-bdac-4757294fbe34"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 10</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/5ca09831-9f2d-45a4-a1cd-d0f51d98f463">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/6"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESB6_1</statementNotation>
+	<dcterms:description xml:lang="en-au">apply knowledge of ethical concepts, values, perspectives and frameworks when responding to ethical issues</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/9"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/10"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">apply knowledge of ethical concepts, values, perspectives and frameworks when responding to ethical issues</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/15f5e20a-6b9a-4fb2-98c3-cc8620fc0ed0"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 10</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e49dd90e-e0c0-4ecf-9447-edf1f66fa153">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Sub-Element</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC</statementNotation>
+	<dcterms:description xml:lang="en-au">&lt;p&gt;This sub-element supports students to recognise the factors that impact on ethical decisions, determine alternative responses to an issue, and consider how these may impact potential outcomes.&lt;/p&gt;</dcterms:description>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Making and reflecting on ethical decisions</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/1f04a410-7906-44b0-a7d8-4fa2475f47fa"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/649705bc-d1cd-4bc5-a0b5-8b61340d9cac"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/5b3f9a31-9646-4882-825f-52c05737664b"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/65121be8-34e8-4f08-8196-dd2c66a6d2ba"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/8cf19d13-087a-4d3d-bcda-e826640872f8"/>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/27c22151-2c0e-46b9-9846-4997bd48a5d5"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/3524986c-6be1-430b-a030-0655c03b4192"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/1f04a410-7906-44b0-a7d8-4fa2475f47fa">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/1"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC1</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 1 (Foundation)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/0"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 1 (Foundation)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/4bf3ac85-8d43-4d58-b00b-c97530515b09"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e49dd90e-e0c0-4ecf-9447-edf1f66fa153"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Foundation Year</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/4bf3ac85-8d43-4d58-b00b-c97530515b09">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/1"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC1_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify the links between people’s wants and needs and their choices and actions</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/0"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify the links between people’s wants and needs and their choices and actions</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/1f04a410-7906-44b0-a7d8-4fa2475f47fa"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Foundation Year</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/649705bc-d1cd-4bc5-a0b5-8b61340d9cac">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/2"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC2</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 2 (Years 1-2)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/1"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/2"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 2 (Years 1-2)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9cf52e0e-1507-4e77-b583-4e6f23fdc7b0"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e49dd90e-e0c0-4ecf-9447-edf1f66fa153"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 1</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/9cf52e0e-1507-4e77-b583-4e6f23fdc7b0">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/2"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC2_1</statementNotation>
+	<dcterms:description xml:lang="en-au">identify examples of how perspectives and values influence decision-making </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/1"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/2"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">identify examples of how perspectives and values influence decision-making </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/649705bc-d1cd-4bc5-a0b5-8b61340d9cac"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 1</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/5b3f9a31-9646-4882-825f-52c05737664b">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/3"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC3</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 3 (Years 3-4)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/3"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/4"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 3 (Years 3-4)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/f41c2928-b361-47aa-be5c-d4d745b8625e"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e49dd90e-e0c0-4ecf-9447-edf1f66fa153"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 3</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/f41c2928-b361-47aa-be5c-d4d745b8625e">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/3"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC3_1</statementNotation>
+	<dcterms:description xml:lang="en-au">describe decision-making processes with reference to ethical perspective and values     </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/3"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/4"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">describe decision-making processes with reference to ethical perspective and values     </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/5b3f9a31-9646-4882-825f-52c05737664b"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 3</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/65121be8-34e8-4f08-8196-dd2c66a6d2ba">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/4"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC4</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 4 (Years 5-6)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/5"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/6"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 4 (Years 5-6)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e7e5f67d-a5aa-47bb-ad97-38d46d00c3fa"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e49dd90e-e0c0-4ecf-9447-edf1f66fa153"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 5</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e7e5f67d-a5aa-47bb-ad97-38d46d00c3fa">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/4"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC4_1</statementNotation>
+	<dcterms:description xml:lang="en-au">consider alternative ethical responses to an issue when making and reflecting on ethical decisions</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/5"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/6"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">consider alternative ethical responses to an issue when making and reflecting on ethical decisions</dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/65121be8-34e8-4f08-8196-dd2c66a6d2ba"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 5</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/8cf19d13-087a-4d3d-bcda-e826640872f8">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/5"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC5</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 5 (Years 7-8)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/7"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/8"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 5 (Years 7-8)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/43451a45-5a08-461f-b6ba-eed1ebf52e01"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e49dd90e-e0c0-4ecf-9447-edf1f66fa153"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 7</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/43451a45-5a08-461f-b6ba-eed1ebf52e01">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/5"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC5_1</statementNotation>
+	<dcterms:description xml:lang="en-au">consider how values and beliefs influence approaches to ethical issues, and analyse how these affect outcomes </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/7"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/8"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">consider how values and beliefs influence approaches to ethical issues, and analyse how these affect outcomes </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/8cf19d13-087a-4d3d-bcda-e826640872f8"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 7</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/27c22151-2c0e-46b9-9846-4997bd48a5d5">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/6"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Level</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC6</statementNotation>
+	<dcterms:description xml:lang="en-au">Level 6 (Years 9-10)</dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/9"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/10"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">Level 6 (Years 9-10)</dcterms:title>
+	<hasChild xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/40c459ed-c528-48b9-a025-d8bd1fe29aa0"/>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/e49dd90e-e0c0-4ecf-9447-edf1f66fa153"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 10</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/40c459ed-c528-48b9-a025-d8bd1fe29aa0">
+	<rdf:type rdf:resource="http://purl.org/ASN/schema/core/Statement"/>
+	<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
+	<authorityStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNAuthorityStatus/Original"/>
+	<conceptTerm xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">SCIENCE_TEACHER_BACKGROUND_INFORMATION</conceptTerm>
+	<indexingStatus xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://purl.org/ASN/scheme/ASNIndexingStatus/No"/>
+	<proficiencyLevel xmlns="http://purl.org/ASN/schema/core/" rdf:resource="http://vocabulary.curriculum.edu.au/progressionLevel/6"/>
+	<statementLabel xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">Indicator</statementLabel>
+	<statementNotation xmlns="http://purl.org/ASN/schema/core/" xml:lang="en-au">EURESC6_1</statementNotation>
+	<dcterms:description xml:lang="en-au">analyse biases when applying ethical concepts, values and ethical frameworks, in order to explore and evaluate ethical decisions </dcterms:description>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/9"/>
+	<dcterms:educationLevel rdf:resource="http://vocabulary.curriculum.edu.au/schoolLevel/10"/>
+	<dcterms:isPartOf rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/TBD"/>
+	<dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2021-09-03T15:54:30Z</dcterms:modified>
+	<dcterms:title xml:lang="en-au">analyse biases when applying ethical concepts, values and ethical frameworks, in order to explore and evaluate ethical decisions </dcterms:title>
+	<isChildOf xmlns="http://purl.org/gem/qualifiers/" rdf:resource="http://vocabulary.curriculum.edu.au/MRAC/2024/04/GC/EU/27c22151-2c0e-46b9-9846-4997bd48a5d5"/>
+	<nominalYearLevel xmlns="https://www.esa.edu.au/" xml:lang="en-au">Year 10</nominalYearLevel>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/2008/05/skos-xl">
+	<dcterms:contributor rdf:resource="http://vocabulary.curriculum.edu.au/user/srichardson"/>
+</rdf:Description>
+
+<rdf:Description rdf:about="http://www.w3.org/2004/02/skos/core">
+	<dcterms:contributor rdf:resource="http://vocabulary.curriculum.edu.au/user/srichardson"/>
+</rdf:Description>
+
+</rdf:RDF>
