@@ -286,11 +286,18 @@ designPitchRouter.post('/challenges', async (req, res) => {
       rubric: {
         id: `rubric-${Date.now()}`,
         criteria: data.rubric.criteria.map((c, i) => ({
-          ...c,
           id: `criterion-${i}`,
+          name: c.name!,
+          description: c.description!,
+          weight: c.weight!,
+          levels: c.levels!.map(l => ({
+            score: l.score!,
+            label: l.label!,
+            description: l.description!,
+          })),
         })),
         totalPoints: data.rubric.criteria.reduce((sum, c) =>
-          sum + c.weight * Math.max(...c.levels.map(l => l.score)), 0
+          sum + (c.weight ?? 0) * Math.max(...(c.levels ?? []).map(l => l.score ?? 0)), 0
         ),
       },
       schedule: {
@@ -298,15 +305,21 @@ designPitchRouter.post('/challenges', async (req, res) => {
         startDate: new Date(data.schedule.startDate),
         endDate: new Date(data.schedule.endDate),
         milestones: data.schedule.milestones.map((m, i) => ({
-          ...m,
           id: `milestone-${i}`,
+          name: m.name!,
+          phase: m.phase! as 'empathize_define' | 'ideate_prototype' | 'iterate_refine' | 'pitch_present',
           dueDate: new Date(m.dueDate),
+          deliverables: m.deliverables ?? [],
+          points: m.points ?? 0,
         })),
       },
       phases: data.phases.map(p => ({
-        ...p,
+        phase: p.phase! as 'empathize_define' | 'ideate_prototype' | 'iterate_refine' | 'pitch_present',
+        enabled: p.enabled ?? true,
         startDate: p.startDate ? new Date(p.startDate) : undefined,
         endDate: p.endDate ? new Date(p.endDate) : undefined,
+        requirements: p.requirements ?? [],
+        aiAssistanceLevel: (p.aiAssistanceLevel ?? 'moderate') as 'full' | 'moderate' | 'minimal' | 'none',
       })),
     });
 
@@ -485,9 +498,10 @@ designPitchRouter.post('/journeys/:journeyId/learning-goals', async (req, res) =
 
     const service = getDesignPitchAIService();
     const result = await service.addLearningGoal(tenantId, journeyId, {
-      ...data,
+      goal: data.goal,
+      category: data.category,
       targetDate: data.targetDate ? new Date(data.targetDate) : undefined,
-    });
+    } as { goal: string; category: 'knowledge' | 'skill' | 'mindset'; targetDate?: Date });
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -523,8 +537,12 @@ designPitchRouter.post('/journeys/:journeyId/personas', async (req, res) => {
     const result = await service.createUserPersona(tenantId, journeyId, {
       ...data,
       jobsToBeDone: data.jobsToBeDone.map((j, i) => ({
-        ...j,
         id: `job-${i}`,
+        job: j.job,
+        context: j.context,
+        desiredOutcome: j.desiredOutcome,
+        currentSolution: j.currentSolution,
+        frustrations: j.frustrations,
       })),
     });
 
@@ -582,7 +600,15 @@ designPitchRouter.post('/journeys/:journeyId/evidence', async (req, res) => {
     const data = addEvidenceSchema.parse(req.body);
 
     const service = getDesignPitchAIService();
-    const result = await service.addEvidence(tenantId, journeyId, data);
+    const result = await service.addEvidence(tenantId, journeyId, {
+      type: data.type,
+      title: data.title,
+      description: data.description,
+      insights: data.insights,
+      linkedPersonas: data.linkedPersonas,
+      fileUrl: data.fileUrl,
+      fileType: data.fileType,
+    } as { type: 'interview' | 'observation' | 'survey' | 'research' | 'data' | 'other'; title: string; description: string; insights: string[]; linkedPersonas: string[]; fileUrl?: string; fileType?: string });
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -619,7 +645,16 @@ designPitchRouter.post('/journeys/:journeyId/artifacts', async (req, res) => {
     const data = createArtifactSchema.parse(req.body);
 
     const service = getDesignPitchAIService();
-    const result = await service.createArtifact(tenantId, journeyId, data);
+    const result = await service.createArtifact(tenantId, journeyId, {
+      type: data.type,
+      title: data.title,
+      description: data.description,
+      fileUrl: data.fileUrl,
+      fileType: data.fileType,
+      metadata: data.metadata,
+      tags: data.tags,
+      linkedPersonas: data.linkedPersonas,
+    });
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -654,7 +689,12 @@ designPitchRouter.post('/artifacts/:artifactId/versions', async (req, res) => {
     const data = addVersionSchema.parse(req.body);
 
     const service = getDesignPitchAIService();
-    const result = await service.addArtifactVersion(tenantId, artifactId, data);
+    const result = await service.addArtifactVersion(tenantId, artifactId, {
+      fileUrl: data.fileUrl,
+      fileType: data.fileType,
+      metadata: data.metadata,
+      changelog: data.changelog,
+    });
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');

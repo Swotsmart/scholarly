@@ -87,7 +87,7 @@ export class PrismaTutorRepository implements TutorRepository {
         }
         if (filters?.sessionTypes && filters.sessionTypes.length > 0) {
           const matchesSessionType = t.sessionTypes.some((st) =>
-            filters.sessionTypes!.includes(st)
+            (filters.sessionTypes as string[]).includes(st)
           );
           if (!matchesSessionType) return false;
         }
@@ -250,7 +250,7 @@ export class PrismaTutorRepository implements TutorRepository {
         advanceBookingDays: 14,
         minimumNoticeHours: 24
       },
-      sessionTypes: (profile?.sessionTypes as SessionType[]) || ['online_video'],
+      sessionTypes: (profile?.sessionTypes || ['online_video']) as string[],
       maxStudentsPerGroup: profile?.maxGroupSize || 5,
       pricing: {
         currency: profile?.currency || 'AUD',
