@@ -282,45 +282,69 @@ designPitchRouter.post('/challenges', async (req, res) => {
 
     const service = getDesignPitchAIService();
     const result = await service.createChallenge(tenantId, instructorId, {
-      ...data,
+      title: data.title,
+      description: data.description,
+      problemDomain: data.problemDomain,
+      learningObjectives: data.learningObjectives,
+      constraints: {
+        maxTeamSize: data.constraints.maxTeamSize,
+        minTeamSize: data.constraints.minTeamSize,
+        maxSlides: data.constraints.maxSlides,
+        maxPitchMinutes: data.constraints.maxPitchMinutes,
+        minFontSize: data.constraints.minFontSize,
+        requiredArtifactTypes: data.constraints.requiredArtifactTypes,
+        peerReviewsRequired: data.constraints.peerReviewsRequired,
+      },
       rubric: {
         id: `rubric-${Date.now()}`,
         criteria: data.rubric.criteria.map((c, i) => ({
           id: `criterion-${i}`,
-          name: c.name!,
-          description: c.description!,
-          weight: c.weight!,
-          levels: c.levels!.map(l => ({
-            score: l.score!,
-            label: l.label!,
-            description: l.description!,
+          name: c.name,
+          description: c.description,
+          weight: c.weight,
+          levels: c.levels.map(l => ({
+            score: l.score,
+            label: l.label,
+            description: l.description,
           })),
         })),
         totalPoints: data.rubric.criteria.reduce((sum, c) =>
-          sum + (c.weight ?? 0) * Math.max(...(c.levels ?? []).map(l => l.score ?? 0)), 0
+          sum + c.weight * Math.max(...c.levels.map(l => l.score)), 0
         ),
       },
+      phases: data.phases.map(p => ({
+        phase: p.phase,
+        enabled: p.enabled,
+        startDate: p.startDate ? new Date(p.startDate) : undefined,
+        endDate: p.endDate ? new Date(p.endDate) : undefined,
+        requirements: p.requirements,
+        aiAssistanceLevel: p.aiAssistanceLevel,
+      })),
+      teamSettings: {
+        allowSoloProjects: data.teamSettings.allowSoloProjects,
+        teamFormation: data.teamSettings.teamFormation,
+        requireDiverseSkills: data.teamSettings.requireDiverseSkills,
+      },
       schedule: {
-        ...data.schedule,
         startDate: new Date(data.schedule.startDate),
         endDate: new Date(data.schedule.endDate),
         milestones: data.schedule.milestones.map((m, i) => ({
           id: `milestone-${i}`,
-          name: m.name!,
-          phase: m.phase! as 'empathize_define' | 'ideate_prototype' | 'iterate_refine' | 'pitch_present',
+          name: m.name,
+          phase: m.phase,
           dueDate: new Date(m.dueDate),
-          deliverables: m.deliverables ?? [],
-          points: m.points ?? 0,
+          deliverables: m.deliverables,
+          points: m.points,
         })),
       },
-      phases: data.phases.map(p => ({
-        phase: p.phase! as 'empathize_define' | 'ideate_prototype' | 'iterate_refine' | 'pitch_present',
-        enabled: p.enabled ?? true,
-        startDate: p.startDate ? new Date(p.startDate) : undefined,
-        endDate: p.endDate ? new Date(p.endDate) : undefined,
-        requirements: p.requirements ?? [],
-        aiAssistanceLevel: (p.aiAssistanceLevel ?? 'moderate') as 'full' | 'moderate' | 'minimal' | 'none',
-      })),
+      courseId: data.courseId,
+      ltiConfig: data.ltiConfig ? {
+        deploymentId: data.ltiConfig.deploymentId,
+        clientId: data.ltiConfig.clientId,
+        issuer: data.ltiConfig.issuer,
+        deepLinkingEnabled: data.ltiConfig.deepLinkingEnabled,
+        gradesyncEnabled: data.ltiConfig.gradesyncEnabled,
+      } : undefined,
     });
 
     if (!result.success) {
@@ -535,7 +559,13 @@ designPitchRouter.post('/journeys/:journeyId/personas', async (req, res) => {
 
     const service = getDesignPitchAIService();
     const result = await service.createUserPersona(tenantId, journeyId, {
-      ...data,
+      name: data.name,
+      demographics: data.demographics,
+      goals: data.goals,
+      painPoints: data.painPoints,
+      behaviors: data.behaviors,
+      quote: data.quote,
+      imageUrl: data.imageUrl,
       jobsToBeDone: data.jobsToBeDone.map((j, i) => ({
         id: `job-${i}`,
         job: j.job,
@@ -838,7 +868,24 @@ designPitchRouter.put('/reviews/:reviewId', async (req, res) => {
     const data = submitReviewSchema.parse(req.body);
 
     const service = getDesignPitchAIService();
-    const result = await service.submitPeerReview(tenantId, reviewId, data);
+    const result = await service.submitPeerReview(tenantId, reviewId, {
+      rubricScores: data.rubricScores.map(s => ({
+        criterionId: s.criterionId,
+        score: s.score,
+        feedback: s.feedback,
+      })),
+      feedbackText: data.feedbackText,
+      feedbackPins: data.feedbackPins.map(p => ({
+        x: p.x,
+        y: p.y,
+        page: p.page,
+        type: p.type,
+        comment: p.comment,
+      })),
+      strengths: data.strengths,
+      growthAreas: data.growthAreas,
+      overallRating: data.overallRating,
+    });
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -873,7 +920,13 @@ designPitchRouter.post('/reviews/:reviewId/pins', async (req, res) => {
     const data = addFeedbackPinSchema.parse(req.body);
 
     const service = getDesignPitchAIService();
-    const result = await service.addFeedbackPin(tenantId, reviewId, data);
+    const result = await service.addFeedbackPin(tenantId, reviewId, {
+      x: data.x,
+      y: data.y,
+      page: data.page,
+      type: data.type,
+      comment: data.comment,
+    });
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -1009,7 +1062,20 @@ designPitchRouter.put('/pitch-decks/:pitchDeckId/slides/:slideId', async (req, r
     const data = updateSlideSchema.parse(req.body);
 
     const service = getDesignPitchAIService();
-    const result = await service.updateSlide(tenantId, pitchDeckId, slideId, data);
+    const result = await service.updateSlide(tenantId, pitchDeckId, slideId, {
+      title: data.title,
+      type: data.type,
+      content: data.content ? {
+        layout: data.content.layout!,
+        headline: data.content.headline,
+        bodyText: data.content.bodyText,
+        bulletPoints: data.content.bulletPoints,
+        imageUrl: data.content.imageUrl,
+        videoUrl: data.content.videoUrl,
+      } : undefined,
+      speakerNotes: data.speakerNotes,
+      duration: data.duration,
+    });
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -1066,7 +1132,12 @@ designPitchRouter.post('/pitch-decks/:pitchDeckId/slides', async (req, res) => {
         order: data.order,
         type: data.type,
         title: data.title,
-        content: data.content,
+        content: {
+          layout: data.content.layout,
+          headline: data.content.headline,
+          bodyText: data.content.bodyText,
+          bulletPoints: data.content.bulletPoints,
+        },
         speakerNotes: data.speakerNotes,
         transitions: [{ type: 'fade', duration: 300 }],
       },
@@ -1157,7 +1228,10 @@ designPitchRouter.put('/pitch-decks/:pitchDeckId/practice/:practiceRunId', async
     const data = schema.parse(req.body);
 
     const service = getDesignPitchAIService();
-    const result = await service.endPracticeRun(tenantId, pitchDeckId, practiceRunId, data.slideTimings);
+    const result = await service.endPracticeRun(tenantId, pitchDeckId, practiceRunId, data.slideTimings.map(t => ({
+      slideId: t.slideId,
+      duration: t.duration,
+    })));
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -1196,7 +1270,12 @@ designPitchRouter.post('/journeys/:journeyId/grade', async (req, res) => {
 
     const service = getDesignPitchAIService();
     const result = await service.gradePitch(tenantId, journeyId, {
-      ...data,
+      rubricScores: data.rubricScores.map(s => ({
+        criterionId: s.criterionId,
+        score: s.score,
+        feedback: s.feedback,
+      })),
+      instructorFeedback: data.instructorFeedback,
       gradedBy,
     });
 
@@ -1285,7 +1364,12 @@ designPitchRouter.post('/challenges/:challengeId/teams', async (req, res) => {
     const data = createTeamSchema.parse(req.body);
 
     const service = getDesignPitchAIService();
-    const result = await service.createTeam(tenantId, challengeId, data.name, data.members);
+    const result = await service.createTeam(tenantId, challengeId, data.name, data.members.map(m => ({
+      userId: m.userId,
+      displayName: m.displayName,
+      email: m.email,
+      skills: m.skills,
+    })));
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
