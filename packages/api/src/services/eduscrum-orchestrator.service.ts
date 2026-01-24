@@ -4,31 +4,38 @@
  * Brings agile/scrum methodology to education with AI coaching. Students work
  * in self-organizing teams on learning sprints, with the AI acting as an
  * intelligent Scrum Master that adapts to each team's dynamics.
+ *
+ * ## Schema Integration
+ *
+ * Uses the enhanced schema with:
+ * - EduScrumTeam for team management
+ * - EduScrumSprint for sprint tracking
+ * - EduScrumRetrospective for retrospective data
  */
 
-import {
-  ScholarlyBaseService, Result, success, failure, ValidationError, NotFoundError,
-  Validator, EventBus, Cache, ScholarlyConfig
-} from '@scholarly/shared/types/scholarly-types';
+import { prisma, Prisma } from '@scholarly/database';
+import { ScholarlyBaseService, Result, success, failure } from './base.service';
+import { log } from '../lib/logger';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export interface LearningTeam {
-  id: string;
-  tenantId: string;
-  name: string;
-  members: TeamMember[];
-  maxSize: number;
-  formationType: 'self_selected' | 'ai_suggested' | 'teacher_assigned' | 'random';
-  dynamics: TeamDynamics;
-  currentSprintId?: string;
-  completedSprints: number;
-  averageVelocity: number;
-  createdAt: Date;
-}
+// Prisma model types with relations
+export type EduScrumTeamWithRelations = Prisma.EduScrumTeamGetPayload<{
+  include: {
+    sprints: true;
+    retrospectives: true;
+  };
+}>;
 
+export type EduScrumSprintWithRelations = Prisma.EduScrumSprintGetPayload<{
+  include: {
+    team: true;
+  };
+}>;
+
+// Team member structure stored in JSON
 export interface TeamMember {
   learnerId: string;
   role: 'member' | 'facilitator' | 'note_taker' | 'timekeeper';
@@ -37,6 +44,7 @@ export interface TeamMember {
   growthAreas: string[];
 }
 
+// Team dynamics for AI analysis
 export interface TeamDynamics {
   cohesionScore: number;
   participationBalance: number;
@@ -64,25 +72,10 @@ export interface TeamIntervention {
   status: 'suggested' | 'accepted' | 'completed' | 'dismissed';
 }
 
-export interface LearningSprint {
-  id: string;
-  tenantId: string;
-  teamId: string;
-  sprintNumber: number;
-  name: string;
-  goal: string;
-  startDate: string;
-  endDate: string;
-  duration: number;
-  backlogItems: SprintBacklogItem[];
-  ceremonies: SprintCeremony[];
-  status: 'planning' | 'active' | 'review' | 'retrospective' | 'completed';
-  burndownData: BurndownPoint[];
-  metrics: SprintMetrics;
-  aiCoaching: AISprintCoaching;
-  createdAt: Date;
-}
+export type TeamFormationType = 'self_selected' | 'ai_suggested' | 'teacher_assigned' | 'random';
+export type TeamMaturityLevel = 'forming' | 'storming' | 'norming' | 'performing';
 
+// Sprint backlog item stored in JSON
 export interface SprintBacklogItem {
   id: string;
   title: string;
@@ -94,32 +87,23 @@ export interface SprintBacklogItem {
   acceptanceCriteria: string[];
   criteriaMetStatus: Record<string, boolean>;
   blockers: Blocker[];
-  movedToInProgressAt?: Date;
-  completedAt?: Date;
+  movedToInProgressAt?: string;
+  completedAt?: string;
 }
 
 export interface Blocker {
   id: string;
   description: string;
   reportedBy: string;
-  reportedAt: Date;
-  resolvedAt?: Date;
+  reportedAt: string;
+  resolvedAt?: string;
   aiSuggestedResolution?: string;
 }
 
-export interface SprintCeremony {
-  type: 'planning' | 'daily_standup' | 'review' | 'retrospective';
-  scheduledAt: string;
-  duration: number;
-  status: 'scheduled' | 'completed' | 'skipped';
-  notes?: CeremonyNotes;
-}
-
-export interface CeremonyNotes {
-  standupResponses?: StandupResponse[];
-  wentWell?: string[];
-  toImprove?: string[];
-  actionItems?: { id: string; description: string; assignedTo: string; status: string }[];
+export interface StandupEntry {
+  date: string;
+  responses: StandupResponse[];
+  aiSummary?: string;
 }
 
 export interface StandupResponse {
@@ -136,16 +120,7 @@ export interface BurndownPoint {
   actualRemaining: number;
 }
 
-export interface SprintMetrics {
-  plannedPoints: number;
-  completedPoints: number;
-  velocityRatio: number;
-  qualityRatio: number;
-  participationRate: number;
-  velocityTrend: 'increasing' | 'stable' | 'decreasing';
-}
-
-export interface AISprintCoaching {
+export interface AIInsights {
   currentInsights: AIInsight[];
   completionPrediction: { likelyToComplete: boolean; confidence: number; riskFactors: string[] };
   coachingMessages: CoachingMessage[];
@@ -154,7 +129,7 @@ export interface AISprintCoaching {
 
 export interface AIInsight {
   id: string;
-  timestamp: Date;
+  timestamp: string;
   type: 'progress' | 'collaboration' | 'quality' | 'risk';
   title: string;
   description: string;
@@ -163,7 +138,7 @@ export interface AIInsight {
 
 export interface CoachingMessage {
   id: string;
-  timestamp: Date;
+  timestamp: string;
   targetAudience: 'team' | 'individual';
   targetId?: string;
   messageType: 'encouragement' | 'suggestion' | 'warning' | 'celebration';
@@ -178,556 +153,1100 @@ export interface KanbanBoard {
   columns: { id: string; name: string; status: string; itemIds: string[]; wipLimit?: number }[];
 }
 
-// ============================================================================
-// REPOSITORIES
-// ============================================================================
-
-export interface TeamRepository {
-  findById(tenantId: string, id: string): Promise<LearningTeam | null>;
-  findByMember(tenantId: string, learnerId: string): Promise<LearningTeam[]>;
-  save(tenantId: string, team: LearningTeam): Promise<LearningTeam>;
-  update(tenantId: string, id: string, updates: Partial<LearningTeam>): Promise<LearningTeam>;
-}
-
-export interface SprintRepository {
-  findById(tenantId: string, id: string): Promise<LearningSprint | null>;
-  findByTeam(tenantId: string, teamId: string): Promise<LearningSprint[]>;
-  findActive(tenantId: string, teamId: string): Promise<LearningSprint | null>;
-  save(tenantId: string, sprint: LearningSprint): Promise<LearningSprint>;
-  update(tenantId: string, id: string, updates: Partial<LearningSprint>): Promise<LearningSprint>;
+// Retrospective action item
+export interface ActionItem {
+  id: string;
+  description: string;
+  assignedTo: string;
+  status: 'open' | 'in_progress' | 'completed';
 }
 
 // ============================================================================
 // SERVICE
 // ============================================================================
 
+let eduScrumOrchestratorInstance: EduScrumOrchestrator | null = null;
+
 export class EduScrumOrchestrator extends ScholarlyBaseService {
-  private readonly teamRepo: TeamRepository;
-  private readonly sprintRepo: SprintRepository;
-
-  constructor(deps: {
-    eventBus: EventBus; cache: Cache; config: ScholarlyConfig;
-    teamRepo: TeamRepository; sprintRepo: SprintRepository;
-  }) {
-    super('EduScrumOrchestrator', deps);
-    this.teamRepo = deps.teamRepo;
-    this.sprintRepo = deps.sprintRepo;
+  constructor() {
+    super('EduScrumOrchestrator');
   }
 
-  async formTeam(tenantId: string, request: {
-    name: string; memberIds: string[]; formationType: LearningTeam['formationType'];
-  }): Promise<Result<LearningTeam>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.required(request.name, 'name');
-      if (request.memberIds.length < 2) throw new ValidationError('Team must have at least 2 members');
-    } catch (e) { return failure(e as ValidationError); }
+  /**
+   * Form a new EduScrum team
+   */
+  async formTeam(
+    tenantId: string,
+    request: {
+      name: string;
+      memberIds: string[];
+      formationType: TeamFormationType;
+      scrumMasterId: string;
+      productOwnerId?: string;
+      description?: string;
+    }
+  ): Promise<Result<EduScrumTeamWithRelations>> {
+    return this.withTiming('formTeam', async () => {
+      if (!request.name?.trim()) {
+        return failure({ code: 'VALIDATION_ERROR', message: 'Team name is required' });
+      }
+      if (request.memberIds.length < 2) {
+        return failure({ code: 'VALIDATION_ERROR', message: 'Team must have at least 2 members' });
+      }
 
-    return this.withTiming('formTeam', tenantId, async () => {
-      const analysis = await this.aiAnalyzeComposition(request.memberIds);
-
-      const team: LearningTeam = {
-        id: this.generateId('team'), tenantId, name: request.name,
-        members: request.memberIds.map((id, idx) => ({
-          learnerId: id, role: idx === 0 ? 'facilitator' as const : 'member' as const,
-          contributionScore: 50, strengths: analysis.strengths[id] || [], growthAreas: []
-        })),
-        maxSize: 5, formationType: request.formationType,
-        dynamics: {
-          cohesionScore: 50, participationBalance: 100, conflictLevel: 'none',
-          aiObservations: [], suggestedInterventions: analysis.suggestions, trend: 'stable'
+      const team = await prisma.eduScrumTeam.create({
+        data: {
+          tenantId,
+          name: request.name,
+          description: request.description,
+          scrumMasterId: request.scrumMasterId,
+          productOwnerId: request.productOwnerId,
+          memberIds: request.memberIds,
+          velocity: 0,
+          maturityLevel: 'forming',
+          healthScore: 50,
+          sprintDuration: 14,
+          status: 'active',
         },
-        completedSprints: 0, averageVelocity: 0, createdAt: new Date()
-      };
-
-      const saved = await this.teamRepo.save(tenantId, team);
-      await this.publishEvent('scholarly.eduscrum.team_formed', tenantId, { teamId: saved.id });
-      return saved;
-    }, {});
-  }
-
-  async suggestTeamComposition(tenantId: string, learnerIds: string[], teamSize: number): Promise<Result<{
-    suggestedTeams: { members: string[]; rationale: string; predictedCohesion: number }[];
-  }>> {
-    try { Validator.tenantId(tenantId); } catch (e) { return failure(e as ValidationError); }
-
-    return this.withTiming('suggestTeamComposition', tenantId, async () => {
-      const teams = await this.aiSuggestTeams(learnerIds, teamSize);
-      return { suggestedTeams: teams };
-    }, {});
-  }
-
-  async assessTeamDynamics(tenantId: string, teamId: string): Promise<Result<{
-    dynamics: TeamDynamics; recommendations: string[];
-  }>> {
-    try { Validator.tenantId(tenantId); Validator.required(teamId, 'teamId'); }
-    catch (e) { return failure(e as ValidationError); }
-
-    return this.withTiming('assessTeamDynamics', tenantId, async () => {
-      const team = await this.teamRepo.findById(tenantId, teamId);
-      if (!team) throw new NotFoundError('Team', teamId);
-
-      const sprints = await this.sprintRepo.findByTeam(tenantId, teamId);
-      const analysis = this.aiAnalyzeTeamDynamics(team, sprints);
-
-      team.dynamics = { ...team.dynamics, ...analysis.dynamics };
-      await this.teamRepo.update(tenantId, teamId, { dynamics: team.dynamics });
-
-      return { dynamics: team.dynamics, recommendations: analysis.recommendations };
-    }, {});
-  }
-
-  async startSprintPlanning(tenantId: string, teamId: string, config: {
-    name: string; goal: string; duration: number; startDate: string;
-  }): Promise<Result<LearningSprint>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.required(teamId, 'teamId');
-      Validator.required(config.goal, 'goal');
-    } catch (e) { return failure(e as ValidationError); }
-
-    return this.withTiming('startSprintPlanning', tenantId, async () => {
-      const team = await this.teamRepo.findById(tenantId, teamId);
-      if (!team) throw new NotFoundError('Team', teamId);
-
-      const activeSprint = await this.sprintRepo.findActive(tenantId, teamId);
-      if (activeSprint) throw new ValidationError('Team already has an active sprint');
-
-      const endDate = new Date(config.startDate);
-      endDate.setDate(endDate.getDate() + config.duration);
-      const suggestedVelocity = team.completedSprints === 0 ? 20 : Math.round(team.averageVelocity);
-
-      const sprint: LearningSprint = {
-        id: this.generateId('sprint'), tenantId, teamId,
-        sprintNumber: team.completedSprints + 1,
-        name: config.name, goal: config.goal,
-        startDate: config.startDate, endDate: endDate.toISOString(),
-        duration: config.duration, backlogItems: [],
-        ceremonies: this.generateCeremonies(config.startDate, config.duration),
-        status: 'planning', burndownData: [],
-        metrics: { plannedPoints: 0, completedPoints: 0, velocityRatio: 0, qualityRatio: 0, participationRate: 100, velocityTrend: 'stable' },
-        aiCoaching: {
-          currentInsights: [{
-            id: this.generateId('insight'), timestamp: new Date(), type: 'progress',
-            title: 'Sprint Planning Started',
-            description: `Based on your history, I suggest ${suggestedVelocity} story points.`,
-            priority: 'info'
-          }],
-          completionPrediction: { likelyToComplete: true, confidence: 0.5, riskFactors: [] },
-          coachingMessages: [],
-          difficultyAssessment: { current: 'appropriate' }
+        include: {
+          sprints: true,
+          retrospectives: true,
         },
-        createdAt: new Date()
-      };
-
-      const saved = await this.sprintRepo.save(tenantId, sprint);
-      await this.teamRepo.update(tenantId, teamId, { currentSprintId: saved.id });
-      await this.publishEvent('scholarly.eduscrum.sprint_planning_started', tenantId, { sprintId: saved.id });
-      return saved;
-    }, {});
-  }
-
-  async addToSprintBacklog(tenantId: string, sprintId: string, item: {
-    title: string; description: string; learningObjectiveId: string;
-    storyPoints: number; acceptanceCriteria: string[];
-  }): Promise<Result<SprintBacklogItem>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.required(sprintId, 'sprintId');
-    } catch (e) { return failure(e as ValidationError); }
-
-    return this.withTiming('addToSprintBacklog', tenantId, async () => {
-      const sprint = await this.sprintRepo.findById(tenantId, sprintId);
-      if (!sprint) throw new NotFoundError('Sprint', sprintId);
-      if (sprint.status !== 'planning') throw new ValidationError('Can only add during planning');
-
-      const backlogItem: SprintBacklogItem = {
-        id: this.generateId('item'), title: item.title, description: item.description,
-        learningObjectiveId: item.learningObjectiveId, storyPoints: item.storyPoints,
-        assignedTo: [], status: 'backlog', acceptanceCriteria: item.acceptanceCriteria,
-        criteriaMetStatus: {}, blockers: []
-      };
-
-      sprint.backlogItems.push(backlogItem);
-      sprint.metrics.plannedPoints += item.storyPoints;
-      sprint.aiCoaching.completionPrediction = this.aiPredictCompletion(sprint);
-
-      await this.sprintRepo.update(tenantId, sprintId, sprint);
-      return backlogItem;
-    }, {});
-  }
-
-  async startSprint(tenantId: string, sprintId: string): Promise<Result<LearningSprint>> {
-    try { Validator.tenantId(tenantId); Validator.required(sprintId, 'sprintId'); }
-    catch (e) { return failure(e as ValidationError); }
-
-    return this.withTiming('startSprint', tenantId, async () => {
-      const sprint = await this.sprintRepo.findById(tenantId, sprintId);
-      if (!sprint) throw new NotFoundError('Sprint', sprintId);
-      if (sprint.status !== 'planning') throw new ValidationError('Sprint not in planning');
-
-      sprint.backlogItems = sprint.backlogItems.map(i => ({ ...i, status: 'todo' as const }));
-      sprint.status = 'active';
-      sprint.burndownData = [{
-        date: new Date().toISOString(),
-        plannedRemaining: sprint.metrics.plannedPoints,
-        actualRemaining: sprint.metrics.plannedPoints
-      }];
-      sprint.aiCoaching.coachingMessages.push({
-        id: this.generateId('msg'), timestamp: new Date(), targetAudience: 'team',
-        messageType: 'encouragement',
-        content: `Sprint "${sprint.name}" is GO! Goal: "${sprint.goal}". ${sprint.metrics.plannedPoints} points in ${sprint.duration} days. You've got this!`,
-        acknowledged: false
       });
 
-      const updated = await this.sprintRepo.update(tenantId, sprintId, sprint);
-      await this.publishEvent('scholarly.eduscrum.sprint_started', tenantId, { sprintId });
-      return updated;
-    }, {});
+      log.info('EduScrum team formed', { teamId: team.id, memberCount: request.memberIds.length });
+
+      return success(team);
+    });
   }
 
-  async recordStandup(tenantId: string, sprintId: string, responses: StandupResponse[]): Promise<Result<{
-    sprint: LearningSprint; aiSummary: string; flaggedConcerns: string[];
+  /**
+   * Get AI suggestions for team composition
+   */
+  async suggestTeamComposition(
+    tenantId: string,
+    learnerIds: string[],
+    teamSize: number
+  ): Promise<Result<{
+    suggestedTeams: { members: string[]; rationale: string; predictedCohesion: number }[];
   }>> {
-    try { Validator.tenantId(tenantId); Validator.required(sprintId, 'sprintId'); }
-    catch (e) { return failure(e as ValidationError); }
+    return this.withTiming('suggestTeamComposition', async () => {
+      const teams = await this.aiSuggestTeams(learnerIds, teamSize);
+      return success({ suggestedTeams: teams });
+    });
+  }
 
-    return this.withTiming('recordStandup', tenantId, async () => {
-      const sprint = await this.sprintRepo.findById(tenantId, sprintId);
-      if (!sprint) throw new NotFoundError('Sprint', sprintId);
+  /**
+   * Assess team dynamics and get AI recommendations
+   */
+  async assessTeamDynamics(
+    tenantId: string,
+    teamId: string
+  ): Promise<Result<{
+    dynamics: TeamDynamics;
+    recommendations: string[];
+  }>> {
+    return this.withTiming('assessTeamDynamics', async () => {
+      const team = await prisma.eduScrumTeam.findFirst({
+        where: { id: teamId, tenantId },
+        include: {
+          sprints: true,
+          retrospectives: true,
+        },
+      });
 
-      const analysis = this.aiAnalyzeStandup(responses, sprint);
-      sprint.aiCoaching.currentInsights.push(...analysis.insights);
+      if (!team) {
+        return failure({ code: 'NOT_FOUND', message: `Team ${teamId} not found` });
+      }
 
+      const analysis = this.aiAnalyzeTeamDynamics(team);
+
+      // Update health score
+      await prisma.eduScrumTeam.update({
+        where: { id: teamId },
+        data: { healthScore: analysis.dynamics.cohesionScore },
+      });
+
+      return success({ dynamics: analysis.dynamics, recommendations: analysis.recommendations });
+    });
+  }
+
+  /**
+   * Get a team by ID
+   */
+  async getTeam(
+    tenantId: string,
+    teamId: string
+  ): Promise<Result<EduScrumTeamWithRelations>> {
+    return this.withTiming('getTeam', async () => {
+      const team = await prisma.eduScrumTeam.findFirst({
+        where: { id: teamId, tenantId },
+        include: {
+          sprints: { orderBy: { sprintNumber: 'desc' } },
+          retrospectives: { orderBy: { conductedAt: 'desc' } },
+        },
+      });
+
+      if (!team) {
+        return failure({ code: 'NOT_FOUND', message: `Team ${teamId} not found` });
+      }
+
+      return success(team);
+    });
+  }
+
+  /**
+   * Get teams for a member
+   */
+  async getTeamsByMember(
+    tenantId: string,
+    memberId: string
+  ): Promise<Result<EduScrumTeamWithRelations[]>> {
+    return this.withTiming('getTeamsByMember', async () => {
+      const teams = await prisma.eduScrumTeam.findMany({
+        where: {
+          tenantId,
+          memberIds: { has: memberId },
+          status: 'active',
+        },
+        include: {
+          sprints: { orderBy: { sprintNumber: 'desc' }, take: 1 },
+          retrospectives: { orderBy: { conductedAt: 'desc' }, take: 1 },
+        },
+      });
+
+      return success(teams);
+    });
+  }
+
+  /**
+   * Start sprint planning for a team
+   */
+  async startSprintPlanning(
+    tenantId: string,
+    teamId: string,
+    config: {
+      name: string;
+      goal: string;
+      duration?: number;
+      startDate: Date;
+    }
+  ): Promise<Result<EduScrumSprintWithRelations>> {
+    return this.withTiming('startSprintPlanning', async () => {
+      if (!config.goal?.trim()) {
+        return failure({ code: 'VALIDATION_ERROR', message: 'Sprint goal is required' });
+      }
+
+      const team = await prisma.eduScrumTeam.findFirst({
+        where: { id: teamId, tenantId },
+        include: { sprints: { orderBy: { sprintNumber: 'desc' }, take: 1 } },
+      });
+
+      if (!team) {
+        return failure({ code: 'NOT_FOUND', message: `Team ${teamId} not found` });
+      }
+
+      // Check for active sprint
+      const activeSprint = await prisma.eduScrumSprint.findFirst({
+        where: {
+          teamId,
+          status: { in: ['planning', 'active', 'review'] },
+        },
+      });
+
+      if (activeSprint) {
+        return failure({ code: 'CONFLICT', message: 'Team already has an active sprint' });
+      }
+
+      const sprintDuration = config.duration || team.sprintDuration;
+      const endDate = new Date(config.startDate);
+      endDate.setDate(endDate.getDate() + sprintDuration);
+
+      const lastSprintNumber = team.sprints[0]?.sprintNumber || 0;
+      const suggestedVelocity = Math.round(team.velocity) || 20;
+
+      // Create initial AI insights
+      const aiInsights: AIInsights = {
+        currentInsights: [{
+          id: this.generateId('insight'),
+          timestamp: new Date().toISOString(),
+          type: 'progress',
+          title: 'Sprint Planning Started',
+          description: `Based on your history, I suggest ${suggestedVelocity} story points.`,
+          priority: 'info',
+        }],
+        completionPrediction: { likelyToComplete: true, confidence: 0.5, riskFactors: [] },
+        coachingMessages: [],
+        difficultyAssessment: { current: 'appropriate' },
+      };
+
+      const sprint = await prisma.eduScrumSprint.create({
+        data: {
+          tenantId,
+          teamId,
+          name: config.name,
+          goal: config.goal,
+          sprintNumber: lastSprintNumber + 1,
+          startDate: config.startDate,
+          endDate,
+          backlogItems: [],
+          totalStoryPoints: 0,
+          completedPoints: 0,
+          standups: [],
+          burndownData: [],
+          aiInsights: aiInsights as unknown as Prisma.InputJsonValue,
+          status: 'planning',
+        },
+        include: { team: true },
+      });
+
+      log.info('Sprint planning started', { sprintId: sprint.id, teamId });
+
+      return success(sprint);
+    });
+  }
+
+  /**
+   * Add item to sprint backlog
+   */
+  async addToSprintBacklog(
+    tenantId: string,
+    sprintId: string,
+    item: {
+      title: string;
+      description: string;
+      learningObjectiveId: string;
+      storyPoints: number;
+      acceptanceCriteria: string[];
+    }
+  ): Promise<Result<SprintBacklogItem>> {
+    return this.withTiming('addToSprintBacklog', async () => {
+      const sprint = await prisma.eduScrumSprint.findFirst({
+        where: { id: sprintId, tenantId },
+      });
+
+      if (!sprint) {
+        return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
+      }
+
+      if (sprint.status !== 'planning') {
+        return failure({ code: 'VALIDATION_ERROR', message: 'Can only add items during planning phase' });
+      }
+
+      const backlogItem: SprintBacklogItem = {
+        id: this.generateId('item'),
+        title: item.title,
+        description: item.description,
+        learningObjectiveId: item.learningObjectiveId,
+        storyPoints: item.storyPoints,
+        assignedTo: [],
+        status: 'backlog',
+        acceptanceCriteria: item.acceptanceCriteria,
+        criteriaMetStatus: {},
+        blockers: [],
+      };
+
+      const currentBacklog = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const newBacklog = [...currentBacklog, backlogItem];
+      const newTotalPoints = sprint.totalStoryPoints + item.storyPoints;
+
+      // Update AI prediction
+      const aiInsights = (sprint.aiInsights as unknown as AIInsights) || this.getDefaultAIInsights();
+      aiInsights.completionPrediction = this.aiPredictCompletion(newTotalPoints, sprint.completedPoints, sprint.startDate, sprint.endDate);
+
+      await prisma.eduScrumSprint.update({
+        where: { id: sprintId },
+        data: {
+          backlogItems: newBacklog as unknown as Prisma.InputJsonValue,
+          totalStoryPoints: newTotalPoints,
+          aiInsights: aiInsights as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      return success(backlogItem);
+    });
+  }
+
+  /**
+   * Start an active sprint
+   */
+  async startSprint(
+    tenantId: string,
+    sprintId: string
+  ): Promise<Result<EduScrumSprintWithRelations>> {
+    return this.withTiming('startSprint', async () => {
+      const sprint = await prisma.eduScrumSprint.findFirst({
+        where: { id: sprintId, tenantId },
+        include: { team: true },
+      });
+
+      if (!sprint) {
+        return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
+      }
+
+      if (sprint.status !== 'planning') {
+        return failure({ code: 'VALIDATION_ERROR', message: 'Sprint must be in planning phase to start' });
+      }
+
+      // Move all items to 'todo' status
+      const backlogItems = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const updatedItems = backlogItems.map((item) => ({ ...item, status: 'todo' as const }));
+
+      // Initialize burndown
+      const burndownData: BurndownPoint[] = [{
+        date: new Date().toISOString(),
+        plannedRemaining: sprint.totalStoryPoints,
+        actualRemaining: sprint.totalStoryPoints,
+      }];
+
+      // Add coaching message
+      const aiInsights = (sprint.aiInsights as unknown as AIInsights) || this.getDefaultAIInsights();
+      const durationDays = Math.ceil((sprint.endDate.getTime() - sprint.startDate.getTime()) / 86400000);
+      aiInsights.coachingMessages.push({
+        id: this.generateId('msg'),
+        timestamp: new Date().toISOString(),
+        targetAudience: 'team',
+        messageType: 'encouragement',
+        content: `Sprint "${sprint.name}" is GO! Goal: "${sprint.goal}". ${sprint.totalStoryPoints} points in ${durationDays} days. You've got this!`,
+        acknowledged: false,
+      });
+
+      const updated = await prisma.eduScrumSprint.update({
+        where: { id: sprintId },
+        data: {
+          status: 'active',
+          backlogItems: updatedItems as unknown as Prisma.InputJsonValue,
+          burndownData: burndownData as unknown as Prisma.InputJsonValue,
+          aiInsights: aiInsights as unknown as Prisma.InputJsonValue,
+        },
+        include: { team: true },
+      });
+
+      log.info('Sprint started', { sprintId });
+
+      return success(updated);
+    });
+  }
+
+  /**
+   * Record daily standup responses
+   */
+  async recordStandup(
+    tenantId: string,
+    sprintId: string,
+    responses: StandupResponse[]
+  ): Promise<Result<{
+    aiSummary: string;
+    flaggedConcerns: string[];
+  }>> {
+    return this.withTiming('recordStandup', async () => {
+      const sprint = await prisma.eduScrumSprint.findFirst({
+        where: { id: sprintId, tenantId },
+      });
+
+      if (!sprint) {
+        return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
+      }
+
+      const analysis = this.aiAnalyzeStandup(responses);
+
+      // Update standups
+      const standups = (sprint.standups as StandupEntry[]) || [];
+      standups.push({
+        date: new Date().toISOString(),
+        responses,
+        aiSummary: analysis.summary,
+      });
+
+      // Update burndown
+      const backlogItems = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const remainingPoints = backlogItems
+        .filter((i) => i.status !== 'done')
+        .reduce((s, i) => s + i.storyPoints, 0);
+
+      const burndownData = (sprint.burndownData as BurndownPoint[]) || [];
+      burndownData.push({
+        date: new Date().toISOString(),
+        plannedRemaining: this.calculateIdealBurndown(sprint.totalStoryPoints, sprint.startDate, sprint.endDate),
+        actualRemaining: remainingPoints,
+      });
+
+      // Update AI insights with concerns
+      const aiInsights = (sprint.aiInsights as unknown as AIInsights) || this.getDefaultAIInsights();
+      aiInsights.currentInsights.push(...analysis.insights);
       for (const concern of analysis.concerns) {
-        sprint.aiCoaching.coachingMessages.push({
-          id: this.generateId('msg'), timestamp: new Date(), targetAudience: 'individual',
-          targetId: concern.memberId, messageType: 'suggestion', content: concern.message, acknowledged: false
+        aiInsights.coachingMessages.push({
+          id: this.generateId('msg'),
+          timestamp: new Date().toISOString(),
+          targetAudience: 'individual',
+          targetId: concern.memberId,
+          messageType: 'suggestion',
+          content: concern.message,
+          acknowledged: false,
         });
       }
 
-      const remainingPoints = sprint.backlogItems.filter(i => i.status !== 'done').reduce((s, i) => s + i.storyPoints, 0);
-      sprint.burndownData.push({
-        date: new Date().toISOString(),
-        plannedRemaining: this.calculateIdealBurndown(sprint),
-        actualRemaining: remainingPoints
+      await prisma.eduScrumSprint.update({
+        where: { id: sprintId },
+        data: {
+          standups: standups as unknown as Prisma.InputJsonValue,
+          burndownData: burndownData as unknown as Prisma.InputJsonValue,
+          aiInsights: aiInsights as unknown as Prisma.InputJsonValue,
+        },
       });
 
-      await this.sprintRepo.update(tenantId, sprintId, sprint);
-      return { sprint, aiSummary: analysis.summary, flaggedConcerns: analysis.concerns.map(c => c.description) };
-    }, {});
+      return success({
+        aiSummary: analysis.summary,
+        flaggedConcerns: analysis.concerns.map((c) => c.description),
+      });
+    });
   }
 
-  async moveItem(tenantId: string, sprintId: string, itemId: string, newStatus: SprintBacklogItem['status']): Promise<Result<{
-    item: SprintBacklogItem; aiComment?: string;
+  /**
+   * Move backlog item to new status
+   */
+  async moveItem(
+    tenantId: string,
+    sprintId: string,
+    itemId: string,
+    newStatus: SprintBacklogItem['status']
+  ): Promise<Result<{
+    item: SprintBacklogItem;
+    aiComment?: string;
   }>> {
-    try { Validator.tenantId(tenantId); Validator.required(sprintId, 'sprintId'); }
-    catch (e) { return failure(e as ValidationError); }
+    return this.withTiming('moveItem', async () => {
+      const sprint = await prisma.eduScrumSprint.findFirst({
+        where: { id: sprintId, tenantId },
+      });
 
-    return this.withTiming('moveItem', tenantId, async () => {
-      const sprint = await this.sprintRepo.findById(tenantId, sprintId);
-      if (!sprint) throw new NotFoundError('Sprint', sprintId);
+      if (!sprint) {
+        return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
+      }
 
-      const item = sprint.backlogItems.find(i => i.id === itemId);
-      if (!item) throw new NotFoundError('Item', itemId);
+      const backlogItems = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const itemIndex = backlogItems.findIndex((i) => i.id === itemId);
 
+      if (itemIndex === -1) {
+        return failure({ code: 'NOT_FOUND', message: `Item ${itemId} not found` });
+      }
+
+      const item = backlogItems[itemIndex];
       const oldStatus = item.status;
       item.status = newStatus;
 
-      if (newStatus === 'in_progress' && !item.movedToInProgressAt) item.movedToInProgressAt = new Date();
-      if (newStatus === 'done') {
-        item.completedAt = new Date();
-        sprint.metrics.completedPoints += item.storyPoints;
+      let completedPoints = sprint.completedPoints;
+
+      if (newStatus === 'in_progress' && !item.movedToInProgressAt) {
+        item.movedToInProgressAt = new Date().toISOString();
       }
 
+      if (newStatus === 'done' && oldStatus !== 'done') {
+        item.completedAt = new Date().toISOString();
+        completedPoints += item.storyPoints;
+      } else if (oldStatus === 'done' && newStatus !== 'done') {
+        // Item moved out of done
+        completedPoints -= item.storyPoints;
+      }
+
+      // Generate AI comment
       let aiComment: string | undefined;
       if (newStatus === 'done') {
         aiComment = `"${item.title}" complete! +${item.storyPoints} points!`;
-        const prediction = this.aiPredictCompletion(sprint);
+        const prediction = this.aiPredictCompletion(sprint.totalStoryPoints, completedPoints, sprint.startDate, sprint.endDate);
         if (prediction.likelyToComplete) aiComment += ' On track for goal!';
       } else if (newStatus === 'in_progress') {
-        const wip = sprint.backlogItems.filter(i => i.status === 'in_progress').length;
+        const wip = backlogItems.filter((i) => i.status === 'in_progress').length;
         if (wip > 3) aiComment = `${wip} items in progress - finish some first!`;
       }
 
-      sprint.aiCoaching.completionPrediction = this.aiPredictCompletion(sprint);
-      await this.sprintRepo.update(tenantId, sprintId, sprint);
-      await this.publishEvent('scholarly.eduscrum.item_moved', tenantId, { sprintId, itemId, oldStatus, newStatus });
-      return { item, aiComment };
-    }, {});
+      // Update AI prediction
+      const aiInsights = (sprint.aiInsights as unknown as AIInsights) || this.getDefaultAIInsights();
+      aiInsights.completionPrediction = this.aiPredictCompletion(sprint.totalStoryPoints, completedPoints, sprint.startDate, sprint.endDate);
+
+      backlogItems[itemIndex] = item;
+
+      await prisma.eduScrumSprint.update({
+        where: { id: sprintId },
+        data: {
+          backlogItems: backlogItems as unknown as Prisma.InputJsonValue,
+          completedPoints,
+          aiInsights: aiInsights as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      log.info('Item moved', { sprintId, itemId, oldStatus, newStatus });
+
+      return success({ item, aiComment });
+    });
   }
 
-  async reportBlocker(tenantId: string, sprintId: string, itemId: string, description: string, reportedBy: string): Promise<Result<{
-    blocker: Blocker; aiSuggestion: string;
+  /**
+   * Report a blocker on an item
+   */
+  async reportBlocker(
+    tenantId: string,
+    sprintId: string,
+    itemId: string,
+    description: string,
+    reportedBy: string
+  ): Promise<Result<{
+    blocker: Blocker;
+    aiSuggestion: string;
   }>> {
-    try { Validator.tenantId(tenantId); Validator.required(sprintId, 'sprintId'); }
-    catch (e) { return failure(e as ValidationError); }
+    return this.withTiming('reportBlocker', async () => {
+      const sprint = await prisma.eduScrumSprint.findFirst({
+        where: { id: sprintId, tenantId },
+      });
 
-    return this.withTiming('reportBlocker', tenantId, async () => {
-      const sprint = await this.sprintRepo.findById(tenantId, sprintId);
-      if (!sprint) throw new NotFoundError('Sprint', sprintId);
+      if (!sprint) {
+        return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
+      }
 
-      const item = sprint.backlogItems.find(i => i.id === itemId);
-      if (!item) throw new NotFoundError('Item', itemId);
+      const backlogItems = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const itemIndex = backlogItems.findIndex((i) => i.id === itemId);
 
+      if (itemIndex === -1) {
+        return failure({ code: 'NOT_FOUND', message: `Item ${itemId} not found` });
+      }
+
+      const item = backlogItems[itemIndex];
       const aiSuggestion = this.aiSuggestBlockerResolution(description);
+
       const blocker: Blocker = {
-        id: this.generateId('blocker'), description, reportedBy,
-        reportedAt: new Date(), aiSuggestedResolution: aiSuggestion
+        id: this.generateId('blocker'),
+        description,
+        reportedBy,
+        reportedAt: new Date().toISOString(),
+        aiSuggestedResolution: aiSuggestion,
       };
 
       item.blockers.push(blocker);
-      sprint.aiCoaching.currentInsights.push({
-        id: this.generateId('insight'), timestamp: new Date(), type: 'risk',
-        title: 'Blocker Reported', description: `"${item.title}": ${description}`, priority: 'action_needed'
+      backlogItems[itemIndex] = item;
+
+      // Add AI insight
+      const aiInsights = (sprint.aiInsights as unknown as AIInsights) || this.getDefaultAIInsights();
+      aiInsights.currentInsights.push({
+        id: this.generateId('insight'),
+        timestamp: new Date().toISOString(),
+        type: 'risk',
+        title: 'Blocker Reported',
+        description: `"${item.title}": ${description}`,
+        priority: 'action_needed',
       });
 
-      await this.sprintRepo.update(tenantId, sprintId, sprint);
-      return { blocker, aiSuggestion };
-    }, {});
-  }
-
-  async runSprintReview(tenantId: string, sprintId: string, reviewData: {
-    demonstratedItems: string[]; feedbackReceived: string[];
-  }): Promise<Result<{ sprint: LearningSprint; aiSummary: string; learningOutcomes: string[] }>> {
-    try { Validator.tenantId(tenantId); Validator.required(sprintId, 'sprintId'); }
-    catch (e) { return failure(e as ValidationError); }
-
-    return this.withTiming('runSprintReview', tenantId, async () => {
-      const sprint = await this.sprintRepo.findById(tenantId, sprintId);
-      if (!sprint) throw new NotFoundError('Sprint', sprintId);
-
-      sprint.status = 'review';
-      const completed = sprint.backlogItems.filter(i => i.status === 'done');
-      sprint.metrics.completedPoints = completed.reduce((s, i) => s + i.storyPoints, 0);
-      sprint.metrics.velocityRatio = sprint.metrics.completedPoints / Math.max(1, sprint.metrics.plannedPoints);
-
-      const aiSummary = this.aiGenerateReviewSummary(sprint);
-      const learningOutcomes = completed.map(i => `Mastered: ${i.title}`);
-
-      sprint.aiCoaching.coachingMessages.push({
-        id: this.generateId('msg'), timestamp: new Date(), targetAudience: 'team',
-        messageType: 'celebration', content: this.aiCelebrationMessage(sprint), acknowledged: false
+      await prisma.eduScrumSprint.update({
+        where: { id: sprintId },
+        data: {
+          backlogItems: backlogItems as unknown as Prisma.InputJsonValue,
+          aiInsights: aiInsights as unknown as Prisma.InputJsonValue,
+        },
       });
 
-      await this.sprintRepo.update(tenantId, sprintId, sprint);
-      return { sprint, aiSummary, learningOutcomes };
-    }, {});
+      return success({ blocker, aiSuggestion });
+    });
   }
 
-  async runRetrospective(tenantId: string, sprintId: string, retroData: {
-    wentWell: string[]; toImprove: string[]; actionItems: { description: string; assignedTo: string }[];
-  }): Promise<Result<{ sprint: LearningSprint; aiInsights: string[]; suggestedExperiments: string[] }>> {
-    try { Validator.tenantId(tenantId); Validator.required(sprintId, 'sprintId'); }
-    catch (e) { return failure(e as ValidationError); }
+  /**
+   * Run sprint review ceremony
+   */
+  async runSprintReview(
+    tenantId: string,
+    sprintId: string,
+    reviewData: {
+      demonstratedItems: string[];
+      feedbackReceived: string[];
+    }
+  ): Promise<Result<{
+    aiSummary: string;
+    learningOutcomes: string[];
+  }>> {
+    return this.withTiming('runSprintReview', async () => {
+      const sprint = await prisma.eduScrumSprint.findFirst({
+        where: { id: sprintId, tenantId },
+      });
 
-    return this.withTiming('runRetrospective', tenantId, async () => {
-      const sprint = await this.sprintRepo.findById(tenantId, sprintId);
-      if (!sprint) throw new NotFoundError('Sprint', sprintId);
+      if (!sprint) {
+        return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
+      }
 
-      sprint.status = 'retrospective';
-      const retroCeremony = sprint.ceremonies.find(c => c.type === 'retrospective');
-      if (retroCeremony) {
-        retroCeremony.status = 'completed';
-        retroCeremony.notes = {
-          wentWell: retroData.wentWell, toImprove: retroData.toImprove,
-          actionItems: retroData.actionItems.map(ai => ({
-            id: this.generateId('action'), description: ai.description,
-            assignedTo: ai.assignedTo, status: 'open'
-          }))
-        };
+      const backlogItems = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const completedItems = backlogItems.filter((i) => i.status === 'done');
+      const completedPoints = completedItems.reduce((s, i) => s + i.storyPoints, 0);
+      const velocityRatio = completedPoints / Math.max(1, sprint.totalStoryPoints);
+
+      const aiSummary = this.aiGenerateReviewSummary(sprint.name, completedPoints, sprint.totalStoryPoints);
+      const learningOutcomes = completedItems.map((i) => `Mastered: ${i.title}`);
+
+      // Add celebration message
+      const aiInsights = (sprint.aiInsights as unknown as AIInsights) || this.getDefaultAIInsights();
+      aiInsights.coachingMessages.push({
+        id: this.generateId('msg'),
+        timestamp: new Date().toISOString(),
+        targetAudience: 'team',
+        messageType: 'celebration',
+        content: this.aiCelebrationMessage(velocityRatio, completedPoints),
+        acknowledged: false,
+      });
+
+      await prisma.eduScrumSprint.update({
+        where: { id: sprintId },
+        data: {
+          status: 'review',
+          completedPoints,
+          aiInsights: aiInsights as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      return success({ aiSummary, learningOutcomes });
+    });
+  }
+
+  /**
+   * Run retrospective ceremony
+   */
+  async runRetrospective(
+    tenantId: string,
+    sprintId: string,
+    retroData: {
+      wentWell: string[];
+      toImprove: string[];
+      actionItems: { description: string; assignedTo: string }[];
+      facilitatorId: string;
+      participantIds: string[];
+    }
+  ): Promise<Result<{
+    retrospective: Prisma.EduScrumRetrospectiveGetPayload<{}>;
+    aiInsights: string[];
+    suggestedExperiments: string[];
+  }>> {
+    return this.withTiming('runRetrospective', async () => {
+      const sprint = await prisma.eduScrumSprint.findFirst({
+        where: { id: sprintId, tenantId },
+        include: { team: true },
+      });
+
+      if (!sprint) {
+        return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
       }
 
       const aiInsights = this.aiAnalyzeRetro(retroData);
-      const suggestedExperiments = this.aiSuggestExperiments(retroData, sprint);
+      const suggestedExperiments = this.aiSuggestExperiments(retroData, sprint.completedPoints, sprint.totalStoryPoints);
 
-      await this.sprintRepo.update(tenantId, sprintId, sprint);
-      return { sprint, aiInsights, suggestedExperiments };
-    }, {});
+      // Create retrospective record
+      const retrospective = await prisma.eduScrumRetrospective.create({
+        data: {
+          tenantId,
+          teamId: sprint.teamId,
+          sprintId,
+          wentWell: retroData.wentWell as Prisma.InputJsonValue,
+          toImprove: retroData.toImprove as Prisma.InputJsonValue,
+          actionItems: retroData.actionItems.map((ai) => ({
+            id: this.generateId('action'),
+            description: ai.description,
+            assignedTo: ai.assignedTo,
+            status: 'open',
+          })) as unknown as Prisma.InputJsonValue,
+          participantIds: retroData.participantIds,
+          facilitatorId: retroData.facilitatorId,
+          aiSummary: `Team reflected on ${retroData.wentWell.length} positives and ${retroData.toImprove.length} areas to improve.`,
+          aiRecommendations: suggestedExperiments as Prisma.InputJsonValue,
+        },
+      });
+
+      // Update sprint status
+      await prisma.eduScrumSprint.update({
+        where: { id: sprintId },
+        data: { status: 'retrospective' },
+      });
+
+      return success({ retrospective, aiInsights, suggestedExperiments });
+    });
   }
 
-  async completeSprint(tenantId: string, sprintId: string): Promise<Result<{
-    sprint: LearningSprint; teamUpdate: { newVelocity: number; velocityTrend: string };
+  /**
+   * Complete a sprint and update team velocity
+   */
+  async completeSprint(
+    tenantId: string,
+    sprintId: string
+  ): Promise<Result<{
+    sprint: EduScrumSprintWithRelations;
+    teamUpdate: { newVelocity: number; velocityTrend: string };
   }>> {
-    try { Validator.tenantId(tenantId); Validator.required(sprintId, 'sprintId'); }
-    catch (e) { return failure(e as ValidationError); }
+    return this.withTiming('completeSprint', async () => {
+      const sprint = await prisma.eduScrumSprint.findFirst({
+        where: { id: sprintId, tenantId },
+        include: { team: true },
+      });
 
-    return this.withTiming('completeSprint', tenantId, async () => {
-      const sprint = await this.sprintRepo.findById(tenantId, sprintId);
-      if (!sprint) throw new NotFoundError('Sprint', sprintId);
+      if (!sprint) {
+        return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
+      }
 
-      sprint.status = 'completed';
+      const team = sprint.team;
+      const completedSprints = await prisma.eduScrumSprint.count({
+        where: { teamId: team.id, status: 'completed' },
+      });
 
-      const team = await this.teamRepo.findById(tenantId, sprint.teamId);
-      if (!team) throw new NotFoundError('Team', sprint.teamId);
-
-      const oldVelocity = team.averageVelocity;
-      const newVelocity = team.completedSprints === 0
-        ? sprint.metrics.completedPoints
-        : (team.averageVelocity * team.completedSprints + sprint.metrics.completedPoints) / (team.completedSprints + 1);
+      const oldVelocity = team.velocity;
+      const newVelocity =
+        completedSprints === 0
+          ? sprint.completedPoints
+          : (team.velocity * completedSprints + sprint.completedPoints) / (completedSprints + 1);
       const velocityTrend = newVelocity > oldVelocity ? 'increasing' : newVelocity < oldVelocity ? 'decreasing' : 'stable';
 
-      team.completedSprints++;
-      team.averageVelocity = newVelocity;
-      team.currentSprintId = undefined;
+      // Update team velocity
+      await prisma.eduScrumTeam.update({
+        where: { id: team.id },
+        data: { velocity: newVelocity },
+      });
 
-      await this.teamRepo.update(tenantId, sprint.teamId, team);
-      await this.sprintRepo.update(tenantId, sprintId, sprint);
-      await this.publishEvent('scholarly.eduscrum.sprint_completed', tenantId, { sprintId, newVelocity });
+      // Update sprint status
+      const updatedSprint = await prisma.eduScrumSprint.update({
+        where: { id: sprintId },
+        data: { status: 'completed' },
+        include: { team: true },
+      });
 
-      return { sprint, teamUpdate: { newVelocity, velocityTrend } };
-    }, {});
+      log.info('Sprint completed', { sprintId, newVelocity });
+
+      return success({
+        sprint: updatedSprint,
+        teamUpdate: { newVelocity, velocityTrend },
+      });
+    });
   }
 
-  async getKanbanBoard(tenantId: string, sprintId: string): Promise<Result<KanbanBoard>> {
-    try { Validator.tenantId(tenantId); Validator.required(sprintId, 'sprintId'); }
-    catch (e) { return failure(e as ValidationError); }
+  /**
+   * Get Kanban board view for a sprint
+   */
+  async getKanbanBoard(
+    tenantId: string,
+    sprintId: string
+  ): Promise<Result<KanbanBoard>> {
+    return this.withTiming('getKanbanBoard', async () => {
+      const sprint = await prisma.eduScrumSprint.findFirst({
+        where: { id: sprintId, tenantId },
+      });
 
-    return this.withTiming('getKanbanBoard', tenantId, async () => {
-      const sprint = await this.sprintRepo.findById(tenantId, sprintId);
-      if (!sprint) throw new NotFoundError('Sprint', sprintId);
+      if (!sprint) {
+        return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
+      }
+
+      const backlogItems = (sprint.backlogItems as SprintBacklogItem[]) || [];
 
       const columns = ['backlog', 'todo', 'in_progress', 'review', 'done'].map((status) => ({
-        id: status, name: status.replace('_', ' ').toUpperCase(), status,
-        itemIds: sprint.backlogItems.filter(item => item.status === status).map(item => item.id),
-        wipLimit: status === 'in_progress' ? 3 : undefined
+        id: status,
+        name: status.replace('_', ' ').toUpperCase(),
+        status,
+        itemIds: backlogItems.filter((item) => item.status === status).map((item) => item.id),
+        wipLimit: status === 'in_progress' ? 3 : undefined,
       }));
 
-      return { id: `board_${sprintId}`, teamId: sprint.teamId, sprintId, columns };
-    }, {});
+      return success({
+        id: `board_${sprintId}`,
+        teamId: sprint.teamId,
+        sprintId,
+        columns,
+      });
+    });
   }
 
-  async getAICoaching(tenantId: string, teamId: string): Promise<Result<{
-    insights: AIInsight[]; recommendations: string[]; pendingMessages: CoachingMessage[];
+  /**
+   * Get AI coaching insights for a team
+   */
+  async getAICoaching(
+    tenantId: string,
+    teamId: string
+  ): Promise<Result<{
+    insights: AIInsight[];
+    recommendations: string[];
+    pendingMessages: CoachingMessage[];
   }>> {
-    try { Validator.tenantId(tenantId); Validator.required(teamId, 'teamId'); }
-    catch (e) { return failure(e as ValidationError); }
+    return this.withTiming('getAICoaching', async () => {
+      const team = await prisma.eduScrumTeam.findFirst({
+        where: { id: teamId, tenantId },
+        include: {
+          sprints: {
+            where: { status: { in: ['planning', 'active', 'review'] } },
+            orderBy: { sprintNumber: 'desc' },
+            take: 1,
+          },
+        },
+      });
 
-    return this.withTiming('getAICoaching', tenantId, async () => {
-      const team = await this.teamRepo.findById(tenantId, teamId);
-      if (!team) throw new NotFoundError('Team', teamId);
+      if (!team) {
+        return failure({ code: 'NOT_FOUND', message: `Team ${teamId} not found` });
+      }
 
-      const sprint = team.currentSprintId ? await this.sprintRepo.findById(tenantId, team.currentSprintId) : null;
-      const insights = sprint?.aiCoaching.currentInsights.slice(-5) || [];
-      const pendingMessages = sprint?.aiCoaching.coachingMessages.filter(m => !m.acknowledged) || [];
-      const recommendations = sprint ? this.aiGenerateRecommendations(team, sprint) : [];
+      const activeSprint = team.sprints[0];
+      if (!activeSprint) {
+        return success({
+          insights: [],
+          recommendations: ['Start a new sprint to begin tracking progress'],
+          pendingMessages: [],
+        });
+      }
 
-      return { insights, recommendations, pendingMessages };
-    }, {});
+      const aiInsights = (activeSprint.aiInsights as unknown as AIInsights) || this.getDefaultAIInsights();
+      const backlogItems = (activeSprint.backlogItems as SprintBacklogItem[]) || [];
+
+      const insights = aiInsights.currentInsights.slice(-5);
+      const pendingMessages = aiInsights.coachingMessages.filter((m) => !m.acknowledged);
+      const recommendations = this.aiGenerateRecommendations(backlogItems);
+
+      return success({ insights, recommendations, pendingMessages });
+    });
   }
 
-  // Private AI Methods
-  private async aiAnalyzeComposition(memberIds: string[]): Promise<{
-    strengths: Record<string, string[]>; suggestions: TeamIntervention[];
-  }> {
-    const strengths: Record<string, string[]> = {};
-    memberIds.forEach(id => strengths[id] = ['collaboration']);
+  /**
+   * Get sprint by ID
+   */
+  async getSprint(
+    tenantId: string,
+    sprintId: string
+  ): Promise<Result<EduScrumSprintWithRelations>> {
+    return this.withTiming('getSprint', async () => {
+      const sprint = await prisma.eduScrumSprint.findFirst({
+        where: { id: sprintId, tenantId },
+        include: { team: true },
+      });
+
+      if (!sprint) {
+        return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
+      }
+
+      return success(sprint);
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // PRIVATE AI METHODS
+  // --------------------------------------------------------------------------
+
+  private getDefaultAIInsights(): AIInsights {
     return {
-      strengths,
-      suggestions: [{
-        id: this.generateId('intervention'), type: 'role_rotation',
-        description: 'Rotate facilitator weekly to develop leadership', targetMembers: memberIds,
-        priority: 'medium', status: 'suggested'
-      }]
+      currentInsights: [],
+      completionPrediction: { likelyToComplete: true, confidence: 0.5, riskFactors: [] },
+      coachingMessages: [],
+      difficultyAssessment: { current: 'appropriate' },
     };
   }
 
-  private async aiSuggestTeams(learnerIds: string[], teamSize: number): Promise<{ members: string[]; rationale: string; predictedCohesion: number }[]> {
+  private async aiSuggestTeams(
+    learnerIds: string[],
+    teamSize: number
+  ): Promise<{ members: string[]; rationale: string; predictedCohesion: number }[]> {
     const shuffled = [...learnerIds].sort(() => Math.random() - 0.5);
     const teams: { members: string[]; rationale: string; predictedCohesion: number }[] = [];
     for (let i = 0; i < shuffled.length; i += teamSize) {
       const members = shuffled.slice(i, i + teamSize);
-      if (members.length >= 2) teams.push({ members, rationale: 'Balanced skills', predictedCohesion: 75 });
+      if (members.length >= 2) {
+        teams.push({ members, rationale: 'Balanced skills', predictedCohesion: 75 });
+      }
     }
     return teams;
   }
 
-  private aiAnalyzeTeamDynamics(team: LearningTeam, sprints: LearningSprint[]): {
-    dynamics: Partial<TeamDynamics>; recommendations: string[];
+  private aiAnalyzeTeamDynamics(team: EduScrumTeamWithRelations): {
+    dynamics: TeamDynamics;
+    recommendations: string[];
   } {
     const recommendations: string[] = [];
-    const scores = team.members.map(m => m.contributionScore);
-    const variance = scores.reduce((s, v) => s + Math.pow(v - 50, 2), 0) / scores.length;
-    if (variance > 400) recommendations.push('Participation is uneven - consider role rotation');
-    return { dynamics: { participationBalance: Math.max(0, 100 - Math.sqrt(variance)) }, recommendations };
-  }
+    const completedSprints = team.sprints.filter((s) => s.status === 'completed');
 
-  private generateCeremonies(startDate: string, duration: number): SprintCeremony[] {
-    const ceremonies: SprintCeremony[] = [{ type: 'planning', scheduledAt: startDate, duration: 30, status: 'scheduled' }];
-    const start = new Date(startDate);
-    for (let d = 1; d < duration; d++) {
-      const date = new Date(start); date.setDate(date.getDate() + d);
-      ceremonies.push({ type: 'daily_standup', scheduledAt: date.toISOString(), duration: 10, status: 'scheduled' });
+    // Analyze velocity trend
+    if (completedSprints.length >= 2) {
+      const recentVelocities = completedSprints.slice(-3).map((s) => s.completedPoints);
+      const avgRecent = recentVelocities.reduce((a, b) => a + b, 0) / recentVelocities.length;
+      if (avgRecent < team.velocity * 0.8) {
+        recommendations.push('Recent velocity is below average - consider reducing sprint scope');
+      }
     }
-    const end = new Date(start); end.setDate(end.getDate() + duration - 1);
-    ceremonies.push({ type: 'review', scheduledAt: end.toISOString(), duration: 30, status: 'scheduled' });
-    ceremonies.push({ type: 'retrospective', scheduledAt: end.toISOString(), duration: 30, status: 'scheduled' });
-    return ceremonies;
+
+    if (team.memberIds.length > 5) {
+      recommendations.push('Consider splitting into smaller teams for better collaboration');
+    }
+
+    const dynamics: TeamDynamics = {
+      cohesionScore: team.healthScore,
+      participationBalance: 80,
+      conflictLevel: 'none',
+      aiObservations: [],
+      suggestedInterventions: [],
+      trend: 'stable',
+    };
+
+    return { dynamics, recommendations };
   }
 
-  private aiPredictCompletion(sprint: LearningSprint): AISprintCoaching['completionPrediction'] {
-    const remaining = sprint.backlogItems.filter(i => i.status !== 'done').reduce((s, i) => s + i.storyPoints, 0);
-    const daysElapsed = Math.max(1, (Date.now() - new Date(sprint.startDate).getTime()) / 86400000);
-    const burnRate = sprint.metrics.completedPoints / daysElapsed;
-    const daysRemaining = Math.max(0, sprint.duration - daysElapsed);
+  private aiPredictCompletion(
+    totalPoints: number,
+    completedPoints: number,
+    startDate: Date,
+    endDate: Date
+  ): AIInsights['completionPrediction'] {
+    const remaining = totalPoints - completedPoints;
+    const daysElapsed = Math.max(1, (Date.now() - startDate.getTime()) / 86400000);
+    const totalDays = (endDate.getTime() - startDate.getTime()) / 86400000;
+    const burnRate = completedPoints / daysElapsed;
+    const daysRemaining = Math.max(0, totalDays - daysElapsed);
     const projected = burnRate * daysRemaining;
-    return { likelyToComplete: projected >= remaining * 0.8, confidence: 0.5 + daysElapsed / sprint.duration * 0.4, riskFactors: [] };
+
+    return {
+      likelyToComplete: projected >= remaining * 0.8,
+      confidence: Math.min(0.9, 0.5 + (daysElapsed / totalDays) * 0.4),
+      riskFactors: remaining > projected ? ['Behind schedule'] : [],
+    };
   }
 
-  private aiAnalyzeStandup(responses: StandupResponse[], sprint: LearningSprint): {
-    summary: string; insights: AIInsight[]; concerns: { memberId: string; description: string; message: string }[];
+  private aiAnalyzeStandup(responses: StandupResponse[]): {
+    summary: string;
+    insights: AIInsight[];
+    concerns: { memberId: string; description: string; message: string }[];
   } {
     const concerns: { memberId: string; description: string; message: string }[] = [];
-    for (const r of responses.filter(r => r.mood === 'struggling')) {
-      concerns.push({ memberId: r.memberId, description: 'Struggling', message: 'I noticed you\'re struggling. Want to talk about what\'s blocking you?' });
+
+    for (const r of responses.filter((r) => r.mood === 'struggling')) {
+      concerns.push({
+        memberId: r.memberId,
+        description: 'Struggling',
+        message: "I noticed you're struggling. Want to talk about what's blocking you?",
+      });
     }
-    const moods = responses.map(r => r.mood).join(', ');
-    return { summary: `${responses.length} check-ins. Moods: ${moods}`, insights: [], concerns };
+
+    for (const r of responses.filter((r) => r.blockers.length > 0)) {
+      concerns.push({
+        memberId: r.memberId,
+        description: `${r.blockers.length} blockers reported`,
+        message: 'You have blockers - let the team know so we can help resolve them.',
+      });
+    }
+
+    const moodCounts = responses.reduce(
+      (acc, r) => {
+        acc[r.mood] = (acc[r.mood] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    const moodSummary = Object.entries(moodCounts)
+      .map(([mood, count]) => `${count} ${mood}`)
+      .join(', ');
+
+    return {
+      summary: `${responses.length} check-ins. Moods: ${moodSummary}`,
+      insights: [],
+      concerns,
+    };
   }
 
-  private calculateIdealBurndown(sprint: LearningSprint): number {
-    const elapsed = (Date.now() - new Date(sprint.startDate).getTime()) / 86400000;
-    return Math.max(0, sprint.metrics.plannedPoints * (1 - elapsed / sprint.duration));
+  private calculateIdealBurndown(totalPoints: number, startDate: Date, endDate: Date): number {
+    const elapsed = (Date.now() - startDate.getTime()) / 86400000;
+    const totalDays = (endDate.getTime() - startDate.getTime()) / 86400000;
+    return Math.max(0, totalPoints * (1 - elapsed / totalDays));
   }
 
   private aiSuggestBlockerResolution(description: string): string {
-    if (description.toLowerCase().includes('understand')) return 'Review materials or ask a teammate to explain.';
-    if (description.toLowerCase().includes('time')) return 'Discuss redistributing work with your team.';
+    const lower = description.toLowerCase();
+    if (lower.includes('understand') || lower.includes('confused')) {
+      return 'Review materials or ask a teammate to explain.';
+    }
+    if (lower.includes('time') || lower.includes('busy')) {
+      return 'Discuss redistributing work with your team.';
+    }
+    if (lower.includes('stuck') || lower.includes('help')) {
+      return 'Try pair programming or ask the scrum master for guidance.';
+    }
     return 'Try breaking the task into smaller steps or pair with a teammate.';
   }
 
-  private aiGenerateReviewSummary(sprint: LearningSprint): string {
-    const pct = Math.round(sprint.metrics.velocityRatio * 100);
-    return `Sprint "${sprint.name}": ${sprint.metrics.completedPoints}/${sprint.metrics.plannedPoints} points (${pct}%). ${pct >= 80 ? 'Great work!' : 'Reflect on blockers.'}`;
+  private aiGenerateReviewSummary(sprintName: string, completedPoints: number, totalPoints: number): string {
+    const pct = Math.round((completedPoints / Math.max(1, totalPoints)) * 100);
+    return `Sprint "${sprintName}": ${completedPoints}/${totalPoints} points (${pct}%). ${
+      pct >= 80 ? 'Great work!' : 'Reflect on blockers for next sprint.'
+    }`;
   }
 
-  private aiCelebrationMessage(sprint: LearningSprint): string {
-    const pct = sprint.metrics.velocityRatio;
-    if (pct >= 0.9) return `AMAZING! ${sprint.metrics.completedPoints} points! You crushed it!`;
-    if (pct >= 0.7) return `Great job! ${sprint.metrics.completedPoints} points completed!`;
-    return `Sprint complete! Every sprint teaches us something!`;
+  private aiCelebrationMessage(velocityRatio: number, completedPoints: number): string {
+    if (velocityRatio >= 0.9) return `AMAZING! ${completedPoints} points! You crushed it!`;
+    if (velocityRatio >= 0.7) return `Great job! ${completedPoints} points completed!`;
+    return 'Sprint complete! Every sprint teaches us something!';
   }
 
   private aiAnalyzeRetro(retroData: { wentWell: string[]; toImprove: string[] }): string[] {
     const insights: string[] = [];
-    if (retroData.toImprove.some(i => i.toLowerCase().includes('time'))) insights.push('Time management noted - try timeboxing.');
-    if (retroData.wentWell.some(i => i.toLowerCase().includes('collabor'))) insights.push('Collaboration is strong - keep it up!');
+
+    if (retroData.toImprove.some((i) => i.toLowerCase().includes('time'))) {
+      insights.push('Time management noted - try timeboxing.');
+    }
+    if (retroData.wentWell.some((i) => i.toLowerCase().includes('collabor'))) {
+      insights.push('Collaboration is strong - keep it up!');
+    }
+    if (retroData.toImprove.some((i) => i.toLowerCase().includes('communicat'))) {
+      insights.push('Communication could improve - consider more frequent check-ins.');
+    }
+
     return insights.length ? insights : ['Great reflection session!'];
   }
 
-  private aiSuggestExperiments(retroData: { wentWell: string[]; toImprove: string[] }, sprint: LearningSprint): string[] {
+  private aiSuggestExperiments(
+    retroData: { wentWell: string[]; toImprove: string[] },
+    completedPoints: number,
+    totalPoints: number
+  ): string[] {
     const experiments: string[] = [];
-    if (sprint.metrics.velocityRatio < 0.7) experiments.push('Try fewer points next sprint');
+    const velocityRatio = completedPoints / Math.max(1, totalPoints);
+
+    if (velocityRatio < 0.7) {
+      experiments.push('Try fewer story points next sprint');
+    }
+    if (retroData.toImprove.length > retroData.wentWell.length) {
+      experiments.push('Focus on 1-2 improvements at a time');
+    }
+
     experiments.push('Rotate roles to develop new skills');
+
     return experiments;
   }
 
-  private aiGenerateRecommendations(team: LearningTeam, sprint: LearningSprint): string[] {
+  private aiGenerateRecommendations(backlogItems: SprintBacklogItem[]): string[] {
     const recs: string[] = [];
-    const wip = sprint.backlogItems.filter(i => i.status === 'in_progress').length;
-    if (wip > 3) recs.push(`${wip} items in progress - finish some before starting more`);
-    const blocked = sprint.backlogItems.filter(i => i.blockers.some(b => !b.resolvedAt)).length;
-    if (blocked > 0) recs.push(`${blocked} items blocked - address these first!`);
+
+    const wip = backlogItems.filter((i) => i.status === 'in_progress').length;
+    if (wip > 3) {
+      recs.push(`${wip} items in progress - finish some before starting more`);
+    }
+
+    const blocked = backlogItems.filter((i) => i.blockers.some((b) => !b.resolvedAt)).length;
+    if (blocked > 0) {
+      recs.push(`${blocked} items blocked - address these first!`);
+    }
+
+    const inBacklog = backlogItems.filter((i) => i.status === 'backlog').length;
+    if (inBacklog > 0 && backlogItems.filter((i) => i.status === 'in_progress').length === 0) {
+      recs.push('Start working on backlog items!');
+    }
+
     return recs;
   }
+}
+
+// ============================================================================
+// Service Initialization
+// ============================================================================
+
+export function initializeEduScrumOrchestrator(): EduScrumOrchestrator {
+  if (!eduScrumOrchestratorInstance) {
+    eduScrumOrchestratorInstance = new EduScrumOrchestrator();
+  }
+  return eduScrumOrchestratorInstance;
+}
+
+export function getEduScrumOrchestrator(): EduScrumOrchestrator {
+  if (!eduScrumOrchestratorInstance) {
+    throw new Error('EduScrumOrchestrator not initialized. Call initializeEduScrumOrchestrator() first.');
+  }
+  return eduScrumOrchestratorInstance;
 }

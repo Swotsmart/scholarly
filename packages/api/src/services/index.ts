@@ -24,7 +24,31 @@ export {
   JURISDICTION_REQUIREMENTS,
 } from './tutor-booking.service';
 export * from './micro-school.service';
-export * from './eduscrum-orchestrator.service';
+
+// EduScrum Orchestrator
+export {
+  EduScrumOrchestrator,
+  initializeEduScrumOrchestrator,
+  getEduScrumOrchestrator,
+  type EduScrumTeamWithRelations,
+  type EduScrumSprintWithRelations,
+  type TeamMember,
+  type TeamDynamics,
+  type AIObservation,
+  type TeamIntervention,
+  type TeamFormationType,
+  type TeamMaturityLevel,
+  type SprintBacklogItem,
+  type Blocker,
+  type StandupEntry,
+  type StandupResponse,
+  type BurndownPoint,
+  type AIInsights,
+  type AIInsight,
+  type CoachingMessage,
+  type KanbanBoard,
+  type ActionItem,
+} from './eduscrum-orchestrator.service';
 
 // Content Marketplace
 export {
