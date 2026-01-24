@@ -172,8 +172,21 @@ export class ScholarlyApiError extends Error {
     return new ScholarlyApiError('VALDT_001', { errors });
   }
 
+  static validationError(details?: ErrorDetails | unknown[]) {
+    // Handle Zod error arrays by wrapping them in an object
+    if (Array.isArray(details)) {
+      return new ScholarlyApiError('VALDT_001', { errors: details as unknown });
+    }
+    return new ScholarlyApiError('VALDT_001', details);
+  }
+
   static requiredFieldMissing(field: string) {
     return new ScholarlyApiError('VALDT_002', { field });
+  }
+
+  // Not found errors
+  static notFound(details?: ErrorDetails) {
+    return new ScholarlyApiError('SYS_010', details);
   }
 
   // System errors
@@ -195,4 +208,5 @@ export class ScholarlyApiError extends Error {
 }
 
 // Export aliases for backward compatibility
-export { ErrorCodes, ErrorCode, ErrorCodeToStatus };
+export { ErrorCodes, ErrorCodeToStatus };
+export type { ErrorCode };

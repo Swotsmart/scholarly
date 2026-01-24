@@ -1,8 +1,11 @@
 /**
  * Prisma-based Session Repository Implementation
+ *
+ * Note: Legacy repository - TutorBookingService now uses Prisma directly.
+ * Maintained for backwards compatibility with service factory.
  */
 
-import { PrismaClient } from '@prisma/client';
+import { prisma, Prisma } from '@scholarly/database';
 import {
   TutoringSession,
   SessionStatus,
@@ -11,17 +14,26 @@ import {
   SessionLocation,
   LISSessionReport
 } from '@scholarly/shared/types/scholarly-types';
-import { SessionRepository } from '../services/tutor-booking.service';
+
+// Local interface for backwards compatibility
+export interface SessionRepository {
+  findById(tenantId: string, id: string): Promise<TutoringSession | null>;
+  findByTutor(tenantId: string, tutorId: string, dateRange?: { start: Date; end: Date }): Promise<TutoringSession[]>;
+  findByLearner(tenantId: string, learnerId: string): Promise<TutoringSession[]>;
+  findUpcoming(tenantId: string, userId: string, limit?: number): Promise<TutoringSession[]>;
+  save(tenantId: string, session: TutoringSession): Promise<TutoringSession>;
+  update(tenantId: string, id: string, updates: Partial<TutoringSession>): Promise<TutoringSession>;
+}
 
 export class PrismaSessionRepository implements SessionRepository {
-  constructor(private prisma: PrismaClient) {}
 
   async findById(tenantId: string, id: string): Promise<TutoringSession | null> {
-    const session = await this.prisma.tutoringSession.findFirst({
+    const session = await prisma.tutoringSession.findFirst({
       where: { id, tenantId },
       include: {
         booking: true,
-        participants: true
+        participants: true,
+        subject: true
       }
     });
 
@@ -34,7 +46,7 @@ export class PrismaSessionRepository implements SessionRepository {
     tutorId: string,
     dateRange?: { start: Date; end: Date }
   ): Promise<TutoringSession[]> {
-    const sessions = await this.prisma.tutoringSession.findMany({
+    const sessions = await prisma.tutoringSession.findMany({
       where: {
         tenantId,
         tutorUserId: tutorId,
@@ -43,7 +55,7 @@ export class PrismaSessionRepository implements SessionRepository {
           scheduledEnd: { lte: dateRange.end }
         })
       },
-      include: { participants: true },
+      include: { participants: true, subject: true },
       orderBy: { scheduledStart: 'asc' }
     });
 
@@ -51,14 +63,14 @@ export class PrismaSessionRepository implements SessionRepository {
   }
 
   async findByLearner(tenantId: string, learnerId: string): Promise<TutoringSession[]> {
-    const sessions = await this.prisma.tutoringSession.findMany({
+    const sessions = await prisma.tutoringSession.findMany({
       where: {
         tenantId,
         participants: {
           some: { learnerProfileId: learnerId }
         }
       },
-      include: { participants: true },
+      include: { participants: true, subject: true },
       orderBy: { scheduledStart: 'desc' }
     });
 
@@ -68,7 +80,7 @@ export class PrismaSessionRepository implements SessionRepository {
   async findUpcoming(tenantId: string, userId: string, limit = 10): Promise<TutoringSession[]> {
     const now = new Date();
 
-    const sessions = await this.prisma.tutoringSession.findMany({
+    const sessions = await prisma.tutoringSession.findMany({
       where: {
         tenantId,
         scheduledStart: { gte: now },
@@ -78,7 +90,7 @@ export class PrismaSessionRepository implements SessionRepository {
           { participants: { some: { learnerProfileId: userId } } }
         ]
       },
-      include: { participants: true },
+      include: { participants: true, subject: true },
       orderBy: { scheduledStart: 'asc' },
       take: limit
     });
@@ -87,7 +99,7 @@ export class PrismaSessionRepository implements SessionRepository {
   }
 
   async save(tenantId: string, session: TutoringSession): Promise<TutoringSession> {
-    const created = await this.prisma.tutoringSession.create({
+    const created = await prisma.tutoringSession.create({
       data: {
         id: session.id,
         tenantId,
@@ -100,10 +112,9 @@ export class PrismaSessionRepository implements SessionRepository {
         timezone: session.timezone,
         sessionType: session.sessionType,
         isGroupSession: session.isGroupSession,
-        location: session.location as any,
+        location: session.location as unknown as Prisma.InputJsonValue,
         videoRoomUrl: session.videoRoomUrl,
         subjectId: session.subjectId,
-        subjectName: session.subjectName,
         topicsFocus: session.topicsFocus,
         curriculumCodes: [],
         status: session.status,
@@ -112,17 +123,12 @@ export class PrismaSessionRepository implements SessionRepository {
         sessionNotes: session.sessionNotes,
         homeworkAssigned: session.homeworkAssigned,
         resourcesShared: session.resourcesShared,
-        tutorFeedback: session.tutorFeedback as any,
-        learnerFeedback: session.learnerFeedback as any,
-        parentFeedback: session.parentFeedback as any,
-        lisSessionReport: session.lisSessionReport as any,
-        billingStatus: session.billingStatus,
-        amountCharged: session.amountCharged,
-        tutorEarnings: session.tutorEarnings,
-        platformCommission: session.platformCommission,
-        tokenRewards: session.tokenRewards
+        tutorFeedback: session.tutorFeedback as unknown as Prisma.InputJsonValue,
+        learnerFeedback: session.learnerFeedback as unknown as Prisma.InputJsonValue,
+        parentFeedback: session.parentFeedback as unknown as Prisma.InputJsonValue,
+        lisSessionReport: session.lisSessionReport as unknown as Prisma.InputJsonValue,
       },
-      include: { participants: true }
+      include: { participants: true, subject: true }
     });
 
     return this.mapToSession(created);
@@ -133,7 +139,7 @@ export class PrismaSessionRepository implements SessionRepository {
     id: string,
     updates: Partial<TutoringSession>
   ): Promise<TutoringSession> {
-    const updateData: any = {};
+    const updateData: Prisma.TutoringSessionUpdateInput = {};
 
     if (updates.status) updateData.status = updates.status;
     if (updates.actualStart) updateData.actualStart = updates.actualStart;
@@ -141,16 +147,16 @@ export class PrismaSessionRepository implements SessionRepository {
     if (updates.sessionNotes !== undefined) updateData.sessionNotes = updates.sessionNotes;
     if (updates.homeworkAssigned !== undefined) updateData.homeworkAssigned = updates.homeworkAssigned;
     if (updates.preworkAssigned !== undefined) updateData.preworkAssigned = updates.preworkAssigned;
-    if (updates.billingStatus) updateData.billingStatus = updates.billingStatus;
-    if (updates.tutorFeedback) updateData.tutorFeedback = updates.tutorFeedback;
-    if (updates.learnerFeedback) updateData.learnerFeedback = updates.learnerFeedback;
-    if (updates.parentFeedback) updateData.parentFeedback = updates.parentFeedback;
+    if (updates.tutorFeedback) updateData.tutorFeedback = updates.tutorFeedback as unknown as Prisma.InputJsonValue;
+    if (updates.learnerFeedback) updateData.learnerFeedback = updates.learnerFeedback as unknown as Prisma.InputJsonValue;
+    if (updates.parentFeedback) updateData.parentFeedback = updates.parentFeedback as unknown as Prisma.InputJsonValue;
     if (updates.resourcesShared) updateData.resourcesShared = updates.resourcesShared;
     if (updates.videoRoomUrl) updateData.videoRoomUrl = updates.videoRoomUrl;
 
-    const updated = await this.prisma.tutoringSession.update({
+    const updated = await prisma.tutoringSession.update({
       where: { id },
-      data: updateData
+      data: updateData,
+      include: { subject: true }
     });
 
     return this.mapToSession(updated);
@@ -176,7 +182,7 @@ export class PrismaSessionRepository implements SessionRepository {
       location: record.location as SessionLocation | undefined,
       videoRoomUrl: record.videoRoomUrl,
       subjectId: record.subjectId,
-      subjectName: record.subjectName,
+      subjectName: record.subject?.name || record.subjectName,
       topicsFocus: record.topicsFocus || [],
       status: record.status as SessionStatus,
       bookingId: record.bookingId,
@@ -189,11 +195,11 @@ export class PrismaSessionRepository implements SessionRepository {
       learnerFeedback: record.learnerFeedback as SessionFeedback | undefined,
       parentFeedback: record.parentFeedback as SessionFeedback | undefined,
       lisSessionReport: record.lisSessionReport as LISSessionReport | undefined,
-      billingStatus: record.billingStatus,
-      amountCharged: record.amountCharged,
-      tutorEarnings: record.tutorEarnings,
-      platformCommission: record.platformCommission,
-      tokenRewards: record.tokenRewards
+      billingStatus: undefined,
+      amountCharged: undefined,
+      tutorEarnings: undefined,
+      platformCommission: undefined,
+      tokenRewards: undefined
     };
   }
 }

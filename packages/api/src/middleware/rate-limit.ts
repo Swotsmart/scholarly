@@ -44,8 +44,7 @@ async function getStore(prefix: string) {
 
   if (client) {
     return new RedisStore({
-      // @ts-expect-error - Types mismatch but works
-      sendCommand: (...args: string[]) => client.sendCommand(args),
+      sendCommand: (...args: string[]) => client.sendCommand(args) as any,
       prefix: `scholarly:ratelimit:${prefix}:`,
     });
   }

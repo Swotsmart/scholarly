@@ -75,8 +75,8 @@ analyticsRouter.get('/dashboards', async (req, res) => {
   try {
     const analyticsService = getAnalyticsReportingService();
 
-    // For now, return default dashboard based on user role
-    const persona = req.user!.role as any;
+    // For now, return default dashboard based on user's primary role
+    const persona = req.user!.roles[0] as any;
     const result = await analyticsService.getDefaultDashboard(tenantId, persona);
 
     if (!result.success) {
@@ -145,7 +145,7 @@ analyticsRouter.post('/dashboards', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, dashboardId: result.data.id }, 'Dashboard created');
+    log.info('Dashboard created', { tenantId, dashboardId: result.data.id });
 
     res.status(201).json({
       success: true,
@@ -348,7 +348,7 @@ analyticsRouter.post('/reports', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, reportId: result.data.id }, 'Report template created');
+    log.info('Report template created', { tenantId, reportId: result.data.id });
 
     res.status(201).json({
       success: true,
@@ -383,7 +383,7 @@ analyticsRouter.post('/reports/:id/generate', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info({ tenantId, reportId: id, generatedId: result.data.id }, 'Report generated');
+    log.info('Report generated', { tenantId, reportId: id, generatedId: result.data.id });
 
     res.json({
       success: true,

@@ -88,12 +88,6 @@ export class ServiceFactory {
    * Create all services and return the service container
    */
   createServices(): ServiceContainer {
-    // Create repositories
-    const tutorRepo = new PrismaTutorRepository(this.prisma);
-    const bookingRepo = new PrismaBookingRepository(this.prisma);
-    const sessionRepo = new PrismaSessionRepository(this.prisma);
-    const learnerRepo = new PrismaLearnerRepository(this.prisma);
-
     // Base dependencies for all services
     const baseDeps = {
       eventBus: this.eventBus,
@@ -101,14 +95,8 @@ export class ServiceFactory {
       config: this.config
     };
 
-    // Create TutorBookingService
-    const tutorBookingService = new TutorBookingService({
-      ...baseDeps,
-      tutorRepo,
-      bookingRepo,
-      sessionRepo,
-      learnerRepo
-    });
+    // Create TutorBookingService (now uses Prisma directly)
+    const tutorBookingService = new TutorBookingService();
 
     // Create ContentMarketplaceService with placeholder repos
     const contentMarketplaceService = new ContentMarketplaceService({
@@ -128,12 +116,8 @@ export class ServiceFactory {
       waitlistRepo: this.createPlaceholderWaitlistRepo()
     });
 
-    // Create EduScrumOrchestrator with placeholder repos
-    const eduScrumOrchestrator = new EduScrumOrchestrator({
-      ...baseDeps,
-      teamRepo: this.createPlaceholderTeamRepo(),
-      sprintRepo: this.createPlaceholderSprintRepo()
-    });
+    // Create EduScrumOrchestrator (now uses Prisma directly)
+    const eduScrumOrchestrator = new EduScrumOrchestrator();
 
     // Create HomeschoolHubService with placeholder repos
     const homeschoolHubService = new HomeschoolHubService({

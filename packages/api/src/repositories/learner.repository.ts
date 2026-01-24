@@ -1,8 +1,11 @@
 /**
  * Prisma-based Learner Repository Implementation
+ *
+ * Note: Legacy repository - TutorBookingService now uses Prisma directly.
+ * Maintained for backwards compatibility with service factory.
  */
 
-import { PrismaClient } from '@prisma/client';
+import { prisma, Prisma } from '@scholarly/database';
 import {
   LearnerUser,
   UserRole,
@@ -11,17 +14,21 @@ import {
   SubjectInterest,
   LISProfileSharing
 } from '@scholarly/shared/types/scholarly-types';
-import { LearnerRepository } from '../services/tutor-booking.service';
+
+// Local interface for backwards compatibility
+export interface LearnerRepository {
+  findById(tenantId: string, id: string): Promise<LearnerUser | null>;
+  findByParent(tenantId: string, parentId: string): Promise<LearnerUser[]>;
+  save(tenantId: string, learner: LearnerUser): Promise<LearnerUser>;
+}
 
 export class PrismaLearnerRepository implements LearnerRepository {
-  constructor(private prisma: PrismaClient) {}
 
   async findById(tenantId: string, id: string): Promise<LearnerUser | null> {
-    const user = await this.prisma.user.findFirst({
+    const user = await prisma.user.findFirst({
       where: {
         tenantId,
         id,
-        learnerProfile: { isNot: null }
       },
       include: {
         learnerProfile: true
@@ -33,24 +40,28 @@ export class PrismaLearnerRepository implements LearnerRepository {
   }
 
   async findByParent(tenantId: string, parentId: string): Promise<LearnerUser[]> {
-    const users = await this.prisma.user.findMany({
+    // Get learner profiles with this parentId
+    const learnerProfiles = await prisma.learnerProfile.findMany({
       where: {
-        tenantId,
-        learnerProfile: {
-          isNot: null,
-          parentIds: { has: parentId }
-        }
+        user: { tenantId }
       },
       include: {
-        learnerProfile: true
+        user: true
       }
     });
 
-    return users.filter((u) => u.learnerProfile).map((u) => this.mapToLearnerUser(u));
+    // Filter for those with the parentId
+    const filtered = learnerProfiles.filter((lp) => {
+      const parentIds = lp.parentIds as string[] | null;
+      return parentIds?.includes(parentId);
+    });
+
+    return filtered.map((lp) => this.mapToLearnerUser({ ...lp.user, learnerProfile: lp }));
   }
 
   async save(tenantId: string, learner: LearnerUser): Promise<LearnerUser> {
-    const user = await this.prisma.user.upsert({
+    const prefs = learner.learningPreferences;
+    const user = await prisma.user.upsert({
       where: { id: learner.id },
       create: {
         id: learner.id,
@@ -69,9 +80,9 @@ export class PrismaLearnerRepository implements LearnerRepository {
             dateOfBirth: learner.dateOfBirth,
             yearLevel: learner.yearLevel,
             parentIds: learner.parentIds,
-            learningPreferences: learner.learningPreferences as any,
-            subjects: learner.subjects as any,
-            lisProfileSharing: learner.lisProfileSharing as any
+            preferredSessionLength: prefs?.preferredSessionLength,
+            learningPace: (prefs as any)?.pace,
+            lisProfileSharing: learner.lisProfileSharing as unknown as Prisma.InputJsonValue
           }
         }
       },
@@ -83,9 +94,9 @@ export class PrismaLearnerRepository implements LearnerRepository {
         learnerProfile: {
           update: {
             yearLevel: learner.yearLevel,
-            learningPreferences: learner.learningPreferences as any,
-            subjects: learner.subjects as any,
-            lisProfileSharing: learner.lisProfileSharing as any
+            preferredSessionLength: prefs?.preferredSessionLength,
+            learningPace: (prefs as any)?.pace,
+            lisProfileSharing: learner.lisProfileSharing as unknown as Prisma.InputJsonValue
           }
         }
       },

@@ -117,6 +117,7 @@ export const ErrorCodes = {
   SYS_007: 'Service maintenance',
   SYS_008: 'Feature disabled',
   SYS_009: 'Configuration error',
+  SYS_010: 'Resource not found',
 
   // ============ AI Buddy (AI_xxx) ============
   AI_001: 'AI response generation failed',
@@ -259,6 +260,7 @@ export const ErrorCodeToStatus: Record<ErrorCode, number> = {
   SYS_007: 503,
   SYS_008: 501,
   SYS_009: 500,
+  SYS_010: 404,
 
   // AI Buddy - 500/502/404
   AI_001: 502,

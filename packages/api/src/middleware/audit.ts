@@ -178,7 +178,7 @@ export function auditMiddleware(
   };
 
   // Override end to log after response
-  res.end = function (...args: Parameters<typeof originalEnd>) {
+  (res.end as any) = function (this: Response, ...args: unknown[]) {
     // Only log if audit context was set
     if (req.auditContext && req.user && req.tenantId) {
       // Don't block response - log asynchronously
@@ -209,7 +209,7 @@ export function auditMiddleware(
       });
     }
 
-    return originalEnd.apply(this, args);
+    return originalEnd.apply(this, args as Parameters<typeof originalEnd>);
   };
 
   next();

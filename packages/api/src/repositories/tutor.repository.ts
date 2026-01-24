@@ -1,13 +1,15 @@
 /**
  * Prisma-based Tutor Repository Implementation
+ *
+ * Note: Legacy repository - TutorBookingService now uses Prisma directly.
+ * Maintained for backwards compatibility with service factory.
  */
 
-import { PrismaClient } from '@prisma/client';
+import { prisma, Prisma } from '@scholarly/database';
 import {
   TutorUser,
   UserRole,
   Jurisdiction,
-  SessionType,
   TutorSubject,
   TeachingStyle,
   AvailabilitySchedule,
@@ -16,17 +18,24 @@ import {
   SafeguardingCheck,
   Qualification
 } from '@scholarly/shared/types/scholarly-types';
-import { TutorRepository, TutorSearchFilters } from '../services/tutor-booking.service';
+import { SessionType, TutorSearchFilters } from '../services/tutor-booking.service';
+
+// Local interface for backwards compatibility
+export interface TutorRepository {
+  findById(tenantId: string, id: string): Promise<TutorUser | null>;
+  findBySubject(tenantId: string, subjectId: string, filters?: TutorSearchFilters): Promise<TutorUser[]>;
+  findAvailable(tenantId: string, dateTime: Date, duration: number): Promise<TutorUser[]>;
+  save(tenantId: string, tutor: TutorUser): Promise<TutorUser>;
+  update(tenantId: string, id: string, updates: Partial<TutorUser>): Promise<TutorUser>;
+}
 
 export class PrismaTutorRepository implements TutorRepository {
-  constructor(private prisma: PrismaClient) {}
 
   async findById(tenantId: string, id: string): Promise<TutorUser | null> {
-    const user = await this.prisma.user.findFirst({
+    const user = await prisma.user.findFirst({
       where: {
         tenantId,
         id,
-        tutorProfile: { isNot: null }
       },
       include: {
         tutorProfile: true
@@ -42,25 +51,20 @@ export class PrismaTutorRepository implements TutorRepository {
     subjectId: string,
     filters?: TutorSearchFilters
   ): Promise<TutorUser[]> {
-    const users = await this.prisma.user.findMany({
+    // Get verified tutors with their profiles
+    const tutorProfiles = await prisma.tutorProfile.findMany({
       where: {
-        tenantId,
-        tutorProfile: {
-          isNot: null,
-          status: 'active'
-        },
-        ...(filters?.jurisdiction && { jurisdiction: filters.jurisdiction }),
-        ...(filters?.minRating && {
-          tutorProfile: {
-            averageRating: { gte: filters.minRating }
-          }
-        })
+        user: { tenantId },
+        verificationStatus: 'verified',
       },
       include: {
-        tutorProfile: true
+        user: true
       },
       take: 50
     });
+
+    // Map to users with tutorProfile
+    const users = tutorProfiles.map(tp => ({ ...tp.user, tutorProfile: tp }));
 
     // Filter by subject in memory (subjects stored as JSON)
     const tutors = users
@@ -99,19 +103,18 @@ export class PrismaTutorRepository implements TutorRepository {
   }
 
   async findAvailable(tenantId: string, dateTime: Date, duration: number): Promise<TutorUser[]> {
-    // Get all active tutors
-    const users = await this.prisma.user.findMany({
+    // Get all verified tutors
+    const tutorProfiles = await prisma.tutorProfile.findMany({
       where: {
-        tenantId,
-        tutorProfile: {
-          isNot: null,
-          status: 'active'
-        }
+        user: { tenantId },
+        verificationStatus: 'verified'
       },
       include: {
-        tutorProfile: true
+        user: true
       }
     });
+
+    const users = tutorProfiles.map(tp => ({ ...tp.user, tutorProfile: tp }));
 
     // Filter by availability (simplified - would check calendar in production)
     const dayOfWeek = dateTime.getDay() as 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -128,7 +131,7 @@ export class PrismaTutorRepository implements TutorRepository {
   }
 
   async save(tenantId: string, tutor: TutorUser): Promise<TutorUser> {
-    const user = await this.prisma.user.upsert({
+    const user = await prisma.user.upsert({
       where: { id: tutor.id },
       create: {
         id: tutor.id,
@@ -146,21 +149,12 @@ export class PrismaTutorRepository implements TutorRepository {
         tutorProfile: {
           create: {
             tutorType: tutor.tutorType,
-            subjects: tutor.subjects as any,
-            yearLevels: tutor.yearLevelsTeaching,
-            teachingStyle: tutor.teachingStyle as any,
+            yearLevelsTeaching: tutor.yearLevelsTeaching,
+            teachingStyle: tutor.teachingStyle as unknown as Prisma.InputJsonValue,
             languages: tutor.languages,
-            availability: tutor.availability as any,
             sessionTypes: tutor.sessionTypes,
-            maxGroupSize: tutor.maxStudentsPerGroup,
-            hourlyRate: tutor.pricing.hourlyRate1to1,
-            groupRate: tutor.pricing.hourlyRateGroup,
-            currency: tutor.pricing.currency,
-            qualifications: tutor.qualifications as any,
-            safeguardingChecks: tutor.safeguardingChecks as any,
-            averageRating: tutor.metrics.averageRating,
-            totalSessions: tutor.metrics.totalSessions,
-            totalHours: tutor.metrics.totalHours
+            maxStudentsPerGroup: tutor.maxStudentsPerGroup,
+            metrics: tutor.metrics as unknown as Prisma.InputJsonValue
           }
         }
       },
@@ -172,18 +166,12 @@ export class PrismaTutorRepository implements TutorRepository {
         tokenBalance: tutor.tokenBalance,
         tutorProfile: {
           update: {
-            subjects: tutor.subjects as any,
-            yearLevels: tutor.yearLevelsTeaching,
-            teachingStyle: tutor.teachingStyle as any,
+            yearLevelsTeaching: tutor.yearLevelsTeaching,
+            teachingStyle: tutor.teachingStyle as unknown as Prisma.InputJsonValue,
             languages: tutor.languages,
-            availability: tutor.availability as any,
             sessionTypes: tutor.sessionTypes,
-            maxGroupSize: tutor.maxStudentsPerGroup,
-            hourlyRate: tutor.pricing.hourlyRate1to1,
-            groupRate: tutor.pricing.hourlyRateGroup,
-            averageRating: tutor.metrics.averageRating,
-            totalSessions: tutor.metrics.totalSessions,
-            totalHours: tutor.metrics.totalHours
+            maxStudentsPerGroup: tutor.maxStudentsPerGroup,
+            metrics: tutor.metrics as unknown as Prisma.InputJsonValue
           }
         }
       },
@@ -194,8 +182,8 @@ export class PrismaTutorRepository implements TutorRepository {
   }
 
   async update(tenantId: string, id: string, updates: Partial<TutorUser>): Promise<TutorUser> {
-    const updateData: any = {};
-    const profileUpdateData: any = {};
+    const updateData: Prisma.UserUpdateInput = {};
+    const profileUpdateData: Prisma.TutorProfileUpdateInput = {};
 
     if (updates.displayName) updateData.displayName = updates.displayName;
     if (updates.avatarUrl) updateData.avatarUrl = updates.avatarUrl;
@@ -203,21 +191,11 @@ export class PrismaTutorRepository implements TutorRepository {
     if (updates.trustScore !== undefined) updateData.trustScore = updates.trustScore;
     if (updates.tokenBalance !== undefined) updateData.tokenBalance = updates.tokenBalance;
 
-    if (updates.subjects) profileUpdateData.subjects = updates.subjects;
-    if (updates.yearLevelsTeaching) profileUpdateData.yearLevels = updates.yearLevelsTeaching;
-    if (updates.teachingStyle) profileUpdateData.teachingStyle = updates.teachingStyle;
-    if (updates.availability) profileUpdateData.availability = updates.availability;
-    if (updates.pricing) {
-      profileUpdateData.hourlyRate = updates.pricing.hourlyRate1to1;
-      profileUpdateData.groupRate = updates.pricing.hourlyRateGroup;
-    }
-    if (updates.metrics) {
-      profileUpdateData.averageRating = updates.metrics.averageRating;
-      profileUpdateData.totalSessions = updates.metrics.totalSessions;
-      profileUpdateData.totalHours = updates.metrics.totalHours;
-    }
+    if (updates.yearLevelsTeaching) profileUpdateData.yearLevelsTeaching = updates.yearLevelsTeaching;
+    if (updates.teachingStyle) profileUpdateData.teachingStyle = updates.teachingStyle as unknown as Prisma.InputJsonValue;
+    if (updates.metrics) profileUpdateData.metrics = updates.metrics as unknown as Prisma.InputJsonValue;
 
-    const user = await this.prisma.user.update({
+    const user = await prisma.user.update({
       where: { id },
       data: {
         ...updateData,
@@ -272,7 +250,7 @@ export class PrismaTutorRepository implements TutorRepository {
         advanceBookingDays: 14,
         minimumNoticeHours: 24
       },
-      sessionTypes: (profile?.sessionTypes as SessionType[]) || [SessionType.ONLINE_VIDEO],
+      sessionTypes: (profile?.sessionTypes as SessionType[]) || ['online_video'],
       maxStudentsPerGroup: profile?.maxGroupSize || 5,
       pricing: {
         currency: profile?.currency || 'AUD',

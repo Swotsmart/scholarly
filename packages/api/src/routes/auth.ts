@@ -65,7 +65,8 @@ authRouter.post('/login', generateCsrfToken, async (req, res) => {
   const result = await authService.login({ email, password, tenantId });
 
   if (!result.success) {
-    const error = new ScholarlyApiError(result.error.code as any, result.error.details);
+    const failedResult = result as { success: false; error: { code: string; details?: Record<string, unknown> } };
+    const error = new ScholarlyApiError(failedResult.error.code as any, failedResult.error.details);
     return res.status(error.statusCode).json(error.toResponse(requestId));
   }
 
@@ -226,7 +227,8 @@ authRouter.post('/refresh', async (req, res) => {
   if (!result.success) {
     // Clear invalid cookie
     res.clearCookie('refresh_token', { path: '/api/v1/auth' });
-    const error = new ScholarlyApiError(result.error.code as any, result.error.details);
+    const failedResult = result as { success: false; error: { code: string; details?: Record<string, unknown> } };
+    const error = new ScholarlyApiError(failedResult.error.code as any, failedResult.error.details);
     return res.status(error.statusCode).json(error.toResponse(requestId));
   }
 

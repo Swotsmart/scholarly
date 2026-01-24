@@ -28,7 +28,7 @@ import { standardsComplianceRouter } from './routes/standards-compliance';
 import { analyticsRouter } from './routes/analytics';
 import { dataLakeRouter } from './routes/data-lake';
 import { mlPipelineRouter } from './routes/ml-pipeline';
-import { designPitchAIRouter } from './routes/design-pitch-ai';
+import { designPitchRouter } from './routes/design-pitch-ai';
 import { showcasePortfolioRouter } from './routes/showcase-portfolio';
 
 // Middleware
@@ -80,7 +80,7 @@ api.use('/standards', authMiddleware, standardsComplianceRouter);
 api.use('/analytics', authMiddleware, analyticsRouter);
 api.use('/data-lake', authMiddleware, dataLakeRouter);
 api.use('/ml', authMiddleware, mlPipelineRouter);
-api.use('/design-pitch', authMiddleware, designPitchAIRouter);
+api.use('/design-pitch', authMiddleware, designPitchRouter);
 api.use('/showcase', showcasePortfolioRouter); // Has both public and protected routes
 
 app.use('/api/v1', api);
