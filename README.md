@@ -38,12 +38,10 @@ Scholarly is Chekd's education vertical - a comprehensive platform that brings t
 
 ```
 scholarly/
-├── apps/
-│   └── web/                      # Legacy Next.js app
 ├── packages/
 │   ├── api/                      # Express.js REST API
 │   │   └── src/
-│   │       ├── services/         # Business logic services
+│   │       ├── services/         # Business logic services (20+ modules)
 │   │       ├── routes/           # API route handlers
 │   │       ├── middleware/       # Auth, rate limiting, CSRF
 │   │       └── repositories/     # Data access layer
@@ -56,13 +54,17 @@ scholarly/
 │   │       ├── types/            # TypeScript interfaces
 │   │       ├── infrastructure/   # Base services, cache, events
 │   │       └── utils/            # Validators, ID generation
-│   ├── curriculum-processor/     # MRAC JSON-LD ingestion
-│   └── web/                      # Next.js 14 frontend (main)
+│   ├── curriculum-processor/     # MRAC JSON-LD ingestion CLI
+│   └── web/                      # Next.js 14 frontend
 │       └── src/
 │           ├── app/              # App Router pages
 │           ├── components/       # React components
 │           └── stores/           # Zustand state management
-└── scholarly-project-files/      # Docs & Australian Curriculum data
+└── docs/
+    ├── architecture/             # Architecture documentation
+    ├── prds/                     # Product Requirements Documents
+    ├── specs/                    # Original service specifications
+    └── curriculum/               # Australian Curriculum JSON-LD/RDF
 ```
 
 ---
@@ -170,13 +172,22 @@ scholarly/
 | **BookingEscrow** | `BookingEscrow.sol` | Tutor payment escrow |
 | **ReputationRegistry** | `ReputationRegistry.sol` | On-chain trust scores |
 
-### Curriculum Data (`scholarly-project-files/Australian Curriculum/`)
+### Curriculum Data (`docs/curriculum/Australian Curriculum/`)
 
 | Category | Contents |
 |----------|----------|
 | **Learning Areas** | English, Mathematics, Science, HASS, Technologies, Arts, HPE, Languages |
 | **General Capabilities** | Literacy, Numeracy, Digital Literacy, Critical & Creative Thinking, Personal & Social, Ethical Understanding, Intercultural Understanding |
 | **Formats** | `.jsonld` (JSON-LD), `.rdf` (RDF/XML) |
+
+### Documentation (`docs/`)
+
+| Folder | Contents |
+|--------|----------|
+| `docs/architecture/` | System architecture documentation |
+| `docs/prds/` | Product Requirements Documents (Design & Pitch AI, Showcase Portfolio) |
+| `docs/specs/` | Original TypeScript service specifications |
+| `docs/curriculum/` | Australian Curriculum MRAC data (JSON-LD/RDF) |
 
 ---
 
@@ -325,10 +336,10 @@ Scholarly includes a MRAC (Machine Readable Australian Curriculum) processor:
 
 ```bash
 # Validate curriculum files
-pnpm curriculum:validate --source ./scholarly-project-files/Australian\ Curriculum
+pnpm curriculum:validate --source ./docs/curriculum/Australian\ Curriculum
 
 # Import into database
-pnpm curriculum:ingest --source ./scholarly-project-files/Australian\ Curriculum
+pnpm curriculum:ingest --source ./docs/curriculum/Australian\ Curriculum
 ```
 
 ### Supported Learning Areas
