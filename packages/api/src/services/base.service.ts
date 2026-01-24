@@ -87,12 +87,14 @@ export abstract class ScholarlyBaseService {
           success: true,
         });
       } else {
+        // Type narrowing: result is { success: false; error: ScholarlyError }
+        const errorResult = result as { success: false; error: ScholarlyError };
         log.warn(`${this.serviceName}.${operation} failed`, {
           service: this.serviceName,
           operation,
           duration,
           success: false,
-          error: result.error.code,
+          error: errorResult.error.code,
         });
       }
 

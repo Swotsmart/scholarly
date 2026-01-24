@@ -1,16 +1,45 @@
 /**
  * Prisma-based Booking Repository Implementation
+ *
+ * Note: The TutorBookingService now uses Prisma directly with typed relations.
+ * This repository is maintained for backwards compatibility and testing purposes.
  */
 
-import { PrismaClient } from '@prisma/client';
-import { SessionType } from '@scholarly/shared/types/scholarly-types';
-import { Booking, BookingPricing, BookingRepository } from '../services/tutor-booking.service';
+import { prisma, Prisma } from '@scholarly/database';
+import { BookingPricing, SessionType } from '../services/tutor-booking.service';
 
-export class PrismaBookingRepository implements BookingRepository {
-  constructor(private prisma: PrismaClient) {}
+// Legacy Booking type for backwards compatibility
+export interface LegacyBooking {
+  id: string;
+  tenantId: string;
+  tutorId: string;
+  learnerIds: string[];
+  bookedByUserId: string;
+  scheduledStart: Date;
+  scheduledEnd: Date;
+  sessionType: SessionType;
+  subjectId: string;
+  subjectName?: string;
+  topicsNeedingHelp: string[];
+  learnerNotes?: string;
+  isGroupSession: boolean;
+  openToOthers: boolean;
+  maxGroupSize: number;
+  pricing: BookingPricing;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  createdAt: Date;
+}
 
-  async findById(tenantId: string, id: string): Promise<Booking | null> {
-    const booking = await this.prisma.booking.findFirst({
+export interface LegacyBookingRepository {
+  findById(tenantId: string, id: string): Promise<LegacyBooking | null>;
+  findByUser(tenantId: string, userId: string, status?: string): Promise<LegacyBooking[]>;
+  save(tenantId: string, booking: LegacyBooking): Promise<LegacyBooking>;
+  update(tenantId: string, id: string, updates: Partial<LegacyBooking>): Promise<LegacyBooking>;
+}
+
+export class PrismaBookingRepository implements LegacyBookingRepository {
+  async findById(tenantId: string, id: string): Promise<LegacyBooking | null> {
+    const booking = await prisma.booking.findFirst({
       where: { id, tenantId },
       include: {
         tutor: true,
@@ -22,8 +51,8 @@ export class PrismaBookingRepository implements BookingRepository {
     return this.mapToBooking(booking);
   }
 
-  async findByUser(tenantId: string, userId: string, status?: string): Promise<Booking[]> {
-    const bookings = await this.prisma.booking.findMany({
+  async findByUser(tenantId: string, userId: string, status?: string): Promise<LegacyBooking[]> {
+    const bookings = await prisma.booking.findMany({
       where: {
         tenantId,
         OR: [
@@ -43,8 +72,8 @@ export class PrismaBookingRepository implements BookingRepository {
     return bookings.map((b) => this.mapToBooking(b));
   }
 
-  async save(tenantId: string, booking: Booking): Promise<Booking> {
-    const created = await this.prisma.booking.create({
+  async save(tenantId: string, booking: LegacyBooking): Promise<LegacyBooking> {
+    const created = await prisma.booking.create({
       data: {
         id: booking.id,
         tenantId,
@@ -55,14 +84,13 @@ export class PrismaBookingRepository implements BookingRepository {
         scheduledEnd: booking.scheduledEnd,
         sessionType: booking.sessionType,
         subjectId: booking.subjectId,
-        subjectName: booking.subjectName || '',
         topicsNeedingHelp: booking.topicsNeedingHelp,
         learnerNotes: booking.learnerNotes,
         isGroupSession: booking.isGroupSession,
         openToOthers: booking.openToOthers,
         maxGroupSize: booking.maxGroupSize,
-        pricing: booking.pricing as any,
-        status: booking.status
+        pricing: booking.pricing as unknown as Prisma.InputJsonValue,
+        status: booking.status,
       },
       include: {
         tutor: true,
@@ -73,16 +101,16 @@ export class PrismaBookingRepository implements BookingRepository {
     return this.mapToBooking(created);
   }
 
-  async update(tenantId: string, id: string, updates: Partial<Booking>): Promise<Booking> {
-    const updateData: any = {};
+  async update(tenantId: string, id: string, updates: Partial<LegacyBooking>): Promise<LegacyBooking> {
+    const updateData: Prisma.BookingUpdateInput = {};
 
     if (updates.status) updateData.status = updates.status;
     if (updates.scheduledStart) updateData.scheduledStart = updates.scheduledStart;
     if (updates.scheduledEnd) updateData.scheduledEnd = updates.scheduledEnd;
     if (updates.learnerNotes !== undefined) updateData.learnerNotes = updates.learnerNotes;
-    if (updates.pricing) updateData.pricing = updates.pricing;
+    if (updates.pricing) updateData.pricing = updates.pricing as unknown as Prisma.InputJsonValue;
 
-    const updated = await this.prisma.booking.update({
+    const updated = await prisma.booking.update({
       where: { id },
       data: updateData,
       include: {
@@ -94,8 +122,10 @@ export class PrismaBookingRepository implements BookingRepository {
     return this.mapToBooking(updated);
   }
 
-  private mapToBooking(record: any): Booking {
-    const pricing = record.pricing as BookingPricing;
+  private mapToBooking(record: Prisma.BookingGetPayload<{
+    include: { tutor: true; bookedByUser: true };
+  }>): LegacyBooking {
+    const pricing = record.pricing as unknown as BookingPricing;
 
     return {
       id: record.id,
@@ -107,9 +137,8 @@ export class PrismaBookingRepository implements BookingRepository {
       scheduledEnd: record.scheduledEnd,
       sessionType: record.sessionType as SessionType,
       subjectId: record.subjectId,
-      subjectName: record.subjectName,
       topicsNeedingHelp: record.topicsNeedingHelp || [],
-      learnerNotes: record.learnerNotes,
+      learnerNotes: record.learnerNotes || undefined,
       isGroupSession: record.isGroupSession,
       openToOthers: record.openToOthers,
       maxGroupSize: record.maxGroupSize,
@@ -121,10 +150,10 @@ export class PrismaBookingRepository implements BookingRepository {
         platformFee: 9,
         total: 60,
         currency: 'AUD',
-        tutorEarnings: 51
+        tutorEarnings: 51,
       },
-      status: record.status,
-      createdAt: record.createdAt
+      status: record.status as LegacyBooking['status'],
+      createdAt: record.createdAt,
     };
   }
 }

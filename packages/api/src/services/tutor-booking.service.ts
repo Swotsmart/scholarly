@@ -10,44 +10,44 @@
  * who needs to learn. They introduce the right people: "Sarah's struggling
  * with fractions? Meet James - he explains maths using baking recipes!"
  *
+ * ## Schema Integration
+ *
+ * Uses the enhanced schema with:
+ * - TutorAvailabilitySlot (extracted from JSON)
+ * - TutorPricingTier (extracted from JSON)
+ * - Subject reference table for data integrity
+ *
  * @module TutorBookingService
  */
 
-import {
-  ScholarlyBaseService,
-  Result,
-  success,
-  failure,
-  ValidationError,
-  NotFoundError,
-  AuthorizationError,
-  Validator,
-  EventBus,
-  Cache,
-  ScholarlyConfig,
-  TutorUser,
-  LearnerUser,
-  TutoringSession,
-  SessionStatus,
-  SessionType,
-  SessionFeedback,
-  TutorPricing,
-  SafeguardingCheck,
-  Jurisdiction,
-  JURISDICTION_REQUIREMENTS
-} from '@scholarly/shared/types/scholarly-types';
+import { prisma, Prisma } from '@scholarly/database';
+import { ScholarlyBaseService, Result, success, failure } from './base.service';
+import { log } from '../lib/logger';
 
 // ============================================================================
-// REPOSITORY INTERFACES
+// TYPES & INTERFACES
 // ============================================================================
 
-export interface TutorRepository {
-  findById(tenantId: string, id: string): Promise<TutorUser | null>;
-  findBySubject(tenantId: string, subjectId: string, filters?: TutorSearchFilters): Promise<TutorUser[]>;
-  findAvailable(tenantId: string, dateTime: Date, duration: number): Promise<TutorUser[]>;
-  save(tenantId: string, tutor: TutorUser): Promise<TutorUser>;
-  update(tenantId: string, id: string, updates: Partial<TutorUser>): Promise<TutorUser>;
-}
+// Jurisdiction types
+export type Jurisdiction = 'AU_NSW' | 'AU_VIC' | 'AU_QLD' | 'AU_WA' | 'AU_SA' | 'AU_TAS' | 'AU_NT' | 'AU_ACT' | 'NZ';
+
+export type SessionType = 'one_on_one' | 'small_group' | 'large_group' | 'workshop';
+
+export const JURISDICTION_REQUIREMENTS: Record<Jurisdiction, {
+  safeguardingCheckRequired: boolean;
+  safeguardingCheckType: string;
+  minimumAge: number;
+}> = {
+  AU_NSW: { safeguardingCheckRequired: true, safeguardingCheckType: 'wwcc_nsw', minimumAge: 18 },
+  AU_VIC: { safeguardingCheckRequired: true, safeguardingCheckType: 'wwcc_vic', minimumAge: 18 },
+  AU_QLD: { safeguardingCheckRequired: true, safeguardingCheckType: 'blue_card', minimumAge: 18 },
+  AU_WA: { safeguardingCheckRequired: true, safeguardingCheckType: 'wwcc_wa', minimumAge: 18 },
+  AU_SA: { safeguardingCheckRequired: true, safeguardingCheckType: 'wwcc_sa', minimumAge: 18 },
+  AU_TAS: { safeguardingCheckRequired: true, safeguardingCheckType: 'wwcc_tas', minimumAge: 18 },
+  AU_NT: { safeguardingCheckRequired: true, safeguardingCheckType: 'ochre_card', minimumAge: 18 },
+  AU_ACT: { safeguardingCheckRequired: true, safeguardingCheckType: 'wwvp_act', minimumAge: 18 },
+  NZ: { safeguardingCheckRequired: true, safeguardingCheckType: 'police_vet', minimumAge: 18 },
+};
 
 export interface TutorSearchFilters {
   subjectIds?: string[];
@@ -59,52 +59,43 @@ export interface TutorSearchFilters {
   languages?: string[];
 }
 
-export interface LearnerRepository {
-  findById(tenantId: string, id: string): Promise<LearnerUser | null>;
-  findByParent(tenantId: string, parentId: string): Promise<LearnerUser[]>;
-  save(tenantId: string, learner: LearnerUser): Promise<LearnerUser>;
-}
-
-export interface SessionRepository {
-  findById(tenantId: string, id: string): Promise<TutoringSession | null>;
-  findByTutor(tenantId: string, tutorId: string, dateRange?: { start: Date; end: Date }): Promise<TutoringSession[]>;
-  findByLearner(tenantId: string, learnerId: string): Promise<TutoringSession[]>;
-  findUpcoming(tenantId: string, userId: string, limit?: number): Promise<TutoringSession[]>;
-  save(tenantId: string, session: TutoringSession): Promise<TutoringSession>;
-  update(tenantId: string, id: string, updates: Partial<TutoringSession>): Promise<TutoringSession>;
-}
-
-export interface BookingRepository {
-  findById(tenantId: string, id: string): Promise<Booking | null>;
-  findByUser(tenantId: string, userId: string, status?: string): Promise<Booking[]>;
-  save(tenantId: string, booking: Booking): Promise<Booking>;
-  update(tenantId: string, id: string, updates: Partial<Booking>): Promise<Booking>;
-}
-
 // ============================================================================
 // BOOKING & MATCHING TYPES
 // ============================================================================
 
-export interface Booking {
-  id: string;
-  tenantId: string;
-  tutorId: string;
-  learnerIds: string[];
-  bookedByUserId: string;
-  scheduledStart: Date;
-  scheduledEnd: Date;
-  sessionType: SessionType;
-  subjectId: string;
-  subjectName?: string;
-  topicsNeedingHelp: string[];
-  learnerNotes?: string;
-  isGroupSession: boolean;
-  openToOthers: boolean;
-  maxGroupSize: number;
-  pricing: BookingPricing;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-  createdAt: Date;
-}
+// Get types from Prisma
+export type TutorProfileWithRelations = Prisma.TutorProfileGetPayload<{
+  include: {
+    user: true;
+    subjects: { include: { subject: true } };
+    availabilitySlots: true;
+    pricingTiers: true;
+    safeguardingChecks: true;
+  };
+}>;
+
+export type LearnerProfileWithRelations = Prisma.LearnerProfileGetPayload<{
+  include: {
+    user: true;
+    subjects: { include: { subject: true } };
+  };
+}>;
+
+export type BookingWithRelations = Prisma.BookingGetPayload<{
+  include: {
+    tutor: { include: { user: true } };
+    subject: true;
+    session: true;
+  };
+}>;
+
+export type SessionWithRelations = Prisma.TutoringSessionGetPayload<{
+  include: {
+    tutorProfile: { include: { user: true } };
+    subject: true;
+    participants: { include: { learnerProfile: { include: { user: true } } } };
+  };
+}>;
 
 export interface BookingPricing {
   baseRate: number;
@@ -129,7 +120,7 @@ export interface TutorMatchRequest {
 }
 
 export interface TutorMatch {
-  tutor: TutorUser;
+  tutor: TutorProfileWithRelations;
   matchScore: number;
   matchReasons: string[];
   matchBreakdown: {
@@ -140,6 +131,13 @@ export interface TutorMatch {
   };
   availableSlots: { date: Date; startTime: string; endTime: string }[];
   estimatedPrice: number;
+}
+
+export interface TimeSlot {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  timezone: string;
 }
 
 export interface ProfileBuilderSession {
@@ -155,26 +153,11 @@ export interface ProfileBuilderSession {
 // SERVICE IMPLEMENTATION
 // ============================================================================
 
-export class TutorBookingService extends ScholarlyBaseService {
-  private readonly tutorRepo: TutorRepository;
-  private readonly learnerRepo: LearnerRepository;
-  private readonly sessionRepo: SessionRepository;
-  private readonly bookingRepo: BookingRepository;
+let tutorBookingServiceInstance: TutorBookingService | null = null;
 
-  constructor(deps: {
-    eventBus: EventBus;
-    cache: Cache;
-    config: ScholarlyConfig;
-    tutorRepo: TutorRepository;
-    learnerRepo: LearnerRepository;
-    sessionRepo: SessionRepository;
-    bookingRepo: BookingRepository;
-  }) {
-    super('TutorBookingService', deps);
-    this.tutorRepo = deps.tutorRepo;
-    this.learnerRepo = deps.learnerRepo;
-    this.sessionRepo = deps.sessionRepo;
-    this.bookingRepo = deps.bookingRepo;
+export class TutorBookingService extends ScholarlyBaseService {
+  constructor() {
+    super('TutorBookingService');
   }
 
   // --------------------------------------------------------------------------
@@ -183,52 +166,82 @@ export class TutorBookingService extends ScholarlyBaseService {
 
   /**
    * Find tutors matching a learner's needs using AI scoring
+   * Uses TutorAvailabilitySlot and TutorPricingTier models
    */
   async findTutors(
     tenantId: string,
     request: TutorMatchRequest
   ): Promise<Result<{ tutors: TutorMatch[]; totalCount: number }>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.userId(request.learnerId);
-      Validator.required(request.subjectId, 'subjectId');
-    } catch (e) {
-      return failure(e as ValidationError);
-    }
+    return this.withTiming('findTutors', async () => {
+      // Validate learner exists
+      const learner = await prisma.learnerProfile.findFirst({
+        where: {
+          id: request.learnerId,
+          user: { tenantId },
+        },
+        include: {
+          user: true,
+          subjects: { include: { subject: true } },
+        },
+      });
 
-    return this.withTiming(
-      'findTutors',
-      tenantId,
-      async () => {
-        const learner = await this.learnerRepo.findById(tenantId, request.learnerId);
-        if (!learner) throw new NotFoundError('Learner', request.learnerId);
-
-        const tutors = await this.tutorRepo.findBySubject(tenantId, request.subjectId, {
-          sessionTypes: [request.sessionType],
-          jurisdiction: request.jurisdiction,
-          maxHourlyRate: request.maxHourlyRate
+      if (!learner) {
+        return failure({
+          code: 'NOT_FOUND',
+          message: `Learner ${request.learnerId} not found`,
         });
+      }
 
-        // Filter by safeguarding and score
-        const matches: TutorMatch[] = [];
-        for (const tutor of tutors) {
-          if (!this.verifySafeguarding(tutor, request.jurisdiction)) continue;
-          const match = this.calculateMatch(tutor, learner, request);
-          if (match.matchScore >= 50) matches.push(match);
-        }
+      // Find tutors who teach this subject using TutorSubject relation
+      const tutors = await prisma.tutorProfile.findMany({
+        where: {
+          user: { tenantId },
+          verificationStatus: 'verified',
+          deletedAt: null,
+          subjects: {
+            some: {
+              subjectId: request.subjectId,
+            },
+          },
+          sessionTypes: { has: request.sessionType },
+          // Filter by max hourly rate using TutorPricingTier
+          ...(request.maxHourlyRate && {
+            pricingTiers: {
+              some: {
+                baseRate: { lte: request.maxHourlyRate },
+                isActive: true,
+              },
+            },
+          }),
+        },
+        include: {
+          user: true,
+          subjects: { include: { subject: true } },
+          availabilitySlots: true,
+          pricingTiers: { where: { isActive: true } },
+          safeguardingChecks: true,
+        },
+      });
 
-        matches.sort((a, b) => b.matchScore - a.matchScore);
+      // Filter by safeguarding and score
+      const matches: TutorMatch[] = [];
+      for (const tutor of tutors) {
+        if (!this.verifySafeguarding(tutor, request.jurisdiction)) continue;
+        const match = this.calculateMatch(tutor, learner, request);
+        if (match.matchScore >= 50) matches.push(match);
+      }
 
-        await this.publishEvent('scholarly.tutor.search_completed', tenantId, {
-          learnerId: request.learnerId,
-          subjectId: request.subjectId,
-          resultsCount: matches.length
-        });
+      matches.sort((a, b) => b.matchScore - a.matchScore);
 
-        return { tutors: matches.slice(0, 20), totalCount: matches.length };
-      },
-      { learnerId: request.learnerId }
-    );
+      log.info('Tutor search completed', {
+        tenantId,
+        learnerId: request.learnerId,
+        subjectId: request.subjectId,
+        resultsCount: matches.length,
+      });
+
+      return success({ tutors: matches.slice(0, 20), totalCount: matches.length });
+    });
   }
 
   /**
@@ -244,30 +257,44 @@ export class TutorBookingService extends ScholarlyBaseService {
       marketplaceSuggestion: string;
     }>
   > {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.userId(learnerId);
-    } catch (e) {
-      return failure(e as ValidationError);
-    }
+    return this.withTiming('getProactiveSuggestions', async () => {
+      // Check learner exists
+      const learner = await prisma.learnerProfile.findFirst({
+        where: {
+          id: learnerId,
+          user: { tenantId },
+        },
+        include: {
+          subjects: {
+            where: { needsHelp: true },
+            include: { subject: true },
+          },
+        },
+      });
 
-    return this.withTiming(
-      'getProactiveSuggestions',
-      tenantId,
-      async () => {
-        // Would integrate with LIS - for now return structure
-        return {
-          areasNeedingSupport: ['Fractions', 'Word problems'],
-          schoolTeacherNote:
-            `We've noticed some challenges with fractions and word problems. ` +
-            `Consider discussing with their classroom teacher for additional school support.`,
-          marketplaceSuggestion:
-            `If school support isn't sufficient, our tutor marketplace ` +
-            `has specialists in these areas who can provide one-on-one help.`
-        };
-      },
-      { learnerId }
-    );
+      if (!learner) {
+        return failure({
+          code: 'NOT_FOUND',
+          message: `Learner ${learnerId} not found`,
+        });
+      }
+
+      // Get areas needing support from learner's subjects
+      const areasNeedingSupport = learner.subjects
+        .filter((s) => s.needsHelp)
+        .map((s) => s.subject.name);
+
+      // Would integrate with LIS in production
+      return success({
+        areasNeedingSupport: areasNeedingSupport.length > 0 ? areasNeedingSupport : ['Fractions', 'Word problems'],
+        schoolTeacherNote:
+          `We've noticed some challenges with ${areasNeedingSupport.join(', ') || 'certain topics'}. ` +
+          `Consider discussing with their classroom teacher for additional school support.`,
+        marketplaceSuggestion:
+          `If school support isn't sufficient, our tutor marketplace ` +
+          `has specialists in these areas who can provide one-on-one help.`,
+      });
+    });
   }
 
   // --------------------------------------------------------------------------
@@ -276,12 +303,13 @@ export class TutorBookingService extends ScholarlyBaseService {
 
   /**
    * Create a booking request
+   * Uses TutorPricingTier for pricing and TutorAvailabilitySlot for availability
    */
   async createBooking(
     tenantId: string,
     bookedByUserId: string,
     request: {
-      tutorId: string;
+      tutorProfileId: string;
       learnerIds: string[];
       scheduledStart: Date;
       duration: number;
@@ -292,72 +320,168 @@ export class TutorBookingService extends ScholarlyBaseService {
       openToOthers?: boolean;
       maxGroupSize?: number;
     }
-  ): Promise<Result<{ booking: Booking; session: TutoringSession }>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.userId(bookedByUserId);
-      Validator.userId(request.tutorId);
-      Validator.dateInFuture(request.scheduledStart, 'scheduledStart');
-    } catch (e) {
-      return failure(e as ValidationError);
-    }
+  ): Promise<Result<{ booking: BookingWithRelations; session: SessionWithRelations }>> {
+    return this.withTiming('createBooking', async () => {
+      // Validate scheduled start is in future
+      if (request.scheduledStart <= new Date()) {
+        return failure({
+          code: 'VALIDATION_ERROR',
+          message: 'Scheduled start must be in the future',
+        });
+      }
 
-    return this.withTiming(
-      'createBooking',
-      tenantId,
-      async () => {
-        const tutor = await this.tutorRepo.findById(tenantId, request.tutorId);
-        if (!tutor) throw new NotFoundError('Tutor', request.tutorId);
+      // Get tutor with pricing tiers and availability
+      const tutor = await prisma.tutorProfile.findFirst({
+        where: {
+          id: request.tutorProfileId,
+          user: { tenantId },
+          deletedAt: null,
+        },
+        include: {
+          user: true,
+          subjects: { include: { subject: true } },
+          availabilitySlots: true,
+          pricingTiers: { where: { isActive: true } },
+          safeguardingChecks: true,
+        },
+      });
 
-        // Verify availability
-        const isAvailable = await this.checkAvailability(
-          tenantId,
-          request.tutorId,
-          request.scheduledStart,
-          request.duration
-        );
-        if (!isAvailable) throw new ValidationError('Tutor not available at requested time');
+      if (!tutor) {
+        return failure({
+          code: 'NOT_FOUND',
+          message: `Tutor ${request.tutorProfileId} not found`,
+        });
+      }
 
-        // Calculate pricing
-        const pricing = this.calculatePricing(
-          tutor.pricing,
-          request.duration,
-          request.learnerIds.length
-        );
+      // Verify availability using TutorAvailabilitySlot
+      const isAvailable = await this.checkAvailabilityFromSlots(
+        tutor.availabilitySlots,
+        request.scheduledStart,
+        request.duration
+      );
+      if (!isAvailable) {
+        return failure({
+          code: 'TUTOR_UNAVAILABLE',
+          message: 'Tutor not available at requested time',
+        });
+      }
 
-        const booking: Booking = {
-          id: this.generateId('booking'),
-          tenantId,
-          tutorId: request.tutorId,
-          learnerIds: request.learnerIds,
-          bookedByUserId,
-          scheduledStart: request.scheduledStart,
-          scheduledEnd: new Date(request.scheduledStart.getTime() + request.duration * 60000),
-          sessionType: request.sessionType,
-          subjectId: request.subjectId,
-          topicsNeedingHelp: request.topicsNeedingHelp,
-          learnerNotes: request.learnerNotes,
-          isGroupSession: request.learnerIds.length > 1,
-          openToOthers: request.openToOthers || false,
-          maxGroupSize: request.maxGroupSize || 1,
-          pricing,
-          status: 'pending',
-          createdAt: new Date()
-        };
+      // Check for existing bookings at this time
+      const conflictingBooking = await prisma.booking.findFirst({
+        where: {
+          tutorId: request.tutorProfileId,
+          status: { in: ['pending', 'confirmed'] },
+          OR: [
+            {
+              scheduledStart: { lte: request.scheduledStart },
+              scheduledEnd: { gt: request.scheduledStart },
+            },
+            {
+              scheduledStart: {
+                lt: new Date(request.scheduledStart.getTime() + request.duration * 60000),
+              },
+              scheduledEnd: {
+                gte: new Date(request.scheduledStart.getTime() + request.duration * 60000),
+              },
+            },
+          ],
+        },
+      });
 
-        const savedBooking = await this.bookingRepo.save(tenantId, booking);
-        const session = await this.createSession(tenantId, savedBooking, tutor);
+      if (conflictingBooking) {
+        return failure({
+          code: 'TIME_CONFLICT',
+          message: 'Tutor already has a booking at this time',
+        });
+      }
 
-        await this.publishEvent('scholarly.booking.created', tenantId, {
-          bookingId: savedBooking.id,
-          tutorId: request.tutorId,
-          scheduledStart: request.scheduledStart
+      // Calculate pricing using TutorPricingTier
+      const pricing = this.calculatePricingFromTiers(
+        tutor.pricingTiers,
+        request.sessionType,
+        request.duration,
+        request.learnerIds.length
+      );
+
+      // Get timezone from tutor's availability slots
+      const timezone = tutor.availabilitySlots[0]?.timezone || 'Australia/Sydney';
+
+      // Create booking with transaction
+      const result = await prisma.$transaction(async (tx) => {
+        const booking = await tx.booking.create({
+          data: {
+            tenantId,
+            tutorId: request.tutorProfileId,
+            bookedByUserId,
+            learnerIds: request.learnerIds,
+            scheduledStart: request.scheduledStart,
+            scheduledEnd: new Date(request.scheduledStart.getTime() + request.duration * 60000),
+            timezone,
+            sessionType: request.sessionType,
+            subjectId: request.subjectId,
+            topicsNeedingHelp: request.topicsNeedingHelp,
+            learnerNotes: request.learnerNotes,
+            isGroupSession: request.learnerIds.length > 1,
+            openToOthers: request.openToOthers || false,
+            maxGroupSize: request.maxGroupSize || 1,
+            pricing: pricing as unknown as Prisma.InputJsonValue,
+            status: 'pending',
+          },
+          include: {
+            tutor: { include: { user: true } },
+            subject: true,
+            session: true,
+          },
         });
 
-        return { booking: savedBooking, session };
-      },
-      { bookedByUserId, tutorId: request.tutorId }
-    );
+        // Create session
+        const session = await tx.tutoringSession.create({
+          data: {
+            tenantId,
+            bookingId: booking.id,
+            tutorProfileId: request.tutorProfileId,
+            tutorUserId: tutor.userId,
+            scheduledStart: request.scheduledStart,
+            scheduledEnd: new Date(request.scheduledStart.getTime() + request.duration * 60000),
+            timezone,
+            sessionType: request.sessionType,
+            isGroupSession: request.learnerIds.length > 1,
+            subjectId: request.subjectId,
+            topicsFocus: request.topicsNeedingHelp,
+            status: 'scheduled',
+            amountCharged: pricing.total,
+            tutorEarnings: pricing.tutorEarnings,
+            platformCommission: pricing.platformFee,
+          },
+          include: {
+            tutorProfile: { include: { user: true } },
+            subject: true,
+            participants: { include: { learnerProfile: { include: { user: true } } } },
+          },
+        });
+
+        // Create session participants
+        for (const learnerId of request.learnerIds) {
+          await tx.sessionParticipant.create({
+            data: {
+              sessionId: session.id,
+              learnerProfileId: learnerId,
+              attended: false,
+            },
+          });
+        }
+
+        return { booking, session };
+      });
+
+      log.info('Booking created', {
+        bookingId: result.booking.id,
+        tutorId: request.tutorProfileId,
+        scheduledStart: request.scheduledStart,
+      });
+
+      return success(result);
+    });
   }
 
   /**
@@ -367,22 +491,28 @@ export class TutorBookingService extends ScholarlyBaseService {
     tenantId: string,
     userId: string,
     status?: string
-  ): Promise<Result<Booking[]>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.userId(userId);
-    } catch (e) {
-      return failure(e as ValidationError);
-    }
+  ): Promise<Result<BookingWithRelations[]>> {
+    return this.withTiming('getBookings', async () => {
+      const bookings = await prisma.booking.findMany({
+        where: {
+          tenantId,
+          OR: [
+            { bookedByUserId: userId },
+            { tutor: { userId } },
+            { learnerIds: { has: userId } },
+          ],
+          ...(status && { status }),
+        },
+        include: {
+          tutor: { include: { user: true } },
+          subject: true,
+          session: true,
+        },
+        orderBy: { scheduledStart: 'asc' },
+      });
 
-    return this.withTiming(
-      'getBookings',
-      tenantId,
-      async () => {
-        return await this.bookingRepo.findByUser(tenantId, userId, status);
-      },
-      { userId }
-    );
+      return success(bookings);
+    });
   }
 
   /**
@@ -391,32 +521,57 @@ export class TutorBookingService extends ScholarlyBaseService {
   async confirmBooking(
     tenantId: string,
     bookingId: string,
-    tutorId: string
-  ): Promise<Result<Booking>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.required(bookingId, 'bookingId');
-    } catch (e) {
-      return failure(e as ValidationError);
-    }
+    tutorUserId: string
+  ): Promise<Result<BookingWithRelations>> {
+    return this.withTiming('confirmBooking', async () => {
+      const booking = await prisma.booking.findFirst({
+        where: {
+          id: bookingId,
+          tenantId,
+        },
+        include: {
+          tutor: { include: { user: true } },
+          subject: true,
+          session: true,
+        },
+      });
 
-    return this.withTiming(
-      'confirmBooking',
-      tenantId,
-      async () => {
-        const booking = await this.bookingRepo.findById(tenantId, bookingId);
-        if (!booking) throw new NotFoundError('Booking', bookingId);
-        if (booking.tutorId !== tutorId)
-          throw new AuthorizationError('Only assigned tutor can confirm');
+      if (!booking) {
+        return failure({
+          code: 'NOT_FOUND',
+          message: `Booking ${bookingId} not found`,
+        });
+      }
 
-        booking.status = 'confirmed';
-        const updated = await this.bookingRepo.update(tenantId, bookingId, booking);
+      if (booking.tutor.userId !== tutorUserId) {
+        return failure({
+          code: 'UNAUTHORIZED',
+          message: 'Only assigned tutor can confirm booking',
+        });
+      }
 
-        await this.publishEvent('scholarly.booking.confirmed', tenantId, { bookingId, tutorId });
-        return updated;
-      },
-      { bookingId }
-    );
+      const updated = await prisma.booking.update({
+        where: { id: bookingId },
+        data: { status: 'confirmed' },
+        include: {
+          tutor: { include: { user: true } },
+          subject: true,
+          session: true,
+        },
+      });
+
+      // Update session status too
+      if (booking.session) {
+        await prisma.tutoringSession.update({
+          where: { id: booking.session.id },
+          data: { status: 'confirmed' },
+        });
+      }
+
+      log.info('Booking confirmed', { bookingId, tutorUserId });
+
+      return success(updated);
+    });
   }
 
   /**
@@ -427,35 +582,57 @@ export class TutorBookingService extends ScholarlyBaseService {
     bookingId: string,
     userId: string,
     reason: string
-  ): Promise<Result<Booking>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.required(bookingId, 'bookingId');
-    } catch (e) {
-      return failure(e as ValidationError);
-    }
+  ): Promise<Result<{ booking: BookingWithRelations; refundAmount: number }>> {
+    return this.withTiming('cancelBooking', async () => {
+      const booking = await prisma.booking.findFirst({
+        where: {
+          id: bookingId,
+          tenantId,
+        },
+        include: {
+          tutor: { include: { user: true } },
+          subject: true,
+          session: true,
+        },
+      });
 
-    return this.withTiming(
-      'cancelBooking',
-      tenantId,
-      async () => {
-        const booking = await this.bookingRepo.findById(tenantId, bookingId);
-        if (!booking) throw new NotFoundError('Booking', bookingId);
-
-        booking.status = 'cancelled';
-        const updated = await this.bookingRepo.update(tenantId, bookingId, booking);
-
-        const refundAmount = this.calculateRefund(booking);
-        await this.publishEvent('scholarly.booking.cancelled', tenantId, {
-          bookingId,
-          userId,
-          reason,
-          refundAmount
+      if (!booking) {
+        return failure({
+          code: 'NOT_FOUND',
+          message: `Booking ${bookingId} not found`,
         });
-        return updated;
-      },
-      { bookingId }
-    );
+      }
+
+      // Calculate refund based on cancellation timing
+      const refundAmount = this.calculateRefundAmount(booking);
+
+      const updated = await prisma.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: 'cancelled',
+          cancellationReason: reason,
+          cancelledBy: userId,
+          cancelledAt: new Date(),
+        },
+        include: {
+          tutor: { include: { user: true } },
+          subject: true,
+          session: true,
+        },
+      });
+
+      // Update session status
+      if (booking.session) {
+        await prisma.tutoringSession.update({
+          where: { id: booking.session.id },
+          data: { status: 'cancelled' },
+        });
+      }
+
+      log.info('Booking cancelled', { bookingId, userId, reason, refundAmount });
+
+      return success({ booking: updated, refundAmount });
+    });
   }
 
   // --------------------------------------------------------------------------
@@ -466,43 +643,73 @@ export class TutorBookingService extends ScholarlyBaseService {
     tenantId: string,
     userId: string,
     limit = 10
-  ): Promise<Result<TutoringSession[]>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.userId(userId);
-    } catch (e) {
-      return failure(e as ValidationError);
-    }
-    return this.withTiming(
-      'getUpcomingSessions',
-      tenantId,
-      async () => {
-        return await this.sessionRepo.findUpcoming(tenantId, userId, limit);
-      },
-      { userId }
-    );
+  ): Promise<Result<SessionWithRelations[]>> {
+    return this.withTiming('getUpcomingSessions', async () => {
+      const sessions = await prisma.tutoringSession.findMany({
+        where: {
+          tenantId,
+          scheduledStart: { gt: new Date() },
+          status: { in: ['scheduled', 'confirmed'] },
+          OR: [
+            { tutorUserId: userId },
+            { participants: { some: { learnerProfile: { userId } } } },
+          ],
+        },
+        include: {
+          tutorProfile: { include: { user: true } },
+          subject: true,
+          participants: { include: { learnerProfile: { include: { user: true } } } },
+        },
+        orderBy: { scheduledStart: 'asc' },
+        take: limit,
+      });
+
+      return success(sessions);
+    });
   }
 
-  async startSession(tenantId: string, sessionId: string): Promise<Result<TutoringSession>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.required(sessionId, 'sessionId');
-    } catch (e) {
-      return failure(e as ValidationError);
-    }
+  async startSession(
+    tenantId: string,
+    sessionId: string
+  ): Promise<Result<SessionWithRelations>> {
+    return this.withTiming('startSession', async () => {
+      const session = await prisma.tutoringSession.findFirst({
+        where: {
+          id: sessionId,
+          tenantId,
+        },
+      });
 
-    return this.withTiming(
-      'startSession',
-      tenantId,
-      async () => {
-        const session = await this.sessionRepo.findById(tenantId, sessionId);
-        if (!session) throw new NotFoundError('Session', sessionId);
-        session.status = SessionStatus.IN_PROGRESS;
-        session.actualStart = new Date();
-        return await this.sessionRepo.update(tenantId, sessionId, session);
-      },
-      { sessionId }
-    );
+      if (!session) {
+        return failure({
+          code: 'NOT_FOUND',
+          message: `Session ${sessionId} not found`,
+        });
+      }
+
+      const updated = await prisma.tutoringSession.update({
+        where: { id: sessionId },
+        data: {
+          status: 'in_progress',
+          actualStart: new Date(),
+        },
+        include: {
+          tutorProfile: { include: { user: true } },
+          subject: true,
+          participants: { include: { learnerProfile: { include: { user: true } } } },
+        },
+      });
+
+      // Update participant attendance
+      await prisma.sessionParticipant.updateMany({
+        where: { sessionId },
+        data: { attended: true },
+      });
+
+      log.info('Session started', { sessionId });
+
+      return success(updated);
+    });
   }
 
   async completeSession(
@@ -512,72 +719,122 @@ export class TutorBookingService extends ScholarlyBaseService {
       sessionNotes?: string;
       homeworkAssigned?: string;
     }
-  ): Promise<Result<{ session: TutoringSession; tutorEarnings: number; tokenRewards: number }>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.required(sessionId, 'sessionId');
-    } catch (e) {
-      return failure(e as ValidationError);
-    }
+  ): Promise<Result<{ session: SessionWithRelations; tutorEarnings: number; tokenRewards: number }>> {
+    return this.withTiming('completeSession', async () => {
+      const session = await prisma.tutoringSession.findFirst({
+        where: {
+          id: sessionId,
+          tenantId,
+        },
+      });
 
-    return this.withTiming(
-      'completeSession',
-      tenantId,
-      async () => {
-        const session = await this.sessionRepo.findById(tenantId, sessionId);
-        if (!session) throw new NotFoundError('Session', sessionId);
-
-        session.status = SessionStatus.COMPLETED;
-        session.actualEnd = new Date();
-        session.sessionNotes = data.sessionNotes;
-        session.homeworkAssigned = data.homeworkAssigned;
-        session.billingStatus = 'charged';
-
-        const tokenRewards = Math.round(session.tutorEarnings * 0.01);
-        const updated = await this.sessionRepo.update(tenantId, sessionId, session);
-
-        await this.publishEvent('scholarly.session.completed', tenantId, {
-          sessionId,
-          tutorEarnings: session.tutorEarnings
+      if (!session) {
+        return failure({
+          code: 'NOT_FOUND',
+          message: `Session ${sessionId} not found`,
         });
-        return { session: updated, tutorEarnings: session.tutorEarnings, tokenRewards };
-      },
-      { sessionId }
-    );
+      }
+
+      const tokenRewards = Math.round(session.tutorEarnings * 0.01);
+
+      const updated = await prisma.tutoringSession.update({
+        where: { id: sessionId },
+        data: {
+          status: 'completed',
+          actualEnd: new Date(),
+          sessionNotes: data.sessionNotes,
+          homeworkAssigned: data.homeworkAssigned,
+          billingStatus: 'charged',
+          tokenRewards,
+        },
+        include: {
+          tutorProfile: { include: { user: true } },
+          subject: true,
+          participants: { include: { learnerProfile: { include: { user: true } } } },
+        },
+      });
+
+      // Update booking status
+      await prisma.booking.update({
+        where: { id: session.bookingId },
+        data: { status: 'completed' },
+      });
+
+      log.info('Session completed', { sessionId, tutorEarnings: session.tutorEarnings });
+
+      return success({
+        session: updated,
+        tutorEarnings: session.tutorEarnings,
+        tokenRewards,
+      });
+    });
   }
 
   async submitFeedback(
     tenantId: string,
     sessionId: string,
     userId: string,
-    feedback: SessionFeedback
-  ): Promise<Result<TutoringSession>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.required(sessionId, 'sessionId');
-    } catch (e) {
-      return failure(e as ValidationError);
-    }
+    feedback: { rating: number; comment?: string; wouldRecommend?: boolean }
+  ): Promise<Result<SessionWithRelations>> {
+    return this.withTiming('submitFeedback', async () => {
+      const session = await prisma.tutoringSession.findFirst({
+        where: {
+          id: sessionId,
+          tenantId,
+        },
+        include: {
+          tutorProfile: true,
+          participants: { include: { learnerProfile: true } },
+          booking: true,
+        },
+      });
 
-    return this.withTiming(
-      'submitFeedback',
-      tenantId,
-      async () => {
-        const session = await this.sessionRepo.findById(tenantId, sessionId);
-        if (!session) throw new NotFoundError('Session', sessionId);
+      if (!session) {
+        return failure({
+          code: 'NOT_FOUND',
+          message: `Session ${sessionId} not found`,
+        });
+      }
 
-        if (userId === session.tutorId) session.tutorFeedback = feedback;
-        else if (session.learnerIds.includes(userId)) session.learnerFeedback = feedback;
-        else if (session.parentIds.includes(userId)) session.parentFeedback = feedback;
-        else throw new AuthorizationError('User not in session');
+      // Determine role of user
+      const isTutor = session.tutorUserId === userId;
+      const isLearner = session.participants.some((p) => p.learnerProfile.userId === userId);
+      const isParent = session.booking?.learnerIds.includes(userId) && !isLearner;
 
-        const updated = await this.sessionRepo.update(tenantId, sessionId, session);
-        if (userId !== session.tutorId)
-          await this.updateTutorRating(tenantId, session.tutorId, feedback.rating);
-        return updated;
-      },
-      { sessionId }
-    );
+      if (!isTutor && !isLearner && !isParent) {
+        return failure({
+          code: 'UNAUTHORIZED',
+          message: 'User not part of this session',
+        });
+      }
+
+      // Update appropriate feedback field
+      const updateData: Prisma.TutoringSessionUpdateInput = {};
+      if (isTutor) {
+        updateData.tutorFeedback = feedback as unknown as Prisma.InputJsonValue;
+      } else if (isLearner) {
+        updateData.learnerFeedback = feedback as unknown as Prisma.InputJsonValue;
+      } else {
+        updateData.parentFeedback = feedback as unknown as Prisma.InputJsonValue;
+      }
+
+      const updated = await prisma.tutoringSession.update({
+        where: { id: sessionId },
+        data: updateData,
+        include: {
+          tutorProfile: { include: { user: true } },
+          subject: true,
+          participants: { include: { learnerProfile: { include: { user: true } } } },
+        },
+      });
+
+      // Update tutor rating if feedback from learner/parent
+      if (!isTutor) {
+        await this.updateTutorRating(session.tutorProfileId, feedback.rating);
+      }
+
+      return success(updated);
+    });
   }
 
   // --------------------------------------------------------------------------
@@ -586,27 +843,32 @@ export class TutorBookingService extends ScholarlyBaseService {
 
   async startProfileBuilder(
     tenantId: string,
-    tutorId: string
+    tutorProfileId: string
   ): Promise<Result<ProfileBuilderSession>> {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.userId(tutorId);
-    } catch (e) {
-      return failure(e as ValidationError);
-    }
+    return this.withTiming('startProfileBuilder', async () => {
+      // Verify tutor exists
+      const tutor = await prisma.tutorProfile.findFirst({
+        where: {
+          id: tutorProfileId,
+          user: { tenantId },
+        },
+      });
 
-    return this.withTiming(
-      'startProfileBuilder',
-      tenantId,
-      async () => ({
+      if (!tutor) {
+        return failure({
+          code: 'NOT_FOUND',
+          message: `Tutor profile ${tutorProfileId} not found`,
+        });
+      }
+
+      return success({
         id: this.generateId('profile_builder'),
-        tutorId,
+        tutorId: tutorProfileId,
         currentStep: 0,
         totalSteps: PROFILE_QUESTIONS.length,
-        responses: []
-      }),
-      { tutorId }
-    );
+        responses: [],
+      });
+    });
   }
 
   async answerProfileQuestion(
@@ -620,36 +882,215 @@ export class TutorBookingService extends ScholarlyBaseService {
       suggestedBio?: string;
     }>
   > {
-    try {
-      Validator.tenantId(tenantId);
-      Validator.required(sessionId, 'sessionId');
-    } catch (e) {
-      return failure(e as ValidationError);
+    return this.withTiming('answerProfileQuestion', async () => {
+      // In production would load session from cache/DB
+      const keywords = this.extractKeywords(answer);
+      const currentStep = 1; // Would track actual step
+
+      const isComplete = currentStep >= PROFILE_QUESTIONS.length;
+      const nextQuestion = isComplete ? undefined : PROFILE_QUESTIONS[currentStep];
+      const suggestedBio = isComplete ? this.generateBio(keywords) : undefined;
+
+      return success({ nextQuestion, isComplete, suggestedBio });
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // AVAILABILITY MANAGEMENT
+  // --------------------------------------------------------------------------
+
+  /**
+   * Get tutor's available time slots
+   */
+  async getTutorAvailability(
+    tenantId: string,
+    tutorProfileId: string
+  ): Promise<Result<TimeSlot[]>> {
+    return this.withTiming('getTutorAvailability', async () => {
+      const slots = await prisma.tutorAvailabilitySlot.findMany({
+        where: {
+          profileId: tutorProfileId,
+          profile: { user: { tenantId } },
+          isRecurring: true,
+          OR: [
+            { effectiveTo: null },
+            { effectiveTo: { gte: new Date() } },
+          ],
+        },
+        orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+      });
+
+      return success(
+        slots.map((s) => ({
+          dayOfWeek: s.dayOfWeek,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          timezone: s.timezone,
+        }))
+      );
+    });
+  }
+
+  /**
+   * Update tutor's availability slots
+   */
+  async updateTutorAvailability(
+    tenantId: string,
+    tutorProfileId: string,
+    slots: TimeSlot[]
+  ): Promise<Result<TimeSlot[]>> {
+    return this.withTiming('updateTutorAvailability', async () => {
+      // Verify tutor exists
+      const tutor = await prisma.tutorProfile.findFirst({
+        where: {
+          id: tutorProfileId,
+          user: { tenantId },
+        },
+      });
+
+      if (!tutor) {
+        return failure({
+          code: 'NOT_FOUND',
+          message: `Tutor profile ${tutorProfileId} not found`,
+        });
+      }
+
+      // Delete existing recurring slots
+      await prisma.tutorAvailabilitySlot.deleteMany({
+        where: {
+          profileId: tutorProfileId,
+          isRecurring: true,
+        },
+      });
+
+      // Create new slots
+      const created = await prisma.tutorAvailabilitySlot.createMany({
+        data: slots.map((s) => ({
+          profileId: tutorProfileId,
+          dayOfWeek: s.dayOfWeek,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          timezone: s.timezone,
+          isRecurring: true,
+        })),
+      });
+
+      log.info('Tutor availability updated', {
+        tutorProfileId,
+        slotsCount: created.count,
+      });
+
+      return success(slots);
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // PRICING MANAGEMENT
+  // --------------------------------------------------------------------------
+
+  /**
+   * Get tutor's pricing tiers
+   */
+  async getTutorPricing(
+    tenantId: string,
+    tutorProfileId: string
+  ): Promise<Result<Prisma.TutorPricingTierGetPayload<{}>[]>> {
+    return this.withTiming('getTutorPricing', async () => {
+      const tiers = await prisma.tutorPricingTier.findMany({
+        where: {
+          profileId: tutorProfileId,
+          profile: { user: { tenantId } },
+          isActive: true,
+        },
+        orderBy: [{ sessionType: 'asc' }, { duration: 'asc' }],
+      });
+
+      return success(tiers);
+    });
+  }
+
+  /**
+   * Update or create a pricing tier
+   */
+  async upsertPricingTier(
+    tenantId: string,
+    tutorProfileId: string,
+    tier: {
+      sessionType: string;
+      duration: number;
+      baseRate: number;
+      currency?: string;
+      groupDiscount?: number;
+      maxGroupSize?: number;
+      introRate?: number;
     }
+  ): Promise<Result<Prisma.TutorPricingTierGetPayload<{}>>> {
+    return this.withTiming('upsertPricingTier', async () => {
+      // Verify tutor exists
+      const tutor = await prisma.tutorProfile.findFirst({
+        where: {
+          id: tutorProfileId,
+          user: { tenantId },
+        },
+      });
 
-    return this.withTiming(
-      'answerProfileQuestion',
-      tenantId,
-      async () => {
-        // In production would load session from DB
-        const keywords = this.extractKeywords(answer);
-        const currentStep = 1; // Would track actual step
+      if (!tutor) {
+        return failure({
+          code: 'NOT_FOUND',
+          message: `Tutor profile ${tutorProfileId} not found`,
+        });
+      }
 
-        const isComplete = currentStep >= PROFILE_QUESTIONS.length;
-        const nextQuestion = isComplete ? undefined : PROFILE_QUESTIONS[currentStep];
-        const suggestedBio = isComplete ? this.generateBio(keywords) : undefined;
+      const result = await prisma.tutorPricingTier.upsert({
+        where: {
+          profileId_sessionType_duration: {
+            profileId: tutorProfileId,
+            sessionType: tier.sessionType,
+            duration: tier.duration,
+          },
+        },
+        create: {
+          profileId: tutorProfileId,
+          sessionType: tier.sessionType,
+          duration: tier.duration,
+          baseRate: tier.baseRate,
+          currency: tier.currency || 'AUD',
+          groupDiscount: tier.groupDiscount || 0,
+          maxGroupSize: tier.maxGroupSize || 1,
+          introRate: tier.introRate,
+          isActive: true,
+        },
+        update: {
+          baseRate: tier.baseRate,
+          currency: tier.currency,
+          groupDiscount: tier.groupDiscount,
+          maxGroupSize: tier.maxGroupSize,
+          introRate: tier.introRate,
+          isActive: true,
+        },
+      });
 
-        return { nextQuestion, isComplete, suggestedBio };
-      },
-      { sessionId }
-    );
+      log.info('Pricing tier upserted', {
+        tutorProfileId,
+        sessionType: tier.sessionType,
+        duration: tier.duration,
+      });
+
+      return success(result);
+    });
   }
 
   // --------------------------------------------------------------------------
   // PRIVATE METHODS
   // --------------------------------------------------------------------------
 
-  private verifySafeguarding(tutor: TutorUser, jurisdiction: Jurisdiction): boolean {
+  /**
+   * Verify tutor has valid safeguarding checks for jurisdiction
+   */
+  private verifySafeguarding(
+    tutor: TutorProfileWithRelations,
+    jurisdiction: Jurisdiction
+  ): boolean {
     const req = JURISDICTION_REQUIREMENTS[jurisdiction];
     if (!req.safeguardingCheckRequired) return true;
     return tutor.safeguardingChecks.some(
@@ -660,19 +1101,28 @@ export class TutorBookingService extends ScholarlyBaseService {
     );
   }
 
+  /**
+   * Calculate match score between tutor and learner
+   */
   private calculateMatch(
-    tutor: TutorUser,
-    learner: LearnerUser,
+    tutor: TutorProfileWithRelations,
+    learner: LearnerProfileWithRelations,
     request: TutorMatchRequest
   ): TutorMatch {
-    const subjectMatch =
-      tutor.subjects.find((s) => s.subjectId === request.subjectId)?.confidenceLevel || 0;
-    const styleMatch = learner.learningPreferences ? 75 : 70;
-    const trustMatch = Math.min(100, tutor.trustScore);
-    const priceMatch = request.maxHourlyRate
-      ? tutor.pricing.hourlyRate1to1 <= request.maxHourlyRate
-        ? 100
-        : 50
+    // Get subject match from TutorSubject relation
+    const tutorSubject = tutor.subjects.find((s) => s.subjectId === request.subjectId);
+    const subjectMatch = (tutorSubject?.confidenceLevel || 0) * 20; // 1-5 scale to 0-100
+
+    // Style match (would use more sophisticated AI in production)
+    const styleMatch = learner.learningPace ? 75 : 70;
+
+    // Trust score from user
+    const trustMatch = Math.min(100, tutor.user.trustScore);
+
+    // Price match using TutorPricingTier
+    const pricing = tutor.pricingTiers.find((p) => p.sessionType === request.sessionType);
+    const priceMatch = request.maxHourlyRate && pricing
+      ? pricing.baseRate <= request.maxHourlyRate ? 100 : 50
       : 80;
 
     const matchScore = Math.round(
@@ -684,39 +1134,90 @@ export class TutorBookingService extends ScholarlyBaseService {
     if (trustMatch >= 90) matchReasons.push('Highly trusted');
     if (priceMatch === 100) matchReasons.push('Within budget');
 
+    // Build available slots from TutorAvailabilitySlot
+    const availableSlots = tutor.availabilitySlots.map((slot) => ({
+      date: this.getNextDateForDayOfWeek(slot.dayOfWeek),
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+    }));
+
     return {
       tutor,
       matchScore,
       matchReasons,
-      matchBreakdown: { subjectMatch: subjectMatch * 20, styleMatch, trustMatch, priceMatch },
-      availableSlots: [],
-      estimatedPrice: tutor.pricing.hourlyRate1to1
+      matchBreakdown: { subjectMatch, styleMatch, trustMatch, priceMatch },
+      availableSlots,
+      estimatedPrice: pricing?.baseRate || 50,
     };
   }
 
-  private async checkAvailability(
-    tenantId: string,
-    tutorId: string,
+  /**
+   * Check availability using TutorAvailabilitySlot model
+   */
+  private checkAvailabilityFromSlots(
+    slots: Prisma.TutorAvailabilitySlotGetPayload<{}>[],
     start: Date,
     duration: number
-  ): Promise<boolean> {
-    const end = new Date(start.getTime() + duration * 60000);
-    const sessions = await this.sessionRepo.findByTutor(tenantId, tutorId, { start, end });
-    return sessions.length === 0;
+  ): boolean {
+    const dayOfWeek = start.getDay();
+    const startTime = start.toTimeString().slice(0, 5); // "HH:MM"
+    const endTime = new Date(start.getTime() + duration * 60000)
+      .toTimeString()
+      .slice(0, 5);
+
+    // Check if requested time falls within any availability slot
+    return slots.some(
+      (slot) =>
+        slot.dayOfWeek === dayOfWeek &&
+        slot.startTime <= startTime &&
+        slot.endTime >= endTime
+    );
   }
 
-  private calculatePricing(
-    tutorPricing: TutorPricing,
+  /**
+   * Calculate pricing using TutorPricingTier model
+   */
+  private calculatePricingFromTiers(
+    tiers: Prisma.TutorPricingTierGetPayload<{}>[],
+    sessionType: string,
     duration: number,
     studentCount: number
   ): BookingPricing {
+    // Find matching tier
+    const tier = tiers.find(
+      (t) => t.sessionType === sessionType && t.duration === duration
+    ) || tiers.find(
+      (t) => t.sessionType === sessionType
+    ) || tiers[0];
+
+    if (!tier) {
+      // Default pricing if no tiers found
+      return {
+        baseRate: 50,
+        duration,
+        groupDiscount: 0,
+        subtotal: 50 * (duration / 60),
+        platformFee: 5 * (duration / 60),
+        total: 50 * (duration / 60),
+        currency: 'AUD',
+        tutorEarnings: 45 * (duration / 60),
+      };
+    }
+
     const hours = duration / 60;
-    const baseRate =
-      studentCount === 1 ? tutorPricing.hourlyRate1to1 : tutorPricing.hourlyRateGroup;
+    const baseRate = tier.baseRate;
     const subtotal = baseRate * hours;
-    const groupDiscount = studentCount > 1 ? subtotal * 0.1 * (studentCount - 1) : 0;
+
+    // Apply group discount
+    const groupDiscount = studentCount > 1
+      ? subtotal * tier.groupDiscount * (studentCount - 1)
+      : 0;
     const discounted = subtotal - groupDiscount;
-    const platformFee = discounted * tutorPricing.commissionRate;
+
+    // Platform fee is 10% by default
+    const platformFeeRate = 0.10;
+    const platformFee = discounted * platformFeeRate;
+
     return {
       baseRate,
       duration,
@@ -724,60 +1225,64 @@ export class TutorBookingService extends ScholarlyBaseService {
       subtotal: discounted,
       platformFee,
       total: discounted,
-      currency: tutorPricing.currency,
-      tutorEarnings: discounted - platformFee
+      currency: tier.currency,
+      tutorEarnings: discounted - platformFee,
     };
   }
 
-  private async createSession(
-    tenantId: string,
-    booking: Booking,
-    tutor: TutorUser
-  ): Promise<TutoringSession> {
-    const session: TutoringSession = {
-      id: this.generateId('session'),
-      tenantId,
-      tutorId: booking.tutorId,
-      learnerIds: booking.learnerIds,
-      parentIds: [],
-      scheduledStart: booking.scheduledStart,
-      scheduledEnd: booking.scheduledEnd,
-      timezone: tutor.availability.timezone,
-      sessionType: booking.sessionType,
-      isGroupSession: booking.isGroupSession,
-      subjectId: booking.subjectId,
-      subjectName: tutor.subjects.find((s) => s.subjectId === booking.subjectId)?.subjectName || '',
-      topicsFocus: booking.topicsNeedingHelp,
-      status: SessionStatus.SCHEDULED,
-      bookingId: booking.id,
-      resourcesShared: [],
-      billingStatus: 'pending',
-      amountCharged: booking.pricing.total,
-      tutorEarnings: booking.pricing.tutorEarnings,
-      platformCommission: booking.pricing.platformFee,
-      tokenRewards: 0
-    };
-    return await this.sessionRepo.save(tenantId, session);
-  }
-
-  private calculateRefund(booking: Booking): number {
+  /**
+   * Calculate refund amount based on cancellation timing
+   */
+  private calculateRefundAmount(booking: BookingWithRelations): number {
+    const pricing = booking.pricing as unknown as BookingPricing;
     const hoursUntil = (booking.scheduledStart.getTime() - Date.now()) / 3600000;
-    if (hoursUntil >= 24) return booking.pricing.total;
-    if (hoursUntil >= 4) return booking.pricing.total * 0.5;
+    if (hoursUntil >= 24) return pricing.total;
+    if (hoursUntil >= 4) return pricing.total * 0.5;
     return 0;
   }
 
+  /**
+   * Update tutor's rating after feedback
+   */
   private async updateTutorRating(
-    tenantId: string,
-    tutorId: string,
+    tutorProfileId: string,
     rating: number
   ): Promise<void> {
-    const tutor = await this.tutorRepo.findById(tenantId, tutorId);
+    const tutor = await prisma.tutorProfile.findUnique({
+      where: { id: tutorProfileId },
+    });
+
     if (!tutor) return;
-    const m = tutor.metrics;
-    m.averageRating = (m.averageRating * m.ratingCount + rating) / (m.ratingCount + 1);
-    m.ratingCount++;
-    await this.tutorRepo.update(tenantId, tutorId, { metrics: m });
+
+    const metrics = tutor.metrics as { averageRating?: number; ratingCount?: number } || {};
+    const currentAvg = metrics.averageRating || 0;
+    const currentCount = metrics.ratingCount || 0;
+
+    const newAvg = (currentAvg * currentCount + rating) / (currentCount + 1);
+    const newCount = currentCount + 1;
+
+    await prisma.tutorProfile.update({
+      where: { id: tutorProfileId },
+      data: {
+        metrics: {
+          ...metrics,
+          averageRating: newAvg,
+          ratingCount: newCount,
+        },
+      },
+    });
+  }
+
+  /**
+   * Get next date for a given day of week
+   */
+  private getNextDateForDayOfWeek(dayOfWeek: number): Date {
+    const today = new Date();
+    const currentDay = today.getDay();
+    const daysUntil = (dayOfWeek - currentDay + 7) % 7 || 7;
+    const nextDate = new Date(today);
+    nextDate.setDate(today.getDate() + daysUntil);
+    return nextDate;
   }
 
   private extractKeywords(text: string): string[] {
@@ -795,6 +1300,24 @@ export class TutorBookingService extends ScholarlyBaseService {
       `Focused on making learning engaging and accessible for every student.`
     );
   }
+}
+
+// ============================================================================
+// Service Initialization
+// ============================================================================
+
+export function initializeTutorBookingService(): TutorBookingService {
+  if (!tutorBookingServiceInstance) {
+    tutorBookingServiceInstance = new TutorBookingService();
+  }
+  return tutorBookingServiceInstance;
+}
+
+export function getTutorBookingService(): TutorBookingService {
+  if (!tutorBookingServiceInstance) {
+    throw new Error('TutorBookingService not initialized. Call initializeTutorBookingService() first.');
+  }
+  return tutorBookingServiceInstance;
 }
 
 const PROFILE_QUESTIONS = [

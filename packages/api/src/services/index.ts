@@ -5,7 +5,24 @@
  */
 
 // Core Services - tutor-booking first to establish TimeSlot
-export * from './tutor-booking.service';
+export {
+  TutorBookingService,
+  initializeTutorBookingService,
+  getTutorBookingService,
+  type Jurisdiction,
+  type SessionType,
+  type TutorSearchFilters,
+  type TutorProfileWithRelations,
+  type LearnerProfileWithRelations,
+  type BookingWithRelations,
+  type SessionWithRelations,
+  type BookingPricing,
+  type TutorMatchRequest,
+  type TutorMatch,
+  type TimeSlot,
+  type ProfileBuilderSession,
+  JURISDICTION_REQUIREMENTS,
+} from './tutor-booking.service';
 export * from './micro-school.service';
 export * from './eduscrum-orchestrator.service';
 
