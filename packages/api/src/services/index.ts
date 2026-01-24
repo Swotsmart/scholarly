@@ -356,6 +356,38 @@ export {
   type LTIConfig
 } from './design-pitch-ai.service';
 
+// Base Service
+export * from './base.service';
+
+// Notification Service
+export {
+  NotificationService,
+  initializeNotificationService,
+  getNotificationService,
+  type NotificationChannel,
+  type NotificationPriority,
+  type NotificationStatus,
+  type NotificationPayload,
+  type SendNotificationRequest,
+  type BulkNotificationRequest,
+  type NotificationPreferences,
+  type NotificationFilters,
+} from './notification.service';
+
+// Feature Flag Service
+export {
+  FeatureFlagService,
+  initializeFeatureFlagService,
+  getFeatureFlagService,
+  type FeatureFlag,
+  type FeatureFlagRule,
+  type EvaluationContext,
+  type TenantConfiguration,
+  type BrandingConfig,
+  type TenantLimits,
+  type IntegrationConfig,
+} from './feature-flag.service';
+
 // Showcase Portfolio Service (Terminal Phase of Design & Pitch Journey)
 export {
   ShowcasePortfolioService,

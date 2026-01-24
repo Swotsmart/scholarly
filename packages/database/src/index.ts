@@ -3,7 +3,27 @@
  * Database client and utilities for Scholarly Platform
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+
+/**
+ * Models that support soft delete (have deletedAt column)
+ */
+const SOFT_DELETE_MODELS = [
+  'Tenant',
+  'User',
+  'TutorProfile',
+  'Content',
+  'HomeschoolFamily',
+  'HomeschoolCoop',
+  'MicroSchool',
+  'ReliefTeacher',
+] as const;
+
+type SoftDeleteModel = typeof SOFT_DELETE_MODELS[number];
+
+function isSoftDeleteModel(model: string | undefined): model is SoftDeleteModel {
+  return SOFT_DELETE_MODELS.includes(model as SoftDeleteModel);
+}
 
 // Extend PrismaClient with custom methods
 const prismaClientSingleton = () => {
@@ -12,10 +32,125 @@ const prismaClientSingleton = () => {
   }).$extends({
     query: {
       $allModels: {
+        // Default ordering by createdAt desc
         async findMany({ model, operation, args, query }) {
-          // Add default ordering by createdAt desc if not specified
           args.orderBy = args.orderBy ?? { createdAt: 'desc' };
+
+          // Filter out soft-deleted records unless explicitly requested
+          if (isSoftDeleteModel(model)) {
+            if (!args.where) args.where = {};
+            // Only filter if deletedAt is not explicitly set in the query
+            if ((args.where as any).deletedAt === undefined) {
+              (args.where as any).deletedAt = null;
+            }
+          }
+
           return query(args);
+        },
+
+        // Filter soft-deleted on findFirst
+        async findFirst({ model, operation, args, query }) {
+          if (isSoftDeleteModel(model)) {
+            if (!args.where) args.where = {};
+            if ((args.where as any).deletedAt === undefined) {
+              (args.where as any).deletedAt = null;
+            }
+          }
+          return query(args);
+        },
+
+        // Filter soft-deleted on findUnique
+        async findUnique({ model, operation, args, query }) {
+          if (isSoftDeleteModel(model)) {
+            // Convert to findFirst to allow deletedAt filter
+            const result = await query(args);
+            if (result && (result as any).deletedAt !== null) {
+              return null;
+            }
+            return result;
+          }
+          return query(args);
+        },
+
+        // Convert delete to soft delete
+        async delete({ model, operation, args, query }) {
+          if (isSoftDeleteModel(model)) {
+            // Convert to update with deletedAt
+            return (query as any)({
+              ...args,
+              data: { deletedAt: new Date() },
+            });
+          }
+          return query(args);
+        },
+
+        // Convert deleteMany to soft delete
+        async deleteMany({ model, operation, args, query }) {
+          if (isSoftDeleteModel(model)) {
+            return (query as any)({
+              ...args,
+              data: { deletedAt: new Date() },
+            });
+          }
+          return query(args);
+        },
+
+        // Filter soft-deleted on count
+        async count({ model, operation, args, query }) {
+          if (isSoftDeleteModel(model)) {
+            if (!args.where) args.where = {};
+            if ((args.where as any).deletedAt === undefined) {
+              (args.where as any).deletedAt = null;
+            }
+          }
+          return query(args);
+        },
+
+        // Filter soft-deleted on aggregate
+        async aggregate({ model, operation, args, query }) {
+          if (isSoftDeleteModel(model)) {
+            if (!args.where) args.where = {};
+            if ((args.where as any).deletedAt === undefined) {
+              (args.where as any).deletedAt = null;
+            }
+          }
+          return query(args);
+        },
+      },
+    },
+    model: {
+      // Add restore method for soft-deleted records
+      $allModels: {
+        async restore<T>(this: T, where: Prisma.Args<T, 'update'>['where']): Promise<Prisma.Result<T, { where: typeof where }, 'update'>> {
+          const context = Prisma.getExtensionContext(this);
+          return (context as any).update({
+            where,
+            data: { deletedAt: null },
+          });
+        },
+
+        async hardDelete<T>(this: T, where: Prisma.Args<T, 'delete'>['where']): Promise<Prisma.Result<T, { where: typeof where }, 'delete'>> {
+          const context = Prisma.getExtensionContext(this);
+          // Bypass soft delete by using raw delete
+          const modelName = (context as any).name;
+          const client = (context as any).$parent;
+          return client.$queryRawUnsafe(
+            `DELETE FROM "${modelName}" WHERE id = $1`,
+            (where as any).id
+          );
+        },
+
+        async findWithDeleted<T>(this: T, args?: Prisma.Args<T, 'findMany'>): Promise<Prisma.Result<T, typeof args, 'findMany'>> {
+          const context = Prisma.getExtensionContext(this);
+          // Explicitly include deleted records
+          const argsWithDeleted = {
+            ...args,
+            where: {
+              ...(args?.where || {}),
+              deletedAt: undefined, // Clear the filter
+            },
+          };
+          return (context as any).findMany(argsWithDeleted);
         },
       },
     },
@@ -106,7 +241,19 @@ export function createPaginatedResult<T>(
 }
 
 // Soft delete helpers
-export const activeFilter = { status: { not: 'deleted' } };
+export const activeFilter = { deletedAt: null };
+export const withDeletedFilter = { deletedAt: undefined }; // Includes soft-deleted
+export const onlyDeletedFilter = { deletedAt: { not: null } };
+
+// Helper to check if a model supports soft delete
+export function supportsSoftDelete(model: string): boolean {
+  return SOFT_DELETE_MODELS.includes(model as any);
+}
+
+// Get list of soft delete models
+export function getSoftDeleteModels(): readonly string[] {
+  return SOFT_DELETE_MODELS;
+}
 
 // Common query helpers
 export const userSelect = {
