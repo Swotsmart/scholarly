@@ -32,6 +32,8 @@ import { designPitchRouter } from './routes/design-pitch-ai';
 import { showcasePortfolioRouter } from './routes/showcase-portfolio';
 import { earlyYearsRouter } from './routes/early-years';
 import { linguaFlowRouter } from './routes/linguaflow';
+import { interoperabilityRouter } from './routes/interoperability';
+import { goldenPathRouter } from './routes/golden-path';
 
 // Middleware
 import { errorHandler } from './middleware/error-handler';
@@ -86,6 +88,8 @@ api.use('/design-pitch', authMiddleware, designPitchRouter);
 api.use('/showcase', showcasePortfolioRouter); // Has both public and protected routes
 api.use('/early-years', authMiddleware, earlyYearsRouter);
 api.use('/linguaflow', authMiddleware, linguaFlowRouter);
+api.use('/interoperability', authMiddleware, interoperabilityRouter);
+api.use('/golden-path', authMiddleware, goldenPathRouter);
 
 app.use('/api/v1', api);
 

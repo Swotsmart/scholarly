@@ -3251,3 +3251,786 @@ model LanguageVocabularyReview {
   @@index([cardId])
   @@index([reviewedAt])
 }
+
+// ============================================================================
+// 1EDTECH LTI ADVANTAGE (LTI 1.3)
+// ============================================================================
+
+/// Registered LTI 1.3 platforms (e.g., Canvas, Moodle, Blackboard)
+model LTIPlatform {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name         String
+  issuer       String
+  clientId     String
+  deploymentId String
+  oidcAuthUrl  String
+  tokenUrl     String
+  jwksUrl      String
+
+  publicKey  String? @db.Text
+  privateKey String? @db.Text
+  keyId      String?
+
+  accessTokenUrl String?
+  scopes         String[] @default([])
+
+  status          String    @default("active") // active, inactive, pending_validation
+  lastKeyRotation DateTime?
+  metadata        Json      @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tools      LTITool[]
+  lineItems  AGSLineItem[]
+  oidcStates LTIOIDCState[]
+
+  @@unique([tenantId, issuer, clientId])
+  @@index([tenantId])
+  @@index([issuer])
+}
+
+/// Registered LTI tools linked to a platform
+model LTITool {
+  id         String      @id @default(cuid())
+  tenantId   String
+  platformId String
+  platform   LTIPlatform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+
+  launchUrl    String
+  loginUrl     String
+  redirectUrls String[] @default([])
+  deepLinkUrl  String?
+
+  customParameters Json     @default("{}")
+  scopes           String[] @default([])
+  iconUrl          String?
+  status           String   @default("active")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([platformId])
+}
+
+/// OIDC state tracking for LTI launches (anti-replay)
+model LTIOIDCState {
+  id         String      @id @default(cuid())
+  platformId String
+  platform   LTIPlatform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+
+  state         String  @unique
+  nonce         String
+  loginHint     String
+  targetLinkUri String
+  ltiMessageHint String?
+
+  consumed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([state])
+  @@index([expiresAt])
+}
+
+/// AGS line items for grade passback
+model AGSLineItem {
+  id         String      @id @default(cuid())
+  tenantId   String
+  platformId String
+  platform   LTIPlatform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+
+  contextId      String
+  label          String
+  scoreMaximum   Float
+  resourceId     String?
+  resourceLinkId String?
+  tag            String?
+
+  startDateTime  DateTime?
+  endDateTime    DateTime?
+  gradesReleased Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scores  AGSScore[]
+  results AGSResult[]
+
+  @@index([tenantId])
+  @@index([platformId, contextId])
+}
+
+/// AGS score submissions
+model AGSScore {
+  id         String      @id @default(cuid())
+  lineItemId String
+  lineItem   AGSLineItem @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+
+  userId           String
+  scoreGiven       Float?
+  scoreMaximum     Float?
+  comment          String?
+  activityProgress String // Initialized, Started, InProgress, Submitted, Completed
+  gradingProgress  String // FullyGraded, Pending, PendingManual, Failed, NotReady
+
+  timestamp DateTime @default(now())
+
+  @@index([lineItemId, userId])
+}
+
+/// AGS results (read-only computed from scores)
+model AGSResult {
+  id         String      @id @default(cuid())
+  lineItemId String
+  lineItem   AGSLineItem @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+
+  userId        String
+  resultScore   Float?
+  resultMaximum Float?
+  comment       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([lineItemId, userId])
+}
+
+// ============================================================================
+// ONEROSTER 1.2
+// ============================================================================
+
+/// OneRoster connection configuration for SIS integration
+model OneRosterConnection {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name         String
+  baseUrl      String
+  clientId     String
+  clientSecret String
+  tokenUrl     String
+  scope        String?
+
+  accessToken String?   @db.Text
+  tokenExpiry DateTime?
+
+  lastSyncAt DateTime?
+  syncStatus String    @default("idle") // idle, syncing, error
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fieldMappings OneRosterFieldMapping[]
+  syncJobs      OneRosterSyncJob[]
+
+  @@index([tenantId])
+}
+
+/// Field mapping between Scholarly and OneRoster schemas
+model OneRosterFieldMapping {
+  id           String             @id @default(cuid())
+  connectionId String
+  connection   OneRosterConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  sourceField     String
+  targetField     String
+  transform       String? // uppercase, lowercase, trim, date_iso, custom
+  customTransform String?
+
+  @@index([connectionId])
+}
+
+/// OneRoster sync job tracking
+model OneRosterSyncJob {
+  id           String             @id @default(cuid())
+  tenantId     String
+  connectionId String
+  connection   OneRosterConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  resourceType String // orgs, users, classes, enrollments, etc.
+  direction    String // inbound, outbound
+  status       String @default("pending") // pending, running, completed, failed
+
+  totalRecords     Int @default(0)
+  processedRecords Int @default(0)
+  errorRecords     Int @default(0)
+
+  deltaFrom DateTime?
+  errors    Json      @default("[]")
+
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([connectionId, status])
+}
+
+// ============================================================================
+// CASE (Competency & Academic Standards Exchange)
+// ============================================================================
+
+/// CASE competency framework document
+model CASEFramework {
+  id       String @id @default(cuid())
+  tenantId String
+
+  identifier String
+  uri        String?
+  creator    String
+  title      String
+  publisher  String?
+  description String?
+
+  subject       String[] @default([])
+  language      String?
+  version       String?
+  adoptionStatus String @default("Draft") // Draft, Review, Adopted, Deprecated
+
+  sourceUrl     String?
+  lastSyncAt    DateTime?
+  status        String   @default("active") // active, archived, draft
+
+  document Json // Full CFDocument JSON
+
+  importedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  items        CASEItem[]
+  associations CASEAssociation[]
+  itemMappings CASEItemMapping[]
+
+  @@unique([tenantId, identifier])
+  @@index([tenantId])
+  @@index([tenantId, adoptionStatus])
+}
+
+/// CASE competency framework item (standard/competency)
+model CASEItem {
+  id          String        @id @default(cuid())
+  frameworkId String
+  framework   CASEFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  identifier         String
+  uri                String?
+  fullStatement      String  @db.Text
+  humanCodingScheme  String?
+  cfItemType         String?
+  educationLevel     String[] @default([])
+  abbreviatedStatement String?
+  conceptKeywords    String[] @default([])
+  listEnumeration    String?
+  language           String?
+
+  lastChangeDateTime DateTime @default(now())
+
+  originAssociations      CASEAssociation[] @relation("OriginNode")
+  destinationAssociations CASEAssociation[] @relation("DestinationNode")
+  mappings                CASEItemMapping[]
+
+  @@unique([frameworkId, identifier])
+  @@index([frameworkId])
+  @@index([humanCodingScheme])
+}
+
+/// CASE association between items
+model CASEAssociation {
+  id          String        @id @default(cuid())
+  frameworkId String?
+  framework   CASEFramework? @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+
+  identifier      String
+  associationType String // isChildOf, isPartOf, precedes, isRelatedTo, replacedBy, exemplar
+  sequenceNumber  Int?
+
+  originNodeId      String
+  originNode        CASEItem @relation("OriginNode", fields: [originNodeId], references: [id])
+  destinationNodeId String
+  destinationNode   CASEItem @relation("DestinationNode", fields: [destinationNodeId], references: [id])
+
+  lastChangeDateTime DateTime @default(now())
+
+  @@index([frameworkId])
+  @@index([originNodeId])
+  @@index([destinationNodeId])
+  @@index([associationType])
+}
+
+/// Mapping between CASE items and knowledge graph nodes
+model CASEItemMapping {
+  id          String        @id @default(cuid())
+  tenantId    String
+  frameworkId String
+  framework   CASEFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
+  caseItemId  String
+  caseItem    CASEItem      @relation(fields: [caseItemId], references: [id])
+
+  knowledgeGraphNodeId String
+  confidence           Float
+  mappedBy             String @default("auto") // auto, manual
+
+  mappedAt DateTime @default(now())
+
+  @@unique([caseItemId, knowledgeGraphNodeId])
+  @@index([tenantId])
+  @@index([frameworkId])
+}
+
+// ============================================================================
+// CLR 2.0 / OPEN BADGES 3.0
+// ============================================================================
+
+/// Achievement/badge definition template
+model AchievementDefinition {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name            String
+  description     String @db.Text
+  achievementType String
+  image           String?
+
+  criteriaType      String  // narrative, id_based
+  criteriaNarrative String? @db.Text
+  criteriaId        String?
+
+  alignment Json @default("[]") // AchievementAlignment[]
+  tags      String[] @default([])
+
+  evidenceRequired    Boolean @default(false)
+  evidenceDescription String?
+  resultDescriptions  Json    @default("[]") // ResultDescription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assertions BadgeAssertion[]
+
+  @@index([tenantId])
+  @@index([achievementType])
+}
+
+/// Issued badge/credential assertion
+model BadgeAssertion {
+  id                      String                @id @default(cuid())
+  tenantId                String
+  achievementDefinitionId String
+  achievementDefinition   AchievementDefinition @relation(fields: [achievementDefinitionId], references: [id])
+
+  recipientId          String
+  recipientEmail       String?
+  recipientIdentityHash String?
+  issuerId             String
+
+  credential    Json // Full OpenBadgeCredential JSON-LD
+  verificationType String // HostedBadge, SignedBadge
+  verificationUrl  String?
+  signatureJws     String? @db.Text
+
+  status    String @default("active") // draft, active, revoked, expired
+
+  issuedAt        DateTime  @default(now())
+  expiresAt       DateTime?
+  revokedAt       DateTime?
+  revocationReason String?
+
+  nftTokenId        String?
+  nftTransactionHash String?
+
+  evidence Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([recipientId])
+  @@index([issuerId])
+  @@index([status])
+}
+
+/// Badge revocation list
+model BadgeRevocation {
+  id          String @id @default(cuid())
+  tenantId    String
+  assertionId String @unique
+
+  revokedAt DateTime @default(now())
+  reason    String
+
+  @@index([tenantId])
+}
+
+// ============================================================================
+// ED-FI ODS/API v7 INTEGRATION
+// ============================================================================
+
+/// Ed-Fi district connection configuration
+model EdFiConnection {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name         String
+  districtName String
+  baseUrl      String
+  oauthUrl     String
+  clientId     String
+  clientSecret String
+
+  schoolYear       Int
+  namespace        String
+  apiVersion       String    @default("v7.0")
+  pageSize         Int       @default(100)
+  rateLimitPerMin  Int       @default(300)
+  syncDirection    String    @default("inbound") // inbound, outbound, bidirectional
+  enabledResources String[]  @default([])
+
+  accessToken  String?   @db.Text
+  tokenExpiry  DateTime?
+  lastSyncVersion Int?
+
+  status String @default("active") // active, inactive, error
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  syncJobs      EdFiSyncJob[]
+  fieldMappings EdFiFieldMapping[]
+  conflicts     EdFiSyncConflict[]
+  changeTrackers EdFiChangeTracker[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+/// Ed-Fi sync job execution tracking
+model EdFiSyncJob {
+  id           String         @id @default(cuid())
+  tenantId     String
+  connectionId String
+  connection   EdFiConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  direction    String // inbound, outbound, bidirectional
+  resourceType String // students, staff, grades, attendance, etc.
+  status       String @default("pending") // pending, running, completed, failed, cancelled
+
+  totalRecords     Int @default(0)
+  processedRecords Int @default(0)
+  createdRecords   Int @default(0)
+  updatedRecords   Int @default(0)
+  errorRecords     Int @default(0)
+  skippedRecords   Int @default(0)
+
+  lastChangeVersion Int?
+  errors            Json @default("[]")
+
+  retryCount  Int       @default(0)
+  maxRetries  Int       @default(3)
+  nextRetryAt DateTime?
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  conflicts EdFiSyncConflict[]
+
+  @@index([tenantId])
+  @@index([connectionId, status])
+  @@index([createdAt])
+}
+
+/// Ed-Fi per-district field transform configuration
+model EdFiFieldMapping {
+  id           String         @id @default(cuid())
+  tenantId     String
+  connectionId String
+  connection   EdFiConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  resourceType   String
+  scholarlyField String
+  edfiField      String
+  direction      String  @default("inbound") // inbound, outbound, bidirectional
+
+  transform       String? // direct, uppercase, lowercase, date_format, lookup, custom
+  transformConfig Json?
+  isRequired      Boolean @default(false)
+  defaultValue    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([connectionId, resourceType, scholarlyField, edfiField])
+  @@index([tenantId])
+  @@index([connectionId, resourceType])
+}
+
+/// Ed-Fi sync conflicts requiring manual resolution
+model EdFiSyncConflict {
+  id           String         @id @default(cuid())
+  tenantId     String
+  connectionId String
+  connection   EdFiConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  syncJobId    String
+  syncJob      EdFiSyncJob    @relation(fields: [syncJobId], references: [id], onDelete: Cascade)
+
+  resourceType   String
+  resourceId     String
+  scholarlyData  Json
+  edfiData       Json
+  conflictFields String[] @default([])
+
+  resolution   String? // scholarly_wins, edfi_wins, manual_merge
+  resolvedData Json?
+  resolvedBy   String?
+  resolvedAt   DateTime?
+
+  status String @default("pending") // pending, resolved, ignored
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([connectionId, status])
+  @@index([syncJobId])
+}
+
+/// Ed-Fi local change tracking for outbound sync
+model EdFiChangeTracker {
+  id           String         @id @default(cuid())
+  tenantId     String
+  connectionId String
+  connection   EdFiConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  entityType     String
+  entityId       String
+  operation      String // create, update, delete
+  changedFields  String[] @default([])
+  previousValues Json     @default("{}")
+  newValues      Json     @default("{}")
+
+  synced    Boolean @default(false)
+  syncJobId String?
+
+  trackedAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([connectionId, synced])
+  @@index([entityType, entityId])
+}
+
+// ============================================================================
+// GOLDEN PATH - ADAPTATION ENGINE
+// ============================================================================
+
+/// Learner adaptation profile with BKT states and EMA signals
+model AdaptationProfile {
+  id       String @id @default(cuid())
+  tenantId String
+
+  learnerId String @unique
+
+  // EMA state (exponential moving average signals)
+  emaAccuracy     Float @default(0.5)
+  emaResponseTime Float @default(5000)
+  emaEngagement   Float @default(0.5)
+  emaHintUsage    Float @default(0)
+  emaSkipRate     Float @default(0)
+
+  currentDifficulty Float @default(0.5)
+  targetSuccessRate Float @default(0.8)
+
+  sessionCount     Int   @default(0)
+  totalTimeMinutes Float @default(0)
+
+  lastSessionAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  competencyStates BKTCompetencyState[]
+  adaptationEvents AdaptationEvent[]
+
+  @@index([tenantId])
+  @@index([learnerId])
+}
+
+/// Per-competency BKT mastery state
+model BKTCompetencyState {
+  id        String            @id @default(cuid())
+  profileId String
+  profile   AdaptationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  competencyId String
+  domain       String
+
+  // BKT parameters
+  pLearn Float @default(0.1)
+  pGuess Float @default(0.2)
+  pSlip  Float @default(0.1)
+  pKnown Float @default(0.5)
+
+  observations       Int      @default(0)
+  lastObservationAt   DateTime?
+  masteryHistory     Json     @default("[]") // MasterySnapshot[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([profileId, competencyId])
+  @@index([profileId])
+  @@index([competencyId])
+  @@index([domain])
+}
+
+/// Adaptation rule for decision gates
+model AdaptationRule {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name        String
+  description String
+  scope       String  // global, domain, competency
+  scopeId     String? // domain or competency ID
+
+  priority       Int
+  conditions     Json   // AdaptationRuleCondition[]
+  conditionLogic String @default("AND") // AND, OR
+  action         Json   // AdaptationRuleAction
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, scope, isActive])
+  @@index([priority])
+}
+
+/// Log of adaptation decisions made
+model AdaptationEvent {
+  id        String            @id @default(cuid())
+  tenantId  String
+  profileId String
+  profile   AdaptationProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  learnerId      String
+  ruleId         String?
+  triggerSignals Json   // AdaptationSignal[]
+  action         Json   // AdaptationRuleAction
+  outcome        String?
+
+  timestamp DateTime @default(now())
+
+  @@index([tenantId, learnerId])
+  @@index([profileId])
+  @@index([timestamp])
+}
+
+// ============================================================================
+// GOLDEN PATH - CURIOSITY ENGINE
+// ============================================================================
+
+/// Individual curiosity signal from learner activity
+model CuriositySignal {
+  id       String @id @default(cuid())
+  tenantId String
+
+  learnerId  String
+  signalType String // voluntary_exploration, question_asking, topic_deep_dive, etc.
+  topicId    String
+  topicName  String
+  domain     String
+  strength   Float  @default(0.5)
+
+  context Json @default("{}") // session, content, dwell time, etc.
+
+  recordedAt DateTime @default(now())
+
+  @@index([tenantId, learnerId])
+  @@index([learnerId, topicId])
+  @@index([learnerId, signalType])
+  @@index([recordedAt])
+}
+
+/// Cached curiosity profile for a learner
+model CuriosityProfileCache {
+  id       String @id @default(cuid())
+  tenantId String
+
+  learnerId String @unique
+
+  overallScore       Float @default(0)
+  signalCount        Int   @default(0)
+  breadthScore       Float @default(0)
+  depthScore         Float @default(0)
+  questionFrequency  Float @default(0)
+  explorationRate    Float @default(0)
+
+  clusters          Json @default("[]") // InterestCluster[]
+  emergingInterests Json @default("[]") // EmergingInterest[]
+
+  lastUpdated DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([learnerId])
+}
+
+// ============================================================================
+// GOLDEN PATH - MULTI-OBJECTIVE OPTIMIZATION
+// ============================================================================
+
+/// Objective weights configuration (per-learner, per-cohort, or per-institution)
+model ObjectiveWeightsConfig {
+  id       String @id @default(cuid())
+  tenantId String
+
+  learnerId     String?
+  cohortId      String?
+  institutionId String?
+
+  // 7 objectives (must sum to 1.0)
+  mastery    Float @default(0.25)
+  engagement Float @default(0.20)
+  efficiency Float @default(0.15)
+  curiosity  Float @default(0.15)
+  wellBeing  Float @default(0.10)
+  breadth    Float @default(0.08)
+  depth      Float @default(0.07)
+
+  source String @default("default") // learner, cohort, institution, default
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, learnerId])
+  @@index([tenantId])
+  @@index([learnerId])
+  @@index([cohortId])
+  @@index([institutionId])
+}
+
+/// Log of optimization runs
+model OptimizationEvent {
+  id       String @id @default(cuid())
+  tenantId String
+
+  learnerId         String
+  weightsUsed       Json // ObjectiveWeights
+  constraintsApplied Json // OptimizationConstraints
+  paretoFrontSize   Int
+  selectedPathId    String
+  computeTimeMs     Int
+
+  result Json // Full OptimizationResult
+
+  timestamp DateTime @default(now())
+
+  @@index([tenantId, learnerId])
+  @@index([timestamp])
+}

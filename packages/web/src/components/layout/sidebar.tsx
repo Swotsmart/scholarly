@@ -32,6 +32,21 @@ import {
   Wand2,
   Activity,
   Layers,
+  Compass,
+  Brain,
+  Home,
+  BookMarked,
+  Briefcase,
+  Crosshair,
+  Map,
+  Shield,
+  Cpu,
+  GitBranch,
+  Network,
+  Link2,
+  Shapes,
+  Award,
+  Building,
 } from 'lucide-react';
 
 // Navigation items for learners/students
@@ -123,6 +138,35 @@ const learnerNavigation = [
     icon: BarChart3,
   },
   {
+    name: 'Golden Path',
+    href: '/golden-path',
+    icon: Compass,
+    children: [
+      { name: 'Adaptation', href: '/golden-path/adaptation', icon: Brain },
+      { name: 'Curiosity', href: '/golden-path/curiosity', icon: Sparkles },
+      { name: 'Optimizer', href: '/golden-path/optimizer', icon: Target },
+    ],
+  },
+  {
+    name: 'Homeschool',
+    href: '/homeschool',
+    icon: Home,
+    children: [
+      { name: 'Curriculum', href: '/homeschool/curriculum', icon: BookMarked },
+      { name: 'Resources', href: '/homeschool/resources', icon: BookOpen },
+    ],
+  },
+  {
+    name: 'Portfolio',
+    href: '/portfolio',
+    icon: Briefcase,
+    children: [
+      { name: 'Artifacts', href: '/portfolio/artifacts', icon: FolderOpen },
+      { name: 'Goals', href: '/portfolio/goals', icon: Crosshair },
+      { name: 'Journeys', href: '/portfolio/journeys', icon: Map },
+    ],
+  },
+  {
     name: 'Settings',
     href: '/settings',
     icon: Settings,
@@ -184,6 +228,24 @@ const teacherNavigation = [
     ],
   },
   {
+    name: 'Standards',
+    href: '/standards',
+    icon: Shield,
+    children: [
+      { name: 'Dashboard', href: '/standards', icon: Shield },
+      { name: 'Audits', href: '/standards/audits', icon: ClipboardCheck },
+    ],
+  },
+  {
+    name: 'ML Pipeline',
+    href: '/ml',
+    icon: Cpu,
+    children: [
+      { name: 'Models', href: '/ml/models', icon: GitBranch },
+      { name: 'Predictions', href: '/ml/predictions', icon: TrendingUp },
+    ],
+  },
+  {
     name: 'Reports',
     href: '/teacher/reports',
     icon: BarChart3,
@@ -236,6 +298,33 @@ const adminNavigation = [
       { name: 'Live Events', href: '/data-lake?tab=events', icon: Activity },
       { name: 'Data Sources', href: '/data-lake?tab=sources', icon: Database },
     ],
+  },
+  {
+    name: 'Interoperability',
+    href: '/interoperability',
+    icon: Network,
+    children: [
+      { name: 'LTI', href: '/interoperability/lti', icon: Link2 },
+      { name: 'OneRoster', href: '/interoperability/oneroster', icon: Users },
+      { name: 'CASE', href: '/interoperability/case', icon: Shapes },
+      { name: 'Badges', href: '/interoperability/badges', icon: Award },
+      { name: 'Ed-Fi', href: '/interoperability/edfi', icon: Database },
+    ],
+  },
+  {
+    name: 'Standards',
+    href: '/standards',
+    icon: Shield,
+  },
+  {
+    name: 'ML Pipeline',
+    href: '/ml',
+    icon: Cpu,
+  },
+  {
+    name: 'Micro-Schools',
+    href: '/micro-schools',
+    icon: Building,
   },
   {
     name: 'Reports',

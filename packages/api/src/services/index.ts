@@ -493,3 +493,65 @@ export {
   getPersonasForLevel,
   getHeritagePersonas,
 } from './language-learning-personas';
+
+// 1EdTech Types
+export * from './one-edtech-types';
+
+// Golden Path Types
+export * from './golden-path-types';
+
+// LTI Advantage Service (LTI 1.3)
+export {
+  LTIAdvantageService,
+  initializeLTIAdvantageService,
+  getLTIAdvantageService,
+} from './lti-advantage.service';
+
+// OneRoster 1.2 Service
+export {
+  OneRosterService,
+  initializeOneRosterService,
+  getOneRosterService,
+} from './oneroster.service';
+
+// CASE Network Service (Competency & Academic Standards Exchange)
+export {
+  CASENetworkService,
+  initializeCASENetworkService,
+  getCASENetworkService,
+} from './case-network.service';
+
+// CLR 2.0 / Open Badges 3.0 Service
+export {
+  CLROpenBadgesService,
+  initializeCLROpenBadgesService,
+  getCLROpenBadgesService,
+} from './clr-openbadges.service';
+
+// Ed-Fi Integration Service (ODS/API v7)
+export {
+  EdFiIntegrationService,
+  initializeEdFiIntegrationService,
+  getEdFiIntegrationService,
+} from './edfi-integration.service';
+
+// Adaptation Engine Service (BKT, ZPD, Fatigue Detection)
+export {
+  AdaptationEngineService,
+  initializeAdaptationEngineService,
+  getAdaptationEngineService,
+} from './adaptation-engine.service';
+
+// Curiosity Engine Service (Interest Clusters, Emerging Interests)
+export {
+  CuriosityEngineService,
+  initializeCuriosityEngineService,
+  getCuriosityEngineService,
+} from './curiosity-engine.service';
+
+// Multi-Objective Optimizer Service (Pareto, Tchebycheff)
+export {
+  MultiObjectiveOptimizerService,
+  initializeMultiObjectiveOptimizerService,
+  getMultiObjectiveOptimizerService,
+} from './multi-objective-optimizer.service';
