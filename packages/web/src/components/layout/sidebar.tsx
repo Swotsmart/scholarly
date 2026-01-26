@@ -47,6 +47,23 @@ import {
   Shapes,
   Award,
   Building,
+  Fingerprint,
+  Key,
+  BadgeCheck,
+  FileCheck,
+  Landmark,
+  ScrollText,
+  Coins,
+  PiggyBank,
+  Store,
+  ShoppingBag,
+  Rocket,
+  Video,
+  Building2,
+  BookOpenCheck,
+  Wrench,
+  Globe,
+  ArrowLeftRight,
 } from 'lucide-react';
 
 // Navigation items for learners/students
@@ -111,6 +128,8 @@ const learnerNavigation = [
       { name: 'Vocabulary', href: '/linguaflow/vocabulary', icon: FileText },
       { name: 'Grammar', href: '/linguaflow/grammar', icon: GraduationCap },
       { name: 'Conversation', href: '/linguaflow/conversation', icon: MessageSquare },
+      { name: 'Immersion', href: '/linguaflow/immersion', icon: Globe },
+      { name: 'Exchange', href: '/linguaflow/exchange', icon: ArrowLeftRight },
       { name: 'Progress', href: '/linguaflow/progress', icon: TrendingUp },
     ],
   },
@@ -164,6 +183,49 @@ const learnerNavigation = [
       { name: 'Artifacts', href: '/portfolio/artifacts', icon: FolderOpen },
       { name: 'Goals', href: '/portfolio/goals', icon: Crosshair },
       { name: 'Journeys', href: '/portfolio/journeys', icon: Map },
+    ],
+  },
+  {
+    name: 'Advanced Learning',
+    href: '/advanced-learning',
+    icon: Rocket,
+    children: [
+      { name: 'Video Coaching', href: '/advanced-learning/video-coaching', icon: Video },
+      { name: 'Peer Review', href: '/advanced-learning/peer-review', icon: ClipboardCheck },
+      { name: 'Industry Experience', href: '/advanced-learning/industry', icon: Building2 },
+      { name: 'PD Hub', href: '/advanced-learning/pd-hub', icon: BookOpenCheck },
+      { name: 'PBL Projects', href: '/advanced-learning/pbl', icon: Wrench },
+    ],
+  },
+  {
+    name: 'Identity',
+    href: '/ssi',
+    icon: Fingerprint,
+    children: [
+      { name: 'Wallet', href: '/ssi/wallet', icon: Key },
+      { name: 'Credentials', href: '/ssi/credentials', icon: BadgeCheck },
+      { name: 'Presentations', href: '/ssi/presentations', icon: FileCheck },
+    ],
+  },
+  {
+    name: 'Governance',
+    href: '/governance',
+    icon: Landmark,
+    children: [
+      { name: 'Proposals', href: '/governance/proposals', icon: ScrollText },
+      { name: 'Delegates', href: '/governance/delegates', icon: Users },
+      { name: 'Treasury', href: '/governance/treasury', icon: PiggyBank },
+      { name: 'Tokens', href: '/governance/tokens', icon: Coins },
+    ],
+  },
+  {
+    name: 'Marketplace',
+    href: '/marketplace',
+    icon: Store,
+    children: [
+      { name: 'Apps', href: '/marketplace/apps', icon: ShoppingBag },
+      { name: 'Community', href: '/marketplace/community', icon: Users },
+      { name: 'Developer', href: '/marketplace/developer', icon: Wrench },
     ],
   },
   {
@@ -246,6 +308,22 @@ const teacherNavigation = [
     ],
   },
   {
+    name: 'Advanced Learning',
+    href: '/advanced-learning',
+    icon: Rocket,
+    children: [
+      { name: 'Video Coaching', href: '/advanced-learning/video-coaching', icon: Video },
+      { name: 'Peer Review', href: '/advanced-learning/peer-review', icon: ClipboardCheck },
+      { name: 'PD Hub', href: '/advanced-learning/pd-hub', icon: BookOpenCheck },
+      { name: 'PBL Projects', href: '/advanced-learning/pbl', icon: Wrench },
+    ],
+  },
+  {
+    name: 'Governance',
+    href: '/governance',
+    icon: Landmark,
+  },
+  {
     name: 'Reports',
     href: '/teacher/reports',
     icon: BarChart3,
@@ -325,6 +403,39 @@ const adminNavigation = [
     name: 'Micro-Schools',
     href: '/micro-schools',
     icon: Building,
+  },
+  {
+    name: 'Identity (SSI)',
+    href: '/ssi',
+    icon: Fingerprint,
+    children: [
+      { name: 'Wallet', href: '/ssi/wallet', icon: Key },
+      { name: 'Credentials', href: '/ssi/credentials', icon: BadgeCheck },
+    ],
+  },
+  {
+    name: 'Governance',
+    href: '/governance',
+    icon: Landmark,
+    children: [
+      { name: 'Proposals', href: '/governance/proposals', icon: ScrollText },
+      { name: 'Treasury', href: '/governance/treasury', icon: PiggyBank },
+    ],
+  },
+  {
+    name: 'Marketplace',
+    href: '/marketplace',
+    icon: Store,
+    children: [
+      { name: 'Apps', href: '/marketplace/apps', icon: ShoppingBag },
+      { name: 'Community', href: '/marketplace/community', icon: Users },
+      { name: 'Developers', href: '/marketplace/developer', icon: Wrench },
+    ],
+  },
+  {
+    name: 'Advanced Learning',
+    href: '/advanced-learning',
+    icon: Rocket,
   },
   {
     name: 'Reports',
