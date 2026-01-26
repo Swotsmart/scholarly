@@ -555,3 +555,108 @@ export {
   initializeMultiObjectiveOptimizerService,
   getMultiObjectiveOptimizerService,
 } from './multi-objective-optimizer.service';
+
+// ============================================================================
+// Phase 1: SSI/VC (Self-Sovereign Identity & Verifiable Credentials)
+// ============================================================================
+
+// SSI/VC Types
+export * from './ssi-vc-types';
+
+// DID Service (Decentralized Identifiers)
+export {
+  DIDService,
+  initializeDIDService,
+  getDIDService,
+} from './did.service';
+
+// Verifiable Credentials Service
+export {
+  VerifiableCredentialsService,
+  initializeVCService,
+  getVCService,
+} from './verifiable-credentials.service';
+
+// Digital Wallet Service
+export {
+  DigitalWalletService,
+  initializeDigitalWalletService,
+  getDigitalWalletService,
+} from './digital-wallet.service';
+
+// ============================================================================
+// Phase 3: Advanced Learning Features
+// ============================================================================
+
+// Phase 3 Types
+export * from './phase3-types';
+
+// Video Coaching Service (Edthena-style lesson recording)
+export {
+  VideoCoachingService,
+  initializeVideoCoachingService,
+  getVideoCoachingService,
+} from './video-coaching.service';
+
+// Peer Review Service (AI-enhanced peer feedback)
+export {
+  PeerReviewService,
+  initializePeerReviewService,
+  getPeerReviewService,
+} from './peer-review.service';
+
+// Industry Experience Service (WBL placements)
+export {
+  IndustryExperienceService,
+  initializeIndustryExperienceService,
+  getIndustryExperienceService,
+} from './industry-experience.service';
+
+// PD Hub Service (Professional Development)
+export {
+  PDHubService,
+  initializePDHubService,
+  getPDHubService,
+} from './pd-hub.service';
+
+// PBL Framework Service (Gold Standard Project-Based Learning)
+export {
+  PBLFrameworkService,
+  initializePBLFrameworkService,
+  getPBLFrameworkService,
+} from './pbl-framework.service';
+
+// ============================================================================
+// Phase 4: Governance & Immersion
+// ============================================================================
+
+// Phase 4 Types
+export * from './phase4-types';
+
+// DAO Governance Service
+export {
+  DAOGovernanceService,
+  initializeDAOGovernanceService,
+  getDAOGovernanceService,
+} from './dao-governance.service';
+
+// Token Economy Service
+export {
+  TokenEconomyService,
+  initializeTokenEconomyService,
+  getTokenEconomyService,
+} from './token-economy.service';
+
+// Developer Marketplace Service
+export {
+  DeveloperMarketplaceService,
+  initializeDeveloperMarketplaceService,
+  getDeveloperMarketplaceService,
+} from './developer-marketplace.service';
+
+// Virtual Language Immersion Service
+export {
+  VirtualLanguageImmersionService,
+  initializeLanguageImmersionService,
+  getLanguageImmersionService,
+} from './language-immersion.service';

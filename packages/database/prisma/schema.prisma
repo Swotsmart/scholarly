@@ -4034,3 +4034,929 @@ model OptimizationEvent {
   @@index([tenantId, learnerId])
   @@index([timestamp])
 }
+
+// ============================================================================
+// PHASE 1: SELF-SOVEREIGN IDENTITY & VERIFIABLE CREDENTIALS
+// ============================================================================
+
+/// Decentralized Identifier record (W3C DID Core 1.0)
+model DecentralizedIdentifier {
+  id               String    @id @default(cuid())
+  tenantId         String    @map("tenant_id")
+  userId           String    @map("user_id")
+  did              String    @unique
+  method           String
+  methodSpecificId String    @map("method_specific_id")
+  controller       String
+  isPrimary        Boolean   @default(false) @map("is_primary")
+  status           DIDStatus @default(ACTIVE)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deactivatedAt    DateTime? @map("deactivated_at")
+
+  keyPairs          KeyPair[]
+  wallet            DigitalWallet?              @relation(fields: [walletId], references: [id])
+  walletId          String?                     @map("wallet_id")
+  credentials       VerifiableCredentialRecord[] @relation("CredentialSubject")
+  issuedCredentials VerifiableCredentialRecord[] @relation("CredentialIssuer")
+
+  @@index([tenantId, userId])
+  @@index([tenantId, did])
+  @@index([tenantId, isPrimary])
+  @@map("decentralized_identifiers")
+}
+
+enum DIDStatus {
+  ACTIVE
+  DEACTIVATED
+  REVOKED
+}
+
+/// Cached DID Document resolution
+model DIDDocument {
+  id           String   @id @default(cuid())
+  did          String   @unique
+  document     Json
+  documentHash String   @map("document_hash")
+  fetchedAt    DateTime @default(now()) @map("fetched_at")
+  expiresAt    DateTime @map("expires_at")
+
+  @@map("did_documents")
+}
+
+/// Cryptographic key pair associated with a DID
+model KeyPair {
+  id                   String    @id @default(cuid())
+  tenantId             String    @map("tenant_id")
+  did                  String
+  didRecord            DecentralizedIdentifier @relation(fields: [did], references: [did])
+  keyType              KeyType   @map("key_type")
+  publicKey            String    @map("public_key")
+  encryptedPrivateKey  String    @map("encrypted_private_key") @db.Text
+  privateKeyEncryption String    @default("AES-256-GCM") @map("private_key_encryption")
+  kdf                  String    @default("Argon2id")
+  purposes             Json
+  isPrimary            Boolean   @default(false) @map("is_primary")
+  status               KeyStatus @default(KEY_ACTIVE)
+  createdAt            DateTime  @default(now()) @map("created_at")
+  expiresAt            DateTime? @map("expires_at")
+  revokedAt            DateTime? @map("revoked_at")
+  rotatedAt            DateTime? @map("rotated_at")
+  rotatedToKeyId       String?   @map("rotated_to_key_id")
+
+  @@index([tenantId, did])
+  @@index([did, isPrimary])
+  @@map("key_pairs")
+}
+
+enum KeyType {
+  Ed25519
+  secp256k1
+  P256
+}
+
+enum KeyStatus {
+  KEY_ACTIVE
+  ROTATED
+  KEY_REVOKED
+  KEY_EXPIRED
+}
+
+/// Key rotation audit log
+model KeyRotationLog {
+  id            String            @id @default(cuid())
+  tenantId      String            @map("tenant_id")
+  did           String
+  previousKeyId String            @map("previous_key_id")
+  newKeyId      String            @map("new_key_id")
+  reason        KeyRotationReason
+  rotatedBy     String            @map("rotated_by")
+  rotatedAt     DateTime          @default(now()) @map("rotated_at")
+  metadata      Json?
+
+  @@index([tenantId, did])
+  @@map("key_rotation_logs")
+}
+
+enum KeyRotationReason {
+  SCHEDULED
+  COMPROMISE_SUSPECTED
+  USER_REQUESTED
+  POLICY
+}
+
+/// User's digital identity wallet
+model DigitalWallet {
+  id              String       @id @default(cuid())
+  tenantId        String       @map("tenant_id")
+  userId          String       @unique @map("user_id")
+  primaryDid      String       @map("primary_did")
+  dids            DecentralizedIdentifier[]
+  credentials     VerifiableCredentialRecord[]
+  recoveryConfig  Json         @map("recovery_config")
+  encryptionKeyId String       @map("encryption_key_id")
+  status          WalletStatus @default(WALLET_ACTIVE)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  lastAccessedAt  DateTime     @default(now()) @map("last_accessed_at")
+  lockedAt        DateTime?    @map("locked_at")
+  deactivatedAt   DateTime?    @map("deactivated_at")
+  backups         WalletBackup[]
+
+  @@index([tenantId, userId])
+  @@index([tenantId, primaryDid])
+  @@map("digital_wallets")
+}
+
+enum WalletStatus {
+  WALLET_ACTIVE
+  WALLET_LOCKED
+  RECOVERING
+  WALLET_DEACTIVATED
+}
+
+/// Encrypted wallet backup
+model WalletBackup {
+  id               String        @id @default(cuid())
+  tenantId         String        @map("tenant_id")
+  walletId         String        @map("wallet_id")
+  wallet           DigitalWallet @relation(fields: [walletId], references: [id])
+  version          String
+  encryptedPayload String        @map("encrypted_payload") @db.Text
+  encryptionParams Json          @map("encryption_params")
+  checksum         String
+  createdAt        DateTime      @default(now()) @map("created_at")
+
+  @@index([tenantId, walletId])
+  @@map("wallet_backups")
+}
+
+/// Verifiable Credential storage (W3C VC Data Model v2.0)
+model VerifiableCredentialRecord {
+  id               String    @id @default(cuid())
+  tenantId         String    @map("tenant_id")
+  credentialId     String    @unique @map("credential_id")
+  types            Json
+  issuerDid        String    @map("issuer_did")
+  issuer           DecentralizedIdentifier @relation("CredentialIssuer", fields: [issuerDid], references: [did])
+  subjectDid       String    @map("subject_did")
+  subject          DecentralizedIdentifier @relation("CredentialSubject", fields: [subjectDid], references: [did])
+  walletId         String?   @map("wallet_id")
+  wallet           DigitalWallet? @relation(fields: [walletId], references: [id])
+  credential       Json
+  subjectData      Json      @map("subject_data")
+  statusListIndex  Int?      @map("status_list_index")
+  issuanceDate     DateTime  @map("issuance_date")
+  expirationDate   DateTime? @map("expiration_date")
+  isRevoked        Boolean   @default(false) @map("is_revoked")
+  revokedAt        DateTime? @map("revoked_at")
+  revocationReason String?   @map("revocation_reason")
+  revokedBy        String?   @map("revoked_by")
+  schemaId         String?   @map("schema_id")
+  schema           CredentialSchema? @relation(fields: [schemaId], references: [id])
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@index([tenantId, subjectDid])
+  @@index([tenantId, issuerDid])
+  @@index([tenantId, isRevoked])
+  @@index([credentialId])
+  @@map("verifiable_credentials")
+}
+
+/// Credential schema definitions
+model CredentialSchema {
+  id                 String    @id @default(cuid())
+  name               String
+  version            String
+  credentialType     String    @map("credential_type")
+  schema             Json
+  author             String
+  isDefault          Boolean   @default(false) @map("is_default")
+  validJurisdictions Json?     @map("valid_jurisdictions")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  credentials        VerifiableCredentialRecord[]
+
+  @@unique([credentialType, version])
+  @@index([credentialType, isDefault])
+  @@map("credential_schemas")
+}
+
+/// Status list for credential revocation (Status List 2021)
+model CredentialStatusList {
+  id            String            @id @default(cuid())
+  tenantId      String            @map("tenant_id")
+  statusListId  String            @unique @map("status_list_id")
+  purpose       StatusListPurpose
+  encodedList   String            @map("encoded_list") @db.Text
+  currentIndex  Int               @default(0) @map("current_index")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@map("credential_status_lists")
+}
+
+enum StatusListPurpose {
+  REVOCATION
+  SUSPENSION
+}
+
+/// Verifiable Presentation records
+model VerifiablePresentationRecord {
+  id             String    @id @default(cuid())
+  tenantId       String    @map("tenant_id")
+  presentationId String    @unique @map("presentation_id")
+  holderDid      String    @map("holder_did")
+  presentation   Json
+  credentialIds  Json      @map("credential_ids")
+  challenge      String?
+  domain         String?
+  verified       Boolean?
+  verifiedAt     DateTime? @map("verified_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([tenantId, holderDid])
+  @@map("verifiable_presentations")
+}
+
+/// SSI event audit log
+model SSIEventLog {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id")
+  eventType    String   @map("event_type")
+  actorId      String   @map("actor_id")
+  did          String?
+  credentialId String?  @map("credential_id")
+  walletId     String?  @map("wallet_id")
+  payload      Json
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  requestId    String?  @map("request_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, eventType])
+  @@index([tenantId, actorId])
+  @@index([tenantId, did])
+  @@index([tenantId, createdAt])
+  @@map("ssi_event_logs")
+}
+
+// ============================================================================
+// PHASE 3: ADVANCED LEARNING FEATURES
+// ============================================================================
+
+/// Video recording for lesson coaching
+model VideoRecording {
+  id            String   @id @default(cuid())
+  tenantId      String
+  educatorId    String
+  title         String
+  description   String?
+  videoUrl      String
+  duration      Int
+  fileSize      Int
+  format        String
+  visibility    String   @default("private")
+  status        String   @default("processing")
+  transcript    Json?
+  aiAnalysis    Json?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  reviewCycles  VideoReviewCycle[]
+  shares        VideoShare[]
+
+  @@index([tenantId, educatorId])
+  @@index([tenantId, status])
+}
+
+/// Share record for video recordings
+model VideoShare {
+  id           String         @id @default(cuid())
+  tenantId     String
+  recordingId  String
+  recording    VideoRecording @relation(fields: [recordingId], references: [id])
+  sharedWith   String
+  permissions  Json
+  createdAt    DateTime       @default(now())
+
+  @@unique([recordingId, sharedWith])
+  @@index([tenantId, sharedWith])
+}
+
+/// Review cycle for video coaching
+model VideoReviewCycle {
+  id           String         @id @default(cuid())
+  tenantId     String
+  recordingId  String
+  recording    VideoRecording @relation(fields: [recordingId], references: [id])
+  reviewerId   String
+  reviewType   String
+  status       String         @default("in_progress")
+  comments     Json           @default("[]")
+  feedback     Json?
+  selfReflection Json?
+  createdAt    DateTime       @default(now())
+  completedAt  DateTime?
+
+  @@index([tenantId, recordingId])
+  @@index([tenantId, reviewerId])
+}
+
+/// Peer review session
+model PeerReviewSession {
+  id              String   @id @default(cuid())
+  tenantId        String
+  creatorId       String
+  title           String
+  description     String?
+  config          Json
+  status          String   @default("draft")
+  submissionCount Int      @default(0)
+  reviewCount     Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  submissions     PeerSubmission[]
+  reviewAssignments ReviewAssignment[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, creatorId])
+}
+
+/// Peer review submission
+model PeerSubmission {
+  id          String            @id @default(cuid())
+  tenantId    String
+  sessionId   String
+  session     PeerReviewSession @relation(fields: [sessionId], references: [id])
+  submitterId String
+  content     Json
+  isAnonymous Boolean           @default(false)
+  submittedAt DateTime          @default(now())
+
+  @@index([tenantId, sessionId])
+  @@index([tenantId, submitterId])
+}
+
+/// Review assignment mapping reviewers to submissions
+model ReviewAssignment {
+  id           String            @id @default(cuid())
+  tenantId     String
+  sessionId    String
+  session      PeerReviewSession @relation(fields: [sessionId], references: [id])
+  reviewerId   String
+  submissionId String
+  review       Json?
+  status       String            @default("pending")
+  completedAt  DateTime?
+
+  @@unique([sessionId, reviewerId, submissionId])
+  @@index([tenantId, reviewerId])
+}
+
+/// Industry partner organization
+model IndustryPartner {
+  id                String   @id @default(cuid())
+  tenantId          String
+  name              String
+  industry          String
+  contactInfo       Json
+  safeguardingCheck Json?
+  insuranceDetails  Json?
+  tier              String   @default("standard")
+  status            String   @default("prospective")
+  totalPlacements   Int      @default(0)
+  averageRating     Float    @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  opportunities IndustryOpportunity[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, industry])
+}
+
+/// Industry opportunity/placement posting
+model IndustryOpportunity {
+  id           String          @id @default(cuid())
+  tenantId     String
+  partnerId    String
+  partner      IndustryPartner @relation(fields: [partnerId], references: [id])
+  title        String
+  type         String
+  description  String
+  requirements Json
+  schedule     Json
+  compensation Json?
+  maxPositions Int             @default(1)
+  status       String          @default("draft")
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  applications ExperienceApplication[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, type])
+}
+
+/// Application for industry experience
+model ExperienceApplication {
+  id            String              @id @default(cuid())
+  tenantId      String
+  opportunityId String
+  opportunity   IndustryOpportunity @relation(fields: [opportunityId], references: [id])
+  applicantId   String
+  coverLetter   String?
+  resume        Json?
+  portfolio     Json?
+  status        String              @default("draft")
+  statusHistory Json                @default("[]")
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  placement ExperiencePlacement?
+
+  @@unique([opportunityId, applicantId])
+  @@index([tenantId, applicantId])
+  @@index([tenantId, status])
+}
+
+/// Active industry experience placement
+model ExperiencePlacement {
+  id            String                @id @default(cuid())
+  tenantId      String
+  applicationId String                @unique
+  application   ExperienceApplication @relation(fields: [applicationId], references: [id])
+  learningPlan  Json?
+  progressLogs  Json                  @default("[]")
+  evaluations   Json                  @default("[]")
+  totalHours    Float                 @default(0)
+  status        String                @default("pending_start")
+  startedAt     DateTime?
+  completedAt   DateTime?
+  credentialId  String?
+
+  @@index([tenantId, status])
+}
+
+/// Professional development course
+model PDCourse {
+  id             String   @id @default(cuid())
+  tenantId       String
+  creatorId      String
+  title          String
+  description    String
+  category       String
+  level          String
+  estimatedHours Float
+  pdCredits      Float
+  modules        Json
+  status         String   @default("draft")
+  rating         Float    @default(0)
+  ratingCount    Int      @default(0)
+  completionRate Float    @default(0)
+  enrollmentCount Int     @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  enrollments PDEnrollment[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, category])
+}
+
+/// Educator enrollment in PD course
+model PDEnrollment {
+  id             String    @id @default(cuid())
+  tenantId       String
+  courseId        String
+  course         PDCourse  @relation(fields: [courseId], references: [id])
+  educatorId     String
+  status         String    @default("enrolled")
+  progress       Float     @default(0)
+  moduleProgress Json      @default("[]")
+  enrolledAt     DateTime  @default(now())
+  completedAt    DateTime?
+  credentialId   String?
+
+  @@unique([courseId, educatorId])
+  @@index([tenantId, educatorId])
+  @@index([tenantId, status])
+}
+
+/// PBL project template
+model PBLProject {
+  id               String   @id @default(cuid())
+  tenantId         String
+  creatorId        String
+  title            String
+  description      String
+  drivingQuestion  String
+  subjectAreas     String[]
+  gradeLevel       String
+  estimatedDuration String
+  goldStandard     Json
+  milestones       Json
+  resources        Json     @default("[]")
+  assessmentPlan   Json?
+  status           String   @default("draft")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  instances PBLProjectInstance[]
+
+  @@index([tenantId, status])
+}
+
+/// Student/team instance of a PBL project
+model PBLProjectInstance {
+  id              String      @id @default(cuid())
+  tenantId        String
+  projectId       String
+  project         PBLProject  @relation(fields: [projectId], references: [id])
+  facilitatorId   String
+  teamMembers     Json
+  currentPhase    String      @default("launch")
+  milestoneStatus Json
+  reflections     Json        @default("[]")
+  status          String      @default("active")
+  startedAt       DateTime    @default(now())
+  targetEndDate   DateTime?
+  completedAt     DateTime?
+  finalAssessment Json?
+
+  pitchSubmissions PitchSubmission[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, facilitatorId])
+}
+
+/// Pitch submission for PBL project
+model PitchSubmission {
+  id           String             @id @default(cuid())
+  tenantId     String
+  instanceId   String
+  instance     PBLProjectInstance @relation(fields: [instanceId], references: [id])
+  pitchType    String
+  duration     Int?
+  audience     String[]
+  panelists    String[]
+  recordingUrl String?
+  slidesUrl    String?
+  practiceData Json               @default("[]")
+  assessments  Json               @default("[]")
+  status       String             @default("scheduled")
+  createdAt    DateTime           @default(now())
+
+  @@index([tenantId, instanceId])
+}
+
+// ============================================================================
+// PHASE 4: GOVERNANCE & IMMERSION
+// ============================================================================
+
+/// DAO governance proposal
+model GovernanceProposal {
+  id           String   @id @default(cuid())
+  tenantId     String
+  proposalId   BigInt   @unique
+  proposer     String
+  title        String
+  description  String   @db.Text
+  category     String
+  actions      Json     @default("[]")
+  state        String
+  forVotes     BigInt   @default(0)
+  againstVotes BigInt   @default(0)
+  abstainVotes BigInt   @default(0)
+  quorum       BigInt   @default(0)
+  eta          DateTime?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  votes GovernanceVote[]
+
+  @@index([tenantId, state])
+  @@index([tenantId, proposer])
+  @@index([tenantId, category])
+}
+
+/// Individual vote on a governance proposal
+model GovernanceVote {
+  id         String             @id @default(cuid())
+  tenantId   String
+  proposalId String
+  proposal   GovernanceProposal @relation(fields: [proposalId], references: [id])
+  voter      String
+  support    String
+  weight     BigInt
+  reason     String?
+  txHash     String?
+  votedAt    DateTime           @default(now())
+
+  @@unique([proposalId, voter])
+  @@index([tenantId, voter])
+}
+
+/// Voting power delegation
+model VoteDelegation {
+  id              String   @id @default(cuid())
+  tenantId        String
+  delegator       String
+  delegateAddress String
+  amount          BigInt
+  isActive        Boolean  @default(true)
+  txHash          String?
+  createdAt       DateTime @default(now())
+  revokedAt       DateTime?
+
+  @@index([tenantId, delegator])
+  @@index([tenantId, delegateAddress])
+}
+
+/// Public delegate profile
+model DelegateProfile {
+  id              String   @id @default(cuid())
+  tenantId        String
+  delegateAddress String   @unique
+  name            String
+  bio             String?  @db.Text
+  focusAreas      String[]
+  votingPower     BigInt   @default(0)
+  delegatorCount  Int      @default(0)
+  proposalsVoted  Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId, votingPower(sort: Desc)])
+}
+
+/// Token staking pool
+model StakingPool {
+  id             String   @id @default(cuid())
+  tenantId       String
+  name           String
+  purpose        String
+  minimumStake   BigInt
+  lockPeriodDays Int
+  apr            Float
+  totalStaked    BigInt   @default(0)
+  capacity       BigInt?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  positions StakingPosition[]
+
+  @@index([tenantId, purpose])
+}
+
+/// User staking position
+model StakingPosition {
+  id            String      @id @default(cuid())
+  tenantId      String
+  userId        String
+  poolId        String
+  pool          StakingPool @relation(fields: [poolId], references: [id])
+  stakedAmount  BigInt
+  earnedRewards BigInt      @default(0)
+  status        String      @default("active")
+  stakedAt      DateTime    @default(now())
+  lockUntil     DateTime
+  unstakedAt    DateTime?
+
+  @@index([tenantId, userId])
+  @@index([tenantId, poolId])
+}
+
+/// Publisher NFT for educational content
+model PublisherNFT {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tokenId          BigInt
+  creator          String
+  contentType      String
+  contentId        String
+  title            String
+  metadataUri      String?
+  validationStatus String   @default("pending")
+  validationScores Json     @default("[]")
+  isListed         Boolean  @default(false)
+  listPrice        BigInt?
+  totalSales       Int      @default(0)
+  totalRevenue     BigInt   @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([tenantId, tokenId])
+  @@index([tenantId, creator])
+  @@index([tenantId, validationStatus])
+}
+
+/// Developer account for marketplace
+model DeveloperAccount {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  userId             String   @unique
+  name               String
+  accountType        String
+  supportEmail       String
+  website            String?
+  verificationStatus String   @default("unverified")
+  revenueShare       Float    @default(0.7)
+  status             String   @default("pending_review")
+  totalEarnings      BigInt   @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  apps MarketplaceApp[]
+
+  @@index([tenantId, status])
+}
+
+/// Marketplace application
+model MarketplaceApp {
+  id          String           @id @default(cuid())
+  tenantId    String
+  developerId String
+  developer   DeveloperAccount @relation(fields: [developerId], references: [id])
+  name        String
+  slug        String           @unique
+  description String?          @db.Text
+  category    String
+  appType     String
+  version     String           @default("1.0.0")
+  status      String           @default("draft")
+  rating      Float            @default(0)
+  ratingCount Int              @default(0)
+  installs    Int              @default(0)
+  pricing     Json?
+  permissions String[]
+  isFeatured  Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  installations AppInstallation[]
+  reviews       AppReview[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, category])
+}
+
+/// App installation record
+model AppInstallation {
+  id                 String         @id @default(cuid())
+  tenantId           String
+  appId              String
+  app                MarketplaceApp @relation(fields: [appId], references: [id])
+  userId             String
+  installScope       String
+  grantedPermissions String[]
+  status             String         @default("active")
+  installedAt        DateTime       @default(now())
+  uninstalledAt      DateTime?
+
+  @@unique([appId, userId])
+  @@index([tenantId, userId])
+}
+
+/// User review for marketplace app
+model AppReview {
+  id        String         @id @default(cuid())
+  tenantId  String
+  appId     String
+  app       MarketplaceApp @relation(fields: [appId], references: [id])
+  userId    String
+  rating    Int
+  title     String?
+  body      String?        @db.Text
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([appId, userId])
+  @@index([tenantId, appId])
+}
+
+/// Community feature request with crowdfunding
+model CommunityRequest {
+  id             String   @id @default(cuid())
+  tenantId       String
+  requesterId    String
+  title          String
+  description    String   @db.Text
+  requirements   Json     @default("[]")
+  category       String?
+  fundingGoal    BigInt
+  currentFunding BigInt   @default(0)
+  voteCount      Int      @default(0)
+  bountyStatus   String   @default("open")
+  status         String   @default("active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  pledges FundingPledge[]
+  claims  BountyClaim[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, bountyStatus])
+}
+
+/// Funding pledge for community request
+model FundingPledge {
+  id        String           @id @default(cuid())
+  tenantId  String
+  requestId String
+  request   CommunityRequest @relation(fields: [requestId], references: [id])
+  pledgerId String
+  amount    BigInt
+  status    String           @default("active")
+  createdAt DateTime         @default(now())
+
+  @@index([tenantId, pledgerId])
+}
+
+/// Developer claim on bounty request
+model BountyClaim {
+  id          String           @id @default(cuid())
+  tenantId    String
+  requestId   String
+  request     CommunityRequest @relation(fields: [requestId], references: [id])
+  developerId String
+  proposal    String           @db.Text
+  milestones  Json
+  status      String           @default("proposed")
+  totalPaid   BigInt           @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([tenantId, developerId])
+}
+
+/// Immersion learning scenario
+model ImmersionScenario {
+  id              String   @id @default(cuid())
+  tenantId        String
+  title           String
+  description     String?
+  targetLanguage  String
+  nativeLanguage  String   @default("en")
+  cefrLevel       String
+  category        String
+  supportedTiers  String[]
+  scenes          Json
+  characters      Json     @default("[]")
+  estimatedMinutes Int     @default(15)
+  completionCount Int      @default(0)
+  averageScore    Float    @default(0)
+  status          String   @default("draft")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sessions ImmersionSession[]
+
+  @@index([tenantId, targetLanguage])
+  @@index([tenantId, cefrLevel])
+  @@index([tenantId, status])
+}
+
+/// Active language immersion session
+model ImmersionSession {
+  id              String            @id @default(cuid())
+  tenantId        String
+  learnerId       String
+  scenarioId      String
+  scenario        ImmersionScenario @relation(fields: [scenarioId], references: [id])
+  activeTier      String
+  currentSceneId  String?
+  currentNodeId   String?
+  dialogueHistory Json              @default("[]")
+  hintsUsed       Int               @default(0)
+  currentScore    Int               @default(0)
+  pronunciations  Json              @default("[]")
+  vocabularyMet   String[]
+  status          String            @default("active")
+  startedAt       DateTime          @default(now())
+  completedAt     DateTime?
+  result          Json?
+
+  @@index([tenantId, learnerId])
+  @@index([tenantId, status])
+}
+
+/// Language exchange session between peers
+model LanguageExchangeSession {
+  id           String   @id @default(cuid())
+  tenantId     String
+  participants Json
+  scheduledAt  DateTime
+  duration     Int
+  tier         String
+  status       String   @default("scheduled")
+  feedback     Json?
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, status])
+  @@index([tenantId, scheduledAt])
+}

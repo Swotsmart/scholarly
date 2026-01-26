@@ -34,6 +34,10 @@ import { earlyYearsRouter } from './routes/early-years';
 import { linguaFlowRouter } from './routes/linguaflow';
 import { interoperabilityRouter } from './routes/interoperability';
 import { goldenPathRouter } from './routes/golden-path';
+import { ssiRouter } from './routes/ssi';
+import { advancedLearningRouter } from './routes/advanced-learning';
+import { governanceRouter } from './routes/governance';
+import { marketplaceRouter } from './routes/marketplace';
 
 // Middleware
 import { errorHandler } from './middleware/error-handler';
@@ -90,6 +94,10 @@ api.use('/early-years', authMiddleware, earlyYearsRouter);
 api.use('/linguaflow', authMiddleware, linguaFlowRouter);
 api.use('/interoperability', authMiddleware, interoperabilityRouter);
 api.use('/golden-path', authMiddleware, goldenPathRouter);
+api.use('/ssi', authMiddleware, ssiRouter);
+api.use('/advanced-learning', authMiddleware, advancedLearningRouter);
+api.use('/governance', authMiddleware, governanceRouter);
+api.use('/marketplace', authMiddleware, marketplaceRouter);
 
 app.use('/api/v1', api);
 
