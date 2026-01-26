@@ -23,6 +23,7 @@ import {
   Cache,
   ScholarlyConfig
 } from '@scholarly/shared/types/scholarly-types';
+import { log } from '../lib/logger';
 
 // ============================================================================
 // TYPES
@@ -351,7 +352,7 @@ const MODEL_COSTS: Record<string, { input: number; output: number }> = {
 // ============================================================================
 
 export class AIIntegrationService extends ScholarlyBaseService {
-  private config: AIConfig;
+  private aiConfig: AIConfig;
   private requestQueue: Map<string, Promise<unknown>> = new Map();
   private rateLimitTokens: number;
   private lastRateLimitRefresh: number;
@@ -363,7 +364,7 @@ export class AIIntegrationService extends ScholarlyBaseService {
     aiConfig: AIConfig;
   }) {
     super('AIIntegrationService', deps);
-    this.config = deps.aiConfig;
+    this.aiConfig = deps.aiConfig;
     this.rateLimitTokens = deps.aiConfig.rateLimitPerMinute;
     this.lastRateLimitRefresh = Date.now();
   }
@@ -382,7 +383,7 @@ export class AIIntegrationService extends ScholarlyBaseService {
     try {
       await this.checkRateLimit();
 
-      const model = request.model || this.config.defaultModel;
+      const model = request.model || this.aiConfig.defaultModel;
       const messages = [...request.messages];
 
       if (request.systemPrompt) {
@@ -392,19 +393,19 @@ export class AIIntegrationService extends ScholarlyBaseService {
       const startTime = Date.now();
       let response: CompletionResponse;
 
-      if (this.config.provider === 'openai') {
+      if (this.aiConfig.provider === 'openai') {
         response = await this.openAIComplete(messages, {
           model,
-          maxTokens: request.maxTokens || this.config.maxTokens,
-          temperature: request.temperature ?? this.config.temperature,
+          maxTokens: request.maxTokens || this.aiConfig.maxTokens,
+          temperature: request.temperature ?? this.aiConfig.temperature,
           jsonMode: request.jsonMode,
           stopSequences: request.stopSequences,
         });
       } else {
         response = await this.anthropicComplete(messages, {
           model,
-          maxTokens: request.maxTokens || this.config.maxTokens,
-          temperature: request.temperature ?? this.config.temperature,
+          maxTokens: request.maxTokens || this.aiConfig.maxTokens,
+          temperature: request.temperature ?? this.aiConfig.temperature,
           stopSequences: request.stopSequences,
         });
       }
@@ -421,7 +422,7 @@ export class AIIntegrationService extends ScholarlyBaseService {
 
       return success(response);
     } catch (error) {
-      this.logError('AI completion failed', error as Error);
+      log.error('AI completion failed', error as Error);
       return failure(new ValidationError(`AI completion failed: ${(error as Error).message}`));
     }
   }
@@ -435,7 +436,7 @@ export class AIIntegrationService extends ScholarlyBaseService {
   ): Promise<Result<EmbeddingResponse>> {
     try {
       const texts = Array.isArray(request.text) ? request.text : [request.text];
-      const model = request.model || this.config.embeddingModel;
+      const model = request.model || this.aiConfig.embeddingModel;
 
       // Check cache first
       const cacheKey = `embedding:${model}:${texts.map(t => t.slice(0, 100)).join('|')}`;
@@ -456,7 +457,7 @@ export class AIIntegrationService extends ScholarlyBaseService {
 
       return success(response);
     } catch (error) {
-      this.logError('AI embedding failed', error as Error);
+      log.error('AI embedding failed', error as Error);
       return failure(new ValidationError(`AI embedding failed: ${(error as Error).message}`));
     }
   }
@@ -819,7 +820,7 @@ Provide guiding questions and reflection starters to help deepen this reflection
       stopSequences?: string[];
     }
   ): Promise<CompletionResponse> {
-    const apiKey = this.config.openaiApiKey;
+    const apiKey = this.aiConfig.openaiApiKey;
     if (!apiKey) throw new Error('OpenAI API key not configured');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -839,11 +840,11 @@ Provide guiding questions and reflection starters to help deepen this reflection
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const choice = data.choices[0];
     const usage = data.usage;
 
@@ -872,7 +873,7 @@ Provide guiding questions and reflection starters to help deepen this reflection
       stopSequences?: string[];
     }
   ): Promise<CompletionResponse> {
-    const apiKey = this.config.anthropicApiKey;
+    const apiKey = this.aiConfig.anthropicApiKey;
     if (!apiKey) throw new Error('Anthropic API key not configured');
 
     // Extract system message if present
@@ -899,11 +900,11 @@ Provide guiding questions and reflection starters to help deepen this reflection
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`Anthropic API error: ${error.error?.message || response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const content = data.content[0]?.text || '';
     const usage = data.usage;
 
@@ -924,7 +925,7 @@ Provide guiding questions and reflection starters to help deepen this reflection
   }
 
   private async openAIEmbed(texts: string[], model: string): Promise<EmbeddingResponse> {
-    const apiKey = this.config.openaiApiKey;
+    const apiKey = this.aiConfig.openaiApiKey;
     if (!apiKey) throw new Error('OpenAI API key not configured');
 
     const response = await fetch('https://api.openai.com/v1/embeddings', {
@@ -940,11 +941,11 @@ Provide guiding questions and reflection starters to help deepen this reflection
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as any;
       throw new Error(`OpenAI Embedding API error: ${error.error?.message || response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const embeddings = data.data.map((d: { embedding: number[] }) => d.embedding);
     const usage = data.usage;
 
@@ -970,14 +971,14 @@ Provide guiding questions and reflection starters to help deepen this reflection
     const minuteElapsed = now - this.lastRateLimitRefresh > 60_000;
 
     if (minuteElapsed) {
-      this.rateLimitTokens = this.config.rateLimitPerMinute;
+      this.rateLimitTokens = this.aiConfig.rateLimitPerMinute;
       this.lastRateLimitRefresh = now;
     }
 
     if (this.rateLimitTokens <= 0) {
       const waitTime = 60_000 - (now - this.lastRateLimitRefresh);
       await new Promise(resolve => setTimeout(resolve, waitTime));
-      this.rateLimitTokens = this.config.rateLimitPerMinute;
+      this.rateLimitTokens = this.aiConfig.rateLimitPerMinute;
       this.lastRateLimitRefresh = Date.now();
     }
 

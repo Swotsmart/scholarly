@@ -20,18 +20,34 @@
  * @see PRD: Showcase-Digital-Portfolio-Module.md
  */
 
-import {
-  ScholarlyBaseService,
-  Result,
-  success,
-  failure,
-  ValidationError,
-  NotFoundError,
-  UnauthorizedError,
-  EventBus,
-  Cache,
-  ScholarlyConfig
-} from '@scholarly/shared/types/scholarly-types';
+import { ScholarlyBaseService, Result, success, failure, ScholarlyError } from './base.service';
+
+// Error factory functions for consistent error creation
+const errors = {
+  validation: (message: string, details?: Record<string, unknown>): ScholarlyError => ({
+    code: 'VALIDATION_ERROR',
+    message,
+    details
+  }),
+  notFound: (entity: string, id: string): ScholarlyError => ({
+    code: 'NOT_FOUND',
+    message: `${entity} not found: ${id}`,
+    details: { entity, id }
+  }),
+  unauthorized: (message: string, details?: Record<string, unknown>): ScholarlyError => ({
+    code: 'UNAUTHORIZED',
+    message,
+    details
+  })
+};
+
+// Helper to extract error from failed Result
+function getError<T>(result: Result<T>): ScholarlyError {
+  if (result.success === false) {
+    return result.error;
+  }
+  return { code: 'UNKNOWN', message: 'Unknown error' };
+}
 import { prisma } from '@scholarly/database';
 import { AIIntegrationService, getAIService } from './ai-integration.service';
 import { DesignPitchAIService, getDesignPitchAIService } from './design-pitch-ai.service';
@@ -279,6 +295,18 @@ export interface ViewerLocation {
 }
 
 /**
+ * Journey narrative data for AI summary generation
+ */
+interface JourneyNarrativeData {
+  problemStatement: string;
+  iterations: number;
+  pitchSummary: string;
+  feedbackThemes: string[];
+  growthAreas: string[];
+  artifactSummary: string;
+}
+
+/**
  * Portfolio view analytics
  */
 export interface PortfolioAnalytics {
@@ -417,8 +445,8 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
   private readonly SALT_ROUNDS = 12;
   private readonly BASE_URL = process.env.SHOWCASE_BASE_URL || 'https://portfolio.scholarly.ai';
 
-  constructor(config: ScholarlyConfig) {
-    super(config);
+  constructor() {
+    super('ShowcasePortfolioService');
   }
 
   protected async initialize(): Promise<void> {
@@ -444,7 +472,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
       // Validate journey exists and belongs to user
       const journeyValidation = await this.validateJourneyOwnership(tenantId, userId, journeyId);
       if (!journeyValidation.success) {
-        return failure(journeyValidation.error!);
+        return failure(getError(journeyValidation));
       }
 
       // Generate unique slug
@@ -465,7 +493,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
           noIndex: true, // Default to no-index for privacy
           keywords: []
         },
-        themeConfig: input.theme || this.getDefaultTheme(),
+        themeConfig: { ...this.getDefaultTheme(), ...input.theme },
         items: [],
         featuredItems: [],
         aiSkillTags: [],
@@ -481,7 +509,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
       await this.savePortfolio(portfolio);
 
       // Emit event
-      this.eventBus?.emit('showcase.created', {
+      this.eventBus?.publish('showcase.created', tenantId, {
         portfolioId: portfolio.id,
         userId,
         journeyId,
@@ -490,7 +518,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success(portfolio);
     } catch (error) {
-      return failure(new ValidationError(`Failed to create showcase: ${error}`));
+      return failure(errors.validation(`Failed to create showcase: ${error}`));
     }
   }
 
@@ -506,21 +534,21 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
       const portfolio = await this.loadPortfolio(portfolioId);
 
       if (!portfolio) {
-        return failure(new NotFoundError('Portfolio not found'));
+        return failure(errors.notFound('Portfolio', 'unknown'));
       }
 
       if (portfolio.tenantId !== tenantId) {
-        return failure(new NotFoundError('Portfolio not found'));
+        return failure(errors.notFound('Portfolio', 'unknown'));
       }
 
       // Check access permissions
       if (userId && portfolio.userId !== userId && !portfolio.isPublic) {
-        return failure(new UnauthorizedError('Access denied to this portfolio'));
+        return failure(errors.unauthorized('Access denied to this portfolio'));
       }
 
       return success(portfolio);
     } catch (error) {
-      return failure(new ValidationError(`Failed to get showcase: ${error}`));
+      return failure(errors.validation(`Failed to get showcase: ${error}`));
     }
   }
 
@@ -537,11 +565,11 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
       const portfolio = await this.loadPortfolioBySlug(slug);
 
       if (!portfolio) {
-        return failure(new NotFoundError('Portfolio not found'));
+        return failure(errors.notFound('Portfolio', 'unknown'));
       }
 
       if (portfolio.status !== 'published') {
-        return failure(new NotFoundError('Portfolio not found'));
+        return failure(errors.notFound('Portfolio', 'unknown'));
       }
 
       // Check access
@@ -549,14 +577,14 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
         // Check if password protected
         if (portfolio.passwordProtected) {
           if (!password) {
-            return failure(new UnauthorizedError('Password required'));
+            return failure(errors.unauthorized('Password required'));
           }
           const passwordValid = await this.verifyPassword(password, portfolio.passwordHash!);
           if (!passwordValid) {
-            return failure(new UnauthorizedError('Invalid password'));
+            return failure(errors.unauthorized('Invalid password'));
           }
         } else if (portfolio.accessExpiry && new Date() > portfolio.accessExpiry) {
-          return failure(new UnauthorizedError('Access link has expired'));
+          return failure(errors.unauthorized('Access link has expired'));
         }
       }
 
@@ -568,7 +596,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success(portfolio);
     } catch (error) {
-      return failure(new ValidationError(`Failed to get showcase: ${error}`));
+      return failure(errors.validation(`Failed to get showcase: ${error}`));
     }
   }
 
@@ -602,7 +630,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success(portfolio);
     } catch (error) {
-      return failure(new ValidationError(`Failed to update showcase: ${error}`));
+      return failure(errors.validation(`Failed to update showcase: ${error}`));
     }
   }
 
@@ -625,13 +653,13 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       // Validate portfolio has required content
       if (portfolio.items.length === 0) {
-        return failure(new ValidationError('Portfolio must have at least one curated item'));
+        return failure(errors.validation('Portfolio must have at least one curated item'));
       }
 
       // Check all items have reflections
       const missingReflections = portfolio.items.filter(item => !item.reflection?.content);
       if (missingReflections.length > 0) {
-        return failure(new ValidationError(
+        return failure(errors.validation(
           `${missingReflections.length} item(s) are missing required reflections`
         ));
       }
@@ -674,7 +702,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       await this.savePortfolio(portfolio);
 
-      this.eventBus?.emit('showcase.published', {
+      this.eventBus?.publish('showcase.published', tenantId, {
         portfolioId: portfolio.id,
         userId,
         isPublic: portfolio.isPublic,
@@ -683,7 +711,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success(portfolio);
     } catch (error) {
-      return failure(new ValidationError(`Failed to publish showcase: ${error}`));
+      return failure(errors.validation(`Failed to publish showcase: ${error}`));
     }
   }
 
@@ -704,7 +732,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
     try {
       const portfolioResult = await this.getShowcase(tenantId, portfolioId, userId);
       if (!portfolioResult.success) {
-        return portfolioResult;
+        return failure(getError(portfolioResult));
       }
 
       const portfolio = portfolioResult.data!;
@@ -716,7 +744,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
         portfolio.journeyId
       );
       if (!artifactValidation.success) {
-        return failure(artifactValidation.error!);
+        return failure(getError(artifactValidation));
       }
 
       const item: ShowcaseItem = {
@@ -756,7 +784,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
       portfolio.updatedAt = new Date();
       await this.savePortfolio(portfolio);
 
-      this.eventBus?.emit('showcase.item_added', {
+      this.eventBus?.publish('showcase.item_added', tenantId, {
         portfolioId,
         itemId: item.id,
         artifactId: input.artifactId,
@@ -765,7 +793,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success(item);
     } catch (error) {
-      return failure(new ValidationError(`Failed to add item: ${error}`));
+      return failure(errors.validation(`Failed to add item: ${error}`));
     }
   }
 
@@ -783,14 +811,14 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
     try {
       const portfolioResult = await this.getShowcase(tenantId, portfolioId, userId);
       if (!portfolioResult.success) {
-        return portfolioResult;
+        return failure(getError(portfolioResult));
       }
 
       const portfolio = portfolioResult.data!;
       const item = portfolio.items.find(i => i.id === itemId);
 
       if (!item) {
-        return failure(new NotFoundError('Item not found in portfolio'));
+        return failure(errors.notFound('Item', 'unknown'));
       }
 
       // Update reflection
@@ -813,7 +841,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success(item);
     } catch (error) {
-      return failure(new ValidationError(`Failed to update reflection: ${error}`));
+      return failure(errors.validation(`Failed to update reflection: ${error}`));
     }
   }
 
@@ -829,12 +857,12 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
     try {
       const portfolio = await this.loadPortfolio(portfolioId);
       if (!portfolio) {
-        return failure(new NotFoundError('Portfolio not found'));
+        return failure(errors.notFound('Portfolio', 'unknown'));
       }
 
       const item = portfolio.items.find(i => i.id === itemId);
       if (!item) {
-        return failure(new NotFoundError('Item not found'));
+        return failure(errors.notFound('Item', 'unknown'));
       }
 
       // Get artifact details
@@ -882,7 +910,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
         context: `This is from the ${item.journeyPhase} phase, iteration ${item.iterationNumber}`
       });
     } catch (error) {
-      return failure(new ValidationError(`Failed to generate prompt: ${error}`));
+      return failure(errors.validation(`Failed to generate prompt: ${error}`));
     }
   }
 
@@ -898,7 +926,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
     try {
       const portfolioResult = await this.getShowcase(tenantId, portfolioId, userId);
       if (!portfolioResult.success) {
-        return portfolioResult;
+        return failure(getError(portfolioResult));
       }
 
       const portfolio = portfolioResult.data!;
@@ -907,7 +935,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
       const existingIds = new Set(portfolio.items.map(i => i.id));
       for (const id of itemOrder) {
         if (!existingIds.has(id)) {
-          return failure(new ValidationError(`Item ${id} not found in portfolio`));
+          return failure(errors.validation(`Item ${id} not found in portfolio`));
         }
       }
 
@@ -923,7 +951,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success(portfolio.items);
     } catch (error) {
-      return failure(new ValidationError(`Failed to reorder items: ${error}`));
+      return failure(errors.validation(`Failed to reorder items: ${error}`));
     }
   }
 
@@ -939,14 +967,14 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
     try {
       const portfolioResult = await this.getShowcase(tenantId, portfolioId, userId);
       if (!portfolioResult.success) {
-        return failure(portfolioResult.error!);
+        return failure(getError(portfolioResult));
       }
 
       const portfolio = portfolioResult.data!;
       const itemIndex = portfolio.items.findIndex(i => i.id === itemId);
 
       if (itemIndex === -1) {
-        return failure(new NotFoundError('Item not found'));
+        return failure(errors.notFound('Item', 'unknown'));
       }
 
       portfolio.items.splice(itemIndex, 1);
@@ -962,7 +990,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success(undefined);
     } catch (error) {
-      return failure(new ValidationError(`Failed to remove item: ${error}`));
+      return failure(errors.validation(`Failed to remove item: ${error}`));
     }
   }
 
@@ -984,7 +1012,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
     try {
       const portfolioResult = await this.getShowcase(tenantId, portfolioId, userId);
       if (!portfolioResult.success) {
-        return portfolioResult;
+        return failure(getError(portfolioResult));
       }
 
       const portfolio = portfolioResult.data!;
@@ -992,7 +1020,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
       // Validate deck exists and belongs to journey
       const deckValidation = await this.validatePitchDeck(tenantId, deckId, portfolio.journeyId);
       if (!deckValidation.success) {
-        return failure(deckValidation.error!);
+        return failure(getError(deckValidation));
       }
 
       // Generate embed code and shareable link
@@ -1018,7 +1046,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success(embed);
     } catch (error) {
-      return failure(new ValidationError(`Failed to configure pitch deck: ${error}`));
+      return failure(errors.validation(`Failed to configure pitch deck: ${error}`));
     }
   }
 
@@ -1039,7 +1067,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
     try {
       const portfolioResult = await this.getShowcase(tenantId, portfolioId, userId);
       if (!portfolioResult.success) {
-        return portfolioResult;
+        return failure(getError(portfolioResult));
       }
 
       const token = crypto.randomBytes(32).toString('hex');
@@ -1068,7 +1096,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success({ ...accessLink, token: fullUrl });
     } catch (error) {
-      return failure(new ValidationError(`Failed to generate link: ${error}`));
+      return failure(errors.validation(`Failed to generate link: ${error}`));
     }
   }
 
@@ -1084,30 +1112,30 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
       const link = await this.loadAccessLink(token);
 
       if (!link || !link.isActive) {
-        return failure(new NotFoundError('Invalid or expired link'));
+        return failure(errors.notFound('AccessLink', 'unknown'));
       }
 
       // Check expiry
       if (link.expiresAt && new Date() > link.expiresAt) {
-        return failure(new UnauthorizedError('Link has expired'));
+        return failure(errors.unauthorized('Link has expired'));
       }
 
       // Check max uses
       if (link.maxUses && link.currentUses >= link.maxUses) {
-        return failure(new UnauthorizedError('Link has reached maximum uses'));
+        return failure(errors.unauthorized('Link has reached maximum uses'));
       }
 
       // Check password
       if (link.type === 'password' && link.password) {
         if (!password || !(await this.verifyPassword(password, link.password))) {
-          return failure(new UnauthorizedError('Invalid password'));
+          return failure(errors.unauthorized('Invalid password'));
         }
       }
 
       // Check email allowlist
       if (link.type === 'email' && link.allowedEmails) {
         if (!email || !link.allowedEmails.includes(email.toLowerCase())) {
-          return failure(new UnauthorizedError('Email not authorized'));
+          return failure(errors.unauthorized('Email not authorized'));
         }
       }
 
@@ -1118,7 +1146,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success({ portfolioId: link.portfolioId, accessGranted: true });
     } catch (error) {
-      return failure(new ValidationError(`Failed to validate link: ${error}`));
+      return failure(errors.validation(`Failed to validate link: ${error}`));
     }
   }
 
@@ -1135,19 +1163,19 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
     try {
       const portfolioResult = await this.getShowcase(tenantId, portfolioId, userId);
       if (!portfolioResult.success) {
-        return portfolioResult;
+        return failure(getError(portfolioResult));
       }
 
       // Validate and sanitize slug
       const sanitizedSlug = this.sanitizeSlug(newSlug);
       if (!sanitizedSlug || sanitizedSlug.length < 3) {
-        return failure(new ValidationError('Slug must be at least 3 characters'));
+        return failure(errors.validation('Slug must be at least 3 characters'));
       }
 
       // Check availability
       const existing = await this.loadPortfolioBySlug(sanitizedSlug);
       if (existing && existing.id !== portfolioId) {
-        return failure(new ValidationError('This URL is already taken'));
+        return failure(errors.validation('This URL is already taken'));
       }
 
       const portfolio = portfolioResult.data!;
@@ -1159,7 +1187,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success({ slug: sanitizedSlug, fullUrl: portfolio.fullUrl });
     } catch (error) {
-      return failure(new ValidationError(`Failed to update slug: ${error}`));
+      return failure(errors.validation(`Failed to update slug: ${error}`));
     }
   }
 
@@ -1180,11 +1208,11 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
       const portfolio = await this.loadPortfolio(portfolioId);
 
       if (!portfolio) {
-        return failure(new NotFoundError('Portfolio not found'));
+        return failure(errors.notFound('Portfolio', 'unknown'));
       }
 
       if (!portfolio.guestbookEnabled) {
-        return failure(new ValidationError('Guestbook is not enabled for this portfolio'));
+        return failure(errors.validation('Guestbook is not enabled for this portfolio'));
       }
 
       const guestbookEntry: GuestbookEntry = {
@@ -1208,7 +1236,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
       await this.savePortfolio(portfolio);
 
       // Notify portfolio owner
-      this.eventBus?.emit('showcase.guestbook_entry', {
+      this.eventBus?.publish('showcase.guestbook_entry', portfolio.tenantId, {
         portfolioId,
         entryId: guestbookEntry.id,
         guestName: entry.name,
@@ -1217,7 +1245,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success(guestbookEntry);
     } catch (error) {
-      return failure(new ValidationError(`Failed to submit guestbook entry: ${error}`));
+      return failure(errors.validation(`Failed to submit guestbook entry: ${error}`));
     }
   }
 
@@ -1235,14 +1263,14 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
     try {
       const portfolioResult = await this.getShowcase(tenantId, portfolioId, userId);
       if (!portfolioResult.success) {
-        return portfolioResult;
+        return failure(getError(portfolioResult));
       }
 
       const portfolio = portfolioResult.data!;
       const entry = portfolio.guestbookEntries.find(e => e.id === entryId);
 
       if (!entry) {
-        return failure(new NotFoundError('Guestbook entry not found'));
+        return failure(errors.notFound('GuestbookEntry', 'unknown'));
       }
 
       if (action === 'approve') {
@@ -1258,7 +1286,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success(entry);
     } catch (error) {
-      return failure(new ValidationError(`Failed to moderate entry: ${error}`));
+      return failure(errors.validation(`Failed to moderate entry: ${error}`));
     }
   }
 
@@ -1270,7 +1298,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
       const portfolio = await this.loadPortfolio(portfolioId);
 
       if (!portfolio) {
-        return failure(new NotFoundError('Portfolio not found'));
+        return failure(errors.notFound('Portfolio', 'unknown'));
       }
 
       const approvedEntries = portfolio.guestbookEntries.filter(
@@ -1279,7 +1307,7 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
 
       return success(approvedEntries);
     } catch (error) {
-      return failure(new ValidationError(`Failed to get guestbook: ${error}`));
+      return failure(errors.validation(`Failed to get guestbook: ${error}`));
     }
   }
 
@@ -1298,11 +1326,11 @@ export class ShowcasePortfolioService extends ScholarlyBaseService {
     try {
       const portfolio = await this.loadPortfolio(portfolioId);
       if (!portfolio) {
-        return failure(new NotFoundError('Portfolio not found'));
+        return failure(errors.notFound('Portfolio', 'unknown'));
       }
 
       if (!this.aiService) {
-        return failure(new ValidationError('AI service not available'));
+        return failure(errors.validation('AI service not available'));
       }
 
       // Gather all artifact data for analysis
@@ -1328,13 +1356,17 @@ For each skill, provide:
 
 Return as JSON array.`;
 
-      const response = await this.aiService.complete({
-        prompt,
+      const response = await this.aiService.complete(tenantId, {
+        messages: [{ role: 'user', content: prompt }],
         maxTokens: 2000,
         temperature: 0.3
       });
 
-      const skillTags: SkillTag[] = this.parseSkillTagsResponse(response.data!.content, portfolio.id);
+      if (!response.success) {
+        return failure(getError(response));
+      }
+
+      const skillTags: SkillTag[] = this.parseSkillTagsResponse(response.data.content, portfolio.id);
 
       // Update portfolio
       portfolio.aiSkillTags = skillTags;
@@ -1343,7 +1375,7 @@ Return as JSON array.`;
 
       return success(skillTags);
     } catch (error) {
-      return failure(new ValidationError(`Failed to generate skill tags: ${error}`));
+      return failure(errors.validation(`Failed to generate skill tags: ${error}`));
     }
   }
 
@@ -1358,11 +1390,11 @@ Return as JSON array.`;
     try {
       const portfolio = await this.loadPortfolio(portfolioId);
       if (!portfolio) {
-        return failure(new NotFoundError('Portfolio not found'));
+        return failure(errors.notFound('Portfolio', 'unknown'));
       }
 
       if (!this.aiService) {
-        return failure(new ValidationError('AI service not available'));
+        return failure(errors.validation('AI service not available'));
       }
 
       // Gather journey data
@@ -1391,13 +1423,17 @@ Highlight:
 
 Also provide a separate "Growth Narrative" (100 words) specifically highlighting the transformation from initial problem statement to final pitch.`;
 
-      const response = await this.aiService.complete({
-        prompt,
+      const response = await this.aiService.complete(tenantId, {
+        messages: [{ role: 'user', content: prompt }],
         maxTokens: 800,
         temperature: 0.5
       });
 
-      const { summary, growthNarrative } = this.parseExecutiveSummaryResponse(response.data!.content);
+      if (!response.success) {
+        return failure(getError(response));
+      }
+
+      const { summary, growthNarrative } = this.parseExecutiveSummaryResponse(response.data.content);
 
       // Update portfolio
       portfolio.aiExecutiveSummary = summary;
@@ -1407,7 +1443,7 @@ Also provide a separate "Growth Narrative" (100 words) specifically highlighting
 
       return success({ summary, growthNarrative });
     } catch (error) {
-      return failure(new ValidationError(`Failed to generate summary: ${error}`));
+      return failure(errors.validation(`Failed to generate summary: ${error}`));
     }
   }
 
@@ -1423,13 +1459,13 @@ Also provide a separate "Growth Narrative" (100 words) specifically highlighting
     try {
       const portfolioResult = await this.getShowcase(tenantId, portfolioId, userId);
       if (!portfolioResult.success) {
-        return portfolioResult;
+        return failure(getError(portfolioResult));
       }
 
       const portfolio = portfolioResult.data!;
 
       if (!this.aiService) {
-        return failure(new ValidationError('AI service not available'));
+        return failure(errors.validation('AI service not available'));
       }
 
       // Get all artifacts from journey
@@ -1456,17 +1492,21 @@ For each suggestion, provide:
 
 Select 5-8 artifacts that tell the best story of growth.`;
 
-      const response = await this.aiService.complete({
-        prompt,
+      const response = await this.aiService.complete(tenantId, {
+        messages: [{ role: 'user', content: prompt }],
         maxTokens: 1500,
         temperature: 0.4
       });
 
-      const suggestions = this.parseCurationSuggestions(response.data!.content);
+      if (!response.success) {
+        return failure(getError(response));
+      }
+
+      const suggestions = this.parseCurationSuggestions(response.data.content);
 
       return success(suggestions);
     } catch (error) {
-      return failure(new ValidationError(`Failed to get suggestions: ${error}`));
+      return failure(errors.validation(`Failed to get suggestions: ${error}`));
     }
   }
 
@@ -1480,11 +1520,11 @@ Select 5-8 artifacts that tell the best story of growth.`;
     try {
       const portfolio = await this.loadPortfolio(portfolioId);
       if (!portfolio) {
-        return failure(new NotFoundError('Portfolio not found'));
+        return failure(errors.notFound('Portfolio', 'unknown'));
       }
 
       if (!this.aiService) {
-        return failure(new ValidationError('AI service not available'));
+        return failure(errors.validation('AI service not available'));
       }
 
       const journeyData = await this.gatherGrowthData(portfolio);
@@ -1504,17 +1544,21 @@ Provide a comprehensive growth analysis including:
 
 Focus on measurable growth and transformation.`;
 
-      const response = await this.aiService.complete({
-        prompt,
+      const response = await this.aiService.complete(tenantId, {
+        messages: [{ role: 'user', content: prompt }],
         maxTokens: 2000,
         temperature: 0.3
       });
 
-      const analysis = this.parseGrowthAnalysis(response.data!.content);
+      if (!response.success) {
+        return failure(getError(response));
+      }
+
+      const analysis = this.parseGrowthAnalysis(response.data.content);
 
       return success(analysis);
     } catch (error) {
-      return failure(new ValidationError(`Failed to analyze growth: ${error}`));
+      return failure(errors.validation(`Failed to analyze growth: ${error}`));
     }
   }
 
@@ -1607,7 +1651,7 @@ Focus on measurable growth and transformation.`;
 
       // Send notification to owner (Workflow Step 5)
       if (viewEvent.location && portfolio.analytics.uniqueViews % 5 === 0) {
-        this.eventBus?.emit('showcase.view_milestone', {
+        this.eventBus?.publish('showcase.view_milestone', portfolio.tenantId, {
           portfolioId,
           userId: portfolio.userId,
           uniqueViews: portfolio.analytics.uniqueViews,
@@ -1635,12 +1679,12 @@ Focus on measurable growth and transformation.`;
     try {
       const portfolioResult = await this.getShowcase(tenantId, portfolioId, userId);
       if (!portfolioResult.success) {
-        return portfolioResult;
+        return failure(getError(portfolioResult));
       }
 
       return success(portfolioResult.data!.analytics);
     } catch (error) {
-      return failure(new ValidationError(`Failed to get analytics: ${error}`));
+      return failure(errors.validation(`Failed to get analytics: ${error}`));
     }
   }
 
@@ -1661,7 +1705,7 @@ Focus on measurable growth and transformation.`;
     try {
       const portfolioResult = await this.getShowcase(tenantId, portfolioId, userId);
       if (!portfolioResult.success) {
-        return portfolioResult;
+        return failure(getError(portfolioResult));
       }
 
       const portfolio = portfolioResult.data!;
@@ -1672,7 +1716,7 @@ Focus on measurable growth and transformation.`;
 
       return success(portfolio.seoSettings);
     } catch (error) {
-      return failure(new ValidationError(`Failed to update SEO settings: ${error}`));
+      return failure(errors.validation(`Failed to update SEO settings: ${error}`));
     }
   }
 
@@ -1683,7 +1727,7 @@ Focus on measurable growth and transformation.`;
     try {
       const portfolio = await this.loadPortfolio(portfolioId);
       if (!portfolio || portfolio.status !== 'published') {
-        return failure(new NotFoundError('Portfolio not found'));
+        return failure(errors.notFound('Portfolio', 'unknown'));
       }
 
       const metadata: SEOMetadata = {
@@ -1702,7 +1746,7 @@ Focus on measurable growth and transformation.`;
 
       return success(metadata);
     } catch (error) {
-      return failure(new ValidationError(`Failed to generate SEO metadata: ${error}`));
+      return failure(errors.validation(`Failed to generate SEO metadata: ${error}`));
     }
   }
 
@@ -1829,7 +1873,7 @@ Focus on measurable growth and transformation.`;
     };
   }
 
-  private async gatherJourneyNarrative(portfolio: ShowcasePortfolio): Promise<unknown> {
+  private async gatherJourneyNarrative(portfolio: ShowcasePortfolio): Promise<JourneyNarrativeData> {
     return {
       problemStatement: 'User journey problem',
       iterations: portfolio.items.length,
@@ -2067,9 +2111,9 @@ export interface SEOMetadata {
 // SERVICE INITIALIZATION
 // ============================================================================
 
-export function initializeShowcasePortfolioService(config: ScholarlyConfig): ShowcasePortfolioService {
+export function initializeShowcasePortfolioService(): ShowcasePortfolioService {
   if (!serviceInstance) {
-    serviceInstance = new ShowcasePortfolioService(config);
+    serviceInstance = new ShowcasePortfolioService();
   }
   return serviceInstance;
 }

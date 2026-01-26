@@ -19,11 +19,27 @@ import { z } from 'zod';
 import {
   ShowcasePortfolioService,
   getShowcasePortfolioService,
-  initializeShowcasePortfolioService
+  initializeShowcasePortfolioService,
+  PublishSettings,
+  AddItemInput,
+  ReflectionInput,
+  AccessLinkConfig,
+  GuestbookEntryInput,
+  ViewerLocation
 } from '../services/showcase-portfolio.service';
 import { authMiddleware } from '../middleware/auth';
+import { Result, ScholarlyError } from '../services/base.service';
+import { Router as ExpressRouter } from 'express';
 
-const router = Router();
+const router: ExpressRouter = Router();
+
+// Helper to extract error message from failed Result
+function getErrorMessage<T>(result: Result<T>): string {
+  if (result.success === false) {
+    return result.error?.message || 'Unknown error';
+  }
+  return 'Unknown error';
+}
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -222,7 +238,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response, next: NextF
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.status(201).json({ success: true, data: result.data });
@@ -245,7 +261,7 @@ router.get('/:portfolioId', authMiddleware, async (req: Request, res: Response, 
     );
 
     if (!result.success) {
-      return res.status(404).json({ success: false, error: result.error?.message });
+      return res.status(404).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -278,7 +294,7 @@ router.put('/:portfolioId', authMiddleware, async (req: Request, res: Response, 
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -307,11 +323,11 @@ router.post('/:portfolioId/publish', authMiddleware, async (req: Request, res: R
       getTenantId(req),
       getUserId(req),
       req.params.portfolioId,
-      validation.data
+      validation.data as PublishSettings
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -344,11 +360,11 @@ router.post('/:portfolioId/items', authMiddleware, async (req: Request, res: Res
       getTenantId(req),
       getUserId(req),
       req.params.portfolioId,
-      validation.data
+      validation.data as AddItemInput
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.status(201).json({ success: true, data: result.data });
@@ -378,11 +394,11 @@ router.put('/:portfolioId/items/:itemId/reflection', authMiddleware, async (req:
       getUserId(req),
       req.params.portfolioId,
       req.params.itemId,
-      validation.data
+      validation.data as ReflectionInput
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -405,7 +421,7 @@ router.get('/:portfolioId/items/:itemId/reflection-prompt', authMiddleware, asyn
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -438,7 +454,7 @@ router.put('/:portfolioId/items/reorder', authMiddleware, async (req: Request, r
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -462,7 +478,7 @@ router.delete('/:portfolioId/items/:itemId', authMiddleware, async (req: Request
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, message: 'Item removed' });
@@ -500,7 +516,7 @@ router.post('/:portfolioId/pitch-deck', authMiddleware, async (req: Request, res
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -533,11 +549,11 @@ router.post('/:portfolioId/access-links', authMiddleware, async (req: Request, r
       getTenantId(req),
       getUserId(req),
       req.params.portfolioId,
-      validation.data
+      validation.data as AccessLinkConfig
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.status(201).json({ success: true, data: result.data });
@@ -570,7 +586,7 @@ router.put('/:portfolioId/slug', authMiddleware, async (req: Request, res: Respo
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -597,7 +613,7 @@ router.get('/:portfolioId/guestbook', authMiddleware, async (req: Request, res: 
     );
 
     if (!portfolioResult.success) {
-      return res.status(404).json({ success: false, error: portfolioResult.error?.message });
+      return res.status(404).json({ success: false, error: getErrorMessage(portfolioResult) });
     }
 
     // Owner sees all entries
@@ -633,7 +649,7 @@ router.put('/:portfolioId/guestbook/:entryId/moderate', authMiddleware, async (r
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -659,7 +675,7 @@ router.post('/:portfolioId/ai/skill-tags', authMiddleware, async (req: Request, 
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -681,7 +697,7 @@ router.post('/:portfolioId/ai/executive-summary', authMiddleware, async (req: Re
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -704,7 +720,7 @@ router.get('/:portfolioId/ai/curation-suggestions', authMiddleware, async (req: 
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -726,7 +742,7 @@ router.get('/:portfolioId/ai/growth-analysis', authMiddleware, async (req: Reque
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -763,7 +779,7 @@ router.put('/:portfolioId/seo', authMiddleware, async (req: Request, res: Respon
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -790,7 +806,7 @@ router.get('/:portfolioId/analytics', authMiddleware, async (req: Request, res: 
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -819,12 +835,12 @@ router.get('/public/:slug', async (req: Request, res: Response, next: NextFuncti
     );
 
     if (!result.success) {
-      const statusCode = result.error?.message.includes('Password') ? 401 :
-                         result.error?.message.includes('not found') ? 404 : 400;
+      const statusCode = getErrorMessage(result).includes('Password') ? 401 :
+                         getErrorMessage(result).includes('not found') ? 404 : 400;
       return res.status(statusCode).json({
         success: false,
-        error: result.error?.message,
-        requiresPassword: result.error?.message.includes('Password')
+        error: getErrorMessage(result),
+        requiresPassword: getErrorMessage(result).includes('Password')
       });
     }
 
@@ -857,7 +873,7 @@ router.post('/public/:slug/access', async (req: Request, res: Response, next: Ne
     );
 
     if (!result.success) {
-      return res.status(401).json({ success: false, error: result.error?.message });
+      return res.status(401).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -883,7 +899,7 @@ router.get('/public/:slug/guestbook', async (req: Request, res: Response, next: 
     const result = await service.getPublicGuestbook(portfolioResult.data!.id);
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -925,12 +941,12 @@ router.post('/public/:slug/guestbook', async (req: Request, res: Response, next:
 
     const result = await service.submitGuestbookEntry(
       portfolioResult.data!.id,
-      validation.data,
+      validation.data as GuestbookEntryInput,
       viewerContext
     );
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.status(201).json({
@@ -960,7 +976,7 @@ router.get('/public/:slug/seo', async (req: Request, res: Response, next: NextFu
     const result = await service.generateSEOMetadata(portfolioResult.data!.id);
 
     if (!result.success) {
-      return res.status(400).json({ success: false, error: result.error?.message });
+      return res.status(400).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });
@@ -995,7 +1011,7 @@ router.post('/public/:slug/track', async (req: Request, res: Response, next: Nex
       pitchDeckWatched: validation.success ? validation.data.pitchDeckWatched : undefined,
       pitchDeckProgress: validation.success ? validation.data.pitchDeckProgress : undefined,
       duration: validation.success ? validation.data.duration : undefined,
-      location: validation.success ? validation.data.location : undefined,
+      location: validation.success ? validation.data.location as ViewerLocation : undefined,
       viewedAt: new Date()
     });
 
@@ -1022,7 +1038,7 @@ router.post('/access/validate', async (req: Request, res: Response, next: NextFu
     const result = await service.validateAccessLink(token, password, email);
 
     if (!result.success) {
-      return res.status(401).json({ success: false, error: result.error?.message });
+      return res.status(401).json({ success: false, error: getErrorMessage(result) });
     }
 
     res.json({ success: true, data: result.data });

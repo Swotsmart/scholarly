@@ -86,11 +86,11 @@ export class BlockchainService extends ScholarlyBaseService {
     escrow: Contract;
     reputation: Contract;
   };
-  private config: BlockchainConfig;
+  private blockchainConfig: BlockchainConfig;
 
   constructor(config: BlockchainConfig) {
     super('BlockchainService');
-    this.config = config;
+    this.blockchainConfig = config;
 
     // Initialize provider and wallet
     this.provider = new ethers.JsonRpcProvider(config.rpcUrl);
@@ -286,7 +286,7 @@ export class BlockchainService extends ScholarlyBaseService {
           escrowIdBytes,
           bookingIdBytes,
           tutor,
-          this.config.contracts.scholarlyToken,
+          this.blockchainConfig.contracts.scholarlyToken,
           amountWei,
           sessionScheduledAt
         );

@@ -26,6 +26,7 @@ import {
   ScholarlyConfig
 } from '@scholarly/shared/types/scholarly-types';
 import { prisma } from '@scholarly/database';
+import { log } from '../lib/logger';
 import {
   AIIntegrationService,
   AIBuddyContext,
@@ -278,7 +279,7 @@ export class AIBuddyService extends ScholarlyBaseService {
 
       return success(conversation);
     } catch (error) {
-      this.logError('Failed to start conversation', error as Error);
+      log.error('Failed to start conversation', error as Error);
       return failure(new ValidationError('Failed to start conversation'));
     }
   }
@@ -462,19 +463,19 @@ export class AIBuddyService extends ScholarlyBaseService {
       return success({
         conversationId: conversation.id,
         message: {
-          role: 'assistant',
+          role: 'assistant' as const,
           content: responseContent,
           timestamp: new Date(),
           metadata: {
             suggestedActions,
           },
-        },
+        } as AIBuddyMessage,
         suggestedActions,
         relatedResources,
         learningInsight,
       });
     } catch (error) {
-      this.logError('Failed to send message', error as Error);
+      log.error('Failed to send message', error as Error);
       return failure(new ValidationError('Failed to process message'));
     }
   }
@@ -490,7 +491,7 @@ export class AIBuddyService extends ScholarlyBaseService {
     if (cached) return cached;
 
     // In production, fetch from database
-    const conversation = await prisma.aiBuddyConversation.findUnique({
+    const conversation = await prisma.aIBuddyConversation.findUnique({
       where: { id: conversationId, tenantId },
     });
 
@@ -533,13 +534,13 @@ export class AIBuddyService extends ScholarlyBaseService {
       if (options?.status) where.status = options.status;
 
       const [conversations, total] = await Promise.all([
-        prisma.aiBuddyConversation.findMany({
+        prisma.aIBuddyConversation.findMany({
           where,
           orderBy: { lastMessageAt: 'desc' },
           take: options?.limit || 20,
           skip: options?.offset || 0,
         }),
-        prisma.aiBuddyConversation.count({ where }),
+        prisma.aIBuddyConversation.count({ where }),
       ]);
 
       return success({
@@ -559,7 +560,7 @@ export class AIBuddyService extends ScholarlyBaseService {
         total,
       });
     } catch (error) {
-      this.logError('Failed to list conversations', error as Error);
+      log.error('Failed to list conversations', error as Error);
       return failure(new ValidationError('Failed to list conversations'));
     }
   }
@@ -573,7 +574,7 @@ export class AIBuddyService extends ScholarlyBaseService {
     conversationId: string
   ): Promise<Result<void>> {
     try {
-      await prisma.aiBuddyConversation.update({
+      await prisma.aIBuddyConversation.update({
         where: { id: conversationId, tenantId, userId },
         data: { status: 'archived', updatedAt: new Date() },
       });
@@ -648,17 +649,17 @@ export class AIBuddyService extends ScholarlyBaseService {
 
     if (!user?.learnerProfile) return null;
 
-    const profile = user.learnerProfile;
+    const profile = user.learnerProfile as any;
     return {
       userId,
       yearLevel: profile.yearLevel || '',
-      subjects: profile.subjects as string[] || [],
-      strengths: profile.strengths as string[] || [],
-      areasForGrowth: profile.areasForGrowth as string[] || [],
-      preferredLearningStyles: profile.learningStyles as string[] || [],
-      pace: (profile.pace as 'slower' | 'standard' | 'accelerated') || 'standard',
-      interests: profile.interests as string[] || [],
-      accommodations: profile.accommodations as string[] || undefined,
+      subjects: profile.subjects || [],
+      strengths: profile.strengths || [],
+      areasForGrowth: profile.areasForGrowth || [],
+      preferredLearningStyles: profile.learningStyles || [],
+      pace: profile.pace || 'standard',
+      interests: profile.interests || [],
+      accommodations: profile.accommodations || undefined,
     };
   }
 
@@ -669,7 +670,7 @@ export class AIBuddyService extends ScholarlyBaseService {
     tenantId: string,
     userId: string
   ): Promise<BuddySettings | null> {
-    const settings = await prisma.aiBuddySettings.findUnique({
+    const settings = await prisma.aIBuddySettings.findUnique({
       where: { userId_tenantId: { userId, tenantId } },
     });
 
@@ -696,7 +697,7 @@ export class AIBuddyService extends ScholarlyBaseService {
     updates: Partial<BuddySettings>
   ): Promise<Result<BuddySettings>> {
     try {
-      const settings = await prisma.aiBuddySettings.upsert({
+      const settings = await prisma.aIBuddySettings.upsert({
         where: { userId_tenantId: { userId, tenantId } },
         create: {
           userId,
@@ -983,30 +984,15 @@ export class AIBuddyService extends ScholarlyBaseService {
   }
 
   private async findRelatedResources(
-    tenantId: string,
+    _tenantId: string,
     topics: string[],
-    context: ConversationContext
+    _context: ConversationContext
   ): Promise<{ title: string; url: string; type: string }[]> {
     if (topics.length === 0) return [];
 
-    // In production, query content library
-    const resources = await prisma.contentResource.findMany({
-      where: {
-        tenantId,
-        OR: topics.map(topic => ({
-          tags: { has: topic.toLowerCase() },
-        })),
-        yearLevels: context.yearLevel ? { has: context.yearLevel } : undefined,
-      },
-      take: 3,
-      select: {
-        title: true,
-        url: true,
-        type: true,
-      },
-    });
-
-    return resources;
+    // TODO: In production, query content library when ContentResource model is available
+    // For now, return empty array as placeholder
+    return [];
   }
 
   private async generateLearningInsight(
@@ -1065,7 +1051,7 @@ export class AIBuddyService extends ScholarlyBaseService {
   }
 
   private async saveConversation(tenantId: string, conversation: Conversation): Promise<void> {
-    await prisma.aiBuddyConversation.upsert({
+    await prisma.aIBuddyConversation.upsert({
       where: { id: conversation.id },
       create: {
         id: conversation.id,

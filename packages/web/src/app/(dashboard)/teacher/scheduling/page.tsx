@@ -48,8 +48,8 @@ export default function TeacherSchedulingPage() {
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" asChild>
-          <Link href="/teacher/scheduling/timetable">
+        <Link href="/teacher/scheduling/timetable">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-lg bg-blue-500/10 p-3">
                 <Calendar className="h-6 w-6 text-blue-500" />
@@ -62,11 +62,11 @@ export default function TeacherSchedulingPage() {
               </div>
               <ArrowRight className="h-5 w-5 text-muted-foreground" />
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" asChild>
-          <Link href="/teacher/scheduling/relief">
+        <Link href="/teacher/scheduling/relief">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-lg bg-orange-500/10 p-3">
                 <Clock className="h-6 w-6 text-orange-500" />
@@ -79,11 +79,11 @@ export default function TeacherSchedulingPage() {
               </div>
               <Badge>1 Open</Badge>
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" asChild>
-          <Link href="/teacher/scheduling/rooms">
+        <Link href="/teacher/scheduling/rooms">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-lg bg-green-500/10 p-3">
                 <School className="h-6 w-6 text-green-500" />
@@ -96,8 +96,8 @@ export default function TeacherSchedulingPage() {
               </div>
               <ArrowRight className="h-5 w-5 text-muted-foreground" />
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
       </div>
 
       {/* Today's Schedule */}

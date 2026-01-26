@@ -1129,10 +1129,14 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
       for (let i = 0; i < 3; i++) {
         const riskPrediction = await mlService.predictStudentRisk(tenantId, `student-${i}`);
         if (riskPrediction.success && riskPrediction.data.riskLevel !== 'low') {
+          // Map risk level to allowed values ('critical' becomes 'high')
+          const mappedRiskLevel: 'high' | 'medium' | 'low' =
+            riskPrediction.data.riskLevel === 'critical' ? 'high' :
+            riskPrediction.data.riskLevel === 'high' ? 'high' : 'medium';
           atRiskStudents.push({
             studentId: `student-${i}`,
             studentName: `At-Risk Student ${i + 1}`,
-            riskLevel: riskPrediction.data.riskLevel,
+            riskLevel: mappedRiskLevel,
             riskScore: riskPrediction.data.riskScore,
             riskFactors: riskPrediction.data.riskFactors.map(f => f.factor),
             recommendedInterventions: riskPrediction.data.interventionRecommendations.map(i => i.title),
@@ -2090,7 +2094,7 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
     try {
       const aiService = getAIService();
 
-      const response = await aiService.complete({
+      const response = await aiService.complete(tenantId, {
         messages: [
           {
             role: 'system',
@@ -2198,7 +2202,7 @@ export class AnalyticsReportingService extends ScholarlyBaseService {
   // Helper Methods
   // ==========================================================================
 
-  private generateId(): string {
+  protected generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 }

@@ -229,6 +229,10 @@ model User {
   onChainReputation OnChainReputation?
   tokenTransactions TokenTransaction[]
 
+  // Early Years & LinguaFlow
+  earlyYearsFamilies      EarlyYearsFamily[]
+  languageLearnerProfiles LanguageLearnerProfile[]
+
   @@unique([tenantId, email])
   @@index([tenantId])
   @@index([tenantId, status])
@@ -2515,4 +2519,735 @@ model ShowcaseViewLog {
 
   @@index([portfolioId])
   @@index([viewedAt])
+}
+
+// ============================================================================
+// EARLY YEARS (LITTLE EXPLORERS) MODULE
+// Ages 3-7 education with Systematic Synthetic Phonics (SSP) and CPA numeracy
+// ============================================================================
+
+/// Family unit enrolled in Little Explorers
+model EarlyYearsFamily {
+  id       String @id @default(cuid())
+  tenantId String
+
+  // Primary account holder
+  primaryUserId String
+  primaryUser   User   @relation(fields: [primaryUserId], references: [id], onDelete: Cascade)
+
+  // Identity
+  familyName String?
+
+  // Language & Culture
+  primaryLanguage String   @default("en")
+  homeLanguages   String[] @default([])
+  timezone        String   @default("Australia/Sydney")
+
+  // Subscription
+  subscriptionTier      String    @default("free")
+  subscriptionStatus    String    @default("active")
+  subscriptionExpiresAt DateTime?
+
+  // Engagement Metrics
+  totalLearningMinutes Int       @default(0)
+  lastActiveAt         DateTime?
+
+  // Compliance (COPPA/GDPR-K)
+  dataProcessingConsent   Boolean   @default(false)
+  dataProcessingConsentAt DateTime?
+  consentIpAddress        String?
+
+  // Audit
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  children EarlyYearsChild[]
+
+  @@unique([tenantId, primaryUserId])
+  @@index([tenantId])
+  @@index([subscriptionStatus])
+}
+
+/// Child profile (ages 3-7)
+model EarlyYearsChild {
+  id       String           @id @default(cuid())
+  tenantId String
+  familyId String
+  family   EarlyYearsFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  // Identity (minimal for child privacy)
+  firstName     String
+  preferredName String?
+  dateOfBirth   DateTime
+  avatarId      String?
+
+  // Current State
+  currentWorld  String @default("sound_discovery")
+  currentMentor String @default("mimo_owl")
+
+  // Engagement
+  totalTreasures       Int       @default(0)
+  totalStars           Int       @default(0)
+  totalLearningMinutes Int       @default(0)
+  totalSessions        Int       @default(0)
+  currentStreak        Int       @default(0)
+  longestStreak        Int       @default(0)
+  lastActiveAt         DateTime?
+
+  // Status
+  status     String   @default("active")
+  enrolledAt DateTime @default(now())
+
+  // Audit
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  picturePassword  EarlyYearsPicturePassword?
+  phonicsProgress  EarlyYearsPhonicsProgress?
+  numeracyProgress EarlyYearsNumeracyProgress?
+  sessions         EarlyYearsSession[]
+
+  @@index([tenantId, familyId])
+  @@index([dateOfBirth])
+  @@index([status])
+}
+
+/// Picture password for pre-literate authentication
+model EarlyYearsPicturePassword {
+  id      String          @id @default(cuid())
+  childId String          @unique
+  child   EarlyYearsChild @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  // Security (bcrypt hash of image sequence)
+  imageSequenceHash String
+  sequenceLength    Int
+
+  // Brute force protection
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  lastAttemptAt  DateTime?
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Phonics progress (Systematic Synthetic Phonics - 6 phases)
+model EarlyYearsPhonicsProgress {
+  id      String          @id @default(cuid())
+  childId String          @unique
+  child   EarlyYearsChild @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  // Phase tracking (1-6)
+  currentPhase Int @default(1)
+
+  // Grapheme mastery
+  masteredGraphemes   String[] @default([])
+  introducedGraphemes String[] @default([])
+  strugglingGraphemes String[] @default([])
+
+  // Skill metrics (0.0 - 1.0)
+  blendingAccuracy   Float @default(0)
+  segmentingAccuracy Float @default(0)
+
+  // Sight words
+  sightWordsMastered   String[] @default([])
+  sightWordsIntroduced String[] @default([])
+
+  // Detailed progress (JSON for flexibility)
+  graphemeHistory Json @default("[]")
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Numeracy progress (Concrete-Pictorial-Abstract approach)
+model EarlyYearsNumeracyProgress {
+  id      String          @id @default(cuid())
+  childId String          @unique
+  child   EarlyYearsChild @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  // Level tracking
+  currentLevel String @default("foundations")
+
+  // Number sense
+  reliableCountingRange   Int @default(5)
+  highestNumberRecognised Int @default(10)
+
+  // Skill metrics (0.0 - 1.0)
+  subitizingAccuracy  Float @default(0)
+  additionAccuracy    Float @default(0)
+  subtractionAccuracy Float @default(0)
+
+  // Recognition
+  numeralsRecognized    Int[]    @default([])
+  operationsIntroduced  String[] @default([])
+  shapesKnown           String[] @default([])
+
+  // Detailed progress
+  operationHistory Json @default("[]")
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Learning session
+model EarlyYearsSession {
+  id       String          @id @default(cuid())
+  tenantId String
+  childId  String
+  child    EarlyYearsChild @relation(fields: [childId], references: [id], onDelete: Cascade)
+  familyId String
+
+  // Session info
+  sessionType String @default("learning")
+  world       String
+  mentor      String
+
+  // Limits
+  maxDurationMinutes Int @default(15)
+  maxActivities      Int @default(10)
+
+  // Timing
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  durationMinutes Int       @default(0)
+
+  // Activity tracking
+  totalActivities     Int @default(0)
+  activitiesCompleted Int @default(0)
+
+  // Skills practiced
+  graphemesPracticed String[] @default([])
+  numbersPracticed   Int[]    @default([])
+
+  // Rewards
+  treasuresEarned Int @default(0)
+  starsEarned     Int @default(0)
+
+  // Engagement
+  averageFocusScore Float?
+  childMoodRating   Int?
+  parentNotes       String?
+
+  // Audit
+  createdAt DateTime @default(now())
+
+  // Relations
+  activities EarlyYearsActivity[]
+
+  @@index([tenantId, childId])
+  @@index([startedAt])
+  @@index([childId, startedAt])
+}
+
+/// Individual activity within a session
+model EarlyYearsActivity {
+  id        String            @id @default(cuid())
+  sessionId String
+  session   EarlyYearsSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // Activity details
+  activityType  String
+  targetContent String[] @default([])
+  difficulty    Int      @default(1)
+
+  // Timing
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  durationSeconds Int?
+
+  // Results
+  score           Float?
+  attempts        Int     @default(1)
+  hintsUsed       Int     @default(0)
+  errorsCommitted Int     @default(0)
+
+  // Response data (for analysis)
+  responseData Json @default("{}")
+
+  // Reward
+  treasureAwarded Boolean @default(false)
+
+  @@index([sessionId])
+  @@index([activityType])
+}
+
+// ============================================================================
+// LINGUAFLOW MODULE
+// Language learning with CEFR A1-C2, SM-2 SRS, heritage pathways, IB alignment
+// Supports: French, Mandarin, Indonesian, Spanish, Italian, German
+// ============================================================================
+
+/// Language learner profile
+model LanguageLearnerProfile {
+  id       String @id @default(cuid())
+  tenantId String
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Target language (ISO 639-3)
+  targetLanguage String // fra, cmn, ind, spa, ita, deu
+
+  // Native language
+  nativeLanguage      String
+  additionalLanguages String[] @default([])
+
+  // CEFR levels (A1, A2, B1, B2, C1, C2)
+  overallLevel   String @default("A1")
+  listeningLevel String @default("A1")
+  speakingLevel  String @default("A1")
+  readingLevel   String @default("A1")
+  writingLevel   String @default("A1")
+
+  // Heritage speaker
+  isHeritageSpeaker Boolean @default(false)
+
+  // Curriculum
+  curriculumFramework String  @default("ACARA")
+  yearLevel           String?
+  ibProgramme         String? // PYP, MYP, DP
+  ibPhaseOrLevel      String?
+  ibCriteriaScores    Json    @default("{}")
+
+  // Gamification
+  currentLevel  Int @default(1)
+  totalXp       Int @default(0)
+  currentStreak Int @default(0)
+  longestStreak Int @default(0)
+
+  // Engagement
+  totalLearningMinutes Int       @default(0)
+  totalSpeakingMinutes Int       @default(0)
+  lastActiveAt         DateTime?
+
+  // Offline
+  lastSyncedAt       DateTime?
+  offlineDataVersion Int       @default(0)
+
+  // Status
+  status     String   @default("active")
+  enrolledAt DateTime @default(now())
+
+  // Audit
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  vocabularyProgress LanguageVocabularyProgress?
+  heritagePathway    LanguageHeritagePathway?
+  conversations      LanguageConversation[]
+  achievements       LanguageLearnerAchievement[]
+  offlinePackages    LanguageOfflinePackage[]
+
+  @@unique([tenantId, userId, targetLanguage])
+  @@index([tenantId, targetLanguage])
+  @@index([userId])
+  @@index([overallLevel])
+  @@index([status])
+}
+
+/// Vocabulary progress with SRS tracking
+model LanguageVocabularyProgress {
+  id        String                 @id @default(cuid())
+  profileId String                 @unique
+  profile   LanguageLearnerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Counts
+  totalWordsExposed  Int @default(0)
+  totalWordsMastered Int @default(0)
+  totalWordsLearning Int @default(0)
+
+  // Coverage tracking
+  cefrCoverage  Json @default("{}")
+  topicCoverage Json @default("{}")
+
+  // Review scheduling
+  dueForReview Int       @default(0)
+  nextReviewAt DateTime?
+
+  // Metrics
+  averageRetentionRate Float @default(0)
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  items LanguageVocabularyItem[]
+}
+
+/// Individual vocabulary item with SM-2 SRS
+model LanguageVocabularyItem {
+  id         String                     @id @default(cuid())
+  progressId String
+  progress   LanguageVocabularyProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+
+  // Word data
+  wordId          String
+  word            String
+  translation     String
+  cefrLevel       String  @default("A1")
+  partOfSpeech    String?
+  exampleSentence String?
+  audioUrl        String?
+
+  // Mastery
+  masteryLevel String @default("new") // new, learning, reviewing, mastered
+
+  // SM-2 SRS fields
+  easeFactor   Float     @default(2.5)
+  interval     Int       @default(0)
+  repetitions  Int       @default(0)
+  nextReviewAt DateTime?
+
+  // Accuracy tracking
+  timesCorrect       Int      @default(0)
+  timesIncorrect     Int      @default(0)
+  lastAttemptCorrect Boolean?
+
+  // Timestamps
+  firstEncounteredAt DateTime  @default(now())
+  lastPracticedAt    DateTime?
+  masteredAt         DateTime?
+
+  // Pronunciation
+  pronunciationScore Float?
+
+  // Offline
+  availableOffline Boolean @default(false)
+
+  @@unique([progressId, wordId])
+  @@index([progressId, nextReviewAt])
+  @@index([progressId, masteryLevel])
+  @@index([cefrLevel])
+}
+
+/// Heritage speaker pathway
+model LanguageHeritagePathway {
+  id        String                 @id @default(cuid())
+  profileId String                 @unique
+  profile   LanguageLearnerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Pathway type
+  pathwayType String // literacy_launch, academic_register, standard_variety, cultural_deepening, accelerated
+
+  // Assessment
+  assessmentDate DateTime @default(now())
+
+  // Proficiency levels
+  oralProficiency       String
+  literacyLevel         String
+  academicRegisterLevel String
+  dialectFeatures       String[] @default([])
+
+  // Curriculum customization
+  focusAreas        String[] @default([])
+  skipAreas         String[] @default([])
+  acceleratedTopics String[] @default([])
+
+  // Progress
+  literacyMilestones Json  @default("{}")
+  registerProgress   Float @default(0)
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// AI conversation session
+model LanguageConversation {
+  id        String                 @id @default(cuid())
+  profileId String
+  profile   LanguageLearnerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Conversation setup
+  mode      String // role_play, free_conversation, topic_discussion, targeted_practice, ib_oral_practice
+  language  String
+  cefrLevel String
+
+  // AI configuration
+  aiRole    String?
+  aiPersona String?
+
+  // Scenario
+  scenarioId    String?
+  scenarioTitle String?
+
+  // Targets
+  targetVocabulary String[] @default([])
+  targetStructures String[] @default([])
+
+  // Timing
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  durationMinutes Int       @default(0)
+
+  // Transcript (JSON array of messages)
+  messages Json @default("[]")
+
+  // Assessment scores (0.0 - 1.0)
+  fluencyScore  Float?
+  accuracyScore Float?
+  overallScore  Float?
+
+  // Feedback
+  strengths      String[] @default([])
+  areasToImprove String[] @default([])
+  vocabularyUsed String[] @default([])
+  errorsNoted    Json     @default("[]")
+
+  // Rewards
+  xpEarned Int @default(0)
+
+  // Self-rating
+  selfFluencyRating    Int?
+  selfConfidenceRating Int?
+
+  // Flags
+  isHeritageVariant Boolean @default(false)
+
+  @@index([profileId, startedAt])
+  @@index([profileId, mode])
+}
+
+/// Achievement definition
+model LanguageAchievement {
+  id String @id @default(cuid())
+
+  // Identity
+  code        String @unique
+  name        String
+  description String
+
+  // Categorization
+  category String // streak, vocabulary, speaking, listening, reading, writing, grammar, cultural, heritage, milestone
+
+  // Display
+  iconUrl  String?
+  badgeUrl String?
+
+  // Criteria
+  criteriaType  String // count, streak, score, time, level
+  criteriaValue Int
+
+  // Reward
+  xpReward Int    @default(0)
+  rarity   String @default("common") // common, uncommon, rare, epic, legendary
+
+  // Flags
+  isHidden Boolean @default(false)
+  isActive Boolean @default(true)
+
+  // Language-specific (null = all languages)
+  language String?
+
+  // Audit
+  createdAt DateTime @default(now())
+
+  // Relations
+  learnerAchievements LanguageLearnerAchievement[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+/// Learner's earned achievement
+model LanguageLearnerAchievement {
+  id            String                 @id @default(cuid())
+  profileId     String
+  profile       LanguageLearnerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   LanguageAchievement    @relation(fields: [achievementId], references: [id])
+
+  // Progress
+  earnedAt        DateTime @default(now())
+  currentProgress Int      @default(0)
+  targetProgress  Int?
+
+  // Display
+  celebrationShown Boolean @default(false)
+
+  @@unique([profileId, achievementId])
+  @@index([profileId, earnedAt])
+}
+
+/// Offline content package
+model LanguageOfflinePackage {
+  id        String                 @id @default(cuid())
+  profileId String
+  profile   LanguageLearnerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Package type
+  packageType String // vocabulary_review, lesson_unit, conversation_scenarios, practice_tests, full_sync
+
+  // Content
+  contentSelection Json    @default("{}")
+  vocabularyCount  Int     @default(0)
+
+  // Size
+  totalItems              Int   @default(0)
+  estimatedSizeMb         Float @default(0)
+  estimatedOfflineMinutes Int   @default(0)
+
+  // Status
+  downloadStatus String    @default("pending") // pending, downloading, ready, expired, error
+  downloadedAt   DateTime?
+  expiresAt      DateTime?
+
+  // Versioning
+  packageVersion Int @default(1)
+
+  // Offline progress (synced on reconnect)
+  offlineProgressData   Json      @default("{}")
+  lastOfflineActivityAt DateTime?
+  pendingSyncItems      Int       @default(0)
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId, downloadStatus])
+  @@index([expiresAt])
+}
+
+// ============================================================================
+// ANALYTICS & ML SUPPORT
+// ============================================================================
+
+/// Learning event for analytics pipeline
+model LearningEvent {
+  id       String @id @default(cuid())
+  tenantId String
+
+  // Event identification
+  eventType   String
+  eventSource String // early_years, linguaflow
+
+  // Context
+  learnerId String?
+  sessionId String?
+
+  // Payload
+  payload Json
+
+  // Timestamps
+  occurredAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([tenantId, eventType])
+  @@index([tenantId, occurredAt])
+  @@index([learnerId])
+  @@index([processedAt])
+}
+
+/// ML prediction cache
+model MLPrediction {
+  id       String @id @default(cuid())
+  tenantId String
+
+  // Model info
+  modelId      String
+  modelVersion String
+
+  // Target
+  learnerId      String
+  predictionType String // at_risk, engagement, proficiency, recommendation
+
+  // Result
+  prediction Json
+  confidence Float
+
+  // Lifecycle
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  @@index([tenantId, learnerId])
+  @@index([predictionType])
+  @@index([expiresAt])
+}
+
+// ============================================================================
+// ADDITIONAL EARLY YEARS MODELS
+// ============================================================================
+
+/// Early Years conversation with AI characters
+model EarlyYearsConversation {
+  id       String @id @default(cuid())
+  tenantId String
+
+  // Context
+  learnerId   String
+  characterId String // Lettie, Numero, etc.
+  sessionId   String?
+
+  // Conversation state
+  messages      Json     @default("[]")
+  topic         String?
+  learningGoal  String?
+  isActive      Boolean  @default(true)
+
+  // Timestamps
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, learnerId])
+  @@index([characterId])
+  @@index([isActive])
+}
+
+/// Picture password login attempt tracking
+model EarlyYearsPicturePasswordAttempt {
+  id         String @id @default(cuid())
+  passwordId String
+
+  // Attempt details
+  wasSuccessful Boolean
+  attemptedAt   DateTime @default(now())
+
+  // Security context
+  ipAddress String?
+  userAgent String?
+
+  @@index([passwordId, attemptedAt])
+}
+
+// ============================================================================
+// ADDITIONAL LANGUAGE LEARNING MODELS
+// ============================================================================
+
+/// SRS review history for vocabulary items
+model LanguageVocabularyReview {
+  id       String @id @default(cuid())
+  tenantId String
+
+  // References
+  learnerId String
+  cardId    String
+
+  // Review result
+  quality        Int      // SM-2 quality rating (0-5)
+  wasCorrect     Boolean
+  responseTimeMs Int?
+
+  // Before/after state
+  previousInterval Int
+  newInterval      Int
+  previousEasiness Float
+  newEasiness      Float
+
+  // Timestamp
+  reviewedAt DateTime @default(now())
+
+  @@index([tenantId, learnerId])
+  @@index([cardId])
+  @@index([reviewedAt])
 }

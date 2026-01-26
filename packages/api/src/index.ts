@@ -30,6 +30,8 @@ import { dataLakeRouter } from './routes/data-lake';
 import { mlPipelineRouter } from './routes/ml-pipeline';
 import { designPitchRouter } from './routes/design-pitch-ai';
 import { showcasePortfolioRouter } from './routes/showcase-portfolio';
+import { earlyYearsRouter } from './routes/early-years';
+import { linguaFlowRouter } from './routes/linguaflow';
 
 // Middleware
 import { errorHandler } from './middleware/error-handler';
@@ -82,6 +84,8 @@ api.use('/data-lake', authMiddleware, dataLakeRouter);
 api.use('/ml', authMiddleware, mlPipelineRouter);
 api.use('/design-pitch', authMiddleware, designPitchRouter);
 api.use('/showcase', showcasePortfolioRouter); // Has both public and protected routes
+api.use('/early-years', authMiddleware, earlyYearsRouter);
+api.use('/linguaflow', authMiddleware, linguaFlowRouter);
 
 app.use('/api/v1', api);
 

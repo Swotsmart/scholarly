@@ -278,8 +278,8 @@ homeschoolRouter.get('/families/search', async (req, res) => {
     return {
       familyId: family.id,
       familyName: family.primaryContactName.split(' ')[0] + "'s Family",
-      location: familyLocation.suburb,
-      educationalApproach: familyProfile.primaryApproach,
+      location: familyLocation?.suburb || '',
+      educationalApproach: familyApproach || 'Not specified',
       childrenAges: familyChildAges,
       childrenCount: family.children.length,
       compatibilityScore: Math.min(100, compatibilityScore),

@@ -814,7 +814,7 @@ export class DesignPitchAIService extends ScholarlyBaseService {
       const aiService = getAIService();
 
       // Use AI to validate problem statement
-      const response = await aiService.complete({
+      const response = await aiService.complete(tenantId, {
         messages: [
           {
             role: 'system',
@@ -995,7 +995,7 @@ Desired Outcome: ${journey.problemStatement.desiredOutcome}`,
     try {
       const aiService = getAIService();
 
-      const response = await aiService.complete({
+      const response = await aiService.complete(tenantId, {
         messages: [
           {
             role: 'system',
@@ -1196,7 +1196,7 @@ Pain Points: ${journey.problemStatement.painPoints.join(', ')}`,
       // Get personas for context
       const personas = journey.userPersonas;
 
-      const response = await aiService.complete({
+      const response = await aiService.complete(tenantId, {
         messages: [
           {
             role: 'system',
@@ -1492,7 +1492,7 @@ Type: ${artifact.type}`,
         pins: r.feedbackPins.map(p => p.comment),
       }));
 
-      const response = await aiService.complete({
+      const response = await aiService.complete(tenantId, {
         messages: [
           {
             role: 'system',
@@ -1793,7 +1793,7 @@ Be constructive and specific.`,
 
     // Check slide limit
     if (deck.settings.enforceConstraints && deck.slides.length >= deck.settings.maxSlides) {
-      return failure(`Cannot exceed ${deck.settings.maxSlides} slides (10/20/30 rule)`, 'DPA_042');
+      return failure({ code: 'DPA_042', message: `Cannot exceed ${deck.settings.maxSlides} slides (10/20/30 rule)` });
     }
 
     const newSlide: PitchSlide = {
@@ -2258,7 +2258,7 @@ Be constructive and specific.`,
   // Helper Methods
   // ==========================================================================
 
-  private generateId(): string {
+  protected generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 }

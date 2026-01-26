@@ -446,7 +446,7 @@ export class EduScrumOrchestrator extends ScholarlyBaseService {
         blockers: [],
       };
 
-      const currentBacklog = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const currentBacklog = (sprint.backlogItems as unknown as SprintBacklogItem[]) || [];
       const newBacklog = [...currentBacklog, backlogItem];
       const newTotalPoints = sprint.totalStoryPoints + item.storyPoints;
 
@@ -489,7 +489,7 @@ export class EduScrumOrchestrator extends ScholarlyBaseService {
       }
 
       // Move all items to 'todo' status
-      const backlogItems = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const backlogItems = (sprint.backlogItems as unknown as SprintBacklogItem[]) || [];
       const updatedItems = backlogItems.map((item) => ({ ...item, status: 'todo' as const }));
 
       // Initialize burndown
@@ -551,7 +551,7 @@ export class EduScrumOrchestrator extends ScholarlyBaseService {
       const analysis = this.aiAnalyzeStandup(responses);
 
       // Update standups
-      const standups = (sprint.standups as StandupEntry[]) || [];
+      const standups = (sprint.standups as unknown as StandupEntry[]) || [];
       standups.push({
         date: new Date().toISOString(),
         responses,
@@ -559,12 +559,12 @@ export class EduScrumOrchestrator extends ScholarlyBaseService {
       });
 
       // Update burndown
-      const backlogItems = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const backlogItems = (sprint.backlogItems as unknown as SprintBacklogItem[]) || [];
       const remainingPoints = backlogItems
         .filter((i) => i.status !== 'done')
         .reduce((s, i) => s + i.storyPoints, 0);
 
-      const burndownData = (sprint.burndownData as BurndownPoint[]) || [];
+      const burndownData = (sprint.burndownData as unknown as BurndownPoint[]) || [];
       burndownData.push({
         date: new Date().toISOString(),
         plannedRemaining: this.calculateIdealBurndown(sprint.totalStoryPoints, sprint.startDate, sprint.endDate),
@@ -623,7 +623,7 @@ export class EduScrumOrchestrator extends ScholarlyBaseService {
         return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
       }
 
-      const backlogItems = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const backlogItems = (sprint.backlogItems as unknown as SprintBacklogItem[]) || [];
       const itemIndex = backlogItems.findIndex((i) => i.id === itemId);
 
       if (itemIndex === -1) {
@@ -702,7 +702,7 @@ export class EduScrumOrchestrator extends ScholarlyBaseService {
         return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
       }
 
-      const backlogItems = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const backlogItems = (sprint.backlogItems as unknown as SprintBacklogItem[]) || [];
       const itemIndex = backlogItems.findIndex((i) => i.id === itemId);
 
       if (itemIndex === -1) {
@@ -769,7 +769,7 @@ export class EduScrumOrchestrator extends ScholarlyBaseService {
         return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
       }
 
-      const backlogItems = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const backlogItems = (sprint.backlogItems as unknown as SprintBacklogItem[]) || [];
       const completedItems = backlogItems.filter((i) => i.status === 'done');
       const completedPoints = completedItems.reduce((s, i) => s + i.storyPoints, 0);
       const velocityRatio = completedPoints / Math.max(1, sprint.totalStoryPoints);
@@ -933,7 +933,7 @@ export class EduScrumOrchestrator extends ScholarlyBaseService {
         return failure({ code: 'NOT_FOUND', message: `Sprint ${sprintId} not found` });
       }
 
-      const backlogItems = (sprint.backlogItems as SprintBacklogItem[]) || [];
+      const backlogItems = (sprint.backlogItems as unknown as SprintBacklogItem[]) || [];
 
       const columns = ['backlog', 'todo', 'in_progress', 'review', 'done'].map((status) => ({
         id: status,
@@ -989,7 +989,7 @@ export class EduScrumOrchestrator extends ScholarlyBaseService {
       }
 
       const aiInsights = (activeSprint.aiInsights as unknown as AIInsights) || this.getDefaultAIInsights();
-      const backlogItems = (activeSprint.backlogItems as SprintBacklogItem[]) || [];
+      const backlogItems = (activeSprint.backlogItems as unknown as SprintBacklogItem[]) || [];
 
       const insights = aiInsights.currentInsights.slice(-5);
       const pendingMessages = aiInsights.coachingMessages.filter((m) => !m.acknowledged);

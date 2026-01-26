@@ -500,7 +500,7 @@ export class MLPipelineService extends ScholarlyBaseService {
       // Validate feature config
       const validation = this.validateFeatureConfig(mlModel.featureConfig);
       if (!validation.success) {
-        return failure(validation.error || 'Invalid feature configuration', 'ML_001');
+        return failure({ code: 'ML_001', message: validation.success === false ? validation.error.message : 'Invalid feature configuration' });
       }
 
       this.models.set(mlModel.id, mlModel);
@@ -792,8 +792,8 @@ export class MLPipelineService extends ScholarlyBaseService {
           importantFeatures: [],
           correlations: [],
           recommendations: [
-            'Consider adding interaction features between top predictors',
-            'Remove highly correlated features to reduce multicollinearity',
+            { type: 'add' as const, feature: 'interaction_features', reason: 'Consider adding interaction features between top predictors', expectedImpact: 0.1 },
+            { type: 'remove' as const, feature: 'correlated_features', reason: 'Remove highly correlated features to reduce multicollinearity', expectedImpact: 0.05 },
           ],
         },
         recommendations: [
@@ -1441,7 +1441,7 @@ export class MLPipelineService extends ScholarlyBaseService {
   // Helper Methods
   // ==========================================================================
 
-  private generateId(): string {
+  protected generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 }

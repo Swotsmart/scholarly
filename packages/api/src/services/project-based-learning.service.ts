@@ -546,7 +546,6 @@ Focus on authentic, student-driven learning with real-world applications.`;
         {
           prompt,
           schema: this.getTemplateSchema(),
-          maxTokens: 4000
         }
       );
 
@@ -582,7 +581,7 @@ Focus on authentic, student-driven learning with real-world applications.`;
             id: `activity-${i + 1}-${j + 1}`,
             name: a.name,
             description: a.description,
-            type: a.type,
+            type: a.type as PhaseActivity['type'],
             duration: a.duration,
             individual: a.individual || false,
             resources: a.resources || [],
@@ -1458,7 +1457,7 @@ Generate prompts that encourage:
   // PRIVATE HELPER METHODS
   // ==========================================================================
 
-  private getTemplateSchema(): object {
+  private getTemplateSchema(): Record<string, unknown> {
     return {
       type: 'object',
       properties: {

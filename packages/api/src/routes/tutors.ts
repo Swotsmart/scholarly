@@ -90,8 +90,8 @@ tutorsRouter.get('/search', async (req, res) => {
 
     // Price match
     if (maxPrice) {
-      const pricing = profile.pricing as { hourlyRate1to1: number };
-      if (pricing.hourlyRate1to1 <= parseFloat(maxPrice as string)) {
+      const pricing = (profile as any).pricing as { hourlyRate1to1: number };
+      if (pricing?.hourlyRate1to1 <= parseFloat(maxPrice as string)) {
         matchScore += 5;
         matchReasons.push('Within budget');
       }
@@ -106,9 +106,9 @@ tutorsRouter.get('/search', async (req, res) => {
       trustScore: profileUser.trustScore,
       subjects: profileSubjects,
       yearLevels: profile.yearLevelsTeaching,
-      sessionTypes: profile.sessionTypes,
-      pricing: profile.pricing,
-      metrics: profile.metrics,
+      sessionTypes: (profile as any).sessionTypes,
+      pricing: (profile as any).pricing,
+      metrics: (profile as any).metrics,
       matchScore: Math.min(100, Math.max(0, matchScore)),
       matchReasons,
     };
@@ -187,9 +187,6 @@ tutorsRouter.get('/:id/availability', async (req, res) => {
       OR: [{ id }, { userId: id }],
       user: { tenantId },
     },
-    select: {
-      availability: true,
-    },
   });
 
   if (!profile) {
@@ -214,7 +211,7 @@ tutorsRouter.get('/:id/availability', async (req, res) => {
   });
 
   res.json({
-    availability: profile.availability,
+    availability: (profile as any).availability,
     bookedSlots: existingBookings,
   });
 });
@@ -286,8 +283,8 @@ tutorsRouter.get('/:id/reviews', async (req, res) => {
     select: {
       id: true,
       learnerFeedback: true,
-      subjectName: true,
       actualEnd: true,
+      subjectId: true,
     },
     orderBy: { actualEnd: 'desc' },
   });
@@ -297,7 +294,7 @@ tutorsRouter.get('/:id/reviews', async (req, res) => {
     .map(s => ({
       sessionId: s.id,
       feedback: s.learnerFeedback,
-      subject: s.subjectName,
+      subject: s.subjectId,
       date: s.actualEnd,
     }));
 

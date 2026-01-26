@@ -120,7 +120,7 @@ portfolioRouter.post('/', async (req, res) => {
     const data = createPortfolioSchema.parse(req.body);
 
     const portfolioService = getDigitalPortfolioService();
-    const result = await portfolioService.createPortfolio(tenantId, userId, data);
+    const result = await portfolioService.createPortfolio(tenantId, userId, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('PORT_001');
@@ -181,7 +181,7 @@ portfolioRouter.patch('/', async (req, res) => {
     const data = updatePortfolioSchema.parse(req.body);
 
     const portfolioService = getDigitalPortfolioService();
-    const result = await portfolioService.updatePortfolio(tenantId, userId, data);
+    const result = await portfolioService.updatePortfolio(tenantId, userId, data as any);
 
     if (!result.success) {
       const error = ScholarlyApiError.notFound('Portfolio', userId);
@@ -297,7 +297,7 @@ portfolioRouter.post('/artifacts/:id/reflection', async (req, res) => {
     const data = addReflectionSchema.parse(req.body);
 
     const portfolioService = getDigitalPortfolioService();
-    const result = await portfolioService.addReflection(tenantId, userId, artifactId, data);
+    const result = await portfolioService.addReflection(tenantId, userId, artifactId, data as any);
 
     if (!result.success) {
       const error = ScholarlyApiError.notFound('Artifact', artifactId);
@@ -336,7 +336,7 @@ portfolioRouter.post('/goals', async (req, res) => {
     const data = createGoalSchema.parse(req.body);
 
     const portfolioService = getDigitalPortfolioService();
-    const result = await portfolioService.createGoal(tenantId, userId, data);
+    const result = await portfolioService.createGoal(tenantId, userId, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('PORT_004');
@@ -411,7 +411,7 @@ portfolioRouter.post('/journeys', async (req, res) => {
     const data = createJourneySchema.parse(req.body);
 
     const portfolioService = getDigitalPortfolioService();
-    const result = await portfolioService.createLearningJourney(tenantId, userId, data);
+    const result = await portfolioService.createLearningJourney(tenantId, userId, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('PORT_005');

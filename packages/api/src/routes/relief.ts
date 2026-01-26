@@ -167,7 +167,7 @@ reliefRouter.get('/absences', async (req, res) => {
         assignments: {
           include: {
             reliefTeacher: {
-              select: { name: true, tier: true },
+              select: { id: true, tier: true, user: { select: { displayName: true } } },
             },
           },
         },
@@ -232,7 +232,11 @@ reliefRouter.post('/absences/:id/request-relief', async (req, res) => {
     },
     include: {
       reliefTeacher: {
-        select: { name: true, email: true },
+        include: {
+          user: {
+            select: { displayName: true, email: true },
+          },
+        },
       },
     },
   });
@@ -299,7 +303,11 @@ reliefRouter.get('/pools', async (req, res) => {
       members: {
         include: {
           reliefTeacher: {
-            select: { name: true, tier: true, metrics: true },
+            select: {
+              tier: true,
+              metrics: true,
+              user: { select: { displayName: true } },
+            },
           },
         },
       },

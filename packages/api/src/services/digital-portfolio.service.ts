@@ -28,6 +28,7 @@ import {
 } from '@scholarly/shared/types/scholarly-types';
 import { prisma } from '@scholarly/database';
 import { AIIntegrationService, getAIService } from './ai-integration.service';
+import { log } from '../lib/logger';
 
 // ============================================================================
 // TYPES
@@ -349,7 +350,7 @@ export class DigitalPortfolioService extends ScholarlyBaseService {
 
       return success(portfolio);
     } catch (error) {
-      this.logError('Failed to create portfolio', error as Error);
+      log.error('Failed to create portfolio', error as Error);
       return failure(new ValidationError('Failed to create portfolio'));
     }
   }
@@ -392,7 +393,7 @@ export class DigitalPortfolioService extends ScholarlyBaseService {
         updatedAt: portfolio.updatedAt,
       });
     } catch (error) {
-      this.logError('Failed to get portfolio', error as Error);
+      log.error('Failed to get portfolio', error as Error);
       return failure(new ValidationError('Failed to get portfolio'));
     }
   }
@@ -530,7 +531,7 @@ export class DigitalPortfolioService extends ScholarlyBaseService {
 
       return success(artifact);
     } catch (error) {
-      this.logError('Failed to add artifact', error as Error);
+      log.error('Failed to add artifact', error as Error);
       return failure(new ValidationError('Failed to add artifact'));
     }
   }
@@ -618,7 +619,7 @@ export class DigitalPortfolioService extends ScholarlyBaseService {
       const aiSuggestions = await this.getReflectionSuggestions(
         tenantId,
         artifact.title,
-        artifact.type,
+        artifact.type as ArtifactType,
         reflection
       );
 
@@ -733,7 +734,7 @@ export class DigitalPortfolioService extends ScholarlyBaseService {
 
       return success(journey);
     } catch (error) {
-      this.logError('Failed to create learning journey', error as Error);
+      log.error('Failed to create learning journey', error as Error);
       return failure(new ValidationError('Failed to create learning journey'));
     }
   }

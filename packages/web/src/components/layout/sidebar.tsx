@@ -24,6 +24,14 @@ import {
   FileText,
   TrendingUp,
   Clock,
+  Baby,
+  Languages,
+  Bot,
+  Database,
+  MessageSquare,
+  Wand2,
+  Activity,
+  Layers,
 } from 'lucide-react';
 
 // Navigation items for learners/students
@@ -68,6 +76,45 @@ const learnerNavigation = [
     children: [
       { name: 'Find Tutors', href: '/tutoring/search', icon: Users },
       { name: 'My Bookings', href: '/tutoring/bookings', icon: Calendar },
+    ],
+  },
+  {
+    name: 'Early Years',
+    href: '/early-years',
+    icon: Baby,
+    children: [
+      { name: 'Little Explorers', href: '/early-years', icon: Sparkles },
+      { name: 'Parent Dashboard', href: '/early-years/parent', icon: BarChart3 },
+    ],
+  },
+  {
+    name: 'Languages',
+    href: '/linguaflow',
+    icon: Languages,
+    children: [
+      { name: 'My Learning', href: '/linguaflow', icon: BookOpen },
+      { name: 'Vocabulary', href: '/linguaflow/vocabulary', icon: FileText },
+      { name: 'Grammar', href: '/linguaflow/grammar', icon: GraduationCap },
+      { name: 'Conversation', href: '/linguaflow/conversation', icon: MessageSquare },
+      { name: 'Progress', href: '/linguaflow/progress', icon: TrendingUp },
+    ],
+  },
+  {
+    name: 'AI Studio',
+    href: '/ai-studio',
+    icon: Bot,
+    children: [
+      { name: 'AI Tutor', href: '/ai-studio', icon: MessageSquare },
+      { name: 'Content Generator', href: '/ai-studio?tab=generator', icon: Wand2 },
+    ],
+  },
+  {
+    name: 'Data Lake',
+    href: '/data-lake',
+    icon: Database,
+    children: [
+      { name: 'Overview', href: '/data-lake', icon: Layers },
+      { name: 'Live Events', href: '/data-lake?tab=events', icon: Activity },
     ],
   },
   {
@@ -169,6 +216,25 @@ const adminNavigation = [
       { name: 'Relief Management', href: '/admin/scheduling/relief', icon: Clock },
       { name: 'Room Management', href: '/admin/scheduling/rooms', icon: School },
       { name: 'Constraints', href: '/admin/scheduling/constraints', icon: Settings },
+    ],
+  },
+  {
+    name: 'AI Studio',
+    href: '/ai-studio',
+    icon: Bot,
+    children: [
+      { name: 'AI Tutor', href: '/ai-studio', icon: MessageSquare },
+      { name: 'Content Generator', href: '/ai-studio?tab=generator', icon: Wand2 },
+    ],
+  },
+  {
+    name: 'Data Lake',
+    href: '/data-lake',
+    icon: Database,
+    children: [
+      { name: 'Overview', href: '/data-lake', icon: Layers },
+      { name: 'Live Events', href: '/data-lake?tab=events', icon: Activity },
+      { name: 'Data Sources', href: '/data-lake?tab=sources', icon: Database },
     ],
   },
   {

@@ -206,7 +206,7 @@ mlPipelineRouter.post('/models', async (req, res) => {
     const data = createModelSchema.parse(req.body);
 
     const mlService = getMLPipelineService();
-    const result = await mlService.createModel(tenantId, data);
+    const result = await mlService.createModel(tenantId, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -296,7 +296,7 @@ mlPipelineRouter.post('/automl', async (req, res) => {
     const data = autoMLSchema.parse(req.body);
 
     const mlService = getMLPipelineService();
-    const result = await mlService.runAutoML(tenantId, data.datasetId, data);
+    const result = await mlService.runAutoML(tenantId, data.datasetId as string, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -335,7 +335,7 @@ mlPipelineRouter.post('/models/:id/deploy', async (req, res) => {
     const data = deployModelSchema.parse(req.body);
 
     const mlService = getMLPipelineService();
-    const result = await mlService.deployModel(tenantId, id, data);
+    const result = await mlService.deployModel(tenantId, id, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -525,17 +525,17 @@ mlPipelineRouter.post('/feature-stores', async (req, res) => {
 
     const mlService = getMLPipelineService();
     const result = await mlService.createFeatureStore(tenantId, {
-      name: data.name,
-      description: data.description,
-      features: data.features.map(f => ({
+      name: data.name as string,
+      description: data.description as string,
+      features: data.features?.map(f => ({
         ...f,
         statistics: {
           count: 0,
           nullCount: 0,
         },
-      })),
+      })) as any,
       refreshSchedule: data.refreshSchedule,
-    });
+    } as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');

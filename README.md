@@ -17,6 +17,8 @@ Scholarly is Chekd's education vertical - a comprehensive platform that brings t
 - **Micro-Schools**: Tools for small learning communities
 - **Relief Teacher Marketplace**: AI-powered absence prediction and instant booking
 - **Blockchain Integration**: Soulbound credentials, payment escrow, reputation registry
+- **Early Years (Little Explorers)**: Ages 3-7 learning with picture passwords, phonics (SSP), numeracy, and parent dashboard
+- **LinguaFlow**: Language learning with CEFR A1-C2, SM-2 spaced repetition, AI conversation practice, and IB alignment (French, Mandarin, Indonesian, Spanish, Italian, German)
 
 ---
 
@@ -98,6 +100,10 @@ scholarly/
 | **ML Pipeline** | `ml-pipeline.service.ts` | Machine learning predictions |
 | **LIS Bridge** | `lis-scholarly-bridge.service.ts` | Learning Information Services integration |
 | **Project-Based Learning** | `project-based-learning.service.ts` | PBL workflow management |
+| **Early Years** | `early-years.service.ts` | Little Explorers (ages 3-7), picture passwords, phonics, numeracy |
+| **Early Years Core** | `early-years-core.service.ts` | Child profiles, family management, session tracking |
+| **LinguaFlow** | `linguaflow.service.ts` | Language learning profiles, vocabulary, conversations |
+| **Language Learning** | `language-learning.service.ts` | CEFR progression, SRS engine, grammar topics |
 
 ### API Routes (`packages/api/src/routes/`)
 
@@ -122,6 +128,8 @@ scholarly/
 | `/api/ml-pipeline` | `ml-pipeline.ts` | ML predictions |
 | `/api/standards-compliance` | `standards-compliance.ts` | Compliance checks |
 | `/api/users` | `users.ts` | User management |
+| `/api/early-years` | `early-years.ts` | Early Years families, children, sessions, activities |
+| `/api/linguaflow` | `linguaflow.ts` | Language profiles, vocabulary, conversations, grammar |
 
 ### Frontend Pages (`packages/web/src/app/`)
 
@@ -143,6 +151,17 @@ scholarly/
 | **Tutoring** | `/tutoring/` | `page.tsx` - Tutoring hub |
 | | `/tutoring/search/` | Find tutors |
 | | `/tutoring/bookings/` | Session bookings |
+| **Early Years** | `/early-years/` | Child selector, picture password, child dashboard |
+| | `/early-years/parent/` | Parent dashboard, weekly reports, milestones |
+| | `/early-years/enroll/` | Enroll a new child |
+| | `/early-years/session/[id]/` | Interactive learning session (phonics & numeracy) |
+| **LinguaFlow** | `/linguaflow/` | Language learning dashboard, skills overview |
+| | `/linguaflow/vocabulary/` | Flashcard review with SM-2 spaced repetition |
+| | `/linguaflow/grammar/` | Grammar lessons (present, past, subjunctive units) |
+| | `/linguaflow/conversation/` | AI conversation practice (4 roleplay scenarios) |
+| | `/linguaflow/progress/` | Progress tracking and stats |
+| **AI Studio** | `/ai-studio/` | AI Tutor and Content Generator |
+| **Data Lake** | `/data-lake/` | Analytics data warehouse, live events |
 | **Analytics** | `/analytics/` | Personal analytics |
 | **Settings** | `/settings/` | Account settings |
 
@@ -281,12 +300,24 @@ DEMO_MODE=true
 
 | Account | Email | Password | Role |
 |---------|-------|----------|------|
-| Student | `student@scholarly.app` | `demo123` | learner |
+| Student (Emma) | `learner@scholarly.app` | `demo123` | learner |
 | Teacher | `teacher@scholarly.app` | `demo123` | teacher |
-| Parent | `parent@scholarly.demo` | `demo123` | parent |
-| Tutor | `tutor@scholarly.demo` | `demo123` | tutor |
-| Admin | `admin@scholarly.demo` | `demo123` | platform_admin |
-| Creator | `creator@scholarly.demo` | `demo123` | content_creator |
+| Parent (David) | `parent@scholarly.app` | `demo123` | parent |
+| Tutor | `tutor@scholarly.app` | `demo123` | tutor |
+| Admin | `admin@scholarly.app` | `demo123` | platform_admin |
+| Creator | `creator@scholarly.app` | `demo123` | content_creator |
+
+### Demo Module Access
+
+| Module | Login As | Navigate To |
+|--------|----------|-------------|
+| **LinguaFlow French** | Emma (learner) | Sidebar > Languages |
+| **Early Years** | David (parent) | Sidebar > Early Years |
+| **Parent Dashboard** | David (parent) | Early Years > Parent Dashboard |
+
+**Early Years child:** Lily (age 5) - Picture password: rabbit, star, rainbow
+
+**LinguaFlow French:** CEFR A2 profile with vocabulary, grammar lessons, and 4 AI conversation scenarios (cafe, directions, shopping, doctor)
 
 ---
 
@@ -327,6 +358,29 @@ DEMO_MODE=true
 - `GET /api/relief/absences` - View absences
 - `GET /api/relief/predictions` - AI predictions
 - `POST /api/relief/bookings` - Book relief teacher
+
+### Early Years (Little Explorers)
+- `GET /api/early-years/family` - Get family profile
+- `POST /api/early-years/family` - Create family
+- `POST /api/early-years/family/:id/children` - Enroll child
+- `GET /api/early-years/children/:id/dashboard` - Child dashboard
+- `POST /api/early-years/children/:id/picture-password` - Set picture password
+- `POST /api/early-years/children/:id/authenticate` - Verify picture password
+- `POST /api/early-years/sessions` - Start learning session
+- `POST /api/early-years/sessions/:id/activities` - Record activity
+- `POST /api/early-years/sessions/:id/end` - End session
+- `GET /api/early-years/parent/dashboard` - Parent dashboard
+
+### LinguaFlow (Language Learning)
+- `GET /api/linguaflow/profile` - Get learner profile
+- `POST /api/linguaflow/profile` - Create/update profile
+- `GET /api/linguaflow/progress` - Learning progress & stats
+- `GET /api/linguaflow/vocabulary/due` - Get due vocabulary cards
+- `POST /api/linguaflow/vocabulary/review` - Submit review results
+- `GET /api/linguaflow/grammar/topics` - List grammar topics
+- `POST /api/linguaflow/conversations` - Start AI conversation
+- `POST /api/linguaflow/conversations/:id/message` - Send message
+- `GET /api/linguaflow/conversations/:id` - Get conversation history
 
 ---
 
@@ -838,7 +892,7 @@ jobs:
 
 ## License
 
-Copyright © 2024 Scholarly. All rights reserved.
+Copyright © 2024-2025 Scholarly. All rights reserved.
 
 ---
 

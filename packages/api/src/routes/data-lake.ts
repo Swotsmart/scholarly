@@ -185,7 +185,7 @@ dataLakeRouter.post('/sources', async (req, res) => {
     const data = registerDataSourceSchema.parse(req.body);
 
     const dataLakeService = getDataLakeService();
-    const result = await dataLakeService.registerDataSource(tenantId, data);
+    const result = await dataLakeService.registerDataSource(tenantId, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -312,7 +312,7 @@ dataLakeRouter.post('/pipelines', async (req, res) => {
     const data = createPipelineSchema.parse(req.body);
 
     const dataLakeService = getDataLakeService();
-    const result = await dataLakeService.createPipeline(tenantId, data);
+    const result = await dataLakeService.createPipeline(tenantId, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -415,7 +415,7 @@ dataLakeRouter.post('/catalog', async (req, res) => {
     const data = createCatalogEntrySchema.parse(req.body);
 
     const dataLakeService = getDataLakeService();
-    const result = await dataLakeService.createCatalogEntry(tenantId, data);
+    const result = await dataLakeService.createCatalogEntry(tenantId, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -499,7 +499,7 @@ dataLakeRouter.post('/streaming', async (req, res) => {
     const data = createStreamingPipelineSchema.parse(req.body);
 
     const dataLakeService = getDataLakeService();
-    const result = await dataLakeService.createStreamingPipeline(tenantId, data);
+    const result = await dataLakeService.createStreamingPipeline(tenantId, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -637,7 +637,7 @@ dataLakeRouter.post('/ai/suggest-transformations', async (req, res) => {
     const dataLakeService = getDataLakeService();
     const result = await dataLakeService.suggestTransformations(
       tenantId,
-      data.sourceSchema,
+      data.sourceSchema as any,
       data.targetDescription
     );
 

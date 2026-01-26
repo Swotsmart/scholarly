@@ -8,3 +8,5 @@ export * from './tutor.repository';
 export * from './booking.repository';
 export * from './session.repository';
 export * from './learner.repository';
+export * from './early-years.repository';
+export * from './linguaflow.repository';

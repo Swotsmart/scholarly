@@ -1212,9 +1212,15 @@ export class StandardsComplianceService extends ScholarlyBaseService {
           targetUsers: ['Students', 'Teachers']
         });
 
+        // Map extended statuses to the required subset
+        const mapStatus = (status: string): 'approved' | 'pending' | 'rejected' => {
+          if (status === 'approved') return 'approved';
+          if (status === 'rejected') return 'rejected';
+          return 'pending'; // 'pending', 'conditional', 'pending_review' all map to 'pending'
+        };
         return {
           ...tool,
-          approvalStatus: assessmentResult.success ? assessmentResult.data.approvalStatus : 'pending' as const,
+          approvalStatus: assessmentResult.success ? mapStatus(assessmentResult.data.approvalStatus) : 'pending' as const,
           riskAssessment: assessmentResult.success ? assessmentResult.data : null as unknown as AIEthicsAssessment
         };
       }));

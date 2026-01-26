@@ -679,14 +679,15 @@ export class DataLakeService extends ScholarlyBaseService {
       // Validate source references
       for (const sourceId of pipeline.sourceIds) {
         if (!this.dataSources.has(sourceId)) {
-          return failure(`Source not found: ${sourceId}`, 'ETL_001');
+          return failure({ code: 'ETL_001', message: `Source not found: ${sourceId}` });
         }
       }
 
       // Validate stage dependencies
       const validation = this.validateStageDependencies(pipeline.stages);
       if (!validation.success) {
-        return failure(validation.error || 'Invalid stage dependencies', 'ETL_002');
+        const errorMsg = 'error' in validation ? validation.error.message : 'Invalid stage dependencies';
+        return failure({ code: 'ETL_002', message: errorMsg });
       }
 
       const etlPipeline: ETLPipeline = {
@@ -720,7 +721,7 @@ export class DataLakeService extends ScholarlyBaseService {
       if (stage.dependencies) {
         for (const dep of stage.dependencies) {
           if (!stageIds.has(dep)) {
-            return failure(`Stage dependency not found: ${dep}`, 'ETL_004');
+            return failure({ code: 'ETL_004', message: `Stage dependency not found: ${dep}` });
           }
         }
       }
@@ -778,7 +779,7 @@ export class DataLakeService extends ScholarlyBaseService {
         stageResults.push(stageResult);
 
         if (stageResult.status === 'failed') {
-          return failure(`Stage ${stage.name} failed`, 'ETL_007');
+          return failure({ code: 'ETL_007', message: `Stage ${stage.name} failed` });
         }
 
         totalRecords += stageResult.recordsProcessed;
@@ -1224,7 +1225,7 @@ export class DataLakeService extends ScholarlyBaseService {
       const aiService = getAIService();
 
       // Use AI to analyze sample data and generate optimal schema
-      const schemaAnalysis = await aiService.complete({
+      const schemaAnalysis = await aiService.complete(tenantId, {
         messages: [
           {
             role: 'system',
@@ -1280,7 +1281,7 @@ export class DataLakeService extends ScholarlyBaseService {
     try {
       const aiService = getAIService();
 
-      const suggestion = await aiService.complete({
+      const suggestion = await aiService.complete(tenantId, {
         messages: [
           {
             role: 'system',
@@ -1364,7 +1365,7 @@ export class DataLakeService extends ScholarlyBaseService {
   // Helper Methods
   // ==========================================================================
 
-  private generateId(): string {
+  protected generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 }

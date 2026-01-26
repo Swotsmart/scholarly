@@ -16,9 +16,10 @@ import {
   TutorPricing,
   TutorMetrics,
   SafeguardingCheck,
-  Qualification
+  Qualification,
+  SessionType
 } from '@scholarly/shared/types/scholarly-types';
-import { SessionType, TutorSearchFilters } from '../services/tutor-booking.service';
+import { TutorSearchFilters } from '../services/tutor-booking.service';
 
 // Local interface for backwards compatibility
 export interface TutorRepository {
@@ -250,7 +251,7 @@ export class PrismaTutorRepository implements TutorRepository {
         advanceBookingDays: 14,
         minimumNoticeHours: 24
       },
-      sessionTypes: (profile?.sessionTypes || ['online_video']) as string[],
+      sessionTypes: (profile?.sessionTypes || ['online_video']) as SessionType[],
       maxStudentsPerGroup: profile?.maxGroupSize || 5,
       pricing: {
         currency: profile?.currency || 'AUD',

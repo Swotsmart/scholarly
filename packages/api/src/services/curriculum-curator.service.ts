@@ -647,28 +647,28 @@ export class CurriculumCuratorService extends ScholarlyBaseService {
       let bloomsMapped = 0;
 
       for (const content of contentDescriptions) {
-        const concepts = await this.extractConcepts(content.description);
+        const concepts = await this.extractConcepts(tenantId, content.description, content.yearLevel, content.learningAreaId);
         content.aiEnrichment.keyConcepts = concepts;
         conceptsExtracted += concepts.length;
 
-        const blooms = this.mapToBloomsTaxonomy(content.description);
+        const blooms = await this.mapToBloomsTaxonomyAI(tenantId, content.description);
         content.bloomsLevel = blooms.level;
         content.bloomsVerbs = blooms.verbs;
         bloomsMapped++;
 
-        content.aiEnrichment.embedding = await this.generateEmbedding(content.description);
+        content.aiEnrichment.embedding = await this.generateEmbeddingAI(tenantId, content.description);
 
-        const prerequisites = await this.inferPrerequisites(content, contentDescriptions);
+        const prerequisites = await this.inferPrerequisites(tenantId, content, contentDescriptions);
         content.prerequisites = prerequisites;
         prerequisitesInferred += prerequisites.length;
 
-        const connections = await this.findCrossCurricularConnections(tenantId, content);
+        const connections = await this.findCrossCurricularConnectionsAI(tenantId, content);
         content.crossCurricularLinks = connections;
         connectionsIdentified += connections.length;
 
-        content.aiEnrichment.suggestedActivities = this.generateActivitySuggestions(content);
-        content.aiEnrichment.commonMisconceptions = this.identifyMisconceptions(content);
-        content.aiEnrichment.realWorldApplications = this.findRealWorldApplications(content);
+        content.aiEnrichment.suggestedActivities = await this.generateActivitySuggestionsAI(tenantId, content);
+        content.aiEnrichment.commonMisconceptions = await this.identifyMisconceptionsAI(tenantId, content);
+        content.aiEnrichment.realWorldApplications = await this.findRealWorldApplicationsAI(tenantId, content);
 
         await this.contentDescRepo.save(tenantId, content);
       }
@@ -939,9 +939,9 @@ export class CurriculumCuratorService extends ScholarlyBaseService {
     return this.withTiming('alignContent', tenantId, async () => {
       const startTime = Date.now();
 
-      const contentEmbedding = await this.generateEmbedding(request.contentText);
-      const contentConcepts = await this.extractConcepts(request.contentText);
-      const contentBlooms = this.mapToBloomsTaxonomy(request.contentText);
+      const contentEmbedding = await this.generateEmbeddingAI(tenantId, request.contentText);
+      const contentConcepts = await this.extractConcepts(tenantId, request.contentText, request.yearLevelHint || '', request.subjectHint || '');
+      const contentBlooms = await this.mapToBloomsTaxonomyAI(tenantId, request.contentText);
 
       const similarContent = await this.contentDescRepo.findSimilar(tenantId, contentEmbedding, 20);
 
@@ -1097,22 +1097,23 @@ export class CurriculumCuratorService extends ScholarlyBaseService {
         throw new ValidationError('No valid curriculum codes found');
       }
 
-      const learningIntentions = this.generateLearningIntentions(contents);
-      const successCriteria = this.generateSuccessCriteria(contents, learningIntentions);
+      const learningIntentions = await this.generateLearningIntentionsAI(tenantId, contents);
+      const successCriteria = await this.generateSuccessCriteriaAI(tenantId, contents, learningIntentions);
 
-      const sections = this.designLessonStructure(
+      const sections = await this.designLessonStructureAI(
+        tenantId,
         request.duration,
         request.teachingStyle || 'direct',
         contents
       );
 
-      const differentiation = this.generateDifferentiation(contents, request.differentiationNeeds);
+      const differentiation = await this.generateDifferentiationAI(tenantId, contents, request.differentiationNeeds);
 
       const assessment = request.includeAssessment
-        ? this.generateAssessment(contents, learningIntentions)
+        ? await this.generateAssessmentAI(tenantId, contents, learningIntentions)
         : undefined;
 
-      const resources = this.identifyResources(contents, request.resourceConstraints);
+      const resources = await this.identifyResourcesAI(tenantId, contents, request.resourceConstraints);
 
       let crossCurricularConnections;
       if (request.enableCrossCurricular) {
@@ -1136,7 +1137,7 @@ export class CurriculumCuratorService extends ScholarlyBaseService {
       const generalCapabilities = [...new Set(contents.flatMap(c => c.generalCapabilities))];
       const crossCurriculumPriorities = [...new Set(contents.flatMap(c => c.crossCurriculumPriorities))];
 
-      const title = this.generateLessonTitle(contents, request);
+      const title = await this.generateLessonTitleAI(tenantId, contents);
 
       const plan: GeneratedLessonPlan = {
         id: this.generateId('lesson'),
@@ -1160,7 +1161,7 @@ export class CurriculumCuratorService extends ScholarlyBaseService {
           generatedAt: new Date(),
           modelVersion: '1.0',
           confidence: this.assessPlanConfidence(contents, sections),
-          alignmentScore: this.assessAlignmentScore(contents, learningIntentions),
+          alignmentScore: this.assessAlignmentScoreVal(contents, learningIntentions),
           engagementPrediction: this.predictEngagement(sections, request.teachingStyle)
         }
       };
@@ -1224,9 +1225,10 @@ export class CurriculumCuratorService extends ScholarlyBaseService {
       for (const strand of area.strands || []) {
         for (const subStrand of strand.subStrands || []) {
           for (const cd of subStrand.contentDescriptions || []) {
+            const cdAny = cd as any;
             descriptions.push({
               id: cd.id || this.generateId('cd'),
-              curriculumCode: cd.code || `${area.code}.${strand.code}.${subStrand.code}`,
+              curriculumCode: cdAny.code || cd.curriculumCode || `${area.code}.${strand.code}.${subStrand.code}`,
               description: cd.description || '',
               elaborations: cd.elaborations || [],
               frameworkId,

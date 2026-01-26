@@ -884,6 +884,375 @@ Consider areas such as:
 
   console.log('Created showcase portfolio');
 
+  // ============================================================================
+  // LINGUAFLOW - FRENCH LANGUAGE LEARNING
+  // ============================================================================
+
+  // Create French language profile for Emma (the learner)
+  const frenchProfile = await prisma.languageLearnerProfile.upsert({
+    where: { id: 'linguaflow_emma_french' },
+    update: {},
+    create: {
+      id: 'linguaflow_emma_french',
+      tenantId: tenant.id,
+      userId: learnerUser.id,
+      targetLanguage: 'fra', // French (ISO 639-3)
+      nativeLanguage: 'eng',
+      additionalLanguages: [],
+      overallLevel: 'A2',
+      listeningLevel: 'A2',
+      speakingLevel: 'A1',
+      readingLevel: 'A2',
+      writingLevel: 'A1',
+      isHeritageSpeaker: false,
+      curriculumFramework: 'ACARA',
+      yearLevel: 'Year 8',
+      ibProgramme: 'MYP',
+      ibPhaseOrLevel: '3',
+      ibCriteriaScores: {
+        A: { score: 5, evidence: 'Listening comprehension test' },
+        B: { score: 4, evidence: 'Oral presentation' },
+        C: { score: 5, evidence: 'Reading assessment' },
+        D: { score: 4, evidence: 'Written composition' },
+      },
+      currentLevel: 3,
+      totalXp: 1250,
+      currentStreak: 5,
+      longestStreak: 12,
+      totalLearningMinutes: 480,
+      totalSpeakingMinutes: 45,
+      lastActiveAt: new Date(),
+      status: 'active',
+      enrolledAt: new Date('2024-02-01'),
+    },
+  });
+
+  console.log(`Created LinguaFlow French profile for Emma`);
+
+  // Create vocabulary progress for Emma's French
+  const frenchVocabProgress = await prisma.languageVocabularyProgress.upsert({
+    where: { profileId: frenchProfile.id },
+    update: {},
+    create: {
+      profileId: frenchProfile.id,
+      totalWordsExposed: 245,
+      totalWordsLearning: 78,
+      totalWordsMastered: 156,
+      averageRetentionRate: 0.82,
+      dueForReview: 5,
+      nextReviewAt: new Date(),
+    },
+  });
+
+  // Create some French vocabulary items
+  const frenchVocabulary = [
+    { wordId: 'fr_bonjour', word: 'bonjour', translation: 'hello/good morning', cefrLevel: 'A1', partOfSpeech: 'interjection' },
+    { wordId: 'fr_merci', word: 'merci', translation: 'thank you', cefrLevel: 'A1', partOfSpeech: 'interjection' },
+    { wordId: 'fr_ecole', word: 'école', translation: 'school', cefrLevel: 'A1', partOfSpeech: 'noun' },
+    { wordId: 'fr_maison', word: 'maison', translation: 'house', cefrLevel: 'A1', partOfSpeech: 'noun' },
+    { wordId: 'fr_famille', word: 'famille', translation: 'family', cefrLevel: 'A1', partOfSpeech: 'noun' },
+    { wordId: 'fr_manger', word: 'manger', translation: 'to eat', cefrLevel: 'A1', partOfSpeech: 'verb' },
+    { wordId: 'fr_boire', word: 'boire', translation: 'to drink', cefrLevel: 'A1', partOfSpeech: 'verb' },
+    { wordId: 'fr_parler', word: 'parler', translation: 'to speak', cefrLevel: 'A1', partOfSpeech: 'verb' },
+    { wordId: 'fr_cependant', word: 'cependant', translation: 'however', cefrLevel: 'A2', partOfSpeech: 'adverb' },
+    { wordId: 'fr_environ', word: 'environ', translation: 'about/approximately', cefrLevel: 'A2', partOfSpeech: 'adverb' },
+  ];
+
+  for (const vocab of frenchVocabulary) {
+    await prisma.languageVocabularyItem.upsert({
+      where: { progressId_wordId: { progressId: frenchVocabProgress.id, wordId: vocab.wordId } },
+      update: {},
+      create: {
+        progressId: frenchVocabProgress.id,
+        ...vocab,
+        exampleSentence: vocab.cefrLevel === 'A1' ? `Je dis "${vocab.word}" souvent.` : null,
+        masteryLevel: vocab.cefrLevel === 'A1' ? 'mastered' : 'learning',
+        easeFactor: 2.5,
+        interval: vocab.cefrLevel === 'A1' ? 21 : 3,
+        repetitions: vocab.cefrLevel === 'A1' ? 5 : 2,
+        nextReviewAt: new Date(Date.now() + (vocab.cefrLevel === 'A1' ? 21 : 3) * 24 * 60 * 60 * 1000),
+        timesCorrect: vocab.cefrLevel === 'A1' ? 8 : 3,
+        timesIncorrect: vocab.cefrLevel === 'A1' ? 1 : 2,
+      },
+    });
+  }
+
+  console.log(`Created ${frenchVocabulary.length} French vocabulary items`);
+
+  // Create a sample French conversation
+  await prisma.languageConversation.upsert({
+    where: { id: 'conv_french_cafe' },
+    update: {},
+    create: {
+      id: 'conv_french_cafe',
+      profileId: frenchProfile.id,
+      mode: 'roleplay',
+      language: 'fra',
+      cefrLevel: 'A2',
+      aiRole: 'cafe_server',
+      aiPersona: 'Marie',
+      scenarioTitle: 'Ordering at a French Café',
+      targetVocabulary: ['commander', 'café', 'croissant', 'addition'],
+      targetStructures: ['Je voudrais...', 'Est-ce que...'],
+      messages: [
+        { role: 'assistant', content: 'Bonjour! Bienvenue au Café de Paris. Qu\'est-ce que vous désirez?', timestamp: new Date().toISOString() },
+        { role: 'user', content: 'Bonjour! Je voudrais un café, s\'il vous plaît.', timestamp: new Date().toISOString() },
+        { role: 'assistant', content: 'Très bien! Un café crème ou un café noir?', timestamp: new Date().toISOString() },
+        { role: 'user', content: 'Un café crème, s\'il vous plaît.', timestamp: new Date().toISOString() },
+        { role: 'assistant', content: 'Parfait! Et avec ça? Nous avons des croissants frais.', timestamp: new Date().toISOString() },
+      ],
+      fluencyScore: 0.75,
+      accuracyScore: 0.82,
+      overallScore: 0.78,
+      vocabularyUsed: ['bonjour', 'café', 'crème'],
+      xpEarned: 45,
+      startedAt: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
+    },
+  });
+
+  console.log('Created French conversation session');
+
+  // ============================================================================
+  // EARLY YEARS (LITTLE EXPLORERS) - FAMILY & CHILD
+  // ============================================================================
+
+  // Create Early Years Family (the parent account)
+  const earlyYearsFamily = await prisma.earlyYearsFamily.upsert({
+    where: { id: 'eyfamily_smith' },
+    update: {},
+    create: {
+      id: 'eyfamily_smith',
+      tenantId: tenant.id,
+      primaryUserId: parentUser.id,
+      familyName: 'Smith Family',
+      primaryLanguage: 'en',
+      homeLanguages: ['en'],
+      timezone: 'Australia/Sydney',
+      subscriptionTier: 'family',
+      subscriptionStatus: 'active',
+      subscriptionExpiresAt: new Date('2025-12-31'),
+      totalLearningMinutes: 320,
+      lastActiveAt: new Date(),
+      dataProcessingConsent: true,
+      dataProcessingConsentAt: new Date('2024-01-15'),
+    },
+  });
+
+  console.log('Created Early Years family account');
+
+  // Create Early Years Child (younger sibling - Lily, age 5)
+  const earlyYearsChild = await prisma.earlyYearsChild.upsert({
+    where: { id: 'eychild_lily' },
+    update: {},
+    create: {
+      id: 'eychild_lily',
+      tenantId: tenant.id,
+      familyId: earlyYearsFamily.id,
+      firstName: 'Lily',
+      preferredName: 'Lily',
+      dateOfBirth: new Date('2019-08-20'), // Age 5
+      avatarId: 'bunny_pink',
+      currentWorld: 'phonics_forest',
+      currentMentor: 'ollie_owl',
+      totalTreasures: 45,
+      totalStars: 128,
+      totalLearningMinutes: 320,
+      totalSessions: 24,
+      currentStreak: 3,
+      longestStreak: 7,
+      lastActiveAt: new Date(),
+      status: 'active',
+      enrolledAt: new Date('2024-06-01'),
+    },
+  });
+
+  console.log('Created Early Years child (Lily, age 5)');
+
+  // Create Picture Password for Lily
+  await prisma.earlyYearsPicturePassword.upsert({
+    where: { childId: earlyYearsChild.id },
+    update: {},
+    create: {
+      childId: earlyYearsChild.id,
+      imageSequenceHash: hashPassword('bunny-star-rainbow'), // Demo: bunny → star → rainbow
+      sequenceLength: 3,
+      failedAttempts: 0,
+    },
+  });
+
+  console.log('Created picture password for Lily');
+
+  // Create Phonics Progress for Lily
+  await prisma.earlyYearsPhonicsProgress.upsert({
+    where: { childId: earlyYearsChild.id },
+    update: {},
+    create: {
+      childId: earlyYearsChild.id,
+      currentPhase: 2,
+      masteredGraphemes: ['s', 'a', 't', 'p', 'i', 'n', 'm', 'd'],
+      introducedGraphemes: ['g', 'o', 'c', 'k'],
+      strugglingGraphemes: ['ck'],
+      blendingAccuracy: 0.75,
+      segmentingAccuracy: 0.68,
+      sightWordsMastered: ['the', 'and', 'is', 'it', 'in', 'at'],
+      sightWordsIntroduced: ['to', 'he', 'she', 'we'],
+      graphemeHistory: [
+        { grapheme: 's', masteredAt: '2024-06-15', accuracy: 0.95 },
+        { grapheme: 'a', masteredAt: '2024-06-18', accuracy: 0.92 },
+        { grapheme: 't', masteredAt: '2024-06-22', accuracy: 0.90 },
+        { grapheme: 'p', masteredAt: '2024-07-01', accuracy: 0.88 },
+        { grapheme: 'i', masteredAt: '2024-07-10', accuracy: 0.91 },
+        { grapheme: 'n', masteredAt: '2024-07-20', accuracy: 0.89 },
+        { grapheme: 'm', masteredAt: '2024-08-01', accuracy: 0.87 },
+        { grapheme: 'd', masteredAt: '2024-08-15', accuracy: 0.85 },
+      ],
+    },
+  });
+
+  console.log('Created phonics progress for Lily');
+
+  // Create Numeracy Progress for Lily
+  await prisma.earlyYearsNumeracyProgress.upsert({
+    where: { childId: earlyYearsChild.id },
+    update: {},
+    create: {
+      childId: earlyYearsChild.id,
+      currentLevel: 'counting',
+      reliableCountingRange: 15,
+      highestNumberRecognised: 20,
+      subitizingAccuracy: 0.85,
+      additionAccuracy: 0.72,
+      subtractionAccuracy: 0.0, // Not yet introduced
+      numeralsRecognized: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+      operationsIntroduced: ['addition'],
+      shapesKnown: ['circle', 'square', 'triangle', 'rectangle'],
+      operationHistory: [
+        { operation: 'counting', date: '2024-06-01', range: 5 },
+        { operation: 'counting', date: '2024-07-15', range: 10 },
+        { operation: 'counting', date: '2024-09-01', range: 15 },
+        { operation: 'addition_intro', date: '2024-10-01', maxSum: 5 },
+      ],
+    },
+  });
+
+  console.log('Created numeracy progress for Lily');
+
+  // Create a recent Early Years session
+  const recentSession = await prisma.earlyYearsSession.upsert({
+    where: { id: 'eysession_lily_recent' },
+    update: {},
+    create: {
+      id: 'eysession_lily_recent',
+      tenantId: tenant.id,
+      childId: earlyYearsChild.id,
+      familyId: earlyYearsFamily.id,
+      sessionType: 'learning',
+      world: 'phonics_forest',
+      mentor: 'ollie_owl',
+      maxDurationMinutes: 15,
+      maxActivities: 10,
+      startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      endedAt: new Date(Date.now() - 2 * 60 * 60 * 1000 + 12 * 60 * 1000), // 12 min session
+      durationMinutes: 12,
+      totalActivities: 6,
+      activitiesCompleted: 5,
+      graphemesPracticed: ['g', 'o', 'c'],
+      numbersPracticed: [11, 12, 13],
+      treasuresEarned: 3,
+      starsEarned: 8,
+      averageFocusScore: 0.82,
+      childMoodRating: 5, // Happy!
+      parentNotes: 'Great session! Lily loved the owl character.',
+    },
+  });
+
+  // Create activities for the session
+  await prisma.earlyYearsActivity.createMany({
+    skipDuplicates: true,
+    data: [
+      {
+        id: 'eyact_1',
+        sessionId: recentSession.id,
+        activityType: 'phonics_recognition',
+        targetContent: ['g'],
+        difficulty: 1,
+        startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        completedAt: new Date(Date.now() - 2 * 60 * 60 * 1000 + 90 * 1000),
+        durationSeconds: 90,
+        score: 0.9,
+        attempts: 1,
+        hintsUsed: 0,
+        errorsCommitted: 1,
+        treasureAwarded: true,
+      },
+      {
+        id: 'eyact_2',
+        sessionId: recentSession.id,
+        activityType: 'phonics_blending',
+        targetContent: ['g', 'o', 't'],
+        difficulty: 2,
+        startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000 + 2 * 60 * 1000),
+        completedAt: new Date(Date.now() - 2 * 60 * 60 * 1000 + 4 * 60 * 1000),
+        durationSeconds: 120,
+        score: 0.8,
+        attempts: 2,
+        hintsUsed: 1,
+        errorsCommitted: 2,
+        treasureAwarded: true,
+      },
+      {
+        id: 'eyact_3',
+        sessionId: recentSession.id,
+        activityType: 'number_counting',
+        targetContent: ['11', '12', '13'],
+        difficulty: 1,
+        startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000 + 5 * 60 * 1000),
+        completedAt: new Date(Date.now() - 2 * 60 * 60 * 1000 + 7 * 60 * 1000),
+        durationSeconds: 120,
+        score: 1.0,
+        attempts: 1,
+        hintsUsed: 0,
+        errorsCommitted: 0,
+        treasureAwarded: true,
+      },
+    ],
+  });
+
+  console.log('Created Early Years session with activities');
+
+  // ============================================================================
+  // PARENT DASHBOARD DATA
+  // ============================================================================
+
+  // Update parent profile with Early Years child link
+  await prisma.parentProfile.update({
+    where: { userId: parentUser.id },
+    data: {
+      childIds: [learnerUser.id], // Emma
+      notificationPreferences: {
+        channels: { email: true, sms: true, push: true, inApp: true },
+        categories: {
+          bookingConfirmations: true,
+          sessionReminders: true,
+          sessionFeedback: true,
+          paymentReceipts: true,
+          progressReports: true,
+          newTutorMatches: true,
+          communityUpdates: true,
+          marketplaceDeals: true,
+          complianceAlerts: true,
+          earlyYearsProgress: true, // New: Early Years notifications
+          earlyYearsMilestones: true,
+          linguaFlowProgress: true, // New: Language learning notifications
+        },
+        quietHours: { enabled: true, start: '20:00', end: '07:00', timezone: 'Australia/Sydney' },
+        reminderLeadTime: 60,
+      },
+    },
+  });
+
+  console.log('Updated parent profile with child links and notification preferences');
+
   console.log('\n✅ Seed completed successfully!');
   console.log('\n📋 Demo Credentials (Password for all: demo123):');
   console.log('  👤 Admin:   admin@scholarly.app');
@@ -901,6 +1270,20 @@ Consider areas such as:
   console.log('  • 1 Active Design Journey (Emma - EcoSip project)');
   console.log('  • 4 Design Artifacts (interviews, empathy maps, prototypes)');
   console.log('  • 1 Showcase Portfolio (published)');
+  console.log('\n🇫🇷 LinguaFlow French Demo:');
+  console.log('  • Emma\'s French profile (CEFR A2, MYP Phase 3)');
+  console.log('  • 10 French vocabulary items with SM-2 SRS data');
+  console.log('  • 1 Café conversation roleplay session');
+  console.log('\n👶 Early Years (Little Explorers) Demo:');
+  console.log('  • Smith Family account (parent: David)');
+  console.log('  • Lily (age 5) - child profile');
+  console.log('  • Picture password: bunny → star → rainbow');
+  console.log('  • Phonics Phase 2 (8 graphemes mastered)');
+  console.log('  • Numeracy: counting to 15, addition introduced');
+  console.log('  • 1 Recent learning session with activities');
+  console.log('\n👨‍👩‍👧‍👦 Parent Portal:');
+  console.log('  • Dashboard for Emma (Year 8) & Lily (Early Years)');
+  console.log('  • Progress notifications enabled');
 }
 
 main()

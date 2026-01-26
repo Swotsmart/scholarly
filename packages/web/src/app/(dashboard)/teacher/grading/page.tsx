@@ -87,8 +87,8 @@ export default function TeacherGradingPage() {
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" asChild>
-          <Link href="/teacher/grading/pitches">
+        <Link href="/teacher/grading/pitches">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-lg bg-primary/10 p-3">
                 <Presentation className="h-6 w-6 text-primary" />
@@ -101,11 +101,11 @@ export default function TeacherGradingPage() {
               </div>
               <Badge>{pendingEvaluations.pitches.length} pending</Badge>
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" asChild>
-          <Link href="/teacher/grading/portfolios">
+        <Link href="/teacher/grading/portfolios">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-lg bg-primary/10 p-3">
                 <FolderOpen className="h-6 w-6 text-primary" />
@@ -118,8 +118,8 @@ export default function TeacherGradingPage() {
               </div>
               <Badge>{pendingEvaluations.portfolios.length} pending</Badge>
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
       </div>
 
       {/* Pending Pitches */}

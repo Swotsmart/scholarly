@@ -1,0 +1,73 @@
+# =============================================================================
+# SCHOLARLY PLATFORM - DOCKER IGNORE
+# =============================================================================
+
+# Dependencies
+node_modules
+*/node_modules
+
+# Build outputs
+dist
+*/dist
+*.tsbuildinfo
+
+# Development files
+.git
+.gitignore
+*.md
+!README.md
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Environment files (secrets)
+.env
+.env.local
+.env.*.local
+
+# Test files
+coverage
+*.test.ts
+*.spec.ts
+tests
+__tests__
+
+# Docker files (prevent recursive issues)
+Dockerfile*
+docker-compose*.yml
+.docker
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# Documentation (not needed in image)
+docs
+*.md
+!README.md
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Misc
+*.map
+.editorconfig
+.eslintrc*
+.prettierrc*
+jest.config.*
+tsconfig*.json
+!tsconfig.json

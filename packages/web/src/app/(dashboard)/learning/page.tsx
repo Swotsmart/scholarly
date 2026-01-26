@@ -130,8 +130,8 @@ export default function LearningPage() {
 
       {/* Quick Links */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="cursor-pointer transition-shadow hover:shadow-lg" asChild>
-          <Link href="/learning/courses">
+        <Link href="/learning/courses">
+          <Card className="cursor-pointer transition-shadow hover:shadow-lg">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-lg bg-blue-500/10 p-3">
                 <BookOpen className="h-6 w-6 text-blue-500" />
@@ -144,11 +144,11 @@ export default function LearningPage() {
               </div>
               <ArrowRight className="h-5 w-5 text-muted-foreground" />
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card className="cursor-pointer transition-shadow hover:shadow-lg" asChild>
-          <Link href="/learning/progress">
+        <Link href="/learning/progress">
+          <Card className="cursor-pointer transition-shadow hover:shadow-lg">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-lg bg-green-500/10 p-3">
                 <Target className="h-6 w-6 text-green-500" />
@@ -161,8 +161,8 @@ export default function LearningPage() {
               </div>
               <ArrowRight className="h-5 w-5 text-muted-foreground" />
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
       </div>
     </div>
   );

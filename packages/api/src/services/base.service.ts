@@ -28,8 +28,56 @@ export function success<T>(data: T): Result<T> {
   return { success: true, data };
 }
 
-export function failure<T>(error: ScholarlyError): Result<T> {
+export function failure<T>(error: ScholarlyError | Error): Result<T> {
+  if (error instanceof Error) {
+    // Check if it's a ScholarlyError (has code property)
+    const errorWithCode = error as Error & Partial<ScholarlyError>;
+    return {
+      success: false,
+      error: {
+        code: errorWithCode.code || 'SERVICE_ERROR',
+        message: error.message,
+        details: errorWithCode.details,
+      },
+    };
+  }
   return { success: false, error };
+}
+
+/**
+ * Convert a regular Error to ScholarlyError
+ */
+export function toScholarlyError(error: Error, code = 'SERVICE_ERROR'): ScholarlyError {
+  const errorWithCode = error as Error & Partial<ScholarlyError>;
+  return {
+    code: errorWithCode.code || code,
+    message: error.message,
+    details: errorWithCode.details,
+  };
+}
+
+/**
+ * Type guard to check if a Result is a failure
+ */
+export function isFailure<T>(result: Result<T>): result is { success: false; error: ScholarlyError } {
+  return !result.success;
+}
+
+/**
+ * Type guard to check if a Result is a success
+ */
+export function isSuccess<T>(result: Result<T>): result is { success: true; data: T } {
+  return result.success;
+}
+
+/**
+ * Get error from a failed result, with proper typing
+ */
+export function getError<T>(result: Result<T>): ScholarlyError | undefined {
+  if (isFailure(result)) {
+    return result.error;
+  }
+  return undefined;
 }
 
 // ============================================================================
@@ -290,3 +338,67 @@ export const ErrorCodes = {
   SYS_002: { code: 'SYS_002', message: 'Database error' },
   SYS_003: { code: 'SYS_003', message: 'External service error' },
 } as const;
+
+// ============================================================================
+// Custom Error Classes
+// ============================================================================
+
+export class ValidationError extends Error implements ScholarlyError {
+  code: string;
+  details?: Record<string, unknown>;
+
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(message);
+    this.name = 'ValidationError';
+    this.code = 'VALIDATION_ERROR';
+    this.details = details;
+  }
+}
+
+export class NotFoundError extends Error implements ScholarlyError {
+  code: string;
+  details?: Record<string, unknown>;
+
+  constructor(resourceType: string, resourceId: string) {
+    super(`${resourceType} with id '${resourceId}' not found`);
+    this.name = 'NotFoundError';
+    this.code = 'NOT_FOUND';
+    this.details = { resourceType, resourceId };
+  }
+}
+
+export class AuthorizationError extends Error implements ScholarlyError {
+  code: string;
+  details?: Record<string, unknown>;
+
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(message);
+    this.name = 'AuthorizationError';
+    this.code = 'AUTHORIZATION_ERROR';
+    this.details = details;
+  }
+}
+
+export class BusinessError extends Error implements ScholarlyError {
+  code: string;
+  details?: Record<string, unknown>;
+
+  constructor(code: string, message: string, details?: Record<string, unknown>) {
+    super(message);
+    this.name = 'BusinessError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+// ============================================================================
+// Service Configuration Types
+// ============================================================================
+
+export interface ScholarlyConfig {
+  environment: 'development' | 'staging' | 'production';
+  logLevel: 'debug' | 'info' | 'warn' | 'error';
+  features: Record<string, boolean>;
+  limits: Record<string, number>;
+  [key: string]: unknown;
+}

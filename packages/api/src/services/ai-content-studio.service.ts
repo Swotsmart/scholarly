@@ -556,7 +556,6 @@ export class AIContentStudioService extends ScholarlyBaseService {
         {
           prompt,
           schema: this.getLessonPlanSchema(),
-          maxTokens: 4000
         }
       );
 
@@ -587,7 +586,7 @@ export class AIContentStudioService extends ScholarlyBaseService {
         learningObjectives: generated.objectives.map((obj, i) => ({
           id: `obj-${i + 1}`,
           text: obj.text,
-          bloomsLevel: obj.bloomsLevel,
+          bloomsLevel: obj.bloomsLevel as LearningObjective['bloomsLevel'],
           curriculumCode: obj.curriculumCode,
           successCriteria: obj.successCriteria
         })),
@@ -595,7 +594,7 @@ export class AIContentStudioService extends ScholarlyBaseService {
         resources: generated.resources.map((r, i) => ({
           id: `res-${i + 1}`,
           name: r.name,
-          type: r.type,
+          type: r.type as LessonResource['type'],
           url: r.url,
           description: r.description,
           required: r.required,
@@ -686,7 +685,6 @@ Provide the adapted lesson plan with appropriate scaffolds, modified activities,
 
       const aiResult = await this.aiService.complete(tenantId, {
         messages: [{ role: 'user', content: prompt }],
-        maxTokens: 3000
       });
 
       if (!aiResult.success) {
@@ -741,7 +739,6 @@ Provide the adapted lesson plan with appropriate scaffolds, modified activities,
         {
           prompt,
           schema: this.getAssessmentSchema(),
-          maxTokens: 4000
         }
       );
 
@@ -851,7 +848,6 @@ For each question provide:
 
       const aiResult = await this.aiService.complete(tenantId, {
         messages: [{ role: 'user', content: prompt }],
-        maxTokens: 2000
       });
 
       if (!aiResult.success) {
@@ -894,7 +890,6 @@ For each question provide:
         {
           prompt,
           schema: this.getResourceSchema(request.resourceType),
-          maxTokens: 3000
         }
       );
 
@@ -1048,7 +1043,6 @@ For each question provide:
         {
           prompt,
           schema: this.getPathwaySchema(),
-          maxTokens: 4000
         }
       );
 
@@ -1082,7 +1076,7 @@ For each question provide:
           activities: stage.activities.map((a, j) => ({
             id: `activity-${i + 1}-${j + 1}`,
             name: a.name,
-            type: a.type,
+            type: a.type as StageActivity['type'],
             description: a.description,
             duration: a.duration,
             resources: a.resources,
@@ -1091,7 +1085,7 @@ For each question provide:
           duration: stage.duration,
           prerequisites: stage.prerequisites || [],
           successCriteria: stage.successCriteria,
-          scaffolds: stage.scaffolds || []
+          scaffolds: (stage.scaffolds || []) as LearningStage['scaffolds']
         })),
         checkpoints: generated.checkpoints.map((cp, i) => ({
           id: `checkpoint-${i + 1}`,
@@ -1321,7 +1315,7 @@ Create a progressive learning pathway with:
 6. Estimated time for each stage`;
   }
 
-  private getLessonPlanSchema(): object {
+  private getLessonPlanSchema(): Record<string, unknown> {
     return {
       type: 'object',
       properties: {
@@ -1365,7 +1359,7 @@ Create a progressive learning pathway with:
     };
   }
 
-  private getAssessmentSchema(): object {
+  private getAssessmentSchema(): Record<string, unknown> {
     return {
       type: 'object',
       properties: {
@@ -1390,7 +1384,7 @@ Create a progressive learning pathway with:
     };
   }
 
-  private getResourceSchema(_resourceType: ResourceType): object {
+  private getResourceSchema(_resourceType: ResourceType): Record<string, unknown> {
     return {
       type: 'object',
       properties: {
@@ -1415,7 +1409,7 @@ Create a progressive learning pathway with:
     };
   }
 
-  private getPathwaySchema(): object {
+  private getPathwaySchema(): Record<string, unknown> {
     return {
       type: 'object',
       properties: {

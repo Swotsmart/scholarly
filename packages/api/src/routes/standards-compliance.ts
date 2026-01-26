@@ -95,7 +95,7 @@ standardsComplianceRouter.post('/audit', async (req, res) => {
     const data = runAuditSchema.parse(req.body);
 
     const complianceService = getStandardsComplianceService();
-    const result = await complianceService.runComplianceAudit(tenantId, data);
+    const result = await complianceService.runComplianceAudit(tenantId, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -200,7 +200,7 @@ standardsComplianceRouter.post('/st4s/privacy', async (req, res) => {
     const data = assessPrivacySchema.parse(req.body);
 
     const complianceService = getStandardsComplianceService();
-    const result = await complianceService.assessPrivacyCompliance(tenantId, data);
+    const result = await complianceService.assessPrivacyCompliance(tenantId, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('SYS_001');
@@ -256,11 +256,11 @@ standardsComplianceRouter.post('/aitsl/assess', async (req, res) => {
     const complianceService = getStandardsComplianceService();
     const result = await complianceService.assessTeacherStandards(
       tenantId,
-      data.teacherId,
-      data.evidence.map(e => ({
+      data.teacherId as string,
+      data.evidence?.map(e => ({
         ...e,
         date: new Date(e.date),
-      }))
+      })) as any
     );
 
     if (!result.success) {
@@ -295,7 +295,7 @@ standardsComplianceRouter.post('/ai-ethics/assess', async (req, res) => {
     const data = assessAIEthicsSchema.parse(req.body);
 
     const complianceService = getStandardsComplianceService();
-    const result = await complianceService.assessAIEthics(tenantId, data);
+    const result = await complianceService.assessAIEthics(tenantId, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('AI_001');
@@ -329,7 +329,7 @@ standardsComplianceRouter.post('/ai-ethics/content-safety', async (req, res) => 
     const data = checkAIContentSafetySchema.parse(req.body);
 
     const complianceService = getStandardsComplianceService();
-    const result = await complianceService.checkAIContentSafety(tenantId, data);
+    const result = await complianceService.checkAIContentSafety(tenantId, data as any);
 
     if (!result.success) {
       const error = new ScholarlyApiError('AI_006');

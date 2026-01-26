@@ -130,7 +130,7 @@ export class AuthService extends ScholarlyBaseService {
       // Verify the refresh token
       const payload = await this.verifyToken(refreshToken, 'refresh');
       if (!payload.success) {
-        return failure(payload.error);
+        return failure({ code: 'AUTH_003', message: 'Invalid refresh token' });
       }
 
       const tokenData = payload.data;

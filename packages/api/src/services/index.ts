@@ -394,6 +394,12 @@ export {
 // Base Service
 export * from './base.service';
 
+// Early Years Core Service (Little Explorers - ages 3-7)
+export { earlyYearsCoreService } from './early-years-core.service';
+
+// LinguaFlow Language Learning Service
+export { linguaFlowService } from './linguaflow.service';
+
 // Notification Service
 export {
   NotificationService,
@@ -465,3 +471,25 @@ export {
   type ViewerContext,
   type SEOMetadata
 } from './showcase-portfolio.service';
+
+// Early Years Extension Service (AI-integrated Little Explorers)
+export * from './early-years.service';
+
+// Language Learning Extension Service (AI-integrated LinguaFlow)
+export {
+  LanguageLearningService,
+  initializeLanguageLearningService,
+  getLanguageLearningService,
+} from './language-learning.service';
+
+// Language Learning Types
+export * from './language-learning-types';
+
+// Language Learning Personas
+export {
+  CONVERSATION_PERSONAS,
+  getPersonasForLanguage,
+  getPersonaById,
+  getPersonasForLevel,
+  getHeritagePersonas,
+} from './language-learning-personas';
