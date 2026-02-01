@@ -1,0 +1,1072 @@
+// =============================================================================
+// VOICE INTELLIGENCE SERVICE — UNIFIED PRISMA SCHEMA
+// =============================================================================
+//
+// Complete database schema for the Voice Intelligence Service, covering all
+// four phases of the delivery roadmap. This is the single source of truth
+// for the service's data model — 25 models organised into 12 functional areas.
+//
+// Think of this schema as the architectural blueprint for the service's memory.
+// Every voice interaction, from a simple TTS request to a full VR immersive
+// conversation, ultimately writes data to these tables. The schema is designed
+// so that data flows naturally between phases: a conversation session (Phase 3)
+// can reference a pronunciation assessment (Phase 2), which feeds into a tutor
+// review (Phase 3 completion), which might trigger a voice clone consent check
+// (Phase 4).
+//
+// Functional Areas:
+//   1.  Configuration          — Tenant settings and API keys
+//   2.  Voice Library          — Curated voices and collections
+//   3.  Audio Caching          — TTS cache for cost optimisation
+//   4.  Pronunciation Dicts    — Custom pronunciation rules
+//   5.  Conversation Agents    — AI agent definitions
+//   6.  Sessions & Turns       — Conversation sessions and turn tracking
+//   7.  Immersive Scenarios    — Scenario-based learning
+//   8.  Pronunciation Assess.  — Pronunciation scoring results
+//   9.  Learner Progress       — Voice progress and heritage speaker config
+//  10.  Analytics              — Usage tracking and cost management
+//  11.  Tutor Oversight        — Session review, annotations, and flagging
+//  12.  Voice Cloning          — Consent, clones, and samples
+//  13.  Multi-Speaker Dialogue — Scripted dialogues with multiple voices
+//  14.  VR Integration         — Spatial audio and 3D positioning
+//  15.  Content Audio          — Marketplace audio generation
+//
+// Models: 25 total (14 from v1.0.0 + 11 from v1.1.0)
+// =============================================================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// =============================================================================
+// 1. CONFIGURATION
+// =============================================================================
+
+/// ElevenLabs API configuration per tenant. Each tenant gets their own API key,
+/// model preferences, privacy settings, and cost management thresholds — like
+/// giving each school their own set of keys to the voice lab with personalised
+/// safety limits.
+model VoiceElevenLabsConfig {
+  id                    String   @id @default(cuid())
+  tenantId              String   @unique @map("tenant_id")
+
+  // API Authentication (encrypted at rest)
+  apiKey                String   @map("api_key")
+  apiKeyScope           String   @default("full") @map("api_key_scope") // full, tts_only, stt_only, agents_only
+
+  // Model preferences
+  defaultTTSModel       String   @default("eleven_multilingual_v2") @map("default_tts_model")
+  defaultSTTModel       String   @default("scribe_v2") @map("default_stt_model")
+  preferredLatencyMode  String   @default("balanced") @map("preferred_latency_mode") // ultra_low, balanced, quality
+
+  // Privacy settings
+  zeroRetentionMode     Boolean  @default(true) @map("zero_retention_mode")
+  enableLogging         Boolean  @default(false) @map("enable_logging")
+  dataResidency         String   @default("auto") @map("data_residency") // us, eu, auto
+
+  // Cost management
+  monthlyBudgetCredits  Int?     @map("monthly_budget_credits")
+  alertThresholdPercent Int?     @map("alert_threshold_percent")
+
+  // Feature flags
+  enableVoiceAgents     Boolean  @default(false) @map("enable_voice_agents")
+  enableVoiceCloning    Boolean  @default(false) @map("enable_voice_cloning")
+  enableCustomDicts     Boolean  @default(true) @map("enable_custom_dicts")
+
+  // Rate limiting
+  maxConcurrentRequests Int      @default(10) @map("max_concurrent_requests")
+  requestsPerMinute     Int      @default(60) @map("requests_per_minute")
+
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("voice_elevenlabs_configs")
+}
+
+// =============================================================================
+// 2. VOICE LIBRARY
+// =============================================================================
+
+/// Curated voice for language learning. Each voice is a carefully selected
+/// ElevenLabs voice that has been verified for educational suitability,
+/// pronunciation authenticity, and age-appropriateness.
+model VoiceLinguaFlowVoice {
+  id                  String   @id @default(cuid())
+  tenantId            String   @map("tenant_id")
+
+  // ElevenLabs identifiers
+  elevenLabsVoiceId   String   @map("elevenlabs_voice_id")
+  elevenLabsName      String   @map("elevenlabs_name")
+
+  // LinguaFlow metadata
+  displayName         String   @map("display_name")
+  description         String?
+  avatarUrl           String?  @map("avatar_url")
+
+  // Language attributes
+  language            String   // ISO 639-1
+  region              String   // Region code
+  accent              String   // Human-readable accent
+  dialect             String?  // Optional dialect
+
+  // Voice characteristics
+  gender              String   // male, female, neutral
+  ageRange            String   @map("age_range") // child, young_adult, adult, senior
+  speakingStyles      String[] @map("speaking_styles") // conversational, instructional, etc.
+
+  // Quality metrics
+  clarity             Float    @default(0.8)
+  naturalness         Float    @default(0.8)
+  expressiveness      Float    @default(0.7)
+
+  // Educational suitability
+  suitableFor         String[] @map("suitable_for") // early_years, primary, secondary, adult
+  certifiedAuthentic  Boolean  @default(false) @map("certified_authentic")
+
+  // Default settings (JSON)
+  defaultSettings     Json     @default("{}") @map("default_settings")
+
+  // Usage tracking
+  usageCount          Int      @default(0) @map("usage_count")
+  averageRating       Float    @default(0) @map("average_rating")
+  ratingCount         Int      @default(0) @map("rating_count")
+
+  // Status
+  status              String   @default("active") // active, deprecated, restricted
+  restrictionReason   String?  @map("restriction_reason")
+
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  collections         VoiceCollectionVoice[]
+
+  @@unique([tenantId, elevenLabsVoiceId])
+  @@index([tenantId, language])
+  @@index([tenantId, language, region])
+  @@index([tenantId, status])
+  @@map("voice_linguaflow_voices")
+}
+
+/// Voice collection for organising voices by purpose — a curated playlist
+/// of voices grouped for specific educational contexts like "French Café
+/// Conversation" or "Spanish Airport Navigation".
+model VoiceCollection {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+
+  name        String
+  description String?
+  language    String
+
+  // Collection purpose
+  purpose     String   // conversation_practice, pronunciation_model, etc.
+
+  // Scenario mapping (JSON)
+  scenarioVoices Json?  @map("scenario_voices")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  voices      VoiceCollectionVoice[]
+
+  @@index([tenantId, language])
+  @@index([tenantId, purpose])
+  @@map("voice_collections")
+}
+
+/// Junction table for collection-voice many-to-many relationship.
+model VoiceCollectionVoice {
+  collectionId String @map("collection_id")
+  voiceId      String @map("voice_id")
+
+  collection   VoiceCollection      @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  voice        VoiceLinguaFlowVoice @relation(fields: [voiceId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, voiceId])
+  @@map("voice_collection_voices")
+}
+
+// =============================================================================
+// 3. AUDIO CACHING
+// =============================================================================
+
+/// Cached TTS audio for cost optimisation. When the same text is requested
+/// with the same voice and settings, we serve from cache instead of calling
+/// ElevenLabs again — like a library keeping copies of frequently requested
+/// audiobooks instead of recording them fresh each time.
+model VoiceCachedAudio {
+  id             String   @id @default(cuid())
+  tenantId       String   @map("tenant_id")
+  cacheKey       String   @unique @map("cache_key")
+
+  // Content identifier
+  textHash       String   @map("text_hash")
+  voiceId        String   @map("voice_id")
+  model          String
+  settings       Json     @default("{}")
+
+  // Audio storage
+  audioUrl       String   @map("audio_url")
+  durationMs     Int      @map("duration_ms")
+
+  // Usage metrics
+  hitCount       Int      @default(0) @map("hit_count")
+  lastAccessedAt DateTime @default(now()) @map("last_accessed_at")
+
+  // TTL
+  expiresAt      DateTime @map("expires_at")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId, textHash, voiceId, model])
+  @@index([expiresAt])
+  @@map("voice_cached_audio")
+}
+
+// =============================================================================
+// 4. PRONUNCIATION DICTIONARIES
+// =============================================================================
+
+/// Custom pronunciation dictionary containing rules for how specific words
+/// or phrases should be spoken. These dictionaries can be scoped globally,
+/// per language, per course, or per lesson — ensuring "Versailles" is always
+/// pronounced correctly in every French lesson.
+model VoicePronunciationDictionary {
+  id                     String   @id @default(cuid())
+  tenantId               String   @map("tenant_id")
+
+  name                   String
+  description            String?
+
+  // ElevenLabs sync
+  elevenLabsDictionaryId String?  @map("elevenlabs_dictionary_id")
+  elevenLabsVersionId    String?  @map("elevenlabs_version_id")
+
+  // Language
+  language               String
+
+  // Scope
+  scope                  String   // global, language, course, lesson
+  scopeId                String?  @map("scope_id")
+
+  // Status
+  status                 String   @default("active") // active, draft, archived
+
+  createdBy              String   @map("created_by")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  rules                  VoicePronunciationRule[]
+
+  @@index([tenantId, language])
+  @@index([tenantId, scope, scopeId])
+  @@map("voice_pronunciation_dictionaries")
+}
+
+/// Individual pronunciation rule within a dictionary.
+model VoicePronunciationRule {
+  id               String   @id @default(cuid())
+  dictionaryId     String   @map("dictionary_id")
+
+  // What to replace
+  stringToReplace  String   @map("string_to_replace")
+  caseSensitive    Boolean  @default(false) @map("case_sensitive")
+
+  // Rule type
+  type             String   // alias, phoneme
+
+  // Replacement
+  alias            String?
+  phoneme          String?
+  alphabet         String?  // ipa, cmu
+
+  // Metadata
+  notes            String?
+  examples         String[] @default([])
+
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  dictionary       VoicePronunciationDictionary @relation(fields: [dictionaryId], references: [id], onDelete: Cascade)
+
+  @@index([dictionaryId])
+  @@map("voice_pronunciation_rules")
+}
+
+// =============================================================================
+// 5. CONVERSATION AGENTS
+// =============================================================================
+
+/// Conversational AI agent for language practice. Each agent is a persona
+/// backed by an ElevenLabs agent — a French café waiter, a Spanish hotel
+/// receptionist, or a Mandarin shopkeeper — with configurable personality,
+/// voice, and pedagogical behaviour.
+model VoiceConversationAgent {
+  id                   String   @id @default(cuid())
+  tenantId             String   @map("tenant_id")
+
+  name                 String
+  description          String?
+  avatarUrl            String?  @map("avatar_url")
+
+  // ElevenLabs Agent
+  elevenLabsAgentId    String   @map("elevenlabs_agent_id")
+
+  // Persona (JSON)
+  persona              Json
+
+  // Voice configuration
+  voiceId              String   @map("voice_id")
+  alternateVoices      String[] @map("alternate_voices")
+
+  // Language configuration
+  primaryLanguage      String   @map("primary_language")
+  supportedLanguages   String[] @map("supported_languages")
+  allowLanguageSwitching Boolean @default(true) @map("allow_language_switching")
+
+  // Behavior configuration
+  systemPrompt         String   @map("system_prompt") @db.Text
+  firstMessage         String   @map("first_message")
+
+  // LLM configuration
+  llmModel             String   @default("claude") @map("llm_model")
+  customLLMEndpoint    String?  @map("custom_llm_endpoint")
+  temperature          Float    @default(0.7)
+  maxTokens            Int      @default(1000) @map("max_tokens")
+
+  // Knowledge base
+  knowledgeBaseIds     String[] @map("knowledge_base_ids")
+
+  // Tools (JSON)
+  enabledTools         Json     @default("[]") @map("enabled_tools")
+
+  // Conversation settings (JSON)
+  conversationSettings Json     @map("conversation_settings")
+
+  // Assessment configuration (JSON)
+  assessmentConfig     Json?    @map("assessment_config")
+
+  // Usage limits
+  maxConversationMins  Int      @default(30) @map("max_conversation_mins")
+  cooldownMinutes      Int      @default(5) @map("cooldown_minutes")
+
+  // Status
+  status               String   @default("active") // active, draft, disabled
+
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  sessions             VoiceConversationSession[]
+  scenarioCharacters   VoiceScenarioCharacter[]
+
+  @@index([tenantId, primaryLanguage])
+  @@index([tenantId, status])
+  @@map("voice_conversation_agents")
+}
+
+// =============================================================================
+// 6. SESSIONS & TURNS
+// =============================================================================
+
+/// Active conversation session — the central record of a voice interaction
+/// between a learner and an AI agent. This is the hub from which spokes
+/// radiate outward to turns, reviews, assessments, and VR sessions.
+model VoiceConversationSession {
+  id                  String   @id @default(cuid())
+  tenantId            String   @map("tenant_id")
+
+  // Participants
+  agentId             String   @map("agent_id")
+  userId              String   @map("user_id")
+  learnerId           String?  @map("learner_id")
+
+  // Scenario context
+  scenarioId          String?  @map("scenario_id")
+  scenarioRole        String?  @map("scenario_role")
+
+  // Session state
+  status              String   @default("initializing") // initializing, active, paused, completed, terminated, error
+
+  // Connection
+  websocketSessionId  String?  @map("websocket_session_id")
+
+  // Assessment data (JSON)
+  assessmentData      Json     @default("{}") @map("assessment_data")
+
+  // Language usage (JSON)
+  languageUsage       Json     @default("[]") @map("language_usage")
+
+  // Timing
+  startedAt           DateTime @default(now()) @map("started_at")
+  endedAt             DateTime? @map("ended_at")
+  totalDurationMs     Int      @default(0) @map("total_duration_ms")
+
+  // Costs
+  creditsUsed         Int      @default(0) @map("credits_used")
+
+  // Metadata (JSON)
+  metadata            Json?
+
+  // Relations
+  agent               VoiceConversationAgent   @relation(fields: [agentId], references: [id])
+  scenario            VoiceImmersiveScenario?  @relation(fields: [scenarioId], references: [id])
+  turns               VoiceConversationTurn[]
+  reviews             VoiceSessionReview[]     // v1.1.0: Tutor oversight
+  vrSession           VoiceVRSession?          // v1.1.0: VR integration
+
+  @@index([tenantId, userId])
+  @@index([tenantId, learnerId])
+  @@index([tenantId, status])
+  @@index([tenantId, agentId])
+  @@map("voice_conversation_sessions")
+}
+
+/// Conversation turn within a session — a single utterance from either
+/// the agent or the learner, with optional assessment and correction data.
+model VoiceConversationTurn {
+  id          String   @id @default(cuid())
+  sessionId   String   @map("session_id")
+  sequence    Int
+
+  speaker     String   // agent, learner
+
+  // Content
+  text        String   @db.Text
+  audioUrl    String?  @map("audio_url")
+
+  // Timing
+  startMs     Int      @map("start_ms")
+  endMs       Int      @map("end_ms")
+
+  // Language
+  language    String
+
+  // Assessment (JSON, for learner turns)
+  assessment  Json?
+
+  // Correction (JSON, from agent)
+  correction  Json?
+
+  timestamp   DateTime @default(now())
+
+  // Relations
+  session     VoiceConversationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, sequence])
+  @@map("voice_conversation_turns")
+}
+
+// =============================================================================
+// 7. IMMERSIVE SCENARIOS
+// =============================================================================
+
+/// Immersive language learning scenario — a structured learning experience
+/// set in a realistic context (café, airport, market) with predefined
+/// characters, learning objectives, and assessment criteria. The "stage"
+/// on which conversational practice takes place.
+model VoiceImmersiveScenario {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+
+  // Identity
+  title           String
+  description     String?
+  thumbnailUrl    String?  @map("thumbnail_url")
+
+  // Language
+  targetLanguage  String   @map("target_language")
+  targetRegion    String   @map("target_region")
+  difficultyLevel Int      @map("difficulty_level") // 1-10
+
+  // Learning objectives (JSON)
+  objectives      Json     @default("[]")
+
+  // Curriculum alignment
+  curriculumCodes String[] @map("curriculum_codes")
+  competencyIds   String[] @map("competency_ids")
+
+  // Setting (JSON)
+  setting         Json
+
+  // Conversation structure (JSON)
+  structure       Json
+
+  // Vocabulary (JSON)
+  targetVocabulary Json    @default("[]") @map("target_vocabulary")
+  usefulPhrases    Json    @default("[]") @map("useful_phrases")
+
+  // Assessment criteria (JSON)
+  assessmentCriteria Json  @map("assessment_criteria")
+
+  // Prerequisites
+  prerequisiteScenarios String[] @map("prerequisite_scenarios")
+  prerequisiteVocabulary String[] @map("prerequisite_vocabulary")
+
+  // Status
+  status          String   @default("draft") // draft, published, archived
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  characters      VoiceScenarioCharacter[]
+  sessions        VoiceConversationSession[]
+
+  @@index([tenantId, targetLanguage])
+  @@index([tenantId, status])
+  @@index([tenantId, difficultyLevel])
+  @@map("voice_immersive_scenarios")
+}
+
+/// Character within a scenario — an NPC with a defined role, personality,
+/// and voice who participates in the immersive experience.
+model VoiceScenarioCharacter {
+  id              String   @id @default(cuid())
+  scenarioId      String   @map("scenario_id")
+
+  role            String   // waiter, shopkeeper, etc.
+  agentId         String   @map("agent_id")
+  voiceId         String   @map("voice_id")
+
+  // Character details
+  name            String?
+  personality     String
+  initialGreeting String   @map("initial_greeting")
+
+  // Behavior (JSON)
+  expectedInteractions String[] @map("expected_interactions")
+  responseGuidelines   String   @map("response_guidelines") @db.Text
+
+  // Relations
+  scenario        VoiceImmersiveScenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  agent           VoiceConversationAgent @relation(fields: [agentId], references: [id])
+
+  @@index([scenarioId])
+  @@map("voice_scenario_characters")
+}
+
+// =============================================================================
+// 8. PRONUNCIATION ASSESSMENT
+// =============================================================================
+
+/// Pronunciation assessment result — the detailed scorecard produced when
+/// a learner's speech is analysed. Covers accuracy, fluency, completeness,
+/// and prosody, with word-level and phoneme-level breakdowns.
+model VoicePronunciationAssessment {
+  id               String   @id @default(cuid())
+  tenantId         String   @map("tenant_id")
+
+  learnerId        String   @map("learner_id")
+
+  // Scores
+  overallScore     Int      @map("overall_score") // 0-100
+  accuracyScore    Int      @map("accuracy_score")
+  fluencyScore     Int      @map("fluency_score")
+  completenessScore Int     @map("completeness_score")
+  prosodyScore     Int      @map("prosody_score")
+
+  // Transcription (JSON)
+  transcription    Json
+
+  // Word analysis (JSON)
+  wordAnalysis     Json     @map("word_analysis")
+
+  // Phoneme analysis (JSON)
+  phonemeAnalysis  Json?    @map("phoneme_analysis")
+
+  // Issues (JSON)
+  issues           Json     @default("[]")
+
+  // Suggestions (JSON)
+  suggestions      Json     @default("[]")
+
+  // Reference audio
+  referenceAudioUrl String? @map("reference_audio_url")
+
+  // LIS competency updates (JSON)
+  competencyUpdates Json?   @map("competency_updates")
+
+  // Context
+  exerciseId       String?  @map("exercise_id")
+  sessionId        String?  @map("session_id")
+
+  // Timing
+  processingTimeMs Int      @map("processing_time_ms")
+  assessedAt       DateTime @default(now()) @map("assessed_at")
+
+  @@index([tenantId, learnerId])
+  @@index([tenantId, sessionId])
+  @@index([assessedAt])
+  @@map("voice_pronunciation_assessments")
+}
+
+// =============================================================================
+// 9. LEARNER PROGRESS
+// =============================================================================
+
+/// Learner's voice learning progress — an aggregated view of how a learner
+/// is developing across pronunciation, conversation fluency, and vocabulary.
+/// Updated after each session and assessment.
+model VoiceLearnerProgress {
+  id                   String   @id @default(cuid())
+  tenantId             String   @map("tenant_id")
+  learnerId            String   @unique @map("learner_id")
+
+  // Overall proficiency
+  overallProficiency   Int      @default(0) @map("overall_proficiency") // 0-100
+  proficiencyTrend     String   @default("stable") @map("proficiency_trend") // improving, stable, declining
+
+  // Pronunciation progress (JSON)
+  pronunciation        Json     @default("{}")
+
+  // Conversation metrics (JSON)
+  conversation         Json     @default("{}")
+
+  // Language progress (JSON map)
+  languageProgress     Json     @default("{}") @map("language_progress")
+
+  // LIS competency mastery (JSON map)
+  competencyMastery    Json     @default("{}") @map("competency_mastery")
+
+  // Recommendations (JSON)
+  recommendations      Json     @default("{}")
+
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, learnerId])
+  @@map("voice_learner_progress")
+}
+
+/// Heritage speaker configuration — customised settings for learners who
+/// grew up hearing a language at home but may not have formal literacy.
+/// These learners need a different pedagogical approach: less basic vocabulary
+/// drilling, more register awareness and literacy development.
+model VoiceHeritageSpeakerConfig {
+  id                String   @id @default(cuid())
+  tenantId          String   @map("tenant_id")
+  learnerId         String   @map("learner_id")
+
+  // Languages
+  heritageLanguage  String   @map("heritage_language")
+  dominantLanguage  String   @map("dominant_language")
+
+  // Proficiency profile (JSON)
+  profile           Json
+
+  // Code-switching preferences (JSON)
+  codeSwitching     Json     @map("code_switching")
+
+  // Learning focus (JSON)
+  focus             Json
+
+  // Agent behavior adjustments (JSON)
+  agentBehavior     Json     @map("agent_behavior")
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, learnerId])
+  @@map("voice_heritage_speaker_configs")
+}
+
+// =============================================================================
+// 10. ANALYTICS
+// =============================================================================
+
+/// Voice usage analytics per period — aggregated usage data for reporting,
+/// billing, and capacity planning.
+model VoiceUsageAnalytics {
+  id            String   @id @default(cuid())
+  tenantId      String   @map("tenant_id")
+  period        String   // day, week, month
+  periodStart   DateTime @map("period_start")
+  periodEnd     DateTime @map("period_end")
+
+  // TTS usage (JSON)
+  ttsUsage      Json     @default("{}") @map("tts_usage")
+
+  // STT usage (JSON)
+  sttUsage      Json     @default("{}") @map("stt_usage")
+
+  // Agent usage (JSON)
+  agentUsage    Json     @default("{}") @map("agent_usage")
+
+  // Assessment usage (JSON)
+  assessmentUsage Json   @default("{}") @map("assessment_usage")
+
+  // Totals
+  totalCreditsUsed Int   @default(0) @map("total_credits_used")
+  estimatedCost    Float @default(0) @map("estimated_cost")
+  budgetRemaining  Float? @map("budget_remaining")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, period, periodStart])
+  @@index([tenantId, periodStart])
+  @@map("voice_usage_analytics")
+}
+
+/// Daily usage tracking for real-time budget management — the granular
+/// counter that increments throughout the day as API calls are made.
+model VoiceUsageDaily {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+  date            DateTime @db.Date
+
+  // TTS
+  ttsRequests     Int      @default(0) @map("tts_requests")
+  ttsCharacters   Int      @default(0) @map("tts_characters")
+  ttsCredits      Int      @default(0) @map("tts_credits")
+  ttsCacheHits    Int      @default(0) @map("tts_cache_hits")
+
+  // STT
+  sttRequests     Int      @default(0) @map("stt_requests")
+  sttMinutes      Float    @default(0) @map("stt_minutes")
+  sttCredits      Int      @default(0) @map("stt_credits")
+
+  // Agents
+  agentSessions   Int      @default(0) @map("agent_sessions")
+  agentMinutes    Float    @default(0) @map("agent_minutes")
+  agentCredits    Int      @default(0) @map("agent_credits")
+
+  // Assessments
+  assessments     Int      @default(0)
+
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, date])
+  @@index([tenantId, date])
+  @@map("voice_usage_daily")
+}
+
+// =============================================================================
+// 11. TUTOR OVERSIGHT (v1.1.0)
+// =============================================================================
+
+/// Tutor review of an AI-led conversation session. Each review captures the
+/// tutor's professional assessment alongside structured annotations and flags —
+/// like a driving instructor's feedback form after observing dashcam footage.
+model VoiceSessionReview {
+  id                   String   @id @default(cuid())
+  tenantId             String   @map("tenant_id")
+  sessionId            String   @map("session_id")
+  reviewerId           String   @map("reviewer_id")
+  reviewerRole         String   @map("reviewer_role") // tutor | supervisor | curriculum_lead
+
+  overallRating        Int      @map("overall_rating") // 1-5
+  ratingAgentApprop    Int      @map("rating_agent_approp")
+  ratingEngagement     Int      @map("rating_engagement")
+  ratingOutcomes       Int      @map("rating_outcomes")
+  ratingPronunciation  Int      @map("rating_pronunciation")
+  ratingFlow           Int      @map("rating_flow")
+
+  feedback             String   @db.Text
+  status               String   @default("draft") // draft | submitted | acknowledged
+
+  // Assessment override fields — tutors can correct AI scores they disagree with
+  overridePronunciation Float?  @map("override_pronunciation")
+  overrideGrammar       Float?  @map("override_grammar")
+  overrideFluency       Float?  @map("override_fluency")
+  overrideReason        String? @map("override_reason") @db.Text
+
+  // Tutor recommendations stored as JSON
+  recommendations      Json?    @db.JsonB
+
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  annotations          VoiceTurnAnnotation[]
+  flags                VoiceSessionFlag[]
+  session              VoiceConversationSession @relation(fields: [sessionId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, sessionId])
+  @@index([tenantId, reviewerId])
+  @@index([tenantId, status])
+  @@map("voice_session_reviews")
+}
+
+/// Annotation on a specific conversation turn within a review.
+/// Tutors use these to mark corrections, praise, and suggestions
+/// at the individual utterance level.
+model VoiceTurnAnnotation {
+  id            String @id @default(cuid())
+  reviewId      String @map("review_id")
+  turnId        String @map("turn_id")
+  turnSequence  Int    @map("turn_sequence")
+  type          String // correction | praise | suggestion | concern | note
+  text          String @db.Text
+  targetText    String? @map("target_text")
+  startOffset   Int?   @map("start_offset")
+  endOffset     Int?   @map("end_offset")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  review        VoiceSessionReview @relation(fields: [reviewId], references: [id])
+
+  @@index([reviewId])
+  @@index([turnId])
+  @@map("voice_turn_annotations")
+}
+
+/// Flag raised during session review, ranging from positive highlights
+/// to critical safeguarding concerns. Safeguarding flags are automatically
+/// escalated to critical severity and trigger immediate event publishing.
+model VoiceSessionFlag {
+  id                 String   @id @default(cuid())
+  reviewId           String   @map("review_id")
+  tenantId           String   @map("tenant_id")
+  type               String   // safeguarding_concern | inappropriate_content | learner_distress | assessment_disagreement | positive_highlight
+  severity           String   // low | medium | high | critical
+  description        String   @db.Text
+  turnId             String?  @map("turn_id")
+  requiresEscalation Boolean  @default(false) @map("requires_escalation")
+
+  resolvedAt         DateTime? @map("resolved_at")
+  resolvedBy         String?   @map("resolved_by")
+  resolution         String?   @db.Text
+
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  review             VoiceSessionReview @relation(fields: [reviewId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, type])
+  @@index([tenantId, severity])
+  @@index([tenantId, resolvedAt])
+  @@map("voice_session_flags")
+}
+
+// =============================================================================
+// 12. VOICE CLONING (v1.1.0)
+// =============================================================================
+
+/// Explicit consent record for voice cloning. This is the legal foundation
+/// that must exist before any voice clone can be created — like a signed
+/// release form before a photographer can use someone's likeness. Consent
+/// can be revoked at any time, which immediately disables all associated clones.
+model VoiceCloneConsent {
+  id               String   @id @default(cuid())
+  tenantId         String   @map("tenant_id")
+  voiceOwnerId     String   @map("voice_owner_id")
+  voiceOwnerRole   String   @map("voice_owner_role")
+  requestedBy      String   @map("requested_by")
+
+  consentText      String   @map("consent_text") @db.Text
+  consentVersion   String   @map("consent_version")
+  consentGivenAt   DateTime @map("consent_given_at")
+  consentMethod    String   @map("consent_method") // digital_signature | checkbox | verbal
+
+  allowedPurposes  Json     @map("allowed_purposes") @db.JsonB
+  allowedTenants   Json     @map("allowed_tenants") @db.JsonB
+
+  revokedAt        DateTime? @map("revoked_at")
+  revokedReason    String?   @map("revoked_reason") @db.Text
+  expiresAt        DateTime  @map("expires_at")
+  status           String    @default("active") // active | revoked | expired
+
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  clones           VoiceClone[]
+
+  @@index([tenantId])
+  @@index([tenantId, voiceOwnerId])
+  @@index([tenantId, status])
+  @@map("voice_clone_consents")
+}
+
+/// A cloned voice created from audio samples with explicit consent.
+model VoiceClone {
+  id                        String   @id @default(cuid())
+  tenantId                  String   @map("tenant_id")
+  consentId                 String   @map("consent_id")
+  voiceOwnerId              String   @map("voice_owner_id")
+  elevenLabsVoiceId         String   @map("elevenlabs_voice_id")
+  name                      String
+  description               String   @db.Text
+  quality                   String   // instant | professional
+  verifiedLanguages         Json     @map("verified_languages") @db.JsonB
+  sampleIds                 Json     @map("sample_ids") @db.JsonB
+  status                    String   @default("creating") // creating | processing | ready | suspended | deleted
+  qualityScore              Float?   @map("quality_score")
+  totalCharactersGenerated  Int      @default(0) @map("total_chars_generated")
+  lastUsedAt                DateTime? @map("last_used_at")
+
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  consent                   VoiceCloneConsent @relation(fields: [consentId], references: [id])
+  samples                   VoiceCloneSample[]
+
+  @@index([tenantId])
+  @@index([tenantId, voiceOwnerId])
+  @@index([tenantId, status])
+  @@index([elevenLabsVoiceId])
+  @@map("voice_clones")
+}
+
+/// Individual audio sample used to create a voice clone.
+model VoiceCloneSample {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+  cloneId         String?  @map("clone_id")
+  voiceOwnerId    String   @map("voice_owner_id")
+  audioUrl        String   @map("audio_url")
+  audioFormat     String   @map("audio_format")
+  durationMs      Int      @map("duration_ms")
+  fileSizeBytes   Int      @map("file_size_bytes")
+  qualityAssess   Json?    @map("quality_assessment") @db.JsonB
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  clone           VoiceClone? @relation(fields: [cloneId], references: [id])
+
+  @@index([tenantId])
+  @@index([cloneId])
+  @@map("voice_clone_samples")
+}
+
+// =============================================================================
+// 13. MULTI-SPEAKER DIALOGUE (v1.1.0)
+// =============================================================================
+
+/// A scripted dialogue with multiple characters, vocabulary targets,
+/// and curriculum alignment. The "musical score" from which audio
+/// "recordings" are generated — one score can produce many recordings
+/// with different voice assignments or settings.
+model VoiceDialogueScript {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+  title           String
+  description     String   @db.Text
+  language        String
+  targetLevel     String   @map("target_level")
+  curriculumCodes Json?    @map("curriculum_codes") @db.JsonB
+  teachingNotes   String?  @map("teaching_notes") @db.Text
+  createdBy       String   @map("created_by")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  characters      VoiceDialogueCharacter[]
+  lines           Json     @db.JsonB // DialogueLine[] stored as JSON
+  directions      Json?    @db.JsonB // DialogueDirection[]
+  generated       VoiceGeneratedDialogue[]
+
+  @@index([tenantId])
+  @@index([tenantId, language])
+  @@index([tenantId, createdBy])
+  @@map("voice_dialogue_scripts")
+}
+
+/// Character in a dialogue script with voice assignment and personality.
+model VoiceDialogueCharacter {
+  id            String @id @default(cuid())
+  scriptId      String @map("script_id")
+  name          String
+  role          String
+  voiceId       String @map("voice_id")
+  voiceSettings Json?  @map("voice_settings") @db.JsonB
+  personality   String?
+  accentRegion  String? @map("accent_region")
+  ageGroup      String? @map("age_group")
+
+  script        VoiceDialogueScript @relation(fields: [scriptId], references: [id])
+
+  @@index([scriptId])
+  @@map("voice_dialogue_characters")
+}
+
+/// Generated audio from a dialogue script — the "recording" produced
+/// from the "score", with individual segment tracking for interactive playback.
+model VoiceGeneratedDialogue {
+  id              String   @id @default(cuid())
+  scriptId        String   @map("script_id")
+  tenantId        String   @map("tenant_id")
+  audioUrl        String   @map("audio_url")
+  audioFormat     String   @map("audio_format")
+  durationMs      Int      @map("duration_ms")
+  fileSizeBytes   Int      @map("file_size_bytes")
+  segments        Json     @db.JsonB // DialogueSegment[]
+  totalCredits    Int      @map("total_credits")
+
+  generatedAt     DateTime @map("generated_at")
+
+  script          VoiceDialogueScript @relation(fields: [scriptId], references: [id])
+
+  @@index([tenantId])
+  @@index([scriptId])
+  @@map("voice_generated_dialogues")
+}
+
+// =============================================================================
+// 14. VR INTEGRATION (v1.1.0)
+// =============================================================================
+
+/// VR voice session wrapping a conversation session with spatial audio
+/// metadata and 3D character positioning. Extends the core session with
+/// everything needed for an immersive XR experience — room acoustics,
+/// HRTF profiles, character positions, and device capabilities.
+model VoiceVRSession {
+  id                   String   @id @default(cuid())
+  tenantId             String   @map("tenant_id")
+  learnerId            String   @map("learner_id")
+  sessionId            String   @map("session_id") @unique
+  environmentId        String   @map("environment_id")
+  environmentType      String   @map("environment_type")
+  spatialAudioConfig   Json     @map("spatial_audio_config") @db.JsonB
+  characterPositions   Json     @map("character_positions") @db.JsonB
+  xrSessionState       String   @map("xr_session_state") @default("initialising")
+  deviceCapabilities   Json     @map("device_capabilities") @db.JsonB
+
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  session              VoiceConversationSession @relation(fields: [sessionId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, learnerId])
+  @@index([sessionId])
+  @@map("voice_vr_sessions")
+}
+
+// =============================================================================
+// 15. CONTENT MARKETPLACE AUDIO (v1.1.0)
+// =============================================================================
+
+/// Generated audio version of marketplace content — narration, vocabulary
+/// lists, pronunciation guides, and audio quizzes. Each record represents
+/// a complete audio file ready for learner consumption, with chapter markers
+/// for navigation in longer content.
+model VoiceContentAudio {
+  id                    String   @id @default(cuid())
+  tenantId              String   @map("tenant_id")
+  contentId             String   @map("content_id")
+  type                  String   // narration | vocabulary_list | dialogue | pronunciation_guide | audio_quiz
+  audioUrl              String   @map("audio_url")
+  audioFormat           String   @map("audio_format")
+  durationMs            Int      @map("duration_ms")
+  fileSizeBytes         Int      @map("file_size_bytes")
+  chapters              Json?    @db.JsonB
+  creditsUsed           Int      @map("credits_used")
+  marketplaceListingId  String?  @map("marketplace_listing_id")
+
+  generatedAt           DateTime @map("generated_at")
+
+  @@index([tenantId])
+  @@index([tenantId, contentId])
+  @@index([tenantId, type])
+  @@map("voice_content_audio")
+}

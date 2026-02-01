@@ -5560,3 +5560,486 @@ model VerificationAuditLog {
   @@index([tenantId, verificationType, timestamp])
   @@index([actorId, timestamp])
 }
+
+// ============================================================================
+// VOICE INTELLIGENCE - ELEVENLABS INTEGRATION
+// ============================================================================
+
+/// ElevenLabs API configuration per tenant
+model VoiceElevenLabsConfig {
+  id       String @id @default(cuid())
+  tenantId String @unique
+
+  apiKey              String
+  apiKeyScope         String  @default("full")
+  defaultTTSModel     String  @default("eleven_multilingual_v2")
+  defaultSTTModel     String  @default("scribe_v2")
+  preferredLatencyMode String  @default("balanced")
+
+  zeroRetentionMode Boolean @default(true)
+  enableLogging     Boolean @default(false)
+  dataResidency     String  @default("auto")
+
+  monthlyBudgetCredits  Int?
+  alertThresholdPercent Int?
+
+  enableVoiceAgents  Boolean @default(false)
+  enableVoiceCloning Boolean @default(false)
+  enableCustomDicts  Boolean @default(true)
+
+  maxConcurrentRequests Int @default(10)
+  requestsPerMinute     Int @default(60)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("voice_elevenlabs_configs")
+}
+
+/// Curated voice for language learning
+model VoiceLinguaFlowVoice {
+  id       String @id @default(cuid())
+  tenantId String
+
+  elevenLabsVoiceId String
+  elevenLabsName    String
+  displayName       String
+  description       String?
+  avatarUrl         String?
+
+  language String
+  region   String
+  accent   String
+  dialect  String?
+
+  gender         String
+  ageRange       String
+  speakingStyles String[]
+
+  clarity        Float @default(0.8)
+  naturalness    Float @default(0.8)
+  expressiveness Float @default(0.7)
+
+  suitableFor        String[]
+  certifiedAuthentic Boolean @default(false)
+  defaultSettings    Json    @default("{}")
+
+  usageCount    Int   @default(0)
+  averageRating Float @default(0)
+  ratingCount   Int   @default(0)
+
+  status            String  @default("active")
+  restrictionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, elevenLabsVoiceId])
+  @@index([tenantId, language])
+  @@index([tenantId, status])
+  @@map("voice_linguaflow_voices")
+}
+
+/// Conversation AI agent for language practice
+model VoiceConversationAgent {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name        String
+  description String?
+  avatarUrl   String?
+
+  elevenLabsAgentId String
+  voiceId           String
+  alternateVoices   String[]
+
+  primaryLanguage       String
+  supportedLanguages    String[]
+  allowLanguageSwitching Boolean @default(true)
+
+  systemPrompt String @db.Text
+  firstMessage String
+  persona      Json
+
+  llmModel          String  @default("claude")
+  customLLMEndpoint String?
+  temperature       Float   @default(0.7)
+  maxTokens         Int     @default(1000)
+
+  knowledgeBaseIds     String[]
+  enabledTools         Json     @default("[]")
+  conversationSettings Json
+  assessmentConfig     Json?
+
+  maxConversationMins Int @default(30)
+  cooldownMinutes     Int @default(5)
+
+  status String @default("active")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions VoiceConversationSession[]
+
+  @@index([tenantId, primaryLanguage])
+  @@index([tenantId, status])
+  @@map("voice_conversation_agents")
+}
+
+/// Active conversation session
+model VoiceConversationSession {
+  id       String @id @default(cuid())
+  tenantId String
+
+  agentId    String
+  agent      VoiceConversationAgent @relation(fields: [agentId], references: [id])
+  userId     String
+  learnerId  String?
+  scenarioId String?
+
+  status             String @default("initializing")
+  websocketSessionId String?
+  assessmentData     Json   @default("{}")
+  languageUsage      Json   @default("[]")
+
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  totalDurationMs Int       @default(0)
+  creditsUsed     Int       @default(0)
+  metadata        Json?
+
+  turns   VoiceConversationTurn[]
+  reviews VoiceSessionReview[]
+
+  @@index([tenantId, userId])
+  @@index([tenantId, learnerId])
+  @@index([tenantId, status])
+  @@map("voice_conversation_sessions")
+}
+
+/// Conversation turn within a session
+model VoiceConversationTurn {
+  id        String @id @default(cuid())
+  sessionId String
+  session   VoiceConversationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sequence  Int
+
+  speaker String
+  text    String   @db.Text
+  audioUrl String?
+  startMs Int
+  endMs   Int
+  language String
+
+  assessment Json?
+  correction Json?
+
+  timestamp DateTime @default(now())
+
+  @@index([sessionId, sequence])
+  @@map("voice_conversation_turns")
+}
+
+/// Pronunciation assessment result
+model VoicePronunciationAssessment {
+  id        String @id @default(cuid())
+  tenantId  String
+  learnerId String
+
+  overallScore      Int
+  accuracyScore     Int
+  fluencyScore      Int
+  completenessScore Int
+  prosodyScore      Int
+
+  transcription   Json
+  wordAnalysis    Json
+  phonemeAnalysis Json?
+  issues          Json @default("[]")
+  suggestions     Json @default("[]")
+
+  referenceAudioUrl String?
+  competencyUpdates Json?
+  exerciseId        String?
+  sessionId         String?
+
+  processingTimeMs Int
+  assessedAt       DateTime @default(now())
+
+  @@index([tenantId, learnerId])
+  @@index([tenantId, sessionId])
+  @@map("voice_pronunciation_assessments")
+}
+
+/// Learner's voice learning progress
+model VoiceLearnerProgress {
+  id        String @id @default(cuid())
+  tenantId  String
+  learnerId String @unique
+
+  overallProficiency Int    @default(0)
+  proficiencyTrend   String @default("stable")
+
+  pronunciation     Json @default("{}")
+  conversation      Json @default("{}")
+  languageProgress  Json @default("{}")
+  competencyMastery Json @default("{}")
+  recommendations   Json @default("{}")
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, learnerId])
+  @@map("voice_learner_progress")
+}
+
+/// Tutor session review
+model VoiceSessionReview {
+  id         String @id @default(cuid())
+  tenantId   String
+  sessionId  String
+  session    VoiceConversationSession @relation(fields: [sessionId], references: [id])
+  reviewerId String
+  reviewerRole String
+
+  overallRating       Int
+  ratingAgentApprop   Int
+  ratingEngagement    Int
+  ratingOutcomes      Int
+  ratingPronunciation Int
+  ratingFlow          Int
+
+  feedback String @db.Text
+  status   String @default("draft")
+
+  overridePronunciation Float?
+  overrideGrammar       Float?
+  overrideFluency       Float?
+  overrideReason        String? @db.Text
+
+  recommendations Json? @db.JsonB
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  annotations VoiceTurnAnnotation[]
+  flags       VoiceSessionFlag[]
+
+  @@index([tenantId])
+  @@index([tenantId, sessionId])
+  @@index([tenantId, reviewerId])
+  @@map("voice_session_reviews")
+}
+
+/// Turn annotation from tutor review
+model VoiceTurnAnnotation {
+  id           String @id @default(cuid())
+  reviewId     String
+  review       VoiceSessionReview @relation(fields: [reviewId], references: [id])
+  turnId       String
+  turnSequence Int
+  type         String
+  text         String @db.Text
+  targetText   String?
+  startOffset  Int?
+  endOffset    Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([reviewId])
+  @@map("voice_turn_annotations")
+}
+
+/// Session flag from tutor review
+model VoiceSessionFlag {
+  id                 String @id @default(cuid())
+  reviewId           String
+  review             VoiceSessionReview @relation(fields: [reviewId], references: [id])
+  tenantId           String
+  type               String
+  severity           String
+  description        String @db.Text
+  turnId             String?
+  requiresEscalation Boolean @default(false)
+
+  resolvedAt DateTime?
+  resolvedBy String?
+  resolution String?   @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, type])
+  @@index([tenantId, severity])
+  @@map("voice_session_flags")
+}
+
+/// Voice clone consent record
+model VoiceCloneConsent {
+  id             String @id @default(cuid())
+  tenantId       String
+  voiceOwnerId   String
+  voiceOwnerRole String
+  requestedBy    String
+
+  consentText    String   @db.Text
+  consentVersion String
+  consentGivenAt DateTime
+  consentMethod  String
+
+  allowedPurposes Json @db.JsonB
+  allowedTenants  Json @db.JsonB
+
+  revokedAt     DateTime?
+  revokedReason String?   @db.Text
+  expiresAt     DateTime
+  status        String    @default("active")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clones VoiceClone[]
+
+  @@index([tenantId])
+  @@index([tenantId, voiceOwnerId])
+  @@index([tenantId, status])
+  @@map("voice_clone_consents")
+}
+
+/// Cloned voice instance
+model VoiceClone {
+  id                       String @id @default(cuid())
+  tenantId                 String
+  consentId                String
+  consent                  VoiceCloneConsent @relation(fields: [consentId], references: [id])
+  voiceOwnerId             String
+  elevenLabsVoiceId        String
+  name                     String
+  description              String   @db.Text
+  quality                  String
+  verifiedLanguages        Json     @db.JsonB
+  sampleIds                Json     @db.JsonB
+  status                   String   @default("creating")
+  qualityScore             Float?
+  totalCharactersGenerated Int      @default(0)
+  lastUsedAt               DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  samples VoiceCloneSample[]
+
+  @@index([tenantId])
+  @@index([tenantId, voiceOwnerId])
+  @@index([elevenLabsVoiceId])
+  @@map("voice_clones")
+}
+
+/// Audio sample for voice cloning
+model VoiceCloneSample {
+  id            String  @id @default(cuid())
+  tenantId      String
+  cloneId       String?
+  clone         VoiceClone? @relation(fields: [cloneId], references: [id])
+  voiceOwnerId  String
+  audioUrl      String
+  audioFormat   String
+  durationMs    Int
+  fileSizeBytes Int
+  qualityAssess Json?   @db.JsonB
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([cloneId])
+  @@map("voice_clone_samples")
+}
+
+/// Multi-speaker dialogue script
+model VoiceDialogueScript {
+  id              String @id @default(cuid())
+  tenantId        String
+  title           String
+  description     String   @db.Text
+  language        String
+  targetLevel     String
+  curriculumCodes Json?    @db.JsonB
+  teachingNotes   String?  @db.Text
+  createdBy       String
+  lines           Json     @db.JsonB
+  directions      Json?    @db.JsonB
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  characters VoiceDialogueCharacter[]
+  generated  VoiceGeneratedDialogue[]
+
+  @@index([tenantId])
+  @@index([tenantId, language])
+  @@map("voice_dialogue_scripts")
+}
+
+/// Character in a dialogue script
+model VoiceDialogueCharacter {
+  id            String @id @default(cuid())
+  scriptId      String
+  script        VoiceDialogueScript @relation(fields: [scriptId], references: [id])
+  name          String
+  role          String
+  voiceId       String
+  voiceSettings Json?  @db.JsonB
+  personality   String?
+  accentRegion  String?
+  ageGroup      String?
+
+  @@index([scriptId])
+  @@map("voice_dialogue_characters")
+}
+
+/// Generated dialogue audio
+model VoiceGeneratedDialogue {
+  id            String @id @default(cuid())
+  scriptId      String
+  script        VoiceDialogueScript @relation(fields: [scriptId], references: [id])
+  tenantId      String
+  audioUrl      String
+  audioFormat   String
+  durationMs    Int
+  fileSizeBytes Int
+  segments      Json   @db.JsonB
+  totalCredits  Int
+
+  generatedAt DateTime
+
+  @@index([tenantId])
+  @@index([scriptId])
+  @@map("voice_generated_dialogues")
+}
+
+/// Daily voice usage tracking
+model VoiceUsageDaily {
+  id       String   @id @default(cuid())
+  tenantId String
+  date     DateTime @db.Date
+
+  ttsRequests   Int   @default(0)
+  ttsCharacters Int   @default(0)
+  ttsCredits    Int   @default(0)
+  ttsCacheHits  Int   @default(0)
+
+  sttRequests Int   @default(0)
+  sttMinutes  Float @default(0)
+  sttCredits  Int   @default(0)
+
+  agentSessions Int   @default(0)
+  agentMinutes  Float @default(0)
+  agentCredits  Int   @default(0)
+
+  assessments Int @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, date])
+  @@index([tenantId, date])
+  @@map("voice_usage_daily")
+}

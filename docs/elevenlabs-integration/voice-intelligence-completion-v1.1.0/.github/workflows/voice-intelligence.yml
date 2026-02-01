@@ -1,0 +1,274 @@
+# =============================================================================
+# Voice Intelligence Service — CI/CD Pipeline
+# =============================================================================
+#
+# GitHub Actions workflow that runs on every push and pull request.
+# Stages:
+#   1. Lint & Type Check  — catch syntax and type errors early
+#   2. Unit Tests         — fast, isolated tests with mocked dependencies
+#   3. Integration Tests  — service-level tests with mocked ElevenLabs API
+#   4. Build & Push       — Docker image build (on main/release branches only)
+#   5. Deploy             — push to staging/production (on tags only)
+# =============================================================================
+
+name: Voice Intelligence Service CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'services/voice-intelligence/**'
+      - '.github/workflows/voice-intelligence.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/voice-intelligence/**'
+  release:
+    types: [published]
+
+env:
+  SERVICE_NAME: voice-intelligence
+  NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/voice-intelligence
+
+defaults:
+  run:
+    working-directory: services/voice-intelligence
+
+# =============================================================================
+# JOBS
+# =============================================================================
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Stage 1: Lint & Type Check
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: services/voice-intelligence/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+  # ---------------------------------------------------------------------------
+  # Stage 2: Unit Tests
+  # ---------------------------------------------------------------------------
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: services/voice-intelligence/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run unit tests
+        run: npm run test:unit -- --coverage --ci
+        env:
+          NODE_ENV: test
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-coverage
+          path: services/voice-intelligence/coverage/
+
+  # ---------------------------------------------------------------------------
+  # Stage 3: Integration Tests
+  # ---------------------------------------------------------------------------
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: scholarly_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: services/voice-intelligence/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run database migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/scholarly_test?schema=voice
+
+      - name: Run integration tests
+        run: npm run test:integration -- --ci
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://test:test@localhost:5432/scholarly_test?schema=voice
+          REDIS_URL: redis://localhost:6379/0
+          ELEVENLABS_API_KEY: test-api-key-mock
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-results
+          path: services/voice-intelligence/test-results/
+
+  # ---------------------------------------------------------------------------
+  # Stage 4: Build Docker Image
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [unit-tests, integration-tests]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/')
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: services/voice-intelligence
+          file: services/voice-intelligence/infrastructure/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ---------------------------------------------------------------------------
+  # Stage 5: Deploy
+  # ---------------------------------------------------------------------------
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "Deploying ${{ env.SERVICE_NAME }} to staging..."
+          # In production, this would use kubectl, terraform, or a deployment API
+          # Example: kubectl set image deployment/voice-intelligence \
+          #   voice-intelligence=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop
+          echo "Deployment triggered successfully"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: production
+
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "Deploying ${{ env.SERVICE_NAME }} to production..."
+          # Example: kubectl set image deployment/voice-intelligence \
+          #   voice-intelligence=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+          echo "Production deployment triggered successfully"
+
+      - name: Notify deployment
+        if: success()
+        run: |
+          echo "Voice Intelligence Service ${{ github.ref_name }} deployed to production"

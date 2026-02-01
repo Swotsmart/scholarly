@@ -1,0 +1,168 @@
+# =============================================================================
+# Voice Intelligence Service — Docker Compose Configuration
+# =============================================================================
+#
+# This file defines the Voice Intelligence Service and its infrastructure
+# dependencies as a docker-compose service entry. In production, this would
+# be merged into the main Scholarly platform docker-compose.yml alongside
+# the other 12+ services.
+#
+# Usage:
+#   docker compose up -d                    # Start all services
+#   docker compose up voice-intelligence    # Start just this service + deps
+#   docker compose logs -f voice-intelligence
+#   docker compose down
+#
+# For local development:
+#   docker compose --profile dev up         # Includes hot-reload watcher
+# =============================================================================
+
+version: '3.9'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Voice Intelligence Service
+  # ---------------------------------------------------------------------------
+  voice-intelligence:
+    build:
+      context: .
+      dockerfile: infrastructure/Dockerfile
+    image: scholarly/voice-intelligence:latest
+    container_name: scholarly-voice-intelligence
+    restart: unless-stopped
+    ports:
+      - "${VOICE_HTTP_PORT:-3010}:3000"   # HTTP API
+      - "${VOICE_WS_PORT:-3011}:3001"     # WebSocket
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      WS_PORT: 3001
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+      # Database — shared PostgreSQL with schema isolation
+      DATABASE_URL: postgresql://${POSTGRES_USER:-scholarly}:${POSTGRES_PASSWORD:-scholarly}@postgres:5432/${POSTGRES_DB:-scholarly}?schema=voice
+
+      # Redis — shared cache and session store
+      REDIS_URL: redis://redis:6379/3
+
+      # NATS — event bus for inter-service communication
+      NATS_URL: nats://nats:4222
+
+      # ElevenLabs API credentials
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_AGENT_API_KEY: ${ELEVENLABS_AGENT_API_KEY:-}
+
+      # Service configuration
+      MAX_SESSIONS_PER_TENANT: ${MAX_SESSIONS_PER_TENANT:-50}
+      MAX_SESSION_DURATION_MS: ${MAX_SESSION_DURATION_MS:-1800000}
+
+      # Observability
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_SERVICE_NAME: voice-intelligence
+
+      # Object storage for audio files
+      S3_BUCKET: ${S3_BUCKET:-scholarly-voice-audio}
+      S3_REGION: ${S3_REGION:-ap-southeast-2}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - scholarly-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ---------------------------------------------------------------------------
+  # Infrastructure Dependencies (shared across Scholarly services)
+  # ---------------------------------------------------------------------------
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: scholarly-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-scholarly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scholarly}
+      POSTGRES_DB: ${POSTGRES_DB:-scholarly}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infrastructure/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scholarly}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - scholarly-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: scholarly-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - scholarly-network
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: scholarly-nats
+    restart: unless-stopped
+    ports:
+      - "${NATS_PORT:-4222}:4222"
+      - "8222:8222"  # Monitoring
+    command: "--jetstream --store_dir=/data"
+    volumes:
+      - nats-data:/data
+    networks:
+      - scholarly-network
+
+# ---------------------------------------------------------------------------
+# Volumes
+# ---------------------------------------------------------------------------
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  nats-data:
+    driver: local
+
+# ---------------------------------------------------------------------------
+# Networks
+# ---------------------------------------------------------------------------
+networks:
+  scholarly-network:
+    driver: bridge
+    name: scholarly-network

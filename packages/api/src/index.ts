@@ -43,6 +43,7 @@ import { identityRouter } from './routes/identity';
 import { createPaymentRouter } from './routes/payment';
 import { hostingRouter } from './routes/hosting';
 import { verificationRouter } from './routes/verification';
+import voiceIntelligenceRouter from './routes/voice-intelligence';
 
 // Middleware
 import { errorHandler } from './middleware/error-handler';
@@ -111,6 +112,7 @@ api.use('/identity', authMiddleware, identityRouter);
 api.use('/payment', authMiddleware, createPaymentRouter());
 api.use('/hosting', hostingRouter); // Has both public and protected routes
 api.use('/verification', verificationRouter); // Has both public (webhooks) and protected routes
+api.use('/voice', voiceIntelligenceRouter); // Voice Intelligence with TTS, STT, agents
 
 app.use('/api/v1', api);
 
