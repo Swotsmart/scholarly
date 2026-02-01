@@ -342,3 +342,6 @@ async function handleDemoAuth(req: Request): Promise<boolean> {
 
   return false;
 }
+
+// Alias for backward compatibility
+export const authenticateUser = authMiddleware;
