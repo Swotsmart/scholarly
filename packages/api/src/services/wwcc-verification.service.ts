@@ -20,6 +20,7 @@ import {
   Result,
   success,
   failure,
+  isFailure,
   ScholarlyBaseService,
 } from './base.service';
 
@@ -118,6 +119,34 @@ export interface WWCCMonitoringAlert {
   timestamp: Date;
 }
 
+// API Response Types for State Registries
+interface NSWApiResponse {
+  status: string;
+  first_name?: string;
+  last_name?: string;
+  date_of_birth?: string;
+  card_type?: WWCCCardType;
+  issue_date?: string;
+  expiry_date?: string;
+}
+
+interface VICApiResponse {
+  status: string;
+  given_name?: string;
+  family_name?: string;
+  card_category?: WWCCCardType;
+  expiry_date?: string;
+}
+
+interface QLDApiResponse {
+  status: string;
+  given_names?: string;
+  surname?: string;
+  card_type?: WWCCCardType;
+  issue_date?: string;
+  expiry_date?: string;
+}
+
 // ============================================================================
 // STATE REGISTRY ADAPTERS
 // ============================================================================
@@ -165,7 +194,7 @@ class NSWRegistryAdapter implements StateRegistryAdapter {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
+        const error = await response.json().catch(() => ({})) as Record<string, unknown>;
 
         if (response.status === 404) {
           return success({
@@ -190,7 +219,7 @@ class NSWRegistryAdapter implements StateRegistryAdapter {
         });
       }
 
-      const data = await response.json();
+      const data = await response.json() as NSWApiResponse;
 
       return success({
         id: this.generateId(),
@@ -198,7 +227,7 @@ class NSWRegistryAdapter implements StateRegistryAdapter {
         wwccNumber: request.wwccNumber,
         state: 'NSW',
         status: this.mapRegistryStatus(data.status),
-        registryStatus: data.status,
+        registryStatus: data.status as RegistryStatus,
         holder: {
           firstName: data.first_name,
           lastName: data.last_name,
@@ -239,7 +268,7 @@ class NSWRegistryAdapter implements StateRegistryAdapter {
         });
       }
 
-      const data = await response.json();
+      const data = await response.json() as NSWApiResponse;
 
       return success({
         status: data.status as RegistryStatus,
@@ -325,11 +354,11 @@ class VICRegistryAdapter implements StateRegistryAdapter {
         return failure({
           code: 'API_ERROR',
           message: `VIC registry API error: ${response.statusText}`,
-          details: error,
+          details: error as Record<string, unknown>,
         });
       }
 
-      const data = await response.json();
+      const data = await response.json() as VICApiResponse;
 
       return success({
         id: this.generateId(),
@@ -337,7 +366,7 @@ class VICRegistryAdapter implements StateRegistryAdapter {
         wwccNumber: request.wwccNumber,
         state: 'VIC',
         status: this.mapStatus(data.status),
-        registryStatus: data.status,
+        registryStatus: data.status as RegistryStatus,
         holder: {
           firstName: data.given_name,
           lastName: data.family_name,
@@ -376,7 +405,7 @@ class VICRegistryAdapter implements StateRegistryAdapter {
         });
       }
 
-      const data = await response.json();
+      const data = await response.json() as VICApiResponse;
 
       return success({
         status: data.status as RegistryStatus,
@@ -461,11 +490,11 @@ class QLDRegistryAdapter implements StateRegistryAdapter {
         return failure({
           code: 'API_ERROR',
           message: `QLD registry API error: ${response.statusText}`,
-          details: error,
+          details: error as Record<string, unknown>,
         });
       }
 
-      const data = await response.json();
+      const data = await response.json() as QLDApiResponse;
 
       return success({
         id: this.generateId(),
@@ -473,7 +502,7 @@ class QLDRegistryAdapter implements StateRegistryAdapter {
         wwccNumber: request.wwccNumber,
         state: 'QLD',
         status: this.mapStatus(data.status),
-        registryStatus: data.status,
+        registryStatus: data.status as RegistryStatus,
         holder: {
           firstName: data.given_names,
           lastName: data.surname,
@@ -513,7 +542,7 @@ class QLDRegistryAdapter implements StateRegistryAdapter {
         });
       }
 
-      const data = await response.json();
+      const data = await response.json() as QLDApiResponse;
 
       return success({
         status: data.status as RegistryStatus,
@@ -850,7 +879,7 @@ export class WWCCVerificationService extends ScholarlyBaseService {
 
       const statusResult = await adapter.checkStatus(verification.wwccNumber);
 
-      if (!statusResult.success) {
+      if (isFailure(statusResult)) {
         return failure(statusResult.error);
       }
 

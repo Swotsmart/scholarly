@@ -106,13 +106,13 @@ export abstract class ScholarlyBaseService {
   protected serviceName: string;
   protected eventBus?: EventBus;
   protected cache?: Cache;
-  protected config?: Record<string, unknown>;
+  protected baseConfig?: Record<string, unknown>;
 
   constructor(serviceName: string, deps?: ServiceDependencies) {
     this.serviceName = serviceName;
     this.eventBus = deps?.eventBus;
     this.cache = deps?.cache;
-    this.config = deps?.config;
+    this.baseConfig = deps?.config;
   }
 
   /**

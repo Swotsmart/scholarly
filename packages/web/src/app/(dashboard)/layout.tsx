@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { CommandPalette } from '@/components/layout/command-palette';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardLayout({
@@ -42,10 +43,23 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      {/* Command Palette — global Cmd+K overlay */}
+      <CommandPalette />
+
+      {/* Sidebar — progressive disclosure, collapsible, with favorites */}
       <Sidebar />
+
+      {/* Main content area */}
       <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Header — breadcrumbs + command trigger + notifications + user menu */}
         <Header />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+
+        {/* Page content — with consistent padding and scroll */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-7xl p-6">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

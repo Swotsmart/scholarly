@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@scholarly/database';
 import * as fs from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
@@ -166,6 +166,8 @@ export class CurriculumIngester {
       description: standard.description,
       generalCapabilities: standard.generalCapabilities,
       crossCurriculumPriorities: standard.crossCurriculumPriorities,
+      source: 'MRAC',
+      version: '9.0',
       metadata: {
         originalId: standard.id,
         parentId: standard.parentId,
