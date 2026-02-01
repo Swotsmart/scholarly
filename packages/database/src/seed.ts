@@ -1253,6 +1253,217 @@ Consider areas such as:
 
   console.log('Updated parent profile with child links and notification preferences');
 
+  // ============================================================================
+  // KYC / WWCC / KYB VERIFICATION DATA
+  // ============================================================================
+
+  // Create KYC verification for tutor (Sarah Chen)
+  await prisma.identityVerification.upsert({
+    where: { id: 'kyc_tutor_sarah' },
+    update: {},
+    create: {
+      id: 'kyc_tutor_sarah',
+      tenantId: tenant.id,
+      userId: tutorUser.id,
+      provider: 'stripe_identity',
+      providerVerificationId: 'vs_demo_sarah_chen_verified',
+      status: 'verified',
+      verificationLevel: 'standard',
+      documentType: 'drivers_license',
+      documentCountry: 'AU',
+      documentState: 'NSW',
+      verifiedFirstName: 'Sarah',
+      verifiedLastName: 'Chen',
+      verifiedDateOfBirth: new Date('1992-03-15'),
+      addressVerified: true,
+      addressLine1: '123 Education Lane',
+      addressCity: 'Sydney',
+      addressState: 'NSW',
+      addressPostalCode: '2000',
+      addressCountry: 'AU',
+      selfieMatch: true,
+      selfieMatchScore: 0.98,
+      livenessCheck: true,
+      livenessCheckScore: 0.99,
+      riskScore: 5,
+      riskSignals: [],
+      verifiedAt: new Date('2024-01-10'),
+      expiresAt: new Date('2027-01-10'),
+      metadata: {
+        verificationMethod: 'document_scan',
+        processingTime: 45,
+      },
+    },
+  });
+
+  console.log('Created KYC verification for tutor (Sarah Chen)');
+
+  // Create WWCC verification for tutor (Sarah Chen)
+  await prisma.wWCCVerification.upsert({
+    where: { id: 'wwcc_tutor_sarah' },
+    update: {},
+    create: {
+      id: 'wwcc_tutor_sarah',
+      tenantId: tenant.id,
+      userId: tutorUser.id,
+      state: 'NSW',
+      wwccNumber: 'WWC1234567E',
+      status: 'verified',
+      clearanceType: 'employee',
+      verificationMethod: 'api',
+      verifiedName: 'Sarah Chen',
+      verifiedAt: new Date('2024-01-12'),
+      expiresAt: new Date('2029-01-12'),
+      lastCheckedAt: new Date(),
+      checkFrequency: 90,
+      isMonitored: true,
+      monitoringActive: true,
+      lastMonitoringCheck: new Date(),
+      metadata: {
+        applicationDate: '2023-12-01',
+        processingTime: 14,
+      },
+    },
+  });
+
+  console.log('Created WWCC verification for tutor (Sarah Chen)');
+
+  // Create KYC verification for teacher (James Wilson)
+  await prisma.identityVerification.upsert({
+    where: { id: 'kyc_teacher_james' },
+    update: {},
+    create: {
+      id: 'kyc_teacher_james',
+      tenantId: tenant.id,
+      userId: teacherUser.id,
+      provider: 'stripe_identity',
+      providerVerificationId: 'vs_demo_james_wilson_verified',
+      status: 'verified',
+      verificationLevel: 'standard',
+      documentType: 'passport',
+      documentCountry: 'AU',
+      verifiedFirstName: 'James',
+      verifiedLastName: 'Wilson',
+      verifiedDateOfBirth: new Date('1985-07-22'),
+      addressVerified: true,
+      addressLine1: '456 Teacher Street',
+      addressCity: 'Sydney',
+      addressState: 'NSW',
+      addressPostalCode: '2010',
+      addressCountry: 'AU',
+      selfieMatch: true,
+      selfieMatchScore: 0.97,
+      livenessCheck: true,
+      livenessCheckScore: 0.98,
+      riskScore: 3,
+      riskSignals: [],
+      verifiedAt: new Date('2023-06-15'),
+      expiresAt: new Date('2026-06-15'),
+    },
+  });
+
+  console.log('Created KYC verification for teacher (James Wilson)');
+
+  // Create WWCC verification for teacher (James Wilson)
+  await prisma.wWCCVerification.upsert({
+    where: { id: 'wwcc_teacher_james' },
+    update: {},
+    create: {
+      id: 'wwcc_teacher_james',
+      tenantId: tenant.id,
+      userId: teacherUser.id,
+      state: 'NSW',
+      wwccNumber: 'WWC7654321E',
+      status: 'verified',
+      clearanceType: 'employee',
+      verificationMethod: 'api',
+      verifiedName: 'James Wilson',
+      verifiedAt: new Date('2023-06-20'),
+      expiresAt: new Date('2028-06-20'),
+      lastCheckedAt: new Date(),
+      checkFrequency: 90,
+      isMonitored: true,
+      monitoringActive: true,
+      lastMonitoringCheck: new Date(),
+    },
+  });
+
+  console.log('Created WWCC verification for teacher (James Wilson)');
+
+  // Create parent KYC (for booking tutors)
+  await prisma.identityVerification.upsert({
+    where: { id: 'kyc_parent_david' },
+    update: {},
+    create: {
+      id: 'kyc_parent_david',
+      tenantId: tenant.id,
+      userId: parentUser.id,
+      provider: 'stripe_identity',
+      providerVerificationId: 'vs_demo_david_smith_verified',
+      status: 'verified',
+      verificationLevel: 'basic',
+      documentType: 'drivers_license',
+      documentCountry: 'AU',
+      documentState: 'NSW',
+      verifiedFirstName: 'David',
+      verifiedLastName: 'Smith',
+      verifiedDateOfBirth: new Date('1982-11-08'),
+      addressVerified: true,
+      addressLine1: '789 Parent Avenue',
+      addressCity: 'Parramatta',
+      addressState: 'NSW',
+      addressPostalCode: '2150',
+      addressCountry: 'AU',
+      selfieMatch: true,
+      selfieMatchScore: 0.96,
+      livenessCheck: true,
+      livenessCheckScore: 0.97,
+      riskScore: 8,
+      riskSignals: [],
+      verifiedAt: new Date('2024-02-01'),
+      expiresAt: new Date('2027-02-01'),
+    },
+  });
+
+  console.log('Created KYC verification for parent (David Smith)');
+
+  // Create verification audit log entries
+  await prisma.verificationAuditLog.createMany({
+    skipDuplicates: true,
+    data: [
+      {
+        id: 'audit_kyc_sarah_1',
+        tenantId: tenant.id,
+        verificationId: 'kyc_tutor_sarah',
+        verificationType: 'identity',
+        action: 'verification_completed',
+        previousStatus: 'pending',
+        newStatus: 'verified',
+        performedBy: 'system',
+        ipAddress: '10.0.0.1',
+        userAgent: 'Stripe-Identity-Webhook/1.0',
+        details: { provider: 'stripe_identity', documentType: 'drivers_license' },
+        createdAt: new Date('2024-01-10'),
+      },
+      {
+        id: 'audit_wwcc_sarah_1',
+        tenantId: tenant.id,
+        verificationId: 'wwcc_tutor_sarah',
+        verificationType: 'wwcc',
+        action: 'verification_completed',
+        previousStatus: 'pending',
+        newStatus: 'verified',
+        performedBy: 'system',
+        ipAddress: '10.0.0.1',
+        userAgent: 'WWCC-API-Client/1.0',
+        details: { state: 'NSW', clearanceType: 'employee' },
+        createdAt: new Date('2024-01-12'),
+      },
+    ],
+  });
+
+  console.log('Created verification audit logs');
+
   console.log('\n✅ Seed completed successfully!');
   console.log('\n📋 Demo Credentials (Password for all: demo123):');
   console.log('  👤 Admin:   admin@scholarly.app');
@@ -1284,6 +1495,11 @@ Consider areas such as:
   console.log('\n👨‍👩‍👧‍👦 Parent Portal:');
   console.log('  • Dashboard for Emma (Year 8) & Lily (Early Years)');
   console.log('  • Progress notifications enabled');
+  console.log('\n🔐 KYC/WWCC Verification Demo:');
+  console.log('  • Sarah Chen (Tutor): KYC verified + WWCC NSW verified');
+  console.log('  • James Wilson (Teacher): KYC verified + WWCC NSW verified');
+  console.log('  • David Smith (Parent): KYC verified');
+  console.log('  • Verification audit trail records');
 }
 
 main()
