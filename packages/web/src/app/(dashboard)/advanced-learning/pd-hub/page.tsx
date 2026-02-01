@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -26,8 +26,20 @@ import {
   FileText,
   Shield,
   CalendarDays,
+  Target,
+  TrendingUp,
+  Zap,
+  ArrowRight,
+  ExternalLink,
+  Trophy,
+  Medal,
+  Route,
+  Building2,
+  Briefcase,
+  ChevronRight,
 } from 'lucide-react';
 
+// Course library
 const MOCK_COURSES = [
   {
     id: 'course_001',
@@ -44,6 +56,7 @@ const MOCK_COURSES = [
     description: 'Master the integration of digital tools into everyday teaching practice. Covers learning management systems, interactive whiteboards, student response systems, and AI-assisted learning platforms aligned with Australian curriculum frameworks.',
     modules: 8,
     color: 'blue',
+    level: 'Intermediate',
   },
   {
     id: 'course_002',
@@ -60,6 +73,7 @@ const MOCK_COURSES = [
     description: 'Learn to use student data and learning analytics to differentiate instruction effectively. Explore formative assessment strategies, learning progressions, and adaptive teaching approaches using NAPLAN and school-based data.',
     modules: 6,
     color: 'emerald',
+    level: 'Advanced',
   },
   {
     id: 'course_003',
@@ -76,6 +90,7 @@ const MOCK_COURSES = [
     description: 'Develop practical strategies for creating inclusive classrooms that support students with diverse needs. Covers Universal Design for Learning, culturally responsive pedagogy, trauma-informed practices, and NCCD compliance.',
     modules: 10,
     color: 'violet',
+    level: 'Beginner',
   },
   {
     id: 'course_004',
@@ -92,6 +107,7 @@ const MOCK_COURSES = [
     description: 'Design and implement integrated STEM learning experiences aligned with the Australian Curriculum. Explore engineering design processes, computational thinking, mathematical modelling, and inquiry-based science across year levels.',
     modules: 7,
     color: 'amber',
+    level: 'Intermediate',
   },
   {
     id: 'course_005',
@@ -108,6 +124,7 @@ const MOCK_COURSES = [
     description: 'Deepen your understanding of Aboriginal and Torres Strait Islander histories, cultures, and perspectives. Build capacity to embed Indigenous knowledges across curriculum areas and create culturally safe learning environments.',
     modules: 5,
     color: 'rose',
+    level: 'Beginner',
   },
   {
     id: 'course_006',
@@ -124,115 +141,182 @@ const MOCK_COURSES = [
     description: 'Transform your assessment practices with evidence-based approaches to formative and summative assessment. Master learning intentions, success criteria, effective feedback, and moderation processes aligned with ACARA standards.',
     modules: 6,
     color: 'teal',
+    level: 'Intermediate',
   },
 ];
 
-const MOCK_ENROLLMENTS = [
+// AITSL Standards mapping
+const AITSL_STANDARDS = [
   {
-    id: 'enr_001',
-    courseTitle: 'Digital Pedagogy in Practice',
-    provider: 'Australian Institute of Teaching',
-    progress: 62,
-    modulesCompleted: 5,
-    totalModules: 8,
-    nextModule: 'Module 6: AI-Assisted Assessment Tools',
-    enrolledDate: '2025-01-15',
-    creditHours: 20,
-    estimatedCompletion: '2025-04-01',
-    lastAccessed: '2 hours ago',
+    domain: 1,
+    title: 'Know students and how they learn',
+    descriptors: [
+      { code: '1.1', name: 'Physical, social and intellectual development', hours: 15, required: 20 },
+      { code: '1.2', name: 'Understand how students learn', hours: 12, required: 15 },
+      { code: '1.3', name: 'Diverse backgrounds', hours: 25, required: 20 },
+      { code: '1.4', name: 'Aboriginal and Torres Strait Islander', hours: 12, required: 15 },
+      { code: '1.5', name: 'Differentiate teaching', hours: 10, required: 20 },
+      { code: '1.6', name: 'Students with disability', hours: 8, required: 15 },
+    ],
   },
   {
-    id: 'enr_002',
-    courseTitle: 'Inclusive Classroom Strategies',
-    provider: 'Inclusive Education Victoria',
-    progress: 40,
-    modulesCompleted: 4,
-    totalModules: 10,
-    nextModule: 'Module 5: Trauma-Informed Classroom Practices',
-    enrolledDate: '2025-02-01',
-    creditHours: 25,
-    estimatedCompletion: '2025-05-15',
-    lastAccessed: '1 day ago',
+    domain: 2,
+    title: 'Know the content and how to teach it',
+    descriptors: [
+      { code: '2.1', name: 'Content and teaching strategies', hours: 20, required: 25 },
+      { code: '2.2', name: 'Content selection and organisation', hours: 18, required: 20 },
+      { code: '2.3', name: 'Curriculum, assessment and reporting', hours: 14, required: 20 },
+      { code: '2.4', name: 'Literacy and numeracy strategies', hours: 10, required: 15 },
+      { code: '2.5', name: 'ICT', hours: 20, required: 20 },
+      { code: '2.6', name: 'Information and Communication Technology', hours: 15, required: 15 },
+    ],
   },
   {
-    id: 'enr_003',
-    courseTitle: 'STEM Integration Framework',
-    provider: 'STEM Education Research Centre',
-    progress: 85,
-    modulesCompleted: 6,
-    totalModules: 7,
-    nextModule: 'Module 7: Capstone STEM Unit Design',
-    enrolledDate: '2024-11-20',
-    creditHours: 18,
-    estimatedCompletion: '2025-03-20',
-    lastAccessed: '3 days ago',
+    domain: 3,
+    title: 'Plan for and implement effective teaching',
+    descriptors: [
+      { code: '3.1', name: 'Learning goals and content', hours: 12, required: 15 },
+      { code: '3.2', name: 'Plan and structure learning', hours: 18, required: 20 },
+      { code: '3.3', name: 'Teaching strategies', hours: 16, required: 20 },
+      { code: '3.4', name: 'Select and use resources', hours: 20, required: 20 },
+      { code: '3.5', name: 'ICT strategies', hours: 14, required: 15 },
+      { code: '3.6', name: 'Evaluation and reflection', hours: 10, required: 15 },
+      { code: '3.7', name: 'Parent/carer engagement', hours: 8, required: 10 },
+    ],
   },
   {
-    id: 'enr_004',
-    courseTitle: 'Data-Driven Differentiation',
-    provider: 'Education Services Australia',
-    progress: 17,
-    modulesCompleted: 1,
-    totalModules: 6,
-    nextModule: 'Module 2: Learning Analytics Fundamentals',
-    enrolledDate: '2025-03-01',
-    creditHours: 15,
-    estimatedCompletion: '2025-06-15',
-    lastAccessed: '5 days ago',
-  },
-  {
-    id: 'enr_005',
-    courseTitle: 'Assessment for Learning',
-    provider: 'ACER',
-    progress: 33,
-    modulesCompleted: 2,
-    totalModules: 6,
-    nextModule: 'Module 3: Success Criteria and Learning Intentions',
-    enrolledDate: '2025-02-10',
-    creditHours: 16,
-    estimatedCompletion: '2025-05-30',
-    lastAccessed: '1 week ago',
+    domain: 5,
+    title: 'Assess, provide feedback and report',
+    descriptors: [
+      { code: '5.1', name: 'Assess student learning', hours: 16, required: 20 },
+      { code: '5.2', name: 'Provide feedback', hours: 12, required: 15 },
+      { code: '5.3', name: 'Make consistent judgements', hours: 8, required: 10 },
+      { code: '5.4', name: 'Interpret student data', hours: 10, required: 15 },
+      { code: '5.5', name: 'Report on student achievement', hours: 6, required: 10 },
+    ],
   },
 ];
 
-const MOCK_CERTIFICATES = [
+// Hours tracking
+const ACCREDITATION_TRACKING = {
+  currentCycle: {
+    startDate: '2024-01-01',
+    endDate: '2028-12-31',
+    totalRequired: 100,
+    totalCompleted: 72,
+    elective: { required: 60, completed: 42 },
+    mandatory: { required: 20, completed: 20 },
+    teacherIdentified: { required: 20, completed: 10 },
+  },
+  recentActivity: [
+    { date: '2025-03-15', course: 'Digital Pedagogy in Practice', hours: 4, type: 'elective' },
+    { date: '2025-03-10', course: 'Inclusive Classroom Strategies', hours: 5, type: 'elective' },
+    { date: '2025-03-05', course: 'Child Safety Fundamentals', hours: 2, type: 'mandatory' },
+    { date: '2025-02-28', course: 'Cultural Responsiveness Training', hours: 6, type: 'teacher_identified' },
+  ],
+};
+
+// Micro-credentials / badges
+const CREDENTIALS = [
   {
-    id: 'cert_001',
-    courseTitle: 'Cultural Responsiveness Training',
-    provider: 'Reconciliation Australia',
-    issuedDate: '2025-02-28',
-    credentialId: 'CRT-2025-AU-48291',
-    creditHours: 12,
-    aitslDomain: 'AITSL 1.4',
-    expiryDate: '2028-02-28',
+    id: 'cred_001',
+    name: 'Digital Learning Designer',
+    issuer: 'AITSL',
+    earnedDate: '2025-02-28',
+    credentialId: 'DLD-2025-AU-48291',
+    skills: ['LMS Administration', 'Digital Assessment', 'Blended Learning'],
+    level: 'Gold',
+    verificationUrl: 'https://credentials.aitsl.edu.au/verify/DLD-2025-AU-48291',
   },
   {
-    id: 'cert_002',
-    courseTitle: 'Foundations of Inquiry-Based Learning',
-    provider: 'University of Melbourne',
-    issuedDate: '2024-11-15',
-    credentialId: 'FIBL-2024-UM-33847',
-    creditHours: 10,
-    aitslDomain: 'AITSL 3.3',
-    expiryDate: '2027-11-15',
+    id: 'cred_002',
+    name: 'Inclusive Education Practitioner',
+    issuer: 'Inclusive Education Victoria',
+    earnedDate: '2024-11-15',
+    credentialId: 'IEP-2024-VIC-33847',
+    skills: ['UDL', 'Differentiation', 'NCCD Compliance'],
+    level: 'Silver',
+    verificationUrl: 'https://credentials.iev.edu.au/verify/IEP-2024-VIC-33847',
   },
   {
-    id: 'cert_003',
-    courseTitle: 'Classroom Management for Early Career Teachers',
-    provider: 'NSW Department of Education',
-    issuedDate: '2024-08-20',
-    credentialId: 'CMECT-2024-NSW-19274',
-    creditHours: 8,
-    aitslDomain: 'AITSL 4.3',
-    expiryDate: '2027-08-20',
+    id: 'cred_003',
+    name: 'STEM Integration Specialist',
+    issuer: 'STEM Education Research Centre',
+    earnedDate: '2024-08-20',
+    credentialId: 'SIS-2024-SERC-19274',
+    skills: ['Engineering Design', 'Computational Thinking', 'Inquiry-Based Learning'],
+    level: 'Bronze',
+    verificationUrl: 'https://credentials.serc.edu.au/verify/SIS-2024-SERC-19274',
+  },
+  {
+    id: 'cred_004',
+    name: 'Assessment & Feedback Expert',
+    issuer: 'ACER',
+    earnedDate: '2024-06-10',
+    credentialId: 'AFE-2024-ACER-22156',
+    skills: ['Formative Assessment', 'Feedback Strategies', 'Moderation'],
+    level: 'Silver',
+    verificationUrl: 'https://credentials.acer.edu.au/verify/AFE-2024-ACER-22156',
+  },
+];
+
+// Career pathways
+const CAREER_PATHWAYS = [
+  {
+    id: 'path_001',
+    title: 'Highly Accomplished Teacher',
+    currentStage: 'Proficient',
+    targetStage: 'Highly Accomplished',
+    progress: 65,
+    requirements: [
+      { name: '100 PD hours in current cycle', completed: true },
+      { name: 'Leadership evidence portfolio', completed: false },
+      { name: 'External assessment application', completed: false },
+      { name: 'Peer observation & feedback', completed: true },
+      { name: 'Student outcome data', completed: true },
+    ],
+    timeline: '12-18 months',
+    nextStep: 'Submit leadership evidence portfolio',
+  },
+  {
+    id: 'path_002',
+    title: 'Curriculum Coordinator',
+    currentStage: 'Classroom Teacher',
+    targetStage: 'Curriculum Coordinator',
+    progress: 45,
+    requirements: [
+      { name: 'Graduate Certificate in Curriculum', completed: false },
+      { name: 'Curriculum leadership experience', completed: true },
+      { name: 'Data analysis certification', completed: true },
+      { name: 'Peer mentoring experience', completed: false },
+      { name: 'Whole-school planning involvement', completed: false },
+    ],
+    timeline: '2-3 years',
+    nextStep: 'Enrol in Graduate Certificate program',
+  },
+  {
+    id: 'path_003',
+    title: 'Head of Department',
+    currentStage: 'Senior Teacher',
+    targetStage: 'Head of Department',
+    progress: 30,
+    requirements: [
+      { name: 'Masters in Educational Leadership', completed: false },
+      { name: 'Budget management experience', completed: false },
+      { name: 'Staff supervision & mentoring', completed: true },
+      { name: 'Strategic planning capability', completed: false },
+      { name: 'School improvement involvement', completed: true },
+    ],
+    timeline: '3-5 years',
+    nextStep: 'Apply for Masters program',
   },
 ];
 
 const pageStats = [
   { label: 'Courses Enrolled', value: '5', icon: BookOpen, color: 'blue' },
-  { label: 'Credit Hours Earned', value: '42', icon: Clock, color: 'emerald' },
-  { label: 'Certificates Issued', value: '3', icon: Award, color: 'violet' },
-  { label: 'AITSL Domains Covered', value: '5', icon: Shield, color: 'amber' },
+  { label: 'Credit Hours', value: '72/100', icon: Clock, color: 'emerald' },
+  { label: 'Credentials Earned', value: '4', icon: Award, color: 'violet' },
+  { label: 'AITSL Domains', value: '4/7', icon: Shield, color: 'amber' },
 ];
 
 function getFormatBadge(format: string) {
@@ -248,6 +332,19 @@ function getFormatBadge(format: string) {
   }
 }
 
+function getLevelBadge(level: string) {
+  switch (level) {
+    case 'Gold':
+      return <Badge className="bg-amber-500/10 text-amber-600"><Trophy className="h-3 w-3 mr-1" />Gold</Badge>;
+    case 'Silver':
+      return <Badge className="bg-slate-400/10 text-slate-600"><Medal className="h-3 w-3 mr-1" />Silver</Badge>;
+    case 'Bronze':
+      return <Badge className="bg-orange-500/10 text-orange-600"><Medal className="h-3 w-3 mr-1" />Bronze</Badge>;
+    default:
+      return <Badge variant="secondary">{level}</Badge>;
+  }
+}
+
 export default function PDHubPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -257,6 +354,8 @@ export default function PDHubPage() {
       course.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.aitslDomain.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const tracking = ACCREDITATION_TRACKING.currentCycle;
 
   return (
     <div className="space-y-6">
@@ -271,7 +370,7 @@ export default function PDHubPage() {
           <div>
             <h1 className="heading-2">Professional Development Hub</h1>
             <p className="text-muted-foreground">
-              AITSL-aligned courses, micro-credentials, and professional learning for educators
+              AITSL-aligned courses, micro-credentials, and career pathways
             </p>
           </div>
         </div>
@@ -301,16 +400,33 @@ export default function PDHubPage() {
         })}
       </div>
 
-      <Tabs defaultValue="browse">
+      <Tabs defaultValue="courses">
         <TabsList>
-          <TabsTrigger value="browse">Browse Courses</TabsTrigger>
-          <TabsTrigger value="enrollments">My Enrollments</TabsTrigger>
-          <TabsTrigger value="certificates">Certificates</TabsTrigger>
+          <TabsTrigger value="courses">
+            <BookOpen className="mr-2 h-4 w-4" />
+            Courses
+          </TabsTrigger>
+          <TabsTrigger value="aitsl">
+            <Shield className="mr-2 h-4 w-4" />
+            AITSL Mapping
+          </TabsTrigger>
+          <TabsTrigger value="hours">
+            <Clock className="mr-2 h-4 w-4" />
+            Hours
+          </TabsTrigger>
+          <TabsTrigger value="credentials">
+            <Award className="mr-2 h-4 w-4" />
+            Credentials
+          </TabsTrigger>
+          <TabsTrigger value="pathways">
+            <Route className="mr-2 h-4 w-4" />
+            Pathways
+          </TabsTrigger>
         </TabsList>
 
-        {/* Browse Courses */}
-        <TabsContent value="browse" className="space-y-4">
-          <div className="relative max-w-sm">
+        {/* Courses Tab */}
+        <TabsContent value="courses" className="space-y-4">
+          <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search courses, providers, AITSL standards..."
@@ -325,7 +441,7 @@ export default function PDHubPage() {
               <Card key={course.id} className="flex flex-col">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <Badge className={`bg-${course.color}-500/10 text-${course.color}-500 hover:bg-${course.color}-500/20`}>
+                    <Badge className={`bg-${course.color}-500/10 text-${course.color}-600 hover:bg-${course.color}-500/20`}>
                       {course.aitslDomain}
                     </Badge>
                     {getFormatBadge(course.format)}
@@ -346,8 +462,8 @@ export default function PDHubPage() {
                       <span className="font-medium">{course.creditHours}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Modules</span>
-                      <span className="font-medium">{course.modules}</span>
+                      <span className="text-muted-foreground">Level</span>
+                      <Badge variant="outline" className="text-xs">{course.level}</Badge>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Rating</span>
@@ -357,13 +473,6 @@ export default function PDHubPage() {
                         <span className="text-muted-foreground">({course.reviewCount})</span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Enrolled</span>
-                      <div className="flex items-center gap-1">
-                        <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="font-medium">{course.enrolled.toLocaleString()}</span>
-                      </div>
-                    </div>
                   </div>
 
                   <div className="rounded-lg bg-muted/50 p-2">
@@ -371,153 +480,348 @@ export default function PDHubPage() {
                       <span className="font-medium">AITSL Standard:</span> {course.aitslDescription}
                     </p>
                   </div>
-
+                </CardContent>
+                <CardFooter className="pt-0">
                   <Button className="w-full">
                     <GraduationCap className="h-4 w-4 mr-2" />
                     Enrol Now
                   </Button>
-                </CardContent>
+                </CardFooter>
               </Card>
             ))}
           </div>
         </TabsContent>
 
-        {/* My Enrollments */}
-        <TabsContent value="enrollments" className="space-y-4">
-          {MOCK_ENROLLMENTS.map((enrollment) => (
-            <Card key={enrollment.id}>
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row md:items-start gap-6">
-                  <div className="flex-1 space-y-4">
-                    <div>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold text-lg">{enrollment.courseTitle}</h3>
-                          <p className="text-sm text-muted-foreground">{enrollment.provider}</p>
+        {/* AITSL Mapping Tab */}
+        <TabsContent value="aitsl" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-blue-500" />
+                AITSL Standards Alignment
+              </CardTitle>
+              <CardDescription>
+                Track your professional development against Australian Professional Standards for Teachers
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {AITSL_STANDARDS.map((standard) => {
+                const totalHours = standard.descriptors.reduce((sum, d) => sum + d.hours, 0);
+                const totalRequired = standard.descriptors.reduce((sum, d) => sum + d.required, 0);
+                const percentage = Math.round((totalHours / totalRequired) * 100);
+
+                return (
+                  <div key={standard.domain} className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          Domain {standard.domain}
+                        </Badge>
+                        <h4 className="font-medium">{standard.title}</h4>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {totalHours}/{totalRequired} hours ({percentage}%)
+                      </span>
+                    </div>
+
+                    <Progress value={percentage} className="h-2" />
+
+                    <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                      {standard.descriptors.map((descriptor) => {
+                        const descPercentage = Math.round((descriptor.hours / descriptor.required) * 100);
+                        const isComplete = descriptor.hours >= descriptor.required;
+
+                        return (
+                          <div
+                            key={descriptor.code}
+                            className={`rounded-lg border p-3 ${isComplete ? 'bg-emerald-500/5 border-emerald-500/20' : ''}`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <Badge variant="outline" className="text-[10px] mb-1">
+                                  {descriptor.code}
+                                </Badge>
+                                <p className="text-xs text-muted-foreground line-clamp-2">
+                                  {descriptor.name}
+                                </p>
+                              </div>
+                              {isComplete && (
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                              )}
+                            </div>
+                            <div className="mt-2 space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">Progress</span>
+                                <span className="font-medium">{descriptor.hours}/{descriptor.required}h</span>
+                              </div>
+                              <Progress value={Math.min(descPercentage, 100)} className="h-1" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Hours Tab */}
+        <TabsContent value="hours" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-emerald-500" />
+                Accreditation Hours Tracking
+              </CardTitle>
+              <CardDescription>
+                Current accreditation cycle: {new Date(tracking.startDate).getFullYear()} - {new Date(tracking.endDate).getFullYear()}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Overall Progress */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Total PD Hours</span>
+                  <span className="text-lg font-bold">
+                    {tracking.totalCompleted}/{tracking.totalRequired} hours
+                  </span>
+                </div>
+                <Progress
+                  value={(tracking.totalCompleted / tracking.totalRequired) * 100}
+                  className="h-4"
+                />
+                <p className="text-sm text-muted-foreground">
+                  {tracking.totalRequired - tracking.totalCompleted} hours remaining to meet accreditation requirements
+                </p>
+              </div>
+
+              {/* Category Breakdown */}
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">Elective PD</span>
+                    <Badge variant="outline">{tracking.elective.completed}/{tracking.elective.required}h</Badge>
+                  </div>
+                  <Progress
+                    value={(tracking.elective.completed / tracking.elective.required) * 100}
+                    className="h-2"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Self-selected professional development activities
+                  </p>
+                </div>
+
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">Mandatory</span>
+                    <Badge className="bg-emerald-500/10 text-emerald-600">
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                      {tracking.mandatory.completed}/{tracking.mandatory.required}h
+                    </Badge>
+                  </div>
+                  <Progress
+                    value={(tracking.mandatory.completed / tracking.mandatory.required) * 100}
+                    className="h-2"
+                    indicatorClassName="bg-emerald-500"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Required compliance training (child safety, first aid)
+                  </p>
+                </div>
+
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">Teacher Identified</span>
+                    <Badge variant="outline">{tracking.teacherIdentified.completed}/{tracking.teacherIdentified.required}h</Badge>
+                  </div>
+                  <Progress
+                    value={(tracking.teacherIdentified.completed / tracking.teacherIdentified.required) * 100}
+                    className="h-2"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Based on your professional growth goals
+                  </p>
+                </div>
+              </div>
+
+              {/* Recent Activity */}
+              <div>
+                <h4 className="font-medium mb-3">Recent PD Activity</h4>
+                <div className="space-y-2">
+                  {ACCREDITATION_TRACKING.recentActivity.map((activity, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between rounded-lg border p-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-muted p-2">
+                          <BookOpen className="h-4 w-4 text-muted-foreground" />
                         </div>
-                        <Badge className={enrollment.progress >= 80 ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20' : 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'}>
-                          {enrollment.progress >= 80 ? 'Nearly Complete' : 'In Progress'}
+                        <div>
+                          <p className="text-sm font-medium">{activity.course}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(activity.date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="capitalize text-xs">
+                          {activity.type.replace('_', ' ')}
+                        </Badge>
+                        <Badge className="bg-blue-500/10 text-blue-600">
+                          +{activity.hours}h
                         </Badge>
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Overall Progress</span>
-                        <span className="font-medium">{enrollment.progress}%</span>
-                      </div>
-                      <Progress value={enrollment.progress} className="h-2" />
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      <div className="rounded-lg bg-muted/50 p-2.5">
-                        <p className="text-xs text-muted-foreground">Modules</p>
-                        <p className="text-sm font-medium">{enrollment.modulesCompleted}/{enrollment.totalModules}</p>
-                      </div>
-                      <div className="rounded-lg bg-muted/50 p-2.5">
-                        <p className="text-xs text-muted-foreground">Credit Hours</p>
-                        <p className="text-sm font-medium">{enrollment.creditHours}</p>
-                      </div>
-                      <div className="rounded-lg bg-muted/50 p-2.5">
-                        <p className="text-xs text-muted-foreground">Est. Completion</p>
-                        <p className="text-sm font-medium">
-                          {new Date(enrollment.estimatedCompletion).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
-                        </p>
-                      </div>
-                      <div className="rounded-lg bg-muted/50 p-2.5">
-                        <p className="text-xs text-muted-foreground">Last Accessed</p>
-                        <p className="text-sm font-medium">{enrollment.lastAccessed}</p>
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg border p-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <PlayCircle className="h-4 w-4 text-blue-500" />
-                        <div>
-                          <p className="text-sm font-medium">Next Up</p>
-                          <p className="text-xs text-muted-foreground">{enrollment.nextModule}</p>
-                        </div>
-                      </div>
-                      <Button size="sm">
-                        Continue
-                      </Button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* Certificates */}
-        <TabsContent value="certificates" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {MOCK_CERTIFICATES.map((cert) => (
-              <Card key={cert.id} className="relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-blue-500" />
+        {/* Credentials Tab */}
+        <TabsContent value="credentials" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Micro-Credential Gallery</h3>
+            <Button variant="outline">
+              <Search className="mr-2 h-4 w-4" />
+              Browse Available Credentials
+            </Button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {CREDENTIALS.map((credential) => (
+              <Card key={credential.id} className="relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-violet-500" />
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <div className="rounded-lg bg-emerald-500/10 p-3">
-                      <Award className="h-6 w-6 text-emerald-500" />
+                    <div className="rounded-lg bg-blue-500/10 p-3">
+                      <Award className="h-6 w-6 text-blue-500" />
                     </div>
-                    <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Verified
-                    </Badge>
+                    {getLevelBadge(credential.level)}
                   </div>
-                  <CardTitle className="text-lg mt-3">{cert.courseTitle}</CardTitle>
-                  <CardDescription>{cert.provider}</CardDescription>
+                  <CardTitle className="text-lg mt-3">{credential.name}</CardTitle>
+                  <CardDescription>{credential.issuer}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Credential ID</span>
-                      <span className="font-mono text-xs">{cert.credentialId}</span>
+                      <span className="font-mono text-xs">{credential.credentialId}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Issued</span>
+                      <span className="text-muted-foreground">Earned</span>
                       <span className="font-medium">
-                        {new Date(cert.issuedDate).toLocaleDateString('en-AU', {
+                        {new Date(credential.earnedDate).toLocaleDateString('en-AU', {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',
                         })}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Valid Until</span>
-                      <span className="font-medium">
-                        {new Date(cert.expiryDate).toLocaleDateString('en-AU', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Credit Hours</span>
-                      <span className="font-medium">{cert.creditHours}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">AITSL Domain</span>
-                      <Badge variant="outline" className="text-xs">{cert.aitslDomain}</Badge>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium mb-2">Skills Demonstrated</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {credential.skills.map((skill) => (
+                        <Badge key={skill} variant="secondary" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
 
                   <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1">
+                    <Button variant="outline" className="flex-1" size="sm">
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </Button>
-                    <Button variant="outline" className="flex-1">
-                      <FileText className="h-4 w-4 mr-2" />
-                      View
+                    <Button variant="outline" className="flex-1" size="sm">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Verify
                     </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
+        </TabsContent>
+
+        {/* Pathways Tab */}
+        <TabsContent value="pathways" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Route className="h-5 w-5 text-violet-500" />
+                Career Progression Routes
+              </CardTitle>
+              <CardDescription>
+                Explore pathways for professional advancement and plan your career growth
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {CAREER_PATHWAYS.map((pathway) => (
+                <div key={pathway.id} className="rounded-lg border p-4 space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="font-semibold text-lg">{pathway.title}</h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline">{pathway.currentStage}</Badge>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <Badge className="bg-violet-500/10 text-violet-600">{pathway.targetStage}</Badge>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold">{pathway.progress}%</p>
+                      <p className="text-xs text-muted-foreground">Complete</p>
+                    </div>
+                  </div>
+
+                  <Progress value={pathway.progress} className="h-2" />
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <p className="text-sm font-medium mb-2">Requirements</p>
+                      <div className="space-y-1.5">
+                        {pathway.requirements.map((req, index) => (
+                          <div key={index} className="flex items-center gap-2 text-sm">
+                            {req.completed ? (
+                              <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                            ) : (
+                              <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 flex-shrink-0" />
+                            )}
+                            <span className={req.completed ? 'text-muted-foreground line-through' : ''}>
+                              {req.name}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="rounded-lg bg-muted/50 p-3">
+                        <p className="text-xs text-muted-foreground">Estimated Timeline</p>
+                        <p className="text-sm font-medium mt-1">{pathway.timeline}</p>
+                      </div>
+                      <div className="rounded-lg bg-blue-500/5 border border-blue-500/20 p-3">
+                        <p className="text-xs text-blue-600 font-medium">Next Step</p>
+                        <p className="text-sm mt-1">{pathway.nextStep}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button variant="outline" className="w-full">
+                    <Target className="mr-2 h-4 w-4" />
+                    View Full Pathway Details
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

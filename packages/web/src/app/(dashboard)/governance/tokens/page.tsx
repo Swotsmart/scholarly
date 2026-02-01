@@ -27,8 +27,18 @@ import {
   Vote,
   Award,
   Sparkles,
-  ExternalLink,
+  ShoppingCart,
+  Store,
+  CreditCard,
+  Package,
+  Download,
+  Send,
+  Eye,
 } from 'lucide-react';
+
+// ---------------------------------------------------------------------------
+// Mock Data
+// ---------------------------------------------------------------------------
 
 const TOKEN_BALANCE = {
   total: 32700,
@@ -113,6 +123,63 @@ const REWARD_HISTORY = [
   { id: 'rw-006', date: '18 Jan 2026', type: 'tutoring' as const, description: 'Peer tutoring in Mathematics', amount: 160, claimed: true },
   { id: 'rw-007', date: '15 Jan 2026', type: 'governance' as const, description: 'Delegate participation bonus', amount: 50, claimed: true },
   { id: 'rw-008', date: '12 Jan 2026', type: 'validation' as const, description: 'Content quality review (8 items)', amount: 120, claimed: true },
+];
+
+const MARKETPLACE_TRANSACTIONS = [
+  {
+    id: 'mp-001',
+    date: '26 Jan 2026',
+    type: 'purchase' as const,
+    item: 'VR Chemistry Lab Module',
+    seller: 'ScienceEd Australia',
+    amount: -850,
+    status: 'completed' as const,
+  },
+  {
+    id: 'mp-002',
+    date: '22 Jan 2026',
+    type: 'sale' as const,
+    item: 'Indigenous Art History Curriculum',
+    buyer: 'Melbourne Primary School',
+    amount: 1200,
+    status: 'completed' as const,
+  },
+  {
+    id: 'mp-003',
+    date: '18 Jan 2026',
+    type: 'purchase' as const,
+    item: 'Maths Extension Pack Year 11',
+    seller: 'EdTech Solutions',
+    amount: -450,
+    status: 'completed' as const,
+  },
+  {
+    id: 'mp-004',
+    date: '15 Jan 2026',
+    type: 'subscription' as const,
+    item: 'Premium Tutoring Tools (Monthly)',
+    seller: 'Scholarly Platform',
+    amount: -150,
+    status: 'active' as const,
+  },
+  {
+    id: 'mp-005',
+    date: '10 Jan 2026',
+    type: 'purchase' as const,
+    item: 'Digital Portfolio Template Pack',
+    seller: 'Creative Ed Designs',
+    amount: -75,
+    status: 'completed' as const,
+  },
+  {
+    id: 'mp-006',
+    date: '5 Jan 2026',
+    type: 'sale' as const,
+    item: 'Environmental Science Module',
+    buyer: 'Brisbane Grammar School',
+    amount: 980,
+    status: 'completed' as const,
+  },
 ];
 
 const NFT_CREDENTIALS = [
@@ -213,6 +280,9 @@ export default function TokenEconomyPage() {
     setRewards((prev) => prev.map((r) => (r.id === id ? { ...r, claimed: true } : r)));
   };
 
+  const totalEarned = REWARD_HISTORY.reduce((sum, r) => sum + r.amount, 0);
+  const totalSpent = MARKETPLACE_TRANSACTIONS.filter((t) => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -222,21 +292,47 @@ export default function TokenEconomyPage() {
             <Link href="/governance" className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-4 w-4" />
             </Link>
-            <h1 className="heading-2">Token Economy</h1>
+            <h1 className="heading-2">EDU Token Dashboard</h1>
           </div>
           <p className="text-muted-foreground">
             Manage your EDU tokens, stake for rewards, and collect NFT credentials
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline">
+            <Send className="h-4 w-4 mr-2" />
+            Send
+          </Button>
+          <Button>
+            <Download className="h-4 w-4 mr-2" />
+            Receive
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="balance">Balance</TabsTrigger>
-          <TabsTrigger value="staking">Staking</TabsTrigger>
-          <TabsTrigger value="rewards">Rewards</TabsTrigger>
-          <TabsTrigger value="nfts">NFTs</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+          <TabsTrigger value="balance" className="flex items-center gap-2">
+            <Wallet className="h-4 w-4" />
+            <span className="hidden sm:inline">Balance</span>
+          </TabsTrigger>
+          <TabsTrigger value="earning" className="flex items-center gap-2">
+            <Gift className="h-4 w-4" />
+            <span className="hidden sm:inline">Earning</span>
+          </TabsTrigger>
+          <TabsTrigger value="spending" className="flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4" />
+            <span className="hidden sm:inline">Spending</span>
+          </TabsTrigger>
+          <TabsTrigger value="staking" className="flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            <span className="hidden sm:inline">Staking</span>
+          </TabsTrigger>
+          <TabsTrigger value="badges" className="flex items-center gap-2">
+            <Award className="h-4 w-4" />
+            <span className="hidden sm:inline">Badges</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Balance Tab */}
@@ -329,6 +425,236 @@ export default function TokenEconomyPage() {
           </Card>
         </TabsContent>
 
+        {/* Earning Tab */}
+        <TabsContent value="earning" className="space-y-6">
+          {/* Claimable Rewards */}
+          <Card className={claimableAmount > 0 ? 'border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/10' : ''}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="rounded-lg bg-amber-500/10 p-4">
+                    <Gift className="h-8 w-8 text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Claimable Rewards</p>
+                    <p className="text-4xl font-bold">{claimableAmount.toLocaleString()}</p>
+                    <p className="text-sm font-medium text-muted-foreground">EDU Tokens</p>
+                  </div>
+                </div>
+                {claimableAmount > 0 && (
+                  <Button onClick={handleClaimAll}>
+                    <Gift className="h-4 w-4 mr-2" />
+                    Claim All ({claimableRewards.length})
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Reward Breakdown */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {Object.entries(REWARD_TYPE_CONFIG).map(([type, config]) => {
+              const typeRewards = rewards.filter((r) => r.type === type);
+              const typeTotal = typeRewards.reduce((sum, r) => sum + r.amount, 0);
+              const Icon = config.icon;
+              return (
+                <Card key={type}>
+                  <CardContent className="flex items-center gap-4 p-6">
+                    <div className={`rounded-lg ${config.bg} p-3`}>
+                      <Icon className={`h-6 w-6 ${config.color}`} />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{typeTotal.toLocaleString()}</p>
+                      <p className="text-sm text-muted-foreground">{config.label} Rewards</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Reward History */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Activity Rewards History</CardTitle>
+              <CardDescription>All earned rewards across platform activities</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-0 divide-y">
+                {rewards.map((reward) => {
+                  const config = REWARD_TYPE_CONFIG[reward.type];
+                  const Icon = config.icon;
+                  return (
+                    <div key={reward.id} className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+                      <div className="flex items-center gap-4">
+                        <div className={`rounded-lg ${config.bg} p-2`}>
+                          <Icon className={`h-4 w-4 ${config.color}`} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{reward.description}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <Badge variant="secondary" className="text-xs">{config.label}</Badge>
+                            <span className="text-xs text-muted-foreground">{reward.date}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                          +{reward.amount.toLocaleString()} EDU
+                        </span>
+                        {reward.claimed ? (
+                          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Claimed
+                          </Badge>
+                        ) : (
+                          <Button size="sm" variant="outline" onClick={() => handleClaimSingle(reward.id)}>
+                            Claim
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Spending Tab */}
+        <TabsContent value="spending" className="space-y-6">
+          {/* Spending Overview */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="rounded-lg bg-red-500/10 p-3">
+                  <ShoppingCart className="h-6 w-6 text-red-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{totalSpent.toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground">Total Spent</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="rounded-lg bg-green-500/10 p-3">
+                  <Store className="h-6 w-6 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {MARKETPLACE_TRANSACTIONS.filter((t) => t.amount > 0).reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Sales Revenue</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="rounded-lg bg-blue-500/10 p-3">
+                  <Package className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {MARKETPLACE_TRANSACTIONS.filter((t) => t.type === 'purchase').length}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Purchases</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="rounded-lg bg-purple-500/10 p-3">
+                  <CreditCard className="h-6 w-6 text-purple-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {MARKETPLACE_TRANSACTIONS.filter((t) => t.type === 'subscription' && t.status === 'active').length}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Active Subscriptions</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Marketplace Transactions */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Marketplace Transactions</CardTitle>
+                  <CardDescription>Your purchases and sales in the Scholarly marketplace</CardDescription>
+                </div>
+                <Link href="/marketplace">
+                  <Button variant="outline" size="sm">
+                    <Store className="h-4 w-4 mr-2" />
+                    Visit Marketplace
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-medium">Date</th>
+                      <th className="px-4 py-3 text-left font-medium">Type</th>
+                      <th className="px-4 py-3 text-left font-medium">Item</th>
+                      <th className="px-4 py-3 text-left font-medium">Seller/Buyer</th>
+                      <th className="px-4 py-3 text-left font-medium">Status</th>
+                      <th className="px-4 py-3 text-right font-medium">Amount (EDU)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {MARKETPLACE_TRANSACTIONS.map((tx) => (
+                      <tr key={tx.id} className="hover:bg-muted/50">
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{tx.date}</td>
+                        <td className="px-4 py-3">
+                          <Badge
+                            className={
+                              tx.type === 'purchase'
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                : tx.type === 'sale'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                            }
+                          >
+                            {tx.type === 'purchase' && <ShoppingCart className="h-3 w-3 mr-1" />}
+                            {tx.type === 'sale' && <Store className="h-3 w-3 mr-1" />}
+                            {tx.type === 'subscription' && <CreditCard className="h-3 w-3 mr-1" />}
+                            {tx.type}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 font-medium">{tx.item}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {'seller' in tx ? tx.seller : 'buyer' in tx ? tx.buyer : '-'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge
+                            className={
+                              tx.status === 'completed'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                            }
+                          >
+                            {tx.status === 'completed' && <CheckCircle2 className="h-3 w-3 mr-1" />}
+                            {tx.status === 'active' && <Clock className="h-3 w-3 mr-1" />}
+                            {tx.status}
+                          </Badge>
+                        </td>
+                        <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${tx.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Staking Tab */}
         <TabsContent value="staking" className="space-y-6">
           {/* Staking Overview */}
@@ -361,7 +687,7 @@ export default function TokenEconomyPage() {
                   <Zap className="h-6 w-6 text-purple-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">2</p>
+                  <p className="text-2xl font-bold">{STAKING_POOLS.filter((p) => p.yourStake > 0).length}</p>
                   <p className="text-sm text-muted-foreground">Active Pools</p>
                 </div>
               </CardContent>
@@ -369,11 +695,11 @@ export default function TokenEconomyPage() {
             <Card>
               <CardContent className="flex items-center gap-4 p-6">
                 <div className="rounded-lg bg-amber-500/10 p-3">
-                  <Gift className="h-6 w-6 text-amber-500" />
+                  <Vote className="h-6 w-6 text-amber-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{TOKEN_BALANCE.pendingRewards.toLocaleString()}</p>
-                  <p className="text-sm text-muted-foreground">Pending Rewards</p>
+                  <p className="text-2xl font-bold">{TOKEN_BALANCE.staked.toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground">Governance Power</p>
                 </div>
               </CardContent>
             </Card>
@@ -460,104 +786,8 @@ export default function TokenEconomyPage() {
           </div>
         </TabsContent>
 
-        {/* Rewards Tab */}
-        <TabsContent value="rewards" className="space-y-6">
-          {/* Claimable Rewards */}
-          <Card className={claimableAmount > 0 ? 'border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/10' : ''}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-lg bg-amber-500/10 p-4">
-                    <Gift className="h-8 w-8 text-amber-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Claimable Rewards</p>
-                    <p className="text-4xl font-bold">{claimableAmount.toLocaleString()}</p>
-                    <p className="text-sm font-medium text-muted-foreground">EDU Tokens</p>
-                  </div>
-                </div>
-                {claimableAmount > 0 && (
-                  <Button onClick={handleClaimAll}>
-                    <Gift className="h-4 w-4 mr-2" />
-                    Claim All ({claimableRewards.length})
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Reward Breakdown */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {Object.entries(REWARD_TYPE_CONFIG).map(([type, config]) => {
-              const typeRewards = rewards.filter((r) => r.type === type);
-              const typeTotal = typeRewards.reduce((sum, r) => sum + r.amount, 0);
-              const Icon = config.icon;
-              return (
-                <Card key={type}>
-                  <CardContent className="flex items-center gap-4 p-6">
-                    <div className={`rounded-lg ${config.bg} p-3`}>
-                      <Icon className={`h-6 w-6 ${config.color}`} />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{typeTotal.toLocaleString()}</p>
-                      <p className="text-sm text-muted-foreground">{config.label} Rewards</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Reward History */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Reward History</CardTitle>
-              <CardDescription>All earned rewards across platform activities</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-0 divide-y">
-                {rewards.map((reward) => {
-                  const config = REWARD_TYPE_CONFIG[reward.type];
-                  const Icon = config.icon;
-                  return (
-                    <div key={reward.id} className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-                      <div className="flex items-center gap-4">
-                        <div className={`rounded-lg ${config.bg} p-2`}>
-                          <Icon className={`h-4 w-4 ${config.color}`} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{reward.description}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <Badge variant="secondary" className="text-xs">{config.label}</Badge>
-                            <span className="text-xs text-muted-foreground">{reward.date}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                          +{reward.amount.toLocaleString()} EDU
-                        </span>
-                        {reward.claimed ? (
-                          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Claimed
-                          </Badge>
-                        ) : (
-                          <Button size="sm" variant="outline" onClick={() => handleClaimSingle(reward.id)}>
-                            Claim
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* NFTs Tab */}
-        <TabsContent value="nfts" className="space-y-6">
+        {/* Badges (NFTs) Tab */}
+        <TabsContent value="badges" className="space-y-6">
           {/* NFT Stats */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
@@ -664,6 +894,19 @@ export default function TokenEconomyPage() {
                       <Sparkles className="h-4 w-4 mr-2" />
                       Mint NFT
                     </Button>
+                  )}
+
+                  {nft.mintStatus === 'minted' && (
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" className="flex-1">
+                        <Eye className="h-3.5 w-3.5 mr-1" />
+                        View
+                      </Button>
+                      <Button variant="ghost" size="sm" className="flex-1">
+                        <Send className="h-3.5 w-3.5 mr-1" />
+                        Transfer
+                      </Button>
+                    </div>
                   )}
                 </CardContent>
               </Card>

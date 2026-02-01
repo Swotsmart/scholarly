@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   CalendarClock,
+  BarChart3,
 } from 'lucide-react';
 
 const todaySchedule = [
@@ -47,7 +48,7 @@ export default function TeacherSchedulingPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Link href="/teacher/scheduling/timetable">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardContent className="flex items-center gap-4 p-6">
@@ -72,7 +73,7 @@ export default function TeacherSchedulingPage() {
                 <Clock className="h-6 w-6 text-orange-500" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold">Relief Coverage</h3>
+                <h3 className="font-semibold">Relief Marketplace</h3>
                 <p className="text-sm text-muted-foreground">
                   View or accept relief slots
                 </p>
@@ -92,6 +93,23 @@ export default function TeacherSchedulingPage() {
                 <h3 className="font-semibold">Room Booking</h3>
                 <p className="text-sm text-muted-foreground">
                   Book labs and facilities
+                </p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/teacher/scheduling/capacity">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-lg bg-purple-500/10 p-3">
+                <BarChart3 className="h-6 w-6 text-purple-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold">Capacity Dashboard</h3>
+                <p className="text-sm text-muted-foreground">
+                  Monitor resource utilization
                 </p>
               </div>
               <ArrowRight className="h-5 w-5 text-muted-foreground" />

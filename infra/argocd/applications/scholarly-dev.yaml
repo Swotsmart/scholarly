@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: scholarly-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: scholarly
+    environment: dev
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    # Notifications (if argocd-notifications is installed)
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: scholarly-deployments
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: scholarly-alerts
+spec:
+  project: scholarly
+
+  source:
+    repoURL: https://github.com/your-org/scholarly.git  # Update with your repo
+    targetRevision: main
+    path: infra/kubernetes/overlays/dev
+
+    # Kustomize configuration
+    kustomize:
+      images:
+        - scholarlyacr.azurecr.io/scholarly:latest
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: scholarly-dev
+
+  # Sync policy
+  syncPolicy:
+    automated:
+      prune: true           # Delete resources removed from Git
+      selfHeal: true        # Revert manual changes
+      allowEmpty: false     # Don't sync if no resources
+
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - ApplyOutOfSyncOnly=true
+      - Validate=true
+
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health checks
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Ignore HPA-managed replica count
+
+  # Revision history limit
+  revisionHistoryLimit: 10

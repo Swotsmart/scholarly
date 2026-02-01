@@ -1,0 +1,67 @@
+# =============================================================================
+# Scholarly API - Production Dockerfile
+# =============================================================================
+
+FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat openssl
+RUN corepack enable && corepack prepare pnpm@8.15.0 --activate
+WORKDIR /app
+
+# Stage: Dependencies
+FROM base AS deps
+
+# Copy package files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/database/package.json ./packages/database/
+COPY packages/database/prisma ./packages/database/prisma/
+COPY packages/api/package.json ./packages/api/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile || pnpm install
+
+# Generate Prisma client
+RUN cd packages/database && pnpm exec prisma generate
+
+# Stage: Builder
+FROM base AS builder
+WORKDIR /app
+
+COPY --from=deps /app ./
+
+# Copy source code
+COPY packages/shared ./packages/shared
+COPY packages/database/src ./packages/database/src
+COPY packages/api ./packages/api
+
+# Build packages in order
+RUN pnpm --filter @scholarly/shared build || true
+RUN pnpm --filter @scholarly/database build || true
+RUN pnpm --filter @scholarly/api build
+
+# Stage: Production
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+RUN apk add --no-cache libc6-compat openssl dumb-init
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 scholarly
+
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Copy entire built application including node_modules with proper symlinks
+COPY --from=builder --chown=scholarly:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=scholarly:nodejs /app/packages ./packages
+COPY --from=builder --chown=scholarly:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=scholarly:nodejs /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+
+USER scholarly
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "packages/api/dist/index.js"]

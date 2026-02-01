@@ -1,0 +1,95 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: scholarly
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Scholarly Platform Project
+
+  # Source repositories
+  sourceRepos:
+    - 'https://github.com/your-org/scholarly.git'  # Update with your repo
+    - 'https://github.com/your-org/scholarly-infra.git'
+
+  # Destination clusters and namespaces
+  destinations:
+    # Dev cluster
+    - namespace: scholarly-dev
+      server: https://kubernetes.default.svc
+    - namespace: scholarly
+      server: https://kubernetes.default.svc
+    # Add more clusters as needed
+    # - namespace: scholarly
+    #   server: https://prod-cluster-api-server
+
+  # Allowed cluster resources
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: networking.k8s.io
+      kind: IngressClass
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+
+  # Allowed namespace resources (all by default)
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  # Deny specific resources
+  namespaceResourceBlacklist:
+    - group: ''
+      kind: ResourceQuota
+    - group: ''
+      kind: LimitRange
+
+  # Sync windows - prevent deployments during certain times
+  syncWindows:
+    # Allow deployments only during business hours on weekdays
+    - kind: allow
+      schedule: '0 9 * * 1-5'  # 9 AM Mon-Fri
+      duration: 10h            # Until 7 PM
+      applications:
+        - '*'
+      namespaces:
+        - scholarly
+      timeZone: Australia/Sydney
+
+    # Allow deployments anytime in dev
+    - kind: allow
+      schedule: '* * * * *'
+      duration: 24h
+      applications:
+        - scholarly-dev
+      namespaces:
+        - scholarly-dev
+
+  # Orphaned resources monitoring
+  orphanedResources:
+    warn: true
+    ignore:
+      - group: ''
+        kind: ConfigMap
+        name: kube-root-ca.crt
+
+  # Roles within this project
+  roles:
+    - name: developer
+      description: Developer access to scholarly applications
+      policies:
+        - p, proj:scholarly:developer, applications, get, scholarly/*, allow
+        - p, proj:scholarly:developer, applications, sync, scholarly/*, allow
+        - p, proj:scholarly:developer, applications, action/*, scholarly/*, allow
+      groups:
+        - scholarly-developers  # Azure AD group
+
+    - name: viewer
+      description: Read-only access
+      policies:
+        - p, proj:scholarly:viewer, applications, get, scholarly/*, allow
+      groups:
+        - scholarly-viewers

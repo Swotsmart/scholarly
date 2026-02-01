@@ -1,0 +1,17 @@
+# Production Environment Variables
+# Copy this file to terraform.tfvars and fill in the values
+
+# Required
+jwt_secret = "your-production-jwt-secret-minimum-32-characters"
+
+# AKS deployment toggle
+# Set to true when ready to deploy AKS for high traffic
+deploy_aks = false
+
+# AAD groups for AKS admin access (Azure AD Group Object IDs)
+admin_group_object_ids = []
+
+# Optional overrides
+# location    = "australiaeast"
+# environment = "prod"
+# project     = "scholarly"

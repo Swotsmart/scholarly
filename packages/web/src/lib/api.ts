@@ -3,7 +3,7 @@
  */
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || true; // Enable demo mode by default
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== 'false'; // Demo mode unless explicitly disabled
 
 // ==========================================================================
 // MOCK DATA FOR DEMO MODE

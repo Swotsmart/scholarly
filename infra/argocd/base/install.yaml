@@ -1,0 +1,43 @@
+# ArgoCD HA Installation
+# This file is a reference - we use the official manifests via kustomize
+# See: https://argo-cd.readthedocs.io/en/stable/operator-manual/installation/
+#
+# For HA installation (production):
+#   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/ha/install.yaml
+#
+# For non-HA installation (dev):
+#   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+#
+# This kustomization patches the official install with our customizations
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+resources:
+  - namespace.yaml
+  # Use HA install for production
+  - https://raw.githubusercontent.com/argoproj/argo-cd/v2.10.0/manifests/ha/install.yaml
+
+patches:
+  # Configure ArgoCD server for ingress
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --insecure
+    target:
+      kind: Deployment
+      name: argocd-server
+
+  # Increase resource limits for HA
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: 1Gi
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: 512Mi
+    target:
+      kind: Deployment
+      name: argocd-repo-server

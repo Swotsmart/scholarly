@@ -172,9 +172,9 @@ curriculumRouter.get('/structure', async (req, res) => {
   }
 
   // Get all year levels
-  const yearLevels = [...new Set(standards.flatMap(s => s.yearLevels))].sort((a, b) => {
-    const numA = parseInt(a.replace(/\D/g, '')) || 0;
-    const numB = parseInt(b.replace(/\D/g, '')) || 0;
+  const yearLevels = [...new Set(standards.flatMap(s => s.yearLevels as string[]))].sort((a, b) => {
+    const numA = parseInt((a as string).replace(/\D/g, '')) || 0;
+    const numB = parseInt((b as string).replace(/\D/g, '')) || 0;
     return numA - numB;
   });
 

@@ -1,0 +1,46 @@
+# App of Apps Pattern
+# This application manages all other applications
+# Deploy this single app to bootstrap the entire system
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: scholarly-apps
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: scholarly-apps
+    app.kubernetes.io/component: app-of-apps
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default  # Use default project for the app-of-apps
+
+  source:
+    repoURL: https://github.com/your-org/scholarly.git  # Update with your repo
+    targetRevision: main
+    path: infra/argocd/applications
+
+    # Only include Application manifests
+    directory:
+      recurse: false
+      include: 'scholarly-*.yaml'
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=false
+      - ApplyOutOfSyncOnly=true
+
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

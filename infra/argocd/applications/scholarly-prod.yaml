@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: scholarly-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: scholarly
+    environment: prod
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: scholarly-deployments
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: scholarly-alerts
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: scholarly-alerts
+spec:
+  project: scholarly
+
+  source:
+    repoURL: https://github.com/your-org/scholarly.git  # Update with your repo
+    targetRevision: main  # Or use tags for production: v1.0.0
+    path: infra/kubernetes/overlays/prod
+
+    kustomize:
+      images:
+        - scholarlyacr.azurecr.io/scholarly:latest  # Override via image updater
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: scholarly
+
+  # Production sync policy - manual approval required
+  syncPolicy:
+    # IMPORTANT: No 'automated' block = manual sync required for prod
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - ApplyOutOfSyncOnly=true
+      - Validate=true
+      - RespectIgnoreDifferences=true
+
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+      jsonPointers:
+        - /spec/minReplicas
+        - /spec/maxReplicas
+
+  revisionHistoryLimit: 20  # Keep more history for prod

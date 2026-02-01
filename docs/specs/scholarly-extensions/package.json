@@ -1,0 +1,62 @@
+{
+  "name": "@scholarly/extensions",
+  "version": "1.0.0",
+  "description": "Early Years Curriculum (EYLF/EYFS) and Third-Party Integrations for Scholarly",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:integration": "jest --config jest.integration.config.js",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
+  "keywords": [
+    "scholarly",
+    "education",
+    "eylf",
+    "eyfs",
+    "early-years",
+    "curriculum",
+    "canva",
+    "google-classroom",
+    "paypal",
+    "integrations"
+  ],
+  "author": "Scholarly Team",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^5.10.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.2.5",
+    "prisma": "^5.10.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "@scholarly/core": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scholarly/extensions.git"
+  },
+  "files": [
+    "dist",
+    "prisma/schema.prisma",
+    "README.md"
+  ]
+}

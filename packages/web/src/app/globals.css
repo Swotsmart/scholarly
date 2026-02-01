@@ -2,58 +2,116 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   Design System v2.0 - Scholarly UI/UX
+   ============================================ */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
+    /* Background & Foreground */
+    --background: 0 0% 100%;           /* Surface White: #FFFFFF */
+    --foreground: 222.2 84% 4.9%;      /* Dark text */
+
+    /* Card & Popover */
+    --card: 0 0% 100%;                 /* Surface White: #FFFFFF */
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
+
+    /* Primary Blue: #2563EB - Scholarly Blue (Actions, links, primary buttons) */
+    --primary: 217 83% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary Indigo: #6366F1 - Secondary actions, highlights */
+    --secondary: 239 84% 67%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted - Surface Alt: #F9FAFB */
+    --muted: 210 20% 98%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --success: 142.1 76.2% 36.3%;
-    --success-foreground: 355.7 100% 97.3%;
+
+    /* Accent Violet: #8B5CF6 - Special features, gamification */
+    --accent: 258 90% 66%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Error Red: #EF4444 - Errors, critical alerts */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success Emerald: #10B981 - Positive feedback, completion */
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning Amber: #F59E0B - Caution states, deadlines */
     --warning: 38 92% 50%;
-    --warning-foreground: 48 96% 89%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --warning-foreground: 0 0% 100%;
+
+    /* Border: #E5E7EB - Subtle dividers, card borders */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 83% 53%;         /* Matches primary */
+
+    /* Border Radius - Design System v2.0 */
+    --radius: 6px;                     /* DEFAULT radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+
+    /* Spacing - Design System v2.0 (base unit: 4px) */
+    --spacing-unit: 4px;
+    --spacing-tight: 16px;             /* gap-4 for tight layouts */
+    --spacing-relaxed: 24px;           /* gap-6 for relaxed layouts */
+    --spacing-section: 32px;           /* Section spacing min */
+    --spacing-section-lg: 48px;        /* Section spacing max */
+
+    /* Max Content Width */
+    --max-content-width: 1280px;       /* max-w-7xl */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Background & Foreground - Dark mode */
+    --background: 222 84% 5%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+
+    /* Card & Popover - Dark mode */
+    --card: 222 84% 6%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 84% 6%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+
+    /* Primary Blue: #3B82F6 - Lighter for dark mode visibility */
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+
+    /* Secondary Indigo: #818CF8 - Adjusted for dark mode */
+    --secondary: 239 84% 74%;
+    --secondary-foreground: 222 47% 11%;
+
+    /* Muted - Dark surface */
+    --muted: 217 33% 18%;
+    --muted-foreground: 215 20% 65%;
+
+    /* Accent Violet: #A78BFA - Adjusted for dark mode */
+    --accent: 258 90% 76%;
+    --accent-foreground: 222 47% 11%;
+
+    /* Error Red - Dark mode */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-    --success: 142.1 70.6% 45.3%;
-    --success-foreground: 144.9 80.4% 10%;
-    --warning: 48 96% 53%;
-    --warning-foreground: 20.5 90.2% 48.2%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+
+    /* Success Emerald - Dark mode */
+    --success: 160 84% 45%;
+    --success-foreground: 145 80% 10%;
+
+    /* Warning Amber - Dark mode */
+    --warning: 38 92% 55%;
+    --warning-foreground: 21 90% 10%;
+
+    /* Border - Dark mode */
+    --border: 217 33% 18%;
+    --input: 217 33% 18%;
+    --ring: 217 91% 60%;
   }
 }
 
@@ -125,41 +183,199 @@
   }
 }
 
-/* Typography utilities */
+/* ============================================
+   Typography Utilities - Design System v2.0
+   Font: Inter (SF Pro alternative)
+   Line height: 1.5 body, 1.2 headings
+   Letter spacing: -0.01em for large text
+   ============================================ */
 @layer utilities {
+  /* Display headings - largest text */
+  .display-1 {
+    @apply scroll-m-20 text-7xl font-extrabold;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .display-2 {
+    @apply scroll-m-20 text-6xl font-extrabold;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  /* Standard headings */
   .heading-1 {
-    @apply scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl;
+    @apply scroll-m-20 text-5xl font-extrabold lg:text-6xl;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
   }
 
   .heading-2 {
-    @apply scroll-m-20 text-3xl font-semibold tracking-tight;
+    @apply scroll-m-20 text-4xl font-semibold;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
   }
 
   .heading-3 {
-    @apply scroll-m-20 text-2xl font-semibold tracking-tight;
+    @apply scroll-m-20 text-3xl font-semibold;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
   }
 
   .heading-4 {
-    @apply scroll-m-20 text-xl font-semibold tracking-tight;
+    @apply scroll-m-20 text-2xl font-semibold;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
   }
 
+  .heading-5 {
+    @apply scroll-m-20 text-xl font-semibold;
+    line-height: 1.2;
+  }
+
+  .heading-6 {
+    @apply scroll-m-20 text-lg font-semibold;
+    line-height: 1.2;
+  }
+
+  /* Body text */
   .paragraph {
-    @apply leading-7 [&:not(:first-child)]:mt-6;
+    @apply text-base;
+    line-height: 1.5;
+  }
+
+  .paragraph:not(:first-child) {
+    @apply mt-6;
   }
 
   .lead {
     @apply text-xl text-muted-foreground;
+    line-height: 1.5;
   }
 
   .large {
     @apply text-lg font-semibold;
+    line-height: 1.5;
   }
 
   .small {
-    @apply text-sm font-medium leading-none;
+    @apply text-sm font-medium;
+    line-height: 1.5;
   }
 
   .muted {
     @apply text-sm text-muted-foreground;
+    line-height: 1.5;
+  }
+
+  .caption {
+    @apply text-xs text-muted-foreground;
+    line-height: 1.5;
+  }
+}
+
+/* ============================================
+   Spacing Utilities - Design System v2.0
+   Base unit: 4px (0.25rem)
+   ============================================ */
+@layer utilities {
+  /* Component padding */
+  .padding-standard {
+    @apply p-4; /* 16px */
+  }
+
+  .padding-card {
+    @apply p-6; /* 24px */
+  }
+
+  /* Section spacing */
+  .section-spacing {
+    @apply py-8; /* 32px */
+  }
+
+  .section-spacing-lg {
+    @apply py-12; /* 48px */
+  }
+
+  /* Grid gaps */
+  .gap-tight {
+    @apply gap-4; /* 16px */
+  }
+
+  .gap-relaxed {
+    @apply gap-6; /* 24px */
+  }
+
+  /* Content container */
+  .content-container {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+}
+
+/* ============================================
+   Color Utility Classes - Design System v2.0
+   ============================================ */
+@layer utilities {
+  /* Scholarly brand color utilities */
+  .bg-scholarly-blue {
+    background-color: #2563EB;
+  }
+
+  .bg-scholarly-indigo {
+    background-color: #6366F1;
+  }
+
+  .bg-scholarly-violet {
+    background-color: #8B5CF6;
+  }
+
+  .bg-scholarly-emerald {
+    background-color: #10B981;
+  }
+
+  .bg-scholarly-amber {
+    background-color: #F59E0B;
+  }
+
+  .bg-scholarly-red {
+    background-color: #EF4444;
+  }
+
+  .bg-surface {
+    background-color: #FFFFFF;
+  }
+
+  .bg-surface-alt {
+    background-color: #F9FAFB;
+  }
+
+  /* Text colors */
+  .text-scholarly-blue {
+    color: #2563EB;
+  }
+
+  .text-scholarly-indigo {
+    color: #6366F1;
+  }
+
+  .text-scholarly-violet {
+    color: #8B5CF6;
+  }
+
+  .text-scholarly-emerald {
+    color: #10B981;
+  }
+
+  .text-scholarly-amber {
+    color: #F59E0B;
+  }
+
+  .text-scholarly-red {
+    color: #EF4444;
+  }
+
+  /* Border colors */
+  .border-scholarly {
+    border-color: #E5E7EB;
   }
 }

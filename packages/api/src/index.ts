@@ -38,10 +38,18 @@ import { ssiRouter } from './routes/ssi';
 import { advancedLearningRouter } from './routes/advanced-learning';
 import { governanceRouter } from './routes/governance';
 import { marketplaceRouter } from './routes/marketplace';
+import { subscriptionsRouter } from './routes/subscriptions';
+import { identityRouter } from './routes/identity';
+import { createPaymentRouter } from './routes/payment';
+import { hostingRouter } from './routes/hosting';
+import { verificationRouter } from './routes/verification';
 
 // Middleware
 import { errorHandler } from './middleware/error-handler';
 import { authMiddleware } from './middleware/auth';
+
+// Service initialization
+import { initializeHostingServices } from './lib/hosting-init';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
@@ -98,6 +106,11 @@ api.use('/ssi', authMiddleware, ssiRouter);
 api.use('/advanced-learning', authMiddleware, advancedLearningRouter);
 api.use('/governance', authMiddleware, governanceRouter);
 api.use('/marketplace', authMiddleware, marketplaceRouter);
+api.use('/subscriptions', authMiddleware, subscriptionsRouter);
+api.use('/identity', authMiddleware, identityRouter);
+api.use('/payment', authMiddleware, createPaymentRouter());
+api.use('/hosting', hostingRouter); // Has both public and protected routes
+api.use('/verification', verificationRouter); // Has both public (webhooks) and protected routes
 
 app.use('/api/v1', api);
 
@@ -115,6 +128,9 @@ async function start() {
     console.log('Connecting to database...');
     await prisma.$connect();
     console.log('Database connected');
+
+    // Initialize hosting services
+    initializeHostingServices();
 
     app.listen(PORT, () => {
       console.log(`

@@ -1,0 +1,10 @@
+# Development Environment Variables
+# Copy this file to terraform.tfvars and fill in the values
+
+# Required
+jwt_secret = "your-jwt-secret-minimum-32-characters-long"
+
+# Optional overrides
+# location    = "australiaeast"
+# environment = "dev"
+# project     = "scholarly"

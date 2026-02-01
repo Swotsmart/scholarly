@@ -18,23 +18,17 @@ import {
   Target,
   Presentation,
   ClipboardCheck,
-  UserCheck,
   CalendarClock,
   School,
   FileText,
   TrendingUp,
   Clock,
-  Baby,
   Languages,
   Bot,
   Database,
   MessageSquare,
-  Wand2,
-  Activity,
-  Layers,
   Compass,
   Brain,
-  Home,
   BookMarked,
   Briefcase,
   Crosshair,
@@ -47,26 +41,24 @@ import {
   Shapes,
   Award,
   Building,
-  Fingerprint,
-  Key,
-  BadgeCheck,
-  FileCheck,
   Landmark,
-  ScrollText,
-  Coins,
-  PiggyBank,
   Store,
-  ShoppingBag,
   Rocket,
-  Video,
   Building2,
-  BookOpenCheck,
-  Wrench,
-  Globe,
-  ArrowLeftRight,
+  Trophy,
+  Search,
+  BookCheck,
+  Library,
+  PenTool,
+  DoorOpen,
+  Maximize,
+  CreditCard,
+  Eye,
+  Kanban,
+  FolderKanban,
 } from 'lucide-react';
 
-// Navigation items for learners/students
+// Navigation items for learners/students (UI/UX Design System v2.0)
 const learnerNavigation = [
   {
     name: 'Dashboard',
@@ -74,87 +66,13 @@ const learnerNavigation = [
     icon: LayoutDashboard,
   },
   {
-    name: 'Design & Pitch',
-    href: '/design-pitch',
-    icon: Lightbulb,
-    children: [
-      { name: 'My Journeys', href: '/design-pitch/journeys', icon: Target },
-      { name: 'Challenges', href: '/design-pitch/challenges', icon: Sparkles },
-      { name: 'Pitch Decks', href: '/design-pitch/pitch-decks', icon: Presentation },
-    ],
-  },
-  {
-    name: 'Showcase',
-    href: '/showcase',
-    icon: FolderOpen,
-    children: [
-      { name: 'My Portfolios', href: '/showcase/portfolios', icon: FolderOpen },
-      { name: 'Analytics', href: '/showcase/analytics', icon: BarChart3 },
-    ],
-  },
-  {
     name: 'Learning',
     href: '/learning',
     icon: BookOpen,
     children: [
       { name: 'Courses', href: '/learning/courses', icon: BookOpen },
-      { name: 'My Progress', href: '/learning/progress', icon: Target },
+      { name: 'Progress', href: '/learning/progress', icon: TrendingUp },
     ],
-  },
-  {
-    name: 'Tutoring',
-    href: '/tutoring',
-    icon: GraduationCap,
-    children: [
-      { name: 'Find Tutors', href: '/tutoring/search', icon: Users },
-      { name: 'My Bookings', href: '/tutoring/bookings', icon: Calendar },
-    ],
-  },
-  {
-    name: 'Early Years',
-    href: '/early-years',
-    icon: Baby,
-    children: [
-      { name: 'Little Explorers', href: '/early-years', icon: Sparkles },
-      { name: 'Parent Dashboard', href: '/early-years/parent', icon: BarChart3 },
-    ],
-  },
-  {
-    name: 'Languages',
-    href: '/linguaflow',
-    icon: Languages,
-    children: [
-      { name: 'My Learning', href: '/linguaflow', icon: BookOpen },
-      { name: 'Vocabulary', href: '/linguaflow/vocabulary', icon: FileText },
-      { name: 'Grammar', href: '/linguaflow/grammar', icon: GraduationCap },
-      { name: 'Conversation', href: '/linguaflow/conversation', icon: MessageSquare },
-      { name: 'Immersion', href: '/linguaflow/immersion', icon: Globe },
-      { name: 'Exchange', href: '/linguaflow/exchange', icon: ArrowLeftRight },
-      { name: 'Progress', href: '/linguaflow/progress', icon: TrendingUp },
-    ],
-  },
-  {
-    name: 'AI Studio',
-    href: '/ai-studio',
-    icon: Bot,
-    children: [
-      { name: 'AI Tutor', href: '/ai-studio', icon: MessageSquare },
-      { name: 'Content Generator', href: '/ai-studio?tab=generator', icon: Wand2 },
-    ],
-  },
-  {
-    name: 'Data Lake',
-    href: '/data-lake',
-    icon: Database,
-    children: [
-      { name: 'Overview', href: '/data-lake', icon: Layers },
-      { name: 'Live Events', href: '/data-lake?tab=events', icon: Activity },
-    ],
-  },
-  {
-    name: 'Analytics',
-    href: '/analytics',
-    icon: BarChart3,
   },
   {
     name: 'Golden Path',
@@ -167,12 +85,24 @@ const learnerNavigation = [
     ],
   },
   {
-    name: 'Homeschool',
-    href: '/homeschool',
-    icon: Home,
+    name: 'LinguaFlow',
+    href: '/linguaflow',
+    icon: Languages,
     children: [
-      { name: 'Curriculum', href: '/homeschool/curriculum', icon: BookMarked },
-      { name: 'Resources', href: '/homeschool/resources', icon: BookOpen },
+      { name: 'Vocabulary', href: '/linguaflow/vocabulary', icon: FileText },
+      { name: 'Grammar', href: '/linguaflow/grammar', icon: GraduationCap },
+      { name: 'Conversation', href: '/linguaflow/conversation', icon: MessageSquare },
+      { name: 'Progress', href: '/linguaflow/progress', icon: TrendingUp },
+    ],
+  },
+  {
+    name: 'Design & Pitch',
+    href: '/design-pitch',
+    icon: Lightbulb,
+    children: [
+      { name: 'Challenges', href: '/design-pitch/challenges', icon: Sparkles },
+      { name: 'Journeys', href: '/design-pitch/journeys', icon: Map },
+      { name: 'Pitch Decks', href: '/design-pitch/pitch-decks', icon: Presentation },
     ],
   },
   {
@@ -183,6 +113,21 @@ const learnerNavigation = [
       { name: 'Artifacts', href: '/portfolio/artifacts', icon: FolderOpen },
       { name: 'Goals', href: '/portfolio/goals', icon: Crosshair },
       { name: 'Journeys', href: '/portfolio/journeys', icon: Map },
+      { name: 'Showcase', href: '/portfolio/showcase', icon: Eye },
+    ],
+  },
+  {
+    name: 'AI Buddy',
+    href: '/ai-buddy',
+    icon: Bot,
+  },
+  {
+    name: 'Tutoring',
+    href: '/tutoring',
+    icon: GraduationCap,
+    children: [
+      { name: 'Search', href: '/tutoring/search', icon: Search },
+      { name: 'Bookings', href: '/tutoring/bookings', icon: Calendar },
     ],
   },
   {
@@ -190,43 +135,15 @@ const learnerNavigation = [
     href: '/advanced-learning',
     icon: Rocket,
     children: [
-      { name: 'Video Coaching', href: '/advanced-learning/video-coaching', icon: Video },
-      { name: 'Peer Review', href: '/advanced-learning/peer-review', icon: ClipboardCheck },
-      { name: 'Industry Experience', href: '/advanced-learning/industry', icon: Building2 },
-      { name: 'PD Hub', href: '/advanced-learning/pd-hub', icon: BookOpenCheck },
-      { name: 'PBL Projects', href: '/advanced-learning/pbl', icon: Wrench },
+      { name: 'EduScrum', href: '/advanced-learning/eduscrum', icon: Kanban },
+      { name: 'PBL', href: '/advanced-learning/pbl', icon: FolderKanban },
+      { name: 'Work Experience', href: '/advanced-learning/work-experience', icon: Building2 },
     ],
   },
   {
-    name: 'Identity',
-    href: '/ssi',
-    icon: Fingerprint,
-    children: [
-      { name: 'Wallet', href: '/ssi/wallet', icon: Key },
-      { name: 'Credentials', href: '/ssi/credentials', icon: BadgeCheck },
-      { name: 'Presentations', href: '/ssi/presentations', icon: FileCheck },
-    ],
-  },
-  {
-    name: 'Governance',
-    href: '/governance',
-    icon: Landmark,
-    children: [
-      { name: 'Proposals', href: '/governance/proposals', icon: ScrollText },
-      { name: 'Delegates', href: '/governance/delegates', icon: Users },
-      { name: 'Treasury', href: '/governance/treasury', icon: PiggyBank },
-      { name: 'Tokens', href: '/governance/tokens', icon: Coins },
-    ],
-  },
-  {
-    name: 'Marketplace',
-    href: '/marketplace',
-    icon: Store,
-    children: [
-      { name: 'Apps', href: '/marketplace/apps', icon: ShoppingBag },
-      { name: 'Community', href: '/marketplace/community', icon: Users },
-      { name: 'Developer', href: '/marketplace/developer', icon: Wrench },
-    ],
+    name: 'Achievements',
+    href: '/achievements',
+    icon: Trophy,
   },
   {
     name: 'Settings',
@@ -235,7 +152,7 @@ const learnerNavigation = [
   },
 ];
 
-// Navigation items for teachers/educators
+// Navigation items for teachers/educators (UI/UX Design System v2.0)
 const teacherNavigation = [
   {
     name: 'Dashboard',
@@ -243,40 +160,42 @@ const teacherNavigation = [
     icon: LayoutDashboard,
   },
   {
-    name: 'My Classes',
+    name: 'Classes',
     href: '/teacher/classes',
     icon: School,
-    children: [
-      { name: 'All Classes', href: '/teacher/classes', icon: School },
-      { name: 'Student Progress', href: '/teacher/students', icon: TrendingUp },
-    ],
   },
   {
-    name: 'Design Challenges',
+    name: 'Students',
+    href: '/teacher/students',
+    icon: Users,
+  },
+  {
+    name: 'Challenges',
     href: '/teacher/challenges',
-    icon: Lightbulb,
-    children: [
-      { name: 'My Challenges', href: '/teacher/challenges', icon: Sparkles },
-      { name: 'Create Challenge', href: '/teacher/challenges/create', icon: FileText },
-      { name: 'Student Journeys', href: '/teacher/journeys', icon: Target },
-    ],
+    icon: Sparkles,
   },
   {
-    name: 'Peer Review',
-    href: '/teacher/reviews',
-    icon: ClipboardCheck,
-    children: [
-      { name: 'Review Queue', href: '/teacher/reviews', icon: ClipboardCheck },
-      { name: 'Assignments', href: '/teacher/reviews/assignments', icon: UserCheck },
-    ],
+    name: 'Journeys',
+    href: '/teacher/journeys',
+    icon: Map,
   },
   {
     name: 'Grading',
     href: '/teacher/grading',
     icon: FileText,
     children: [
-      { name: 'Pitch Evaluations', href: '/teacher/grading/pitches', icon: Presentation },
-      { name: 'Portfolio Reviews', href: '/teacher/grading/portfolios', icon: FolderOpen },
+      { name: 'Pitches', href: '/teacher/grading/pitches', icon: Presentation },
+      { name: 'Portfolios', href: '/teacher/grading/portfolios', icon: FolderOpen },
+      { name: 'Gradebook', href: '/teacher/grading/gradebook', icon: BookCheck },
+    ],
+  },
+  {
+    name: 'Assessment',
+    href: '/teacher/assessment',
+    icon: ClipboardCheck,
+    children: [
+      { name: 'Library', href: '/teacher/assessment/library', icon: Library },
+      { name: 'Builder', href: '/teacher/assessment/builder', icon: PenTool },
     ],
   },
   {
@@ -285,43 +204,32 @@ const teacherNavigation = [
     icon: CalendarClock,
     children: [
       { name: 'Timetable', href: '/teacher/scheduling/timetable', icon: Calendar },
-      { name: 'Relief Coverage', href: '/teacher/scheduling/relief', icon: Clock },
-      { name: 'Room Booking', href: '/teacher/scheduling/rooms', icon: School },
+      { name: 'Relief', href: '/teacher/scheduling/relief', icon: Clock },
+      { name: 'Rooms', href: '/teacher/scheduling/rooms', icon: DoorOpen },
+      { name: 'Capacity', href: '/teacher/scheduling/capacity', icon: Maximize },
     ],
   },
   {
+    name: 'Lesson Planner',
+    href: '/teacher/lesson-planner',
+    icon: BookMarked,
+  },
+  {
     name: 'Standards',
-    href: '/standards',
+    href: '/teacher/standards',
     icon: Shield,
     children: [
-      { name: 'Dashboard', href: '/standards', icon: Shield },
-      { name: 'Audits', href: '/standards/audits', icon: ClipboardCheck },
+      { name: 'Audits', href: '/teacher/standards/audits', icon: ClipboardCheck },
     ],
   },
   {
     name: 'ML Pipeline',
-    href: '/ml',
+    href: '/teacher/ml',
     icon: Cpu,
     children: [
-      { name: 'Models', href: '/ml/models', icon: GitBranch },
-      { name: 'Predictions', href: '/ml/predictions', icon: TrendingUp },
+      { name: 'Models', href: '/teacher/ml/models', icon: GitBranch },
+      { name: 'Predictions', href: '/teacher/ml/predictions', icon: TrendingUp },
     ],
-  },
-  {
-    name: 'Advanced Learning',
-    href: '/advanced-learning',
-    icon: Rocket,
-    children: [
-      { name: 'Video Coaching', href: '/advanced-learning/video-coaching', icon: Video },
-      { name: 'Peer Review', href: '/advanced-learning/peer-review', icon: ClipboardCheck },
-      { name: 'PD Hub', href: '/advanced-learning/pd-hub', icon: BookOpenCheck },
-      { name: 'PBL Projects', href: '/advanced-learning/pbl', icon: Wrench },
-    ],
-  },
-  {
-    name: 'Governance',
-    href: '/governance',
-    icon: Landmark,
   },
   {
     name: 'Reports',
@@ -330,12 +238,145 @@ const teacherNavigation = [
   },
   {
     name: 'Settings',
+    href: '/teacher/settings',
+    icon: Settings,
+  },
+];
+
+// Navigation items for tutors (UI/UX Design System v2.0)
+const tutorNavigation = [
+  {
+    name: 'Dashboard',
+    href: '/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    name: 'My Students',
+    href: '/tutoring/students',
+    icon: Users,
+  },
+  {
+    name: 'Sessions',
+    href: '/tutoring/sessions',
+    icon: Calendar,
+    children: [
+      { name: 'Upcoming', href: '/tutoring/sessions/upcoming', icon: Clock },
+      { name: 'History', href: '/tutoring/sessions/history', icon: FileText },
+    ],
+  },
+  {
+    name: 'Availability',
+    href: '/tutoring/availability',
+    icon: CalendarClock,
+  },
+  {
+    name: 'Resources',
+    href: '/tutoring/resources',
+    icon: BookOpen,
+    children: [
+      { name: 'My Materials', href: '/tutoring/resources/materials', icon: FolderOpen },
+      { name: 'Shared', href: '/tutoring/resources/shared', icon: Library },
+    ],
+  },
+  {
+    name: 'Earnings',
+    href: '/tutoring/earnings',
+    icon: CreditCard,
+    children: [
+      { name: 'Overview', href: '/tutoring/earnings/overview', icon: BarChart3 },
+      { name: 'Payouts', href: '/tutoring/earnings/payouts', icon: TrendingUp },
+    ],
+  },
+  {
+    name: 'Reviews',
+    href: '/tutoring/reviews',
+    icon: Award,
+  },
+  {
+    name: 'Profile',
+    href: '/tutoring/profile',
+    icon: Briefcase,
+  },
+  {
+    name: 'Settings',
     href: '/settings',
     icon: Settings,
   },
 ];
 
-// Navigation items for admins
+// Navigation items for parents (UI/UX Design System v2.0)
+const parentNavigation = [
+  {
+    name: 'Dashboard',
+    href: '/parent/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    name: 'My Children',
+    href: '/parent/children',
+    icon: Users,
+  },
+  {
+    name: 'Little Explorers',
+    href: '/early-years',
+    icon: Sparkles,
+    description: 'Early childhood learning (ages 3-6)',
+  },
+  {
+    name: 'Progress',
+    href: '/parent/progress',
+    icon: TrendingUp,
+    children: [
+      { name: 'Learning', href: '/parent/progress/learning', icon: BookOpen },
+      { name: 'Grades', href: '/parent/progress/grades', icon: FileText },
+      { name: 'Attendance', href: '/parent/progress/attendance', icon: ClipboardCheck },
+    ],
+  },
+  {
+    name: 'Portfolio',
+    href: '/parent/portfolio',
+    icon: Briefcase,
+  },
+  {
+    name: 'Messages',
+    href: '/parent/messages',
+    icon: MessageSquare,
+    children: [
+      { name: 'Teachers', href: '/parent/messages/teachers', icon: School },
+      { name: 'Tutors', href: '/parent/messages/tutors', icon: GraduationCap },
+    ],
+  },
+  {
+    name: 'Tutoring',
+    href: '/parent/tutoring',
+    icon: GraduationCap,
+    children: [
+      { name: 'Find Tutors', href: '/parent/tutoring/search', icon: Search },
+      { name: 'Bookings', href: '/parent/tutoring/bookings', icon: Calendar },
+    ],
+  },
+  {
+    name: 'Calendar',
+    href: '/parent/calendar',
+    icon: Calendar,
+  },
+  {
+    name: 'Payments',
+    href: '/parent/payments',
+    icon: CreditCard,
+    children: [
+      { name: 'History', href: '/parent/payments/history', icon: FileText },
+      { name: 'Subscriptions', href: '/parent/payments/subscriptions', icon: Clock },
+    ],
+  },
+  {
+    name: 'Settings',
+    href: '/settings',
+    icon: Settings,
+  },
+];
+
+// Navigation items for admins (UI/UX Design System v2.0)
 const adminNavigation = [
   {
     name: 'Dashboard',
@@ -352,90 +393,53 @@ const adminNavigation = [
     href: '/admin/scheduling',
     icon: CalendarClock,
     children: [
-      { name: 'Master Timetable', href: '/admin/scheduling/timetable', icon: Calendar },
-      { name: 'Relief Management', href: '/admin/scheduling/relief', icon: Clock },
-      { name: 'Room Management', href: '/admin/scheduling/rooms', icon: School },
+      { name: 'Timetable', href: '/admin/scheduling/timetable', icon: Calendar },
+      { name: 'Relief', href: '/admin/scheduling/relief', icon: Clock },
+      { name: 'Rooms', href: '/admin/scheduling/rooms', icon: DoorOpen },
       { name: 'Constraints', href: '/admin/scheduling/constraints', icon: Settings },
     ],
   },
   {
-    name: 'AI Studio',
-    href: '/ai-studio',
-    icon: Bot,
-    children: [
-      { name: 'AI Tutor', href: '/ai-studio', icon: MessageSquare },
-      { name: 'Content Generator', href: '/ai-studio?tab=generator', icon: Wand2 },
-    ],
-  },
-  {
-    name: 'Data Lake',
-    href: '/data-lake',
-    icon: Database,
-    children: [
-      { name: 'Overview', href: '/data-lake', icon: Layers },
-      { name: 'Live Events', href: '/data-lake?tab=events', icon: Activity },
-      { name: 'Data Sources', href: '/data-lake?tab=sources', icon: Database },
-    ],
-  },
-  {
     name: 'Interoperability',
-    href: '/interoperability',
+    href: '/admin/interoperability',
     icon: Network,
     children: [
-      { name: 'LTI', href: '/interoperability/lti', icon: Link2 },
-      { name: 'OneRoster', href: '/interoperability/oneroster', icon: Users },
-      { name: 'CASE', href: '/interoperability/case', icon: Shapes },
-      { name: 'Badges', href: '/interoperability/badges', icon: Award },
-      { name: 'Ed-Fi', href: '/interoperability/edfi', icon: Database },
+      { name: 'LTI', href: '/admin/interoperability/lti', icon: Link2 },
+      { name: 'OneRoster', href: '/admin/interoperability/oneroster', icon: Users },
+      { name: 'CASE', href: '/admin/interoperability/case', icon: Shapes },
+      { name: 'Badges', href: '/admin/interoperability/badges', icon: Award },
+      { name: 'Ed-Fi', href: '/admin/interoperability/edfi', icon: Database },
     ],
   },
   {
     name: 'Standards',
-    href: '/standards',
+    href: '/admin/standards',
     icon: Shield,
   },
   {
     name: 'ML Pipeline',
-    href: '/ml',
+    href: '/admin/ml',
     icon: Cpu,
   },
   {
     name: 'Micro-Schools',
-    href: '/micro-schools',
+    href: '/admin/micro-schools',
     icon: Building,
   },
   {
-    name: 'Identity (SSI)',
-    href: '/ssi',
-    icon: Fingerprint,
-    children: [
-      { name: 'Wallet', href: '/ssi/wallet', icon: Key },
-      { name: 'Credentials', href: '/ssi/credentials', icon: BadgeCheck },
-    ],
+    name: 'Governance',
+    href: '/admin/governance',
+    icon: Landmark,
   },
   {
-    name: 'Governance',
-    href: '/governance',
-    icon: Landmark,
-    children: [
-      { name: 'Proposals', href: '/governance/proposals', icon: ScrollText },
-      { name: 'Treasury', href: '/governance/treasury', icon: PiggyBank },
-    ],
+    name: 'Payments',
+    href: '/admin/payments',
+    icon: CreditCard,
   },
   {
     name: 'Marketplace',
-    href: '/marketplace',
+    href: '/admin/marketplace',
     icon: Store,
-    children: [
-      { name: 'Apps', href: '/marketplace/apps', icon: ShoppingBag },
-      { name: 'Community', href: '/marketplace/community', icon: Users },
-      { name: 'Developers', href: '/marketplace/developer', icon: Wrench },
-    ],
-  },
-  {
-    name: 'Advanced Learning',
-    href: '/advanced-learning',
-    icon: Rocket,
   },
   {
     name: 'Reports',
@@ -454,9 +458,17 @@ function getNavigationForRole(role: string | undefined) {
     case 'teacher':
     case 'educator':
       return teacherNavigation;
+    case 'tutor':
+    case 'tutor_professional':
+      return tutorNavigation;
+    case 'parent':
+    case 'guardian':
+      return parentNavigation;
     case 'platform_admin':
     case 'admin':
       return adminNavigation;
+    case 'learner':
+    case 'student':
     default:
       return learnerNavigation;
   }
@@ -470,12 +482,26 @@ function getTipForRole(role: string | undefined) {
         title: 'Teacher Tip',
         message: 'Use peer review assignments to encourage collaborative learning.',
       };
+    case 'tutor':
+    case 'tutor_professional':
+      return {
+        title: 'Tutor Tip',
+        message: 'Keep your availability calendar updated to attract more bookings.',
+      };
+    case 'parent':
+    case 'guardian':
+      return {
+        title: 'Parent Tip',
+        message: 'Check weekly progress reports to stay connected with your child\'s learning.',
+      };
     case 'platform_admin':
     case 'admin':
       return {
         title: 'Admin Tip',
         message: 'Check the scheduling constraints for optimal timetable generation.',
       };
+    case 'learner':
+    case 'student':
     default:
       return {
         title: 'Pro Tip',

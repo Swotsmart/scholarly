@@ -1,0 +1,47 @@
+# Alternative dev application with automatic image updates
+# Uses ArgoCD Image Updater to auto-deploy new images
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: scholarly-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: scholarly
+    environment: dev
+  annotations:
+    # ArgoCD Image Updater annotations
+    argocd-image-updater.argoproj.io/image-list: scholarly=scholarlyacr.azurecr.io/scholarly
+    argocd-image-updater.argoproj.io/scholarly.update-strategy: latest
+    argocd-image-updater.argoproj.io/scholarly.allow-tags: regexp:^[a-f0-9]{7,40}$|^latest$|^main$
+    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/git-branch: main
+
+    # Notifications
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: scholarly-deployments
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: scholarly
+
+  source:
+    repoURL: https://github.com/your-org/scholarly.git
+    targetRevision: main
+    path: infra/kubernetes/overlays/dev
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: scholarly-dev
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

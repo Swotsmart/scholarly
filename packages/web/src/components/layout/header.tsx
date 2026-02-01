@@ -22,9 +22,11 @@ import {
   User,
   Settings,
   HelpCircle,
+  Menu,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { getInitials } from '@/lib/utils';
+import { MobileNav } from './mobile-nav';
 
 export function Header() {
   const { user, logout } = useAuthStore();
@@ -37,10 +39,14 @@ export function Header() {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-card px-6">
-      {/* Search */}
-      <div className="flex flex-1 items-center gap-4">
-        <div className="relative max-w-md flex-1">
+    <header className="flex h-16 items-center justify-between border-b bg-card px-4 lg:px-6">
+      {/* Mobile Menu + Search */}
+      <div className="flex flex-1 items-center gap-2 lg:gap-4">
+        {/* Mobile Navigation */}
+        <MobileNav />
+
+        {/* Search - hidden on very small screens */}
+        <div className="relative hidden flex-1 max-w-md sm:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search journeys, portfolios, courses..."
@@ -50,7 +56,13 @@ export function Header() {
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2">
+        {/* Mobile Search Button */}
+        <Button variant="ghost" size="icon" className="sm:hidden">
+          <Search className="h-5 w-5" />
+          <span className="sr-only">Search</span>
+        </Button>
+
         {/* Theme Toggle */}
         <Button
           variant="ghost"

@@ -1,11 +1,11 @@
 'use client';
 
 /**
- * AI Conversation Practice Page
- * Interactive language practice with AI tutor
+ * AI Conversation Partner Page
+ * Interactive language practice with AI personas and pronunciation feedback
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -19,82 +19,435 @@ import {
   RefreshCw,
   CheckCircle,
   AlertCircle,
+  User,
+  Bot,
+  Lightbulb,
+  BookOpen,
+  ChevronRight,
+  X,
+  Zap,
+  Trophy,
+  Star,
+  Coffee,
+  Map,
+  Newspaper,
+  Users,
+  Settings,
+  Eye,
+  EyeOff,
+  HelpCircle,
+  Gauge,
+  BarChart3,
+  Clock,
+  Target,
+  Check,
+  AlertTriangle,
+  Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { PageHeader } from '@/components/shared/page-header';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import type { ConversationMessage, CorrectionSuggestion } from '@/types/linguaflow';
 
-type Message = {
+// Persona definitions
+type Persona = {
   id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  translation?: string;
-  corrections?: { original: string; corrected: string; explanation: string }[];
-  timestamp: Date;
+  name: string;
+  role: string;
+  personality: string;
+  avatar: string;
+  voiceStyle: string;
+  icon: React.ReactNode;
+  color: string;
+  greeting: string;
+  greetingTranslation: string;
 };
 
+const personas: Persona[] = [
+  {
+    id: 'marie',
+    name: 'Marie',
+    role: 'Cafe Owner',
+    personality: 'Warm, patient, loves talking about French cuisine',
+    avatar: 'bg-pink-100 text-pink-600',
+    voiceStyle: 'Friendly and welcoming',
+    icon: <Coffee className="w-5 h-5" />,
+    color: 'from-pink-500 to-rose-500',
+    greeting: 'Bonjour et bienvenue au Cafe de Paris! Je suis Marie. Qu\'est-ce que je peux vous servir aujourd\'hui?',
+    greetingTranslation: 'Hello and welcome to Cafe de Paris! I\'m Marie. What can I serve you today?',
+  },
+  {
+    id: 'pierre',
+    name: 'Pierre',
+    role: 'Travel Guide',
+    personality: 'Enthusiastic, knowledgeable about history and culture',
+    avatar: 'bg-blue-100 text-blue-600',
+    voiceStyle: 'Energetic and informative',
+    icon: <Map className="w-5 h-5" />,
+    color: 'from-blue-500 to-indigo-500',
+    greeting: 'Bonjour! Je suis Pierre, votre guide touristique. Etes-vous pret a decouvrir les merveilles de Paris?',
+    greetingTranslation: 'Hello! I\'m Pierre, your tour guide. Are you ready to discover the wonders of Paris?',
+  },
+  {
+    id: 'claire',
+    name: 'Claire',
+    role: 'Newsreader',
+    personality: 'Professional, articulate, current events expert',
+    avatar: 'bg-purple-100 text-purple-600',
+    voiceStyle: 'Clear and formal',
+    icon: <Newspaper className="w-5 h-5" />,
+    color: 'from-purple-500 to-violet-500',
+    greeting: 'Bonjour, je suis Claire. Voulez-vous discuter des actualites du jour? Je peux vous expliquer les evenements recents.',
+    greetingTranslation: 'Hello, I\'m Claire. Would you like to discuss today\'s news? I can explain recent events to you.',
+  },
+  {
+    id: 'lucas',
+    name: 'Lucas',
+    role: 'Friend',
+    personality: 'Casual, fun-loving, uses colloquial expressions',
+    avatar: 'bg-green-100 text-green-600',
+    voiceStyle: 'Relaxed and casual',
+    icon: <Users className="w-5 h-5" />,
+    color: 'from-green-500 to-emerald-500',
+    greeting: 'Salut! Ca va? C\'est Lucas! On se fait une petite conversation? Raconte-moi ce que tu fais de beau!',
+    greetingTranslation: 'Hey! How\'s it going? It\'s Lucas! Shall we have a little chat? Tell me what you\'ve been up to!',
+  },
+];
+
+// Scenario definitions
 type Scenario = {
   id: string;
   title: string;
   titleFr: string;
   description: string;
-  aiRole: string;
-  aiGreeting: string;
+  personaId: string;
   targetVocabulary: string[];
   cefrLevel: string;
+  objectives: string[];
 };
 
 const scenarios: Scenario[] = [
   {
-    id: 'cafe',
-    title: 'At the Café',
-    titleFr: 'Au Café',
-    description: 'Practice ordering food and drinks',
-    aiRole: 'Friendly café server named Marie',
-    aiGreeting: 'Bonjour et bienvenue au Café de Paris! Qu\'est-ce que je peux vous servir aujourd\'hui?',
-    targetVocabulary: ['commander', 'café', 'croissant', 'addition', 's\'il vous plaît'],
+    id: 'ordering_food',
+    title: 'Ordering Food',
+    titleFr: 'Commander a manger',
+    description: 'Practice ordering at a French cafe',
+    personaId: 'marie',
+    targetVocabulary: ['commander', 'cafe', 'croissant', 'addition', 's\'il vous plait'],
     cefrLevel: 'A2-B1',
+    objectives: ['Order a drink', 'Ask for recommendations', 'Request the bill'],
   },
   {
-    id: 'directions',
-    title: 'Asking for Directions',
+    id: 'asking_directions',
+    title: 'Asking Directions',
     titleFr: 'Demander son chemin',
     description: 'Learn to navigate in a French city',
-    aiRole: 'Helpful local named Pierre',
-    aiGreeting: 'Bonjour! Vous avez l\'air perdu. Est-ce que je peux vous aider à trouver votre chemin?',
-    targetVocabulary: ['tourner', 'tout droit', 'à gauche', 'à droite', 'près de'],
+    personaId: 'pierre',
+    targetVocabulary: ['tourner', 'tout droit', 'a gauche', 'a droite', 'pres de'],
     cefrLevel: 'A2-B1',
+    objectives: ['Ask where something is', 'Understand directions', 'Thank for help'],
   },
   {
-    id: 'shopping',
-    title: 'Shopping for Clothes',
-    titleFr: 'Faire du shopping',
-    description: 'Practice buying clothes and discussing sizes',
-    aiRole: 'Boutique assistant named Claire',
-    aiGreeting: 'Bonjour et bienvenue dans notre boutique! Vous cherchez quelque chose de particulier aujourd\'hui?',
-    targetVocabulary: ['taille', 'essayer', 'couleur', 'prix', 'ça me va'],
-    cefrLevel: 'A2-B1',
-  },
-  {
-    id: 'doctor',
-    title: 'At the Doctor\'s Office',
-    titleFr: 'Chez le médecin',
-    description: 'Learn to describe symptoms and health',
-    aiRole: 'Doctor named Dr. Dubois',
-    aiGreeting: 'Bonjour, asseyez-vous. Alors, qu\'est-ce qui vous amène aujourd\'hui?',
-    targetVocabulary: ['mal', 'douleur', 'fièvre', 'ordonnance', 'symptôme'],
+    id: 'small_talk',
+    title: 'Small Talk',
+    titleFr: 'Bavardage',
+    description: 'Casual conversation with a friend',
+    personaId: 'lucas',
+    targetVocabulary: ['super', 'genial', 'tranquille', 'quoi de neuf', 'a plus'],
     cefrLevel: 'B1',
+    objectives: ['Greet casually', 'Talk about weekend plans', 'Use informal expressions'],
+  },
+  {
+    id: 'current_events',
+    title: 'Current Events',
+    titleFr: 'Actualites',
+    description: 'Discuss news and current events',
+    personaId: 'claire',
+    targetVocabulary: ['actualite', 'politique', 'economie', 'selon', 'il parait que'],
+    cefrLevel: 'B2',
+    objectives: ['Discuss a news topic', 'Express opinions', 'Use formal register'],
   },
 ];
 
+// Message type with corrections
+type Message = {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  translation?: string;
+  corrections?: CorrectionSuggestion[];
+  timestamp: Date;
+  pronunciation?: {
+    score: number;
+    feedback: string;
+  };
+};
+
+// Assessment scores
+type AssessmentScores = {
+  fluency: number;
+  accuracy: number;
+  complexity: number;
+  vocabulary: number;
+};
+
+// Hint component
+function HintPanel({ hints, vocabulary, onClose }: { hints: string[]; vocabulary: string[]; onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      className="absolute right-0 top-0 w-80 bg-card border rounded-lg shadow-lg p-4 z-10"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="font-semibold flex items-center gap-2">
+          <Lightbulb className="w-4 h-4 text-yellow-500" />
+          Hints & Vocabulary
+        </h4>
+        <Button variant="ghost" size="icon-sm" onClick={onClose}>
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <p className="text-sm font-medium mb-2">Suggested Responses:</p>
+          <div className="space-y-2">
+            {hints.map((hint, i) => (
+              <div key={i} className="text-sm p-2 bg-muted rounded">
+                {hint}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-sm font-medium mb-2">Useful Vocabulary:</p>
+          <div className="flex flex-wrap gap-1">
+            {vocabulary.map((word) => (
+              <Badge key={word} variant="secondary" className="text-xs">
+                {word}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// Correction display component
+function CorrectionDisplay({ corrections }: { corrections: CorrectionSuggestion[] }) {
+  if (corrections.length === 0) return null;
+
+  return (
+    <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded border border-amber-200 dark:border-amber-800">
+      <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
+        <AlertTriangle className="w-3 h-3" />
+        Corrections:
+      </p>
+      {corrections.map((c, i) => (
+        <div key={i} className="text-xs mb-1">
+          <span className="line-through text-red-500">{c.original}</span>
+          {' -> '}
+          <span className="text-green-600 font-medium">{c.corrected}</span>
+          <p className="text-muted-foreground ml-4">{c.explanation}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Session summary dialog
+function SessionSummaryDialog({
+  open,
+  onClose,
+  messages,
+  scores,
+  xpEarned,
+}: {
+  open: boolean;
+  onClose: () => void;
+  messages: Message[];
+  scores: AssessmentScores;
+  xpEarned: number;
+}) {
+  const userMessages = messages.filter((m) => m.role === 'user');
+  const totalCorrections = messages.reduce((sum, m) => sum + (m.corrections?.length || 0), 0);
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Trophy className="w-6 h-6 text-yellow-500" />
+            Conversation Complete!
+          </DialogTitle>
+          <DialogDescription>Here&apos;s your performance summary</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6 py-4">
+          {/* XP Badge */}
+          <motion.div
+            className="text-center"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200 }}
+          >
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full">
+              <Zap className="w-6 h-6" />
+              <span className="text-2xl font-bold">+{xpEarned} XP</span>
+            </div>
+          </motion.div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center p-3 bg-muted rounded-lg">
+              <div className="text-2xl font-bold">{userMessages.length}</div>
+              <div className="text-xs text-muted-foreground">Messages Sent</div>
+            </div>
+            <div className="text-center p-3 bg-muted rounded-lg">
+              <div className="text-2xl font-bold">{totalCorrections}</div>
+              <div className="text-xs text-muted-foreground">Corrections Made</div>
+            </div>
+          </div>
+
+          {/* Assessment Scores */}
+          <div className="space-y-3">
+            <h4 className="font-medium">Assessment Scores</h4>
+            {Object.entries(scores).map(([key, value]) => (
+              <div key={key}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="capitalize">{key}</span>
+                  <span className="font-medium">{value}%</span>
+                </div>
+                <Progress value={value} className="h-2" />
+              </div>
+            ))}
+          </div>
+
+          {/* Overall Grade */}
+          <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg">
+            <div className="text-4xl font-bold text-primary">
+              {Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / 4)}%
+            </div>
+            <div className="text-sm text-muted-foreground">Overall Performance</div>
+          </div>
+        </div>
+
+        <DialogFooter className="flex gap-2">
+          <Button variant="outline" onClick={onClose}>
+            View Transcript
+          </Button>
+          <Button onClick={onClose}>
+            Continue Learning
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Transcript dialog
+function TranscriptDialog({
+  open,
+  onClose,
+  messages,
+}: {
+  open: boolean;
+  onClose: () => void;
+  messages: Message[];
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Conversation Transcript</DialogTitle>
+          <DialogDescription>Full conversation log with corrections</DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto space-y-4 py-4">
+          {messages.filter((m) => m.role !== 'system').map((message) => (
+            <div
+              key={message.id}
+              className={cn(
+                'p-3 rounded-lg',
+                message.role === 'user' ? 'bg-primary/10 ml-8' : 'bg-muted mr-8'
+              )}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                {message.role === 'user' ? (
+                  <User className="w-4 h-4" />
+                ) : (
+                  <Bot className="w-4 h-4" />
+                )}
+                <span className="text-xs text-muted-foreground">
+                  {message.role === 'user' ? 'You' : 'AI Partner'}
+                </span>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {message.timestamp.toLocaleTimeString()}
+                </span>
+              </div>
+              <p className="text-sm">{message.content}</p>
+              {message.translation && (
+                <p className="text-xs text-muted-foreground mt-1 italic">{message.translation}</p>
+              )}
+              {message.corrections && message.corrections.length > 0 && (
+                <CorrectionDisplay corrections={message.corrections} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <DialogFooter>
+          <Button onClick={onClose}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function ConversationPage() {
+  const [activeTab, setActiveTab] = useState('personas');
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [sessionStats, setSessionStats] = useState({ messageCount: 0, xpEarned: 0, vocabulary: new Set<string>() });
+  const [showHints, setShowHints] = useState(false);
+  const [showTranslations, setShowTranslations] = useState(true);
+  const [xpEarned, setXpEarned] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(false);
+  const [assessmentScores, setAssessmentScores] = useState<AssessmentScores>({
+    fluency: 0,
+    accuracy: 0,
+    complexity: 0,
+    vocabulary: 0,
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -105,7 +458,7 @@ export default function ConversationPage() {
     scrollToBottom();
   }, [messages]);
 
-  const speakText = (text: string, lang: string = 'fr-FR') => {
+  const speakText = useCallback((text: string, lang: string = 'fr-FR') => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
@@ -113,74 +466,85 @@ export default function ConversationPage() {
       utterance.rate = 0.85;
       window.speechSynthesis.speak(utterance);
     }
-  };
+  }, []);
 
-  const startScenario = (scenario: Scenario) => {
-    setSelectedScenario(scenario);
-    setMessages([
-      {
-        id: '1',
-        role: 'system',
-        content: `Scenario: ${scenario.title} - ${scenario.description}`,
-        timestamp: new Date(),
-      },
-      {
-        id: '2',
-        role: 'assistant',
-        content: scenario.aiGreeting,
-        translation: getTranslation(scenario.aiGreeting),
-        timestamp: new Date(),
-      },
-    ]);
-    setSessionStats({ messageCount: 0, xpEarned: 0, vocabulary: new Set() });
+  const startConversation = useCallback((persona: Persona, scenario?: Scenario) => {
+    setSelectedPersona(persona);
+    setSelectedScenario(scenario || null);
 
-    // Auto-speak the greeting
-    setTimeout(() => speakText(scenario.aiGreeting), 500);
-  };
-
-  const getTranslation = (text: string): string => {
-    // Demo translations
-    const translations: Record<string, string> = {
-      'Bonjour et bienvenue au Café de Paris! Qu\'est-ce que je peux vous servir aujourd\'hui?':
-        'Hello and welcome to Café de Paris! What can I serve you today?',
-      'Bonjour! Vous avez l\'air perdu. Est-ce que je peux vous aider à trouver votre chemin?':
-        'Hello! You look lost. Can I help you find your way?',
-      'Bonjour et bienvenue dans notre boutique! Vous cherchez quelque chose de particulier aujourd\'hui?':
-        'Hello and welcome to our boutique! Are you looking for something specific today?',
-      'Bonjour, asseyez-vous. Alors, qu\'est-ce qui vous amène aujourd\'hui?':
-        'Hello, have a seat. So, what brings you here today?',
+    const systemMessage: Message = {
+      id: '0',
+      role: 'system',
+      content: scenario
+        ? `Scenario: ${scenario.title} - ${scenario.description}`
+        : `Chatting with ${persona.name} (${persona.role})`,
+      timestamp: new Date(),
     };
-    return translations[text] || 'Translation not available';
-  };
 
-  const generateResponse = (userMessage: string): Message => {
-    // Demo AI responses based on scenario
+    const greetingMessage: Message = {
+      id: '1',
+      role: 'assistant',
+      content: persona.greeting,
+      translation: persona.greetingTranslation,
+      timestamp: new Date(),
+    };
+
+    setMessages([systemMessage, greetingMessage]);
+    setXpEarned(0);
+    setAssessmentScores({ fluency: 0, accuracy: 0, complexity: 0, vocabulary: 0 });
+    setActiveTab('chat');
+
+    setTimeout(() => speakText(persona.greeting), 500);
+  }, [speakText]);
+
+  const generateAIResponse = useCallback((userMessage: string): Message => {
+    // Demo responses based on persona
     const responses: Record<string, { content: string; translation: string }[]> = {
-      cafe: [
-        { content: 'Très bien! Un café crème, c\'est parfait. Et avec cela, vous désirez autre chose? Nous avons des croissants frais ce matin.', translation: 'Very good! A café crème, perfect. And with that, would you like anything else? We have fresh croissants this morning.' },
-        { content: 'Excellent choix! Je vous apporte ça tout de suite. Ce sera 8 euros, s\'il vous plaît.', translation: 'Excellent choice! I\'ll bring that right away. That will be 8 euros, please.' },
-        { content: 'Voici votre commande! Bon appétit! Si vous avez besoin de quelque chose d\'autre, n\'hésitez pas.', translation: 'Here\'s your order! Enjoy! If you need anything else, don\'t hesitate.' },
+      marie: [
+        { content: 'Tres bien! Un cafe creme, c\'est parfait. Voulez-vous un croissant avec ca?', translation: 'Very good! A cafe creme, perfect. Would you like a croissant with that?' },
+        { content: 'Excellent choix! Je vous apporte ca tout de suite. Ce sera 8 euros, s\'il vous plait.', translation: 'Excellent choice! I\'ll bring that right away. That will be 8 euros, please.' },
+        { content: 'Merci beaucoup! Bon appetit! N\'hesitez pas si vous avez besoin d\'autre chose.', translation: 'Thank you very much! Enjoy! Don\'t hesitate if you need anything else.' },
       ],
-      directions: [
-        { content: 'Ah, la Tour Eiffel! C\'est facile. Vous allez tout droit pendant 200 mètres, puis vous tournez à gauche.', translation: 'Ah, the Eiffel Tower! That\'s easy. You go straight for 200 meters, then you turn left.' },
-        { content: 'Continuez tout droit jusqu\'au grand carrefour, puis prenez la deuxième rue à droite.', translation: 'Continue straight until the big intersection, then take the second street on the right.' },
-        { content: 'C\'est à environ 15 minutes à pied. Vous ne pouvez pas la manquer!', translation: 'It\'s about 15 minutes on foot. You can\'t miss it!' },
+      pierre: [
+        { content: 'Ah, le Louvre! C\'est a environ 15 minutes a pied. Vous allez tout droit, puis tournez a gauche au carrefour.', translation: 'Ah, the Louvre! It\'s about 15 minutes on foot. You go straight, then turn left at the intersection.' },
+        { content: 'Le musee ouvre a 9 heures. Je vous conseille d\'y aller tot pour eviter la foule!', translation: 'The museum opens at 9 o\'clock. I advise you to go early to avoid the crowd!' },
+        { content: 'Vous ne pouvez pas le manquer! C\'est un batiment magnifique avec une pyramide de verre devant.', translation: 'You can\'t miss it! It\'s a magnificent building with a glass pyramid in front.' },
       ],
-      shopping: [
-        { content: 'Bien sûr! Cette robe existe en plusieurs couleurs: bleu, rouge, et noir. Quelle taille faites-vous?', translation: 'Of course! This dress comes in several colors: blue, red, and black. What size are you?' },
-        { content: 'Parfait! Les cabines d\'essayage sont au fond à gauche. Je vous apporte la taille medium.', translation: 'Perfect! The fitting rooms are at the back on the left. I\'ll bring you the medium size.' },
-        { content: 'Ça vous va très bien! Le prix est de 45 euros. Nous avons aussi une promotion: -20% sur le deuxième article!', translation: 'It looks great on you! The price is 45 euros. We also have a promotion: 20% off the second item!' },
+      claire: [
+        { content: 'Oui, l\'actualite politique est tres interessante en ce moment. Avez-vous entendu parler des nouvelles reformes?', translation: 'Yes, the political news is very interesting right now. Have you heard about the new reforms?' },
+        { content: 'C\'est une question complexe. D\'un cote, il y a ceux qui soutiennent ces mesures, de l\'autre, les opposants.', translation: 'It\'s a complex question. On one hand, there are those who support these measures, on the other, the opponents.' },
+        { content: 'Je pense qu\'il est important de considerer tous les points de vue avant de se faire une opinion.', translation: 'I think it\'s important to consider all viewpoints before forming an opinion.' },
       ],
-      doctor: [
-        { content: 'Je comprends. Depuis combien de temps avez-vous ces symptômes? Est-ce que vous avez de la fièvre?', translation: 'I understand. How long have you had these symptoms? Do you have a fever?' },
-        { content: 'Je vais vous examiner. Pouvez-vous me montrer où vous avez mal exactement?', translation: 'I\'m going to examine you. Can you show me exactly where it hurts?' },
-        { content: 'Ce n\'est pas grave. Je vais vous prescrire des médicaments. Prenez-les deux fois par jour pendant une semaine.', translation: 'It\'s not serious. I\'m going to prescribe you some medication. Take it twice a day for a week.' },
+      lucas: [
+        { content: 'Trop cool! Moi aussi j\'ai passe un super week-end. On est alles a un concert samedi, c\'etait genial!', translation: 'So cool! I also had a great weekend. We went to a concert on Saturday, it was amazing!' },
+        { content: 'Ouais, c\'etait vraiment sympa! Et toi, t\'as des plans pour ce soir? On pourrait aller boire un verre?', translation: 'Yeah, it was really nice! And you, do you have plans for tonight? We could go for a drink?' },
+        { content: 'Super! On se retrouve a 19h au bar du coin? A plus tard!', translation: 'Great! See you at 7pm at the corner bar? See you later!' },
       ],
     };
 
-    const scenarioResponses = responses[selectedScenario?.id || 'cafe'] || responses.cafe;
-    const responseIndex = Math.min(sessionStats.messageCount, scenarioResponses.length - 1);
-    const response = scenarioResponses[responseIndex];
+    const personaResponses = responses[selectedPersona?.id || 'marie'] || responses.marie;
+    const userMessageCount = messages.filter((m) => m.role === 'user').length;
+    const responseIndex = Math.min(userMessageCount, personaResponses.length - 1);
+    const response = personaResponses[responseIndex];
+
+    // Generate some random corrections for demo
+    const corrections: CorrectionSuggestion[] = [];
+    if (userMessage.includes('je suis')) {
+      corrections.push({
+        original: 'je suis',
+        corrected: 'je suis',
+        explanation: 'Good use of "je suis"!',
+        severity: 'minor',
+      });
+    }
+    if (userMessage.toLowerCase().includes('bonjour') === false && userMessageCount === 0) {
+      corrections.push({
+        original: '(start)',
+        corrected: 'Bonjour!',
+        explanation: 'Remember to greet first in French conversations',
+        severity: 'minor',
+      });
+    }
 
     return {
       id: Date.now().toString(),
@@ -189,16 +553,18 @@ export default function ConversationPage() {
       translation: response.translation,
       timestamp: new Date(),
     };
-  };
+  }, [selectedPersona, messages]);
 
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (!input.trim() || isLoading) return;
 
+    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: input,
       timestamp: new Date(),
+      corrections: [],
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -208,17 +574,22 @@ export default function ConversationPage() {
     // Simulate AI response delay
     await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1000));
 
-    const aiResponse = generateResponse(input);
+    const aiResponse = generateAIResponse(input);
     setMessages((prev) => [...prev, aiResponse]);
-    setSessionStats((prev) => ({
-      messageCount: prev.messageCount + 1,
-      xpEarned: prev.xpEarned + 15,
-      vocabulary: prev.vocabulary,
+
+    // Update XP and scores
+    const earnedXP = 15 + Math.floor(Math.random() * 10);
+    setXpEarned((prev) => prev + earnedXP);
+    setAssessmentScores((prev) => ({
+      fluency: Math.min(100, prev.fluency + Math.floor(Math.random() * 15) + 5),
+      accuracy: Math.min(100, prev.accuracy + Math.floor(Math.random() * 15) + 5),
+      complexity: Math.min(100, prev.complexity + Math.floor(Math.random() * 10) + 3),
+      vocabulary: Math.min(100, prev.vocabulary + Math.floor(Math.random() * 12) + 4),
     }));
 
     speakText(aiResponse.content);
     setIsLoading(false);
-  };
+  }, [input, isLoading, generateAIResponse, speakText]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -227,195 +598,473 @@ export default function ConversationPage() {
     }
   };
 
-  const endSession = () => {
-    setSelectedScenario(null);
-    setMessages([]);
+  const endConversation = () => {
+    setShowSummary(true);
   };
 
-  // Scenario Selection
-  if (!selectedScenario) {
-    return (
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <Link
-            href="/linguaflow"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">AI Conversation Practice</h1>
-            <p className="text-muted-foreground">Choose a scenario to practice your French</p>
-          </div>
-        </div>
+  const resetConversation = () => {
+    setSelectedPersona(null);
+    setSelectedScenario(null);
+    setMessages([]);
+    setXpEarned(0);
+    setShowSummary(false);
+    setActiveTab('personas');
+  };
 
-        <div className="grid md:grid-cols-2 gap-4">
-          {scenarios.map((scenario) => (
-            <motion.div
-              key={scenario.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Card
-                className="cursor-pointer hover:shadow-lg transition-shadow h-full"
-                onClick={() => startScenario(scenario)}
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{scenario.title}</span>
-                    <span className="text-sm font-normal text-muted-foreground">
-                      {scenario.cefrLevel}
-                    </span>
-                  </CardTitle>
-                  <p className="text-lg text-primary font-medium">{scenario.titleFr}</p>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">{scenario.description}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {scenario.targetVocabulary.slice(0, 3).map((word) => (
-                      <span
-                        key={word}
-                        className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs"
-                      >
-                        {word}
-                      </span>
-                    ))}
-                    {scenario.targetVocabulary.length > 3 && (
-                      <span className="px-2 py-1 bg-muted text-muted-foreground rounded-full text-xs">
-                        +{scenario.targetVocabulary.length - 3} more
-                      </span>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Current hints based on scenario
+  const currentHints = selectedScenario
+    ? [
+        'Je voudrais... (I would like...)',
+        'Est-ce que vous avez... (Do you have...)',
+        'Combien coute... (How much does... cost)',
+      ]
+    : [
+        'Bonjour, comment allez-vous?',
+        'Je m\'appelle... (My name is...)',
+        'Enchanté(e)! (Nice to meet you!)',
+      ];
 
-  // Conversation View
+  const currentVocabulary = selectedScenario?.targetVocabulary || ['bonjour', 'merci', 'au revoir', 's\'il vous plait'];
+
   return (
-    <div className="max-w-3xl mx-auto flex flex-col h-[calc(100vh-8rem)]">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 flex-shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={endSession}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            End Session
-          </Button>
-          <div>
-            <h2 className="font-semibold">{selectedScenario.titleFr}</h2>
-            <p className="text-sm text-muted-foreground">{selectedScenario.aiRole}</p>
+      <PageHeader
+        title="AI Conversation Partner"
+        description="Practice speaking with AI personas in real scenarios"
+        actions={
+          <div className="flex items-center gap-3">
+            {xpEarned > 0 && (
+              <div className="flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 px-4 py-2 rounded-full">
+                <Zap className="w-5 h-5 text-purple-500" />
+                <span className="font-bold text-purple-700 dark:text-purple-400">
+                  {xpEarned} XP
+                </span>
+              </div>
+            )}
+            <Button variant="outline" asChild>
+              <Link href="/linguaflow">
+                <ArrowLeft className="mr-2 w-4 h-4" />
+                Back
+              </Link>
+            </Button>
           </div>
-        </div>
-        <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <span className="font-medium text-primary">+{sessionStats.xpEarned} XP</span>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Messages */}
-      <Card className="flex-1 overflow-hidden flex flex-col">
-        <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-          <AnimatePresence>
-            {messages.map((message) => (
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="personas" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Personas
+          </TabsTrigger>
+          <TabsTrigger value="scenarios" className="flex items-center gap-2">
+            <Target className="w-4 h-4" />
+            Scenarios
+          </TabsTrigger>
+          <TabsTrigger value="chat" className="flex items-center gap-2" disabled={!selectedPersona}>
+            <MessageSquare className="w-4 h-4" />
+            Chat
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Personas Tab */}
+        <TabsContent value="personas" className="mt-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            {personas.map((persona) => (
               <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className={cn(
-                  'flex',
-                  message.role === 'user' ? 'justify-end' : 'justify-start',
-                  message.role === 'system' && 'justify-center'
-                )}
+                key={persona.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
-                {message.role === 'system' ? (
-                  <div className="text-sm text-muted-foreground bg-muted px-4 py-2 rounded-full">
-                    {message.content}
-                  </div>
-                ) : (
-                  <div
-                    className={cn(
-                      'max-w-[80%] rounded-2xl p-4',
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    )}
-                  >
-                    <p className="text-base">{message.content}</p>
-                    {message.translation && message.role === 'assistant' && (
-                      <p className="text-sm opacity-70 mt-2 pt-2 border-t border-current/20">
-                        {message.translation}
-                      </p>
-                    )}
-                    {message.role === 'assistant' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="mt-2 h-8 px-2"
-                        onClick={() => speakText(message.content)}
-                      >
-                        <Volume2 className="w-4 h-4 mr-1" />
-                        Listen
+                <Card
+                  className="cursor-pointer hover:shadow-lg transition-shadow h-full"
+                  onClick={() => startConversation(persona)}
+                >
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className={cn('w-14 h-14 rounded-full flex items-center justify-center', persona.avatar)}>
+                        {persona.icon}
+                      </div>
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          {persona.name}
+                          <div className="w-2 h-2 rounded-full bg-green-500" title="Available" />
+                        </CardTitle>
+                        <CardDescription>{persona.role}</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">{persona.personality}</p>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="secondary">{persona.voiceStyle}</Badge>
+                      <Button size="sm">
+                        Start Chat
+                        <ChevronRight className="ml-1 w-4 h-4" />
                       </Button>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  </CardContent>
+                </Card>
               </motion.div>
             ))}
-          </AnimatePresence>
-
-          {isLoading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex justify-start"
-            >
-              <div className="bg-muted rounded-2xl p-4">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" />
-                  <span className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                  <span className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </CardContent>
-
-        {/* Input */}
-        <div className="p-4 border-t flex-shrink-0">
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsListening(!isListening)}
-              className={cn(isListening && 'bg-red-100 border-red-300 text-red-600')}
-            >
-              {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-            </Button>
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your response in French..."
-              className="flex-1"
-              disabled={isLoading}
-            />
-            <Button onClick={handleSend} disabled={!input.trim() || isLoading}>
-              <Send className="w-5 h-5" />
-            </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            Press Enter to send · Click the speaker icon to hear messages
-          </p>
-        </div>
-      </Card>
-    </div>
+        </TabsContent>
+
+        {/* Scenarios Tab */}
+        <TabsContent value="scenarios" className="mt-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            {scenarios.map((scenario) => {
+              const persona = personas.find((p) => p.id === scenario.personaId);
+              return (
+                <motion.div
+                  key={scenario.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Card
+                    className="cursor-pointer hover:shadow-lg transition-shadow h-full"
+                    onClick={() => persona && startConversation(persona, scenario)}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>{scenario.title}</CardTitle>
+                          <CardDescription className="text-primary font-medium">
+                            {scenario.titleFr}
+                          </CardDescription>
+                        </div>
+                        <Badge variant="outline">{scenario.cefrLevel}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground mb-4">{scenario.description}</p>
+
+                      <div className="mb-4">
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Objectives:</p>
+                        <div className="space-y-1">
+                          {scenario.objectives.map((obj, i) => (
+                            <div key={i} className="flex items-center gap-2 text-sm">
+                              <Check className="w-3 h-3 text-green-500" />
+                              <span>{obj}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {persona && (
+                            <div className={cn('w-6 h-6 rounded-full flex items-center justify-center text-xs', persona.avatar)}>
+                              {persona.name[0]}
+                            </div>
+                          )}
+                          <span className="text-xs text-muted-foreground">with {persona?.name}</span>
+                        </div>
+                        <Button size="sm">
+                          Start Scenario
+                          <ChevronRight className="ml-1 w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        </TabsContent>
+
+        {/* Chat Tab */}
+        <TabsContent value="chat" className="mt-6">
+          {selectedPersona && (
+            <div className="grid gap-6 lg:grid-cols-3">
+              {/* Chat Area */}
+              <div className="lg:col-span-2 flex flex-col h-[calc(100vh-20rem)]">
+                {/* Chat Header */}
+                <Card className="mb-4">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={cn('w-12 h-12 rounded-full flex items-center justify-center', selectedPersona.avatar)}>
+                          {selectedPersona.icon}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">{selectedPersona.name}</h3>
+                          <p className="text-sm text-muted-foreground">{selectedPersona.role}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setShowTranslations(!showTranslations)}
+                          title={showTranslations ? 'Hide translations' : 'Show translations'}
+                        >
+                          {showTranslations ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setShowHints(!showHints)}
+                          title="Toggle hints"
+                        >
+                          <Lightbulb className="w-4 h-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={endConversation}>
+                          End Session
+                        </Button>
+                      </div>
+                    </div>
+                    {selectedScenario && (
+                      <div className="mt-3 pt-3 border-t">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Target className="w-4 h-4" />
+                          <span>Scenario: {selectedScenario.title}</span>
+                          <Badge variant="secondary" className="ml-auto">{selectedScenario.cefrLevel}</Badge>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Messages */}
+                <Card className="flex-1 overflow-hidden flex flex-col relative">
+                  <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+                    <AnimatePresence>
+                      {messages.map((message) => (
+                        <motion.div
+                          key={message.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className={cn(
+                            'flex',
+                            message.role === 'user' ? 'justify-end' : 'justify-start',
+                            message.role === 'system' && 'justify-center'
+                          )}
+                        >
+                          {message.role === 'system' ? (
+                            <div className="text-sm text-muted-foreground bg-muted px-4 py-2 rounded-full flex items-center gap-2">
+                              <Info className="w-4 h-4" />
+                              {message.content}
+                            </div>
+                          ) : (
+                            <div
+                              className={cn(
+                                'max-w-[80%] rounded-2xl p-4',
+                                message.role === 'user'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted'
+                              )}
+                            >
+                              <p className="text-base">{message.content}</p>
+                              {message.translation && showTranslations && message.role === 'assistant' && (
+                                <p className="text-sm opacity-70 mt-2 pt-2 border-t border-current/20">
+                                  {message.translation}
+                                </p>
+                              )}
+                              {message.role === 'assistant' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="mt-2 h-8 px-2"
+                                  onClick={() => speakText(message.content)}
+                                >
+                                  <Volume2 className="w-4 h-4 mr-1" />
+                                  Listen
+                                </Button>
+                              )}
+                              {message.corrections && message.corrections.length > 0 && (
+                                <CorrectionDisplay corrections={message.corrections} />
+                              )}
+                            </div>
+                          )}
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+
+                    {isLoading && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex justify-start"
+                      >
+                        <div className="bg-muted rounded-2xl p-4">
+                          <div className="flex gap-1">
+                            <span className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" />
+                            <span className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                            <span className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    <div ref={messagesEndRef} />
+                  </CardContent>
+
+                  {/* Hint Panel */}
+                  <AnimatePresence>
+                    {showHints && (
+                      <HintPanel
+                        hints={currentHints}
+                        vocabulary={currentVocabulary}
+                        onClose={() => setShowHints(false)}
+                      />
+                    )}
+                  </AnimatePresence>
+
+                  {/* Input */}
+                  <div className="p-4 border-t">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setIsListening(!isListening)}
+                        className={cn(isListening && 'bg-red-100 border-red-300 text-red-600')}
+                        title={isListening ? 'Stop recording' : 'Voice input'}
+                      >
+                        {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                      </Button>
+                      <Input
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Type your response in French..."
+                        className="flex-1"
+                        disabled={isLoading}
+                      />
+                      <Button onClick={handleSend} disabled={!input.trim() || isLoading}>
+                        <Send className="w-5 h-5" />
+                      </Button>
+                    </div>
+                    {isListening && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-2 mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded text-sm text-red-600"
+                      >
+                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        Listening... Speak now
+                      </motion.div>
+                    )}
+                  </div>
+                </Card>
+              </div>
+
+              {/* Side Panel - Assessment & Stats */}
+              <div className="space-y-4">
+                {/* Assessment Scores */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Gauge className="w-5 h-5 text-primary" />
+                      Live Assessment
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {Object.entries(assessmentScores).map(([key, value]) => (
+                      <div key={key}>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="capitalize">{key}</span>
+                          <span className="font-medium">{value}%</span>
+                        </div>
+                        <Progress value={value} className="h-2" />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {/* Session Stats */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5 text-primary" />
+                      Session Stats
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4 text-center">
+                      <div className="p-2 bg-muted rounded">
+                        <div className="text-2xl font-bold">{messages.filter((m) => m.role === 'user').length}</div>
+                        <div className="text-xs text-muted-foreground">Messages</div>
+                      </div>
+                      <div className="p-2 bg-muted rounded">
+                        <div className="text-2xl font-bold text-primary">{xpEarned}</div>
+                        <div className="text-xs text-muted-foreground">XP Earned</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Actions */}
+                <Card>
+                  <CardContent className="p-4 space-y-2">
+                    <Button variant="outline" className="w-full justify-start" onClick={() => setShowTranscript(true)}>
+                      <BookOpen className="mr-2 w-4 h-4" />
+                      View Transcript
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start" onClick={() => setShowHints(!showHints)}>
+                      <Lightbulb className="mr-2 w-4 h-4" />
+                      {showHints ? 'Hide Hints' : 'Show Hints'}
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start text-destructive" onClick={resetConversation}>
+                      <RefreshCw className="mr-2 w-4 h-4" />
+                      New Conversation
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Vocabulary Focus */}
+                {selectedScenario && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Vocabulary Focus</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedScenario.targetVocabulary.map((word) => (
+                          <Badge
+                            key={word}
+                            variant="secondary"
+                            className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                            onClick={() => speakText(word)}
+                          >
+                            {word}
+                            <Volume2 className="ml-1 w-3 h-3" />
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Session Summary Dialog */}
+      <SessionSummaryDialog
+        open={showSummary}
+        onClose={() => {
+          setShowSummary(false);
+          resetConversation();
+        }}
+        messages={messages}
+        scores={assessmentScores}
+        xpEarned={xpEarned}
+      />
+
+      {/* Transcript Dialog */}
+      <TranscriptDialog
+        open={showTranscript}
+        onClose={() => setShowTranscript(false)}
+        messages={messages}
+      />
+    </motion.div>
   );
 }

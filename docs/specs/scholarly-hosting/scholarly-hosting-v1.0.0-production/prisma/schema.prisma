@@ -1,0 +1,573 @@
+// =============================================================================
+// SCHOLARLY HOSTING - PRISMA SCHEMA
+// =============================================================================
+// 
+// Database schema for the educational web hosting platform.
+// Enables schools, tutors, micro-schools, and homeschool co-ops to have
+// professional web presences with AI-discoverable structured data.
+//
+// @version 1.0.0
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum ProviderType {
+  school
+  micro_school
+  tutoring_centre
+  solo_tutor
+  homeschool_coop
+  curriculum_provider
+  enrichment
+  online_academy
+}
+
+enum ProviderStatus {
+  pending_setup
+  active
+  suspended
+  archived
+}
+
+enum DomainType {
+  subdomain
+  custom
+  alias
+}
+
+enum DomainStatus {
+  pending_verification
+  verified
+  failed_verification
+  suspended
+}
+
+enum SSLStatus {
+  pending
+  provisioning
+  active
+  expiring_soon
+  expired
+  failed
+}
+
+enum RegistrationStatus {
+  registered
+  accredited
+  pending_registration
+  exempt
+  unregistered
+}
+
+enum VerificationLevel {
+  unverified
+  email_verified
+  identity_verified
+  registration_verified
+  outcomes_verified
+  premium_verified
+}
+
+enum OutcomeType {
+  academic_achievement
+  progress_growth
+  graduation_rate
+  university_admission
+  employment_outcomes
+  parent_satisfaction
+  student_satisfaction
+  attendance_rate
+  wellbeing_score
+}
+
+enum OfferingType {
+  school_program
+  course
+  tutoring_package
+  tutoring_session
+  workshop
+  camp
+  curriculum
+  assessment
+  enrichment_program
+}
+
+enum OfferingStatus {
+  draft
+  published
+  archived
+}
+
+enum DeliveryMode {
+  in_person
+  online_live
+  online_self_paced
+  hybrid
+  home_visit
+}
+
+enum AvailabilityStatus {
+  available
+  limited
+  waitlist
+  full
+  not_available
+}
+
+enum PricingType {
+  free
+  fixed
+  hourly
+  per_session
+  package
+  subscription
+  enquire
+}
+
+enum ComplianceStatus {
+  compliant
+  non_compliant
+  pending
+  expired
+}
+
+enum EnquiryType {
+  general
+  enrollment
+  tour
+  pricing
+  availability
+}
+
+enum EnquiryStatus {
+  new
+  contacted
+  in_progress
+  converted
+  closed
+}
+
+enum ReviewStatus {
+  pending
+  published
+  hidden
+  flagged
+}
+
+enum TourStatus {
+  pending
+  confirmed
+  completed
+  cancelled
+  no_show
+}
+
+// =============================================================================
+// EDUCATIONAL PROVIDER
+// =============================================================================
+
+model EducationalProvider {
+  id                String         @id @default(cuid())
+  tenantId          String         @unique @map("tenant_id")
+  type              ProviderType
+  
+  displayName       String         @map("display_name")
+  legalName         String?        @map("legal_name")
+  description       String
+  tagline           String?
+  
+  logoUrl           String?        @map("logo_url")
+  faviconUrl        String?        @map("favicon_url")
+  theme             Json           @default("{}")
+  
+  primaryDomain     String         @unique @map("primary_domain")
+  
+  primaryContact    Json           @map("primary_contact")
+  serviceArea       Json?          @map("service_area")
+  
+  features          Json           @default("{}")
+  seoConfig         Json           @map("seo_config") @default("{}")
+  agentConfig       Json           @map("agent_config") @default("{}")
+  
+  lisIdentifiers    Json?          @map("lis_identifiers")
+  scholarlyTenantId String         @map("scholarly_tenant_id")
+  
+  status            ProviderStatus @default(pending_setup)
+  
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+  
+  // Relations
+  locations         ProviderLocation[]
+  domains           ProviderDomain[]
+  qualityProfile    QualityProfile?
+  offerings         EducationalOffering[]
+  reviews           ProviderReview[]
+  enquiries         Enquiry[]
+  tourBookings      TourBooking[]
+  
+  @@index([type, status])
+  @@index([primaryDomain])
+  @@index([tenantId])
+  @@map("educational_providers")
+}
+
+model ProviderLocation {
+  id              String   @id @default(cuid())
+  providerId      String   @map("provider_id")
+  
+  name            String
+  isPrimary       Boolean  @default(false) @map("is_primary")
+  
+  streetAddress   String   @map("street_address")
+  addressLocality String   @map("address_locality")
+  addressRegion   String   @map("address_region")
+  postalCode      String   @map("postal_code")
+  addressCountry  String   @map("address_country")
+  
+  latitude        Float?
+  longitude       Float?
+  
+  phone           String?
+  email           String?
+  timezone        String   @default("Australia/Sydney")
+  operatingHours  Json?    @map("operating_hours")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  provider        EducationalProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  
+  @@index([providerId])
+  @@map("provider_locations")
+}
+
+model ProviderDomain {
+  id                String       @id @default(cuid())
+  providerId        String       @map("provider_id")
+  
+  domain            String       @unique
+  type              DomainType
+  status            DomainStatus @default(pending_verification)
+  
+  sslStatus         SSLStatus    @default(pending) @map("ssl_status")
+  sslExpiresAt      DateTime?    @map("ssl_expires_at")
+  
+  verificationToken String?      @map("verification_token")
+  verifiedAt        DateTime?    @map("verified_at")
+  
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  
+  provider          EducationalProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  
+  @@index([providerId])
+  @@index([domain])
+  @@map("provider_domains")
+}
+
+// =============================================================================
+// QUALITY PROFILE
+// =============================================================================
+
+model QualityProfile {
+  id                    String             @id @default(cuid())
+  providerId            String             @unique @map("provider_id")
+  
+  overallScore          Int                @default(50) @map("overall_score")
+  scoreBreakdown        Json               @map("score_breakdown") @default("{}")
+  
+  registrationStatus    RegistrationStatus @default(unregistered) @map("registration_status")
+  registrationDetails   Json?              @map("registration_details")
+  
+  verificationLevel     VerificationLevel  @default(unverified) @map("verification_level")
+  memberSince           DateTime           @default(now()) @map("member_since")
+  lastVerificationDate  DateTime?          @map("last_verification_date")
+  nextVerificationDue   DateTime?          @map("next_verification_due")
+  
+  complianceStatus      String             @default("not_assessed") @map("compliance_status")
+  
+  confidenceLevel       Float              @default(0.2) @map("confidence_level")
+  dataCompleteness      Float              @default(0.1) @map("data_completeness")
+  
+  aggregateRating       Json?              @map("aggregate_rating")
+  staffQualifications   Json?              @map("staff_qualifications")
+  
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+  
+  provider              EducationalProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  accreditations        Accreditation[]
+  verifiedOutcomes      VerifiedOutcome[]
+  complianceRecords     ComplianceRecord[]
+  
+  @@index([overallScore])
+  @@index([verificationLevel])
+  @@map("quality_profiles")
+}
+
+model Accreditation {
+  id                 String   @id @default(cuid())
+  qualityProfileId   String   @map("quality_profile_id")
+  
+  body               String
+  type               String
+  level              String?
+  
+  issuedAt           DateTime @map("issued_at")
+  expiresAt          DateTime? @map("expires_at")
+  verificationUrl    String?  @map("verification_url")
+  
+  status             String   @default("pending")
+  verifiedByScholarly Boolean @default(false) @map("verified_by_scholarly")
+  verifiedAt         DateTime? @map("verified_at")
+  
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  
+  qualityProfile     QualityProfile @relation(fields: [qualityProfileId], references: [id], onDelete: Cascade)
+  
+  @@index([qualityProfileId])
+  @@map("accreditations")
+}
+
+model VerifiedOutcome {
+  id               String      @id @default(cuid())
+  qualityProfileId String      @map("quality_profile_id")
+  
+  type             OutcomeType
+  metric           String
+  value            Float
+  unit             String?
+  
+  comparisonBasis  String      @map("comparison_basis")
+  comparisonValue  Float?      @map("comparison_value")
+  percentile       Int?
+  
+  year             Int
+  cohortSize       Int?        @map("cohort_size")
+  
+  verifiedAt       DateTime    @map("verified_at")
+  verifiedBy       String      @map("verified_by")
+  dataSource       String      @map("data_source")
+  confidenceLevel  Float       @map("confidence_level")
+  
+  validFrom        DateTime    @map("valid_from")
+  validUntil       DateTime?   @map("valid_until")
+  
+  createdAt        DateTime    @default(now()) @map("created_at")
+  
+  qualityProfile   QualityProfile @relation(fields: [qualityProfileId], references: [id], onDelete: Cascade)
+  
+  @@index([qualityProfileId])
+  @@index([type])
+  @@map("verified_outcomes")
+}
+
+model ComplianceRecord {
+  id               String   @id @default(cuid())
+  qualityProfileId String   @map("quality_profile_id")
+  
+  type             String
+  status           ComplianceStatus
+  issuedBy         String   @map("issued_by")
+  issuedAt         DateTime @map("issued_at")
+  expiresAt        DateTime? @map("expires_at")
+  notes            String?
+  documentUrl      String?  @map("document_url")
+  
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  
+  qualityProfile   QualityProfile @relation(fields: [qualityProfileId], references: [id], onDelete: Cascade)
+  
+  @@index([qualityProfileId])
+  @@map("compliance_records")
+}
+
+// =============================================================================
+// EDUCATIONAL OFFERINGS
+// =============================================================================
+
+model EducationalOffering {
+  id                    String         @id @default(cuid())
+  providerId            String         @map("provider_id")
+  type                  OfferingType
+  
+  name                  String
+  description           String
+  shortDescription      String         @map("short_description")
+  
+  subjectAreas          String[]       @map("subject_areas")
+  yearLevels            String[]       @map("year_levels")
+  cefrLevels            String[]       @map("cefr_levels")
+  curriculumAlignment   Json           @map("curriculum_alignment") @default("[]")
+  learningOutcomes      String[]       @map("learning_outcomes")
+  prerequisites         String[]
+  
+  deliveryModes         DeliveryMode[] @map("delivery_modes")
+  duration              Json           @default("{}")
+  schedule              Json?
+  
+  availability          Json           @default("{}")
+  pricing               Json           @default("{}")
+  
+  qualitySignals        Json           @map("quality_signals") @default("{}")
+  
+  naturalLanguageSummary String        @map("natural_language_summary")
+  parentFriendlySummary  String        @map("parent_friendly_summary")
+  agentContext           String        @map("agent_context")
+  
+  images                Json           @default("[]")
+  videos                Json           @default("[]")
+  virtualTourUrl        String?        @map("virtual_tour_url")
+  
+  categories            String[]
+  tags                  String[]
+  
+  status                OfferingStatus @default(draft)
+  publishedAt           DateTime?      @map("published_at")
+  
+  createdAt             DateTime       @default(now()) @map("created_at")
+  updatedAt             DateTime       @updatedAt @map("updated_at")
+  
+  provider              EducationalProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  enquiries             Enquiry[]
+  
+  @@index([providerId, status])
+  @@index([type])
+  @@map("educational_offerings")
+}
+
+// =============================================================================
+// REVIEWS
+// =============================================================================
+
+model ProviderReview {
+  id               String       @id @default(cuid())
+  providerId       String       @map("provider_id")
+  
+  authorType       String       @map("author_type")
+  authorName       String?      @map("author_name")
+  isVerified       Boolean      @default(false) @map("is_verified")
+  
+  overallRating    Int          @map("overall_rating")
+  categoryRatings  Json         @map("category_ratings") @default("[]")
+  
+  title            String?
+  content          String
+  wouldRecommend   Boolean      @default(true) @map("would_recommend")
+  
+  helpfulCount     Int          @default(0) @map("helpful_count")
+  
+  providerResponse String?      @map("provider_response")
+  providerRespondedAt DateTime? @map("provider_responded_at")
+  
+  status           ReviewStatus @default(pending)
+  moderatedAt      DateTime?    @map("moderated_at")
+  
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+  
+  provider         EducationalProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  
+  @@index([providerId, status])
+  @@map("provider_reviews")
+}
+
+// =============================================================================
+// ENQUIRIES & BOOKINGS
+// =============================================================================
+
+model Enquiry {
+  id                String        @id @default(cuid())
+  providerId        String        @map("provider_id")
+  offeringId        String?       @map("offering_id")
+  
+  contactName       String        @map("contact_name")
+  contactEmail      String        @map("contact_email")
+  contactPhone      String?       @map("contact_phone")
+  preferredContact  String        @default("email") @map("preferred_contact")
+  
+  studentName       String?       @map("student_name")
+  studentAge        Int?          @map("student_age")
+  studentYearLevel  String?       @map("student_year_level")
+  
+  enquiryType       EnquiryType   @map("enquiry_type")
+  message           String
+  
+  source            String        @default("website")
+  agentId           String?       @map("agent_id")
+  
+  status            EnquiryStatus @default(new)
+  respondedAt       DateTime?     @map("responded_at")
+  responseTime      Int?          @map("response_time")
+  
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  
+  provider          EducationalProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  offering          EducationalOffering? @relation(fields: [offeringId], references: [id])
+  
+  @@index([providerId, status])
+  @@map("enquiries")
+}
+
+model TourBooking {
+  id              String     @id @default(cuid())
+  providerId      String     @map("provider_id")
+  locationId      String     @map("location_id")
+  
+  contactName     String     @map("contact_name")
+  contactEmail    String     @map("contact_email")
+  contactPhone    String?    @map("contact_phone")
+  
+  scheduledAt     DateTime   @map("scheduled_at")
+  duration        Int        @default(60)
+  tourType        String     @default("in_person") @map("tour_type")
+  
+  attendeeCount   Int        @default(1) @map("attendee_count")
+  studentNames    String[]   @map("student_names")
+  
+  status          TourStatus @default(pending)
+  confirmedAt     DateTime?  @map("confirmed_at")
+  
+  specialRequests String?    @map("special_requests")
+  providerNotes   String?    @map("provider_notes")
+  
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  
+  provider        EducationalProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  
+  @@index([providerId, status])
+  @@map("tour_bookings")
+}
+
+// =============================================================================
+// EVENTS
+// =============================================================================
+
+model HostingEvent {
+  id          String   @id @default(cuid())
+  type        String
+  providerId  String   @map("provider_id")
+  timestamp   DateTime @default(now())
+  data        Json     @default("{}")
+  metadata    Json     @default("{}")
+  
+  @@index([providerId, type])
+  @@index([timestamp])
+  @@map("hosting_events")
+}

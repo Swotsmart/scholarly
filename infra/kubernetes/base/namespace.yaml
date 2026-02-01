@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: scholarly
+  labels:
+    app.kubernetes.io/name: scholarly
+    app.kubernetes.io/part-of: scholarly-platform

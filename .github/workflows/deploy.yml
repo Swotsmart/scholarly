@@ -1,0 +1,211 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+      target:
+        description: 'Deployment target'
+        required: true
+        default: 'container-apps'
+        type: choice
+        options:
+          - container-apps
+          - aks
+
+env:
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build application
+        run: npm run build
+
+  docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to ACR
+        run: |
+          ACR_NAME="${{ vars.ACR_NAME || 'scholarlydevacr' }}"
+          az acr login --name $ACR_NAME
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ vars.ACR_NAME || 'scholarlydevacr' }}.azurecr.io/scholarly
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-container-apps:
+    name: Deploy to Container Apps
+    runs-on: ubuntu-latest
+    needs: docker
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'container-apps')
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Container Apps
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          RESOURCE_GROUP="scholarly-${ENVIRONMENT}-rg"
+          APP_NAME="scholarly-${ENVIRONMENT}"
+          ACR_NAME="${{ vars.ACR_NAME || 'scholarlydevacr' }}"
+          IMAGE_TAG="${{ needs.docker.outputs.image_tag || 'latest' }}"
+
+          echo "Deploying to $APP_NAME in $RESOURCE_GROUP"
+          echo "Image: ${ACR_NAME}.azurecr.io/scholarly:${IMAGE_TAG}"
+
+          az containerapp update \
+            --name $APP_NAME \
+            --resource-group $RESOURCE_GROUP \
+            --image "${ACR_NAME}.azurecr.io/scholarly:${IMAGE_TAG}"
+
+      - name: Verify deployment
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          RESOURCE_GROUP="scholarly-${ENVIRONMENT}-rg"
+          APP_NAME="scholarly-${ENVIRONMENT}"
+
+          FQDN=$(az containerapp show \
+            --name $APP_NAME \
+            --resource-group $RESOURCE_GROUP \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+
+          echo "App URL: https://$FQDN"
+
+          # Wait for deployment and check health
+          sleep 30
+          curl -sf "https://${FQDN}/health" || exit 1
+          echo "Health check passed!"
+
+  deploy-aks:
+    name: Deploy to AKS
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'aks'
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get AKS credentials
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment }}"
+          RESOURCE_GROUP="scholarly-${ENVIRONMENT}-rg"
+          CLUSTER_NAME="scholarly-${ENVIRONMENT}-aks"
+
+          az aks get-credentials \
+            --resource-group $RESOURCE_GROUP \
+            --name $CLUSTER_NAME \
+            --overwrite-existing
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Deploy to AKS
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment }}"
+          ACR_NAME="${{ vars.ACR_NAME || 'scholarlydevacr' }}"
+          IMAGE_TAG="${{ needs.docker.outputs.image_tag || 'latest' }}"
+          OVERLAY="${ENVIRONMENT == 'prod' && 'prod' || 'dev'}"
+
+          cd infra/kubernetes/overlays/$OVERLAY
+
+          # Update image
+          kustomize edit set image \
+            "scholarlyacr.azurecr.io/scholarly=${ACR_NAME}.azurecr.io/scholarly:${IMAGE_TAG}"
+
+          # Apply
+          kubectl apply -k .
+
+          # Wait for rollout
+          kubectl rollout status deployment/scholarly -n scholarly --timeout=5m
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n scholarly -l app.kubernetes.io/name=scholarly
+          kubectl port-forward -n scholarly svc/scholarly 8080:80 &
+          sleep 5
+          curl -sf http://localhost:8080/health || exit 1
+          echo "Health check passed!"

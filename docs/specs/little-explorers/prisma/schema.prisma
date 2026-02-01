@@ -1,0 +1,1103 @@
+// Little Explorers - Complete Database Schema
+// Prisma ORM for PostgreSQL
+// Version: 1.0.0
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// SCHOOL & ORGANIZATIONAL ENTITIES
+// ============================================================================
+
+model School {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  
+  name      String
+  shortName String?  @map("short_name")
+  type      String   // early_learning_centre, childcare, preschool, primary_school
+  
+  addressLine1  String  @map("address_line1")
+  addressLine2  String? @map("address_line2")
+  suburb        String
+  state         String
+  postcode      String
+  country       String  @default("AU")
+  timezone      String  @default("Australia/Sydney")
+  
+  phone    String
+  email    String
+  website  String?
+  
+  settings   Json @default("{}")
+  branding   Json @default("{}")
+  aiConfig   Json @default("{}") @map("ai_config")
+  
+  subscriptionTier   String   @default("free") @map("subscription_tier")
+  subscriptionStatus String   @default("active") @map("subscription_status")
+  
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  classrooms      Classroom[]
+  students        Student[]
+  teachers        Teacher[]
+  behaviourSkills BehaviourSkill[]
+  storyPosts      StoryPost[]
+  calendarEvents  CalendarEvent[]
+  emergencyAlerts EmergencyAlert[]
+  
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("schools")
+}
+
+model Classroom {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  schoolId  String   @map("school_id")
+  
+  name         String
+  displayName  String @map("display_name")
+  grade        String
+  academicYear Int    @map("academic_year")
+  
+  theme    Json @default("{}")
+  settings Json @default("{}")
+  
+  classCode String @unique @map("class_code")
+  
+  totalPoints    Int @default(0) @map("total_points")
+  pointsThisWeek Int @default(0) @map("points_this_week")
+  
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  school          School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  enrollments     StudentEnrollment[]
+  assignments     TeacherAssignment[]
+  points          ExplorerPoint[]
+  groupAwards     GroupAward[]
+  storyPosts      StoryPost[]
+  portfolioItems  PortfolioItem[]
+  activities      PortfolioActivity[]
+  observations    TeacherObservation[]
+  conversations   Conversation[]
+  events          CalendarEvent[]
+  aiSuggestions   AIPointSuggestion[]
+  celebrations    Celebration[]
+  
+  @@unique([tenantId, schoolId, name, academicYear])
+  @@index([tenantId, schoolId])
+  @@map("classrooms")
+}
+
+// ============================================================================
+// STUDENT ENTITIES
+// ============================================================================
+
+model Student {
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  schoolId String @map("school_id")
+  
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  preferredName String?  @map("preferred_name")
+  dateOfBirth   DateTime @map("date_of_birth")
+  gender        String?
+  
+  avatar          Json @default("{}")
+  learningProfile Json @default("{}") @map("learning_profile")
+  medicalInfo     Json @default("{}") @map("medical_info")
+  consents        Json @default("[]")
+  
+  totalPointsAllTime  Int @default(0) @map("total_points_all_time")
+  totalPointsThisTerm Int @default(0) @map("total_points_this_term")
+  currentStreak       Int @default(0) @map("current_streak")
+  
+  loginType String? @map("login_type")
+  loginCode String? @map("login_code")
+  
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  school            School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  enrollments       StudentEnrollment[]
+  familyConnections FamilyConnection[]
+  points            ExplorerPoint[]
+  portfolioItems    PortfolioItem[]
+  activityResponses ActivityResponse[]
+  milestones        StudentMilestone[]
+  celebrations      Celebration[]
+  streak            BehaviourStreak?
+  
+  @@index([tenantId, schoolId])
+  @@index([loginCode])
+  @@map("students")
+}
+
+model StudentEnrollment {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  studentId   String @map("student_id")
+  classroomId String @map("classroom_id")
+  
+  academicYear Int      @map("academic_year")
+  startDate    DateTime @map("start_date")
+  endDate      DateTime? @map("end_date")
+  
+  status String @default("enrolled")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  
+  @@unique([studentId, classroomId, academicYear])
+  @@index([tenantId, classroomId])
+  @@map("student_enrollments")
+}
+
+// ============================================================================
+// PARENT ENTITIES
+// ============================================================================
+
+model Parent {
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  userId   String @map("user_id")
+  
+  firstName         String @map("first_name")
+  lastName          String @map("last_name")
+  email             String
+  phone             String?
+  preferredLanguage String @default("en") @map("preferred_language")
+  
+  communicationPrefs Json @default("{}") @map("communication_prefs")
+  appSettings        Json @default("{}") @map("app_settings")
+  
+  engagementScore Float @default(0) @map("engagement_score")
+  
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  familyConnections FamilyConnection[]
+  conversationParts ConversationParticipant[]
+  
+  @@unique([tenantId, userId])
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("parents")
+}
+
+model FamilyConnection {
+  id        String @id @default(cuid())
+  tenantId  String @map("tenant_id")
+  parentId  String @map("parent_id")
+  studentId String @map("student_id")
+  
+  relationship String
+  isPrimary    Boolean @default(false) @map("is_primary")
+  
+  canPickup          Boolean @default(true) @map("can_pickup")
+  canReceiveReports  Boolean @default(true) @map("can_receive_reports")
+  canAccessPortfolio Boolean @default(true) @map("can_access_portfolio")
+  canMessage         Boolean @default(true) @map("can_message")
+  
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  parent  Parent  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@unique([parentId, studentId])
+  @@index([tenantId, studentId])
+  @@map("family_connections")
+}
+
+// ============================================================================
+// TEACHER ENTITIES
+// ============================================================================
+
+model Teacher {
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  userId   String @map("user_id")
+  schoolId String @map("school_id")
+  
+  firstName   String @map("first_name")
+  lastName    String @map("last_name")
+  displayName String @map("display_name")
+  email       String
+  phone       String?
+  
+  bio       String?
+  photoUrl  String? @map("photo_url")
+  role      String  @default("teacher")
+  
+  safeguardingCheck   Json @default("{}") @map("safeguarding_check")
+  preferences         Json @default("{}")
+  aiAssistantSettings Json @default("{}") @map("ai_assistant_settings")
+  
+  pointsAwardedTotal Int @default(0) @map("points_awarded_total")
+  
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  school      School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  assignments TeacherAssignment[]
+  
+  @@unique([tenantId, userId])
+  @@unique([tenantId, email])
+  @@index([tenantId, schoolId])
+  @@map("teachers")
+}
+
+model TeacherAssignment {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  teacherId   String @map("teacher_id")
+  classroomId String @map("classroom_id")
+  
+  role      String
+  startDate DateTime @map("start_date")
+  endDate   DateTime? @map("end_date")
+  
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  teacher   Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  
+  @@unique([teacherId, classroomId])
+  @@index([tenantId, classroomId])
+  @@map("teacher_assignments")
+}
+
+// ============================================================================
+// BEHAVIOUR SYSTEM
+// ============================================================================
+
+model BehaviourSkill {
+  id          String  @id @default(cuid())
+  tenantId    String  @map("tenant_id")
+  schoolId    String  @map("school_id")
+  classroomId String? @map("classroom_id")
+  
+  name        String
+  emoji       String
+  description String
+  category    String
+  isPositive  Boolean @default(true) @map("is_positive")
+  
+  defaultPoints Int @default(1) @map("default_points")
+  minPoints     Int @default(1) @map("min_points")
+  maxPoints     Int @default(3) @map("max_points")
+  
+  ageGroups     Json @default("[]") @map("age_groups")
+  pbisAlignment Json? @map("pbis_alignment")
+  aiConfig      Json @default("{}") @map("ai_config")
+  
+  isActive   Boolean @default(true) @map("is_active")
+  sortOrder  Int     @default(0) @map("sort_order")
+  usageCount Int     @default(0) @map("usage_count")
+  
+  isSystem  Boolean @default(false) @map("is_system")
+  isCustom  Boolean @default(false) @map("is_custom")
+  createdBy String? @map("created_by")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  school School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  points ExplorerPoint[]
+  
+  @@index([tenantId, schoolId])
+  @@index([schoolId, isActive])
+  @@map("behaviour_skills")
+}
+
+model ExplorerPoint {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  schoolId    String @map("school_id")
+  classroomId String @map("classroom_id")
+  
+  studentId   String @map("student_id")
+  studentName String @map("student_name")
+  
+  skillId    String @map("skill_id")
+  skillName  String @map("skill_name")
+  skillEmoji String @map("skill_emoji")
+  points     Int
+  isPositive Boolean @default(true) @map("is_positive")
+  
+  context Json?
+  
+  aiGenerated    Boolean @default(false) @map("ai_generated")
+  aiSuggestionId String? @map("ai_suggestion_id")
+  
+  awardedBy     String @map("awarded_by")
+  awardedByName String @map("awarded_by_name")
+  awardedByRole String @map("awarded_by_role")
+  
+  location       String?
+  customLocation String? @map("custom_location")
+  
+  parentNotified Boolean @default(false) @map("parent_notified")
+  parentViewed   Boolean @default(false) @map("parent_viewed")
+  
+  reactions Json @default("[]")
+  
+  awardedAt DateTime @map("awarded_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  student   Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  skill     BehaviourSkill @relation(fields: [skillId], references: [id])
+  classroom Classroom      @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, classroomId])
+  @@index([tenantId, studentId])
+  @@index([classroomId, awardedAt])
+  @@map("explorer_points")
+}
+
+model GroupAward {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  schoolId    String @map("school_id")
+  classroomId String @map("classroom_id")
+  
+  groupType String @map("group_type")
+  groupId   String? @map("group_id")
+  groupName String @map("group_name")
+  
+  studentIds Json @map("student_ids")
+  
+  skillId          String @map("skill_id")
+  skillName        String @map("skill_name")
+  skillEmoji       String @map("skill_emoji")
+  pointsPerStudent Int    @map("points_per_student")
+  totalPoints      Int    @map("total_points")
+  isPositive       Boolean @default(true) @map("is_positive")
+  
+  reason  String?
+  context Json?
+  
+  aiGenerated    Boolean @default(false) @map("ai_generated")
+  aiSuggestionId String? @map("ai_suggestion_id")
+  
+  awardedBy     String @map("awarded_by")
+  awardedByName String @map("awarded_by_name")
+  
+  awardedAt DateTime @map("awarded_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, classroomId])
+  @@map("group_awards")
+}
+
+model AIPointSuggestion {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  schoolId    String @map("school_id")
+  classroomId String @map("classroom_id")
+  
+  observationSource String  @map("observation_source")
+  observationText   String? @map("observation_text")
+  
+  suggestedStudentIds Json   @map("suggested_student_ids")
+  suggestedSkillId    String @map("suggested_skill_id")
+  suggestedSkillName  String @map("suggested_skill_name")
+  suggestedPoints     Int    @map("suggested_points")
+  
+  reasoning  String
+  confidence Float
+  
+  alternatives Json @default("[]")
+  
+  status          String    @default("pending")
+  acceptedBy      String?   @map("accepted_by")
+  acceptedAt      DateTime? @map("accepted_at")
+  rejectionReason String?   @map("rejection_reason")
+  
+  suggestedAt DateTime @map("suggested_at")
+  expiresAt   DateTime @map("expires_at")
+  
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, classroomId])
+  @@index([status, expiresAt])
+  @@map("ai_point_suggestions")
+}
+
+model Celebration {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  schoolId    String @map("school_id")
+  classroomId String @map("classroom_id")
+  studentId   String @map("student_id")
+  
+  milestoneType  String @map("milestone_type")
+  milestoneValue Int    @map("milestone_value")
+  milestoneName  String @map("milestone_name")
+  
+  title         String
+  message       String
+  emoji         String
+  animationType String @map("animation_type")
+  
+  certificateGenerated Boolean @default(false) @map("certificate_generated")
+  certificateUrl       String? @map("certificate_url")
+  
+  parentNotified Boolean @default(false) @map("parent_notified")
+  classAnnounced Boolean @default(false) @map("class_announced")
+  
+  achievedAt DateTime @map("achieved_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, studentId])
+  @@map("celebrations")
+}
+
+model BehaviourStreak {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  studentId   String   @unique @map("student_id")
+  classroomId String   @map("classroom_id")
+  
+  currentStreak      Int      @default(1) @map("current_streak")
+  currentStreakStart DateTime @map("current_streak_start")
+  
+  longestStreak      Int      @default(1) @map("longest_streak")
+  longestStreakStart DateTime @map("longest_streak_start")
+  longestStreakEnd   DateTime @map("longest_streak_end")
+  
+  streakType    String @default("daily_positive") @map("streak_type")
+  lastPointDate DateTime @map("last_point_date")
+  
+  milestonesAchieved Json @default("[]") @map("milestones_achieved")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, classroomId])
+  @@map("behaviour_streaks")
+}
+
+// ============================================================================
+// COMMUNICATION SYSTEM
+// ============================================================================
+
+model StoryPost {
+  id          String  @id @default(cuid())
+  tenantId    String  @map("tenant_id")
+  schoolId    String  @map("school_id")
+  classroomId String? @map("classroom_id")
+  
+  authorId        String  @map("author_id")
+  authorName      String  @map("author_name")
+  authorRole      String  @map("author_role")
+  authorAvatarUrl String? @map("author_avatar_url")
+  
+  content Json
+  
+  visibility         String @default("class")
+  taggedStudentIds   Json   @default("[]") @map("tagged_student_ids")
+  learningConnections Json? @map("learning_connections")
+  
+  aiGenerated         Boolean @default(false) @map("ai_generated")
+  aiCaptionSuggestion String? @map("ai_caption_suggestion")
+  
+  moderationStatus String @default("approved") @map("moderation_status")
+  
+  viewCount    Int   @default(0) @map("view_count")
+  likeCount    Int   @default(0) @map("like_count")
+  commentCount Int   @default(0) @map("comment_count")
+  
+  scheduledFor DateTime? @map("scheduled_for")
+  publishedAt  DateTime? @map("published_at")
+  
+  status    String   @default("draft")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  school    School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classroom Classroom? @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  reactions StoryReaction[]
+  comments  StoryComment[]
+  views     StoryView[]
+  
+  @@index([tenantId, classroomId])
+  @@index([classroomId, status, publishedAt])
+  @@map("story_posts")
+}
+
+model StoryReaction {
+  id     String @id @default(cuid())
+  postId String @map("post_id")
+  userId String @map("user_id")
+  userName String @map("user_name")
+  type   String
+  
+  reactedAt DateTime @default(now()) @map("reacted_at")
+  
+  post StoryPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, userId])
+  @@map("story_reactions")
+}
+
+model StoryComment {
+  id       String @id @default(cuid())
+  postId   String @map("post_id")
+  userId   String @map("user_id")
+  userName String @map("user_name")
+  userRole String @map("user_role")
+  
+  content          String
+  moderationStatus String @default("approved") @map("moderation_status")
+  parentCommentId  String? @map("parent_comment_id")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  post StoryPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@index([postId])
+  @@map("story_comments")
+}
+
+model StoryView {
+  id     String @id @default(cuid())
+  postId String @map("post_id")
+  userId String @map("user_id")
+  
+  viewedAt DateTime @default(now()) @map("viewed_at")
+  
+  post StoryPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@unique([postId, userId])
+  @@map("story_views")
+}
+
+model Conversation {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  schoolId    String @map("school_id")
+  classroomId String @map("classroom_id")
+  
+  relatedStudentId   String? @map("related_student_id")
+  relatedStudentName String? @map("related_student_name")
+  
+  subject String?
+  
+  lastMessageAt      DateTime @map("last_message_at")
+  lastMessagePreview String   @map("last_message_preview")
+  lastMessageBy      String   @map("last_message_by")
+  
+  aiSummary     String? @map("ai_summary")
+  aiSentiment   String? @map("ai_sentiment")
+  aiActionItems Json?   @map("ai_action_items")
+  
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  classroom    Classroom                 @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  participants ConversationParticipant[]
+  messages     Message[]
+  
+  @@index([tenantId, classroomId])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String  @id @default(cuid())
+  conversationId String  @map("conversation_id")
+  userId         String  @map("user_id")
+  parentId       String? @map("parent_id")
+  
+  name      String
+  role      String
+  avatarUrl String? @map("avatar_url")
+  
+  notificationsEnabled Boolean   @default(true) @map("notifications_enabled")
+  lastReadAt           DateTime? @map("last_read_at")
+  unreadCount          Int       @default(0) @map("unread_count")
+  
+  leftAt DateTime? @map("left_at")
+  
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  parent       Parent?      @relation(fields: [parentId], references: [id])
+  
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String @id @default(cuid())
+  tenantId       String @map("tenant_id")
+  conversationId String @map("conversation_id")
+  
+  senderId   String @map("sender_id")
+  senderName String @map("sender_name")
+  senderRole String @map("sender_role")
+  
+  content Json
+  
+  originalLanguage String @default("en") @map("original_language")
+  translations     Json   @default("{}")
+  
+  aiDrafted      Boolean @default(false) @map("ai_drafted")
+  aiToneAnalysis Json?   @map("ai_tone_analysis")
+  
+  moderationStatus String @default("approved") @map("moderation_status")
+  moderationFlags  Json?  @map("moderation_flags")
+  
+  deliveryStatus Json @default("{}") @map("delivery_status")
+  readBy         Json @default("[]") @map("read_by")
+  
+  status   String    @default("sent")
+  editedAt DateTime? @map("edited_at")
+  
+  sentAt    DateTime @map("sent_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@index([conversationId, sentAt])
+  @@map("messages")
+}
+
+model CalendarEvent {
+  id          String  @id @default(cuid())
+  tenantId    String  @map("tenant_id")
+  schoolId    String  @map("school_id")
+  classroomId String? @map("classroom_id")
+  
+  title       String
+  description String?
+  type        String
+  
+  startDate DateTime @map("start_date")
+  endDate   DateTime @map("end_date")
+  allDay    Boolean  @default(false) @map("all_day")
+  timezone  String   @default("Australia/Sydney")
+  
+  recurring      Boolean @default(false)
+  recurrenceRule Json?   @map("recurrence_rule")
+  
+  location Json?
+  
+  visibility String @default("class")
+  
+  rsvpEnabled   Boolean   @default(false) @map("rsvp_enabled")
+  rsvpDeadline  DateTime? @map("rsvp_deadline")
+  rsvpResponses Json      @default("[]") @map("rsvp_responses")
+  
+  reminders   Json @default("[]")
+  attachments Json @default("[]")
+  
+  createdBy     String @map("created_by")
+  createdByName String @map("created_by_name")
+  
+  status    String   @default("scheduled")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  school    School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classroom Classroom? @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, schoolId])
+  @@index([classroomId, startDate])
+  @@map("calendar_events")
+}
+
+model EmergencyAlert {
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  schoolId String @map("school_id")
+  
+  scope              String
+  targetClassroomIds Json? @map("target_classroom_ids")
+  
+  type         String
+  severity     String
+  title        String
+  message      String
+  instructions Json?
+  
+  channels      Json
+  deliveryStats Json @default("{}") @map("delivery_stats")
+  
+  requiresAcknowledgement Boolean @default(false) @map("requires_acknowledgement")
+  acknowledgements        Json    @default("[]")
+  
+  createdBy     String @map("created_by")
+  createdByName String @map("created_by_name")
+  
+  status    String    @default("draft")
+  sentAt    DateTime? @map("sent_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, schoolId])
+  @@map("emergency_alerts")
+}
+
+model Notification {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  recipientId String @map("recipient_id")
+  
+  type  String
+  title String
+  body  String
+  data  Json?
+  
+  channels       Json @default("[]")
+  deliveryStatus Json @default("{}") @map("delivery_status")
+  
+  read   Boolean @default(false)
+  readAt DateTime? @map("read_at")
+  
+  scheduledFor DateTime? @map("scheduled_for")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  
+  @@index([tenantId, recipientId])
+  @@index([recipientId, read])
+  @@map("notifications")
+}
+
+// ============================================================================
+// PORTFOLIO SYSTEM
+// ============================================================================
+
+model PortfolioItem {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  schoolId    String @map("school_id")
+  classroomId String @map("classroom_id")
+  studentId   String @map("student_id")
+  
+  type        String
+  title       String
+  description String?
+  content     Json
+  
+  context Json?
+  
+  curriculumTags     Json @default("[]") @map("curriculum_tags")
+  developmentalAreas Json @default("[]") @map("developmental_areas")
+  
+  aiAnalysis Json? @map("ai_analysis")
+  
+  approvalStatus String    @default("pending") @map("approval_status")
+  approvedBy     String?   @map("approved_by")
+  approvedAt     DateTime? @map("approved_at")
+  
+  visibleToParent Boolean @default(false) @map("visible_to_parent")
+  sharedToStory   Boolean @default(false) @map("shared_to_story")
+  storyPostId     String? @map("story_post_id")
+  
+  isHighlight     Boolean @default(false) @map("is_highlight")
+  highlightReason String? @map("highlight_reason")
+  
+  createdBy     String @map("created_by")
+  createdByRole String @map("created_by_role")
+  
+  parentViewed   Boolean   @default(false) @map("parent_viewed")
+  parentViewedAt DateTime? @map("parent_viewed_at")
+  parentReaction Json?     @map("parent_reaction")
+  
+  status String @default("active")
+  
+  capturedAt DateTime @map("captured_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, studentId])
+  @@index([classroomId, createdAt])
+  @@index([approvalStatus])
+  @@map("portfolio_items")
+}
+
+model PortfolioActivity {
+  id          String  @id @default(cuid())
+  tenantId    String  @map("tenant_id")
+  schoolId    String  @map("school_id")
+  classroomId String? @map("classroom_id")
+  
+  title        String
+  description  String
+  instructions String?
+  
+  type          String
+  responseTypes Json @default("[]") @map("response_types")
+  
+  content Json
+  
+  targetAgeGroups  Json  @default("[]") @map("target_age_groups")
+  targetStudentIds Json? @map("target_student_ids")
+  
+  curriculumTags     Json @default("[]") @map("curriculum_tags")
+  developmentalAreas Json @default("[]") @map("developmental_areas")
+  
+  dueDate          DateTime? @map("due_date")
+  estimatedMinutes Int?      @map("estimated_minutes")
+  
+  settings Json @default("{}") @map("settings")
+  aiConfig Json? @map("ai_config")
+  
+  responseCount  Int @default(0) @map("response_count")
+  completedCount Int @default(0) @map("completed_count")
+  
+  status String @default("draft")
+  
+  createdBy     String @map("created_by")
+  createdByName String @map("created_by_name")
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  publishedAt DateTime? @map("published_at")
+  
+  classroom Classroom?         @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  responses ActivityResponse[]
+  
+  @@index([tenantId, classroomId])
+  @@index([status, dueDate])
+  @@map("portfolio_activities")
+}
+
+model ActivityResponse {
+  id         String @id @default(cuid())
+  tenantId   String @map("tenant_id")
+  activityId String @map("activity_id")
+  studentId  String @map("student_id")
+  
+  responseType String @map("response_type")
+  content      Json
+  
+  completionStatus String @default("in_progress") @map("completion_status")
+  
+  teacherFeedback Json? @map("teacher_feedback")
+  aiFeedback      Json? @map("ai_feedback")
+  
+  pointsAwarded Boolean @default(false) @map("points_awarded")
+  pointId       String? @map("point_id")
+  
+  portfolioItemId String? @map("portfolio_item_id")
+  
+  startedAt   DateTime  @map("started_at")
+  submittedAt DateTime? @map("submitted_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  
+  activity PortfolioActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  student  Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@unique([activityId, studentId])
+  @@index([activityId])
+  @@map("activity_responses")
+}
+
+model TeacherObservation {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  schoolId    String @map("school_id")
+  classroomId String @map("classroom_id")
+  
+  studentIds Json @map("student_ids")
+  
+  observation String
+  context     Json?
+  
+  type               String
+  developmentalAreas Json @default("[]") @map("developmental_areas")
+  curriculumTags     Json @default("[]") @map("curriculum_tags")
+  
+  aiEnhanced    Boolean @default(false) @map("ai_enhanced")
+  aiSuggestions Json?   @map("ai_suggestions")
+  
+  media Json @default("[]")
+  
+  convertedToPortfolioItem Boolean @default(false) @map("converted_to_portfolio_item")
+  portfolioItemId          String? @map("portfolio_item_id")
+  
+  observedBy     String @map("observed_by")
+  observedByName String @map("observed_by_name")
+  
+  observedAt DateTime @map("observed_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, classroomId])
+  @@map("teacher_observations")
+}
+
+model DevelopmentalMilestone {
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  
+  framework String
+  area      String
+  
+  name        String
+  description String
+  indicators  Json @default("[]")
+  
+  ageRangeMonths Json @map("age_range_months")
+  
+  sortOrder Int @default(0) @map("sort_order")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  studentMilestones StudentMilestone[]
+  
+  @@index([tenantId, framework])
+  @@index([area])
+  @@map("developmental_milestones")
+}
+
+model StudentMilestone {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  studentId   String @map("student_id")
+  milestoneId String @map("milestone_id")
+  
+  status String @default("not_started")
+  
+  evidenceItems Json @default("[]") @map("evidence_items")
+  teacherNotes  String? @map("teacher_notes")
+  
+  aiDetected   Boolean @default(false) @map("ai_detected")
+  aiConfidence Float?  @map("ai_confidence")
+  
+  firstObservedAt DateTime? @map("first_observed_at")
+  achievedAt      DateTime? @map("achieved_at")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  student   Student                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  milestone DevelopmentalMilestone @relation(fields: [milestoneId], references: [id])
+  
+  @@unique([studentId, milestoneId])
+  @@index([studentId])
+  @@map("student_milestones")
+}
+
+model ProgressReport {
+  id        String @id @default(cuid())
+  tenantId  String @map("tenant_id")
+  studentId String @map("student_id")
+  
+  period    String
+  dateRange Json @map("date_range")
+  
+  narrative Json
+  
+  highlights        Json @default("[]")
+  milestonesSummary Json @default("{}") @map("milestones_summary")
+  
+  pdfUrl String? @map("pdf_url")
+  
+  generatedAt DateTime @map("generated_at")
+  generatedBy String   @map("generated_by")
+  
+  sharedWithParents   Boolean   @default(false) @map("shared_with_parents")
+  sharedAt            DateTime? @map("shared_at")
+  parentAcknowledged  Boolean   @default(false) @map("parent_acknowledged")
+  parentAcknowledgedAt DateTime? @map("parent_acknowledged_at")
+  
+  status    String   @default("draft")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([tenantId, studentId])
+  @@map("progress_reports")
+}
+
+model StudentPortfolioAccess {
+  id        String @id @default(cuid())
+  tenantId  String @map("tenant_id")
+  studentId String @unique @map("student_id")
+  
+  loginType       String  @map("login_type")
+  loginCode       String? @map("login_code")
+  qrCodeUrl       String? @map("qr_code_url")
+  pictureOptions  Json?   @map("picture_options")
+  pictureSequence Json?   @map("picture_sequence")
+  
+  isActive  Boolean   @default(true) @map("is_active")
+  lastLogin DateTime? @map("last_login")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([loginCode])
+  @@map("student_portfolio_access")
+}
+
+// ============================================================================
+// AI INTERACTION LOGGING
+// ============================================================================
+
+model AIInteractionLog {
+  id       String @id @default(cuid())
+  tenantId String @map("tenant_id")
+  
+  requestType      String   @map("request_type")
+  requestTimestamp DateTime @map("request_timestamp")
+  inputSummary     String   @map("input_summary")
+  inputTokens      Int      @map("input_tokens")
+  
+  responseTimestamp DateTime @map("response_timestamp")
+  outputSummary     String   @map("output_summary")
+  outputTokens      Int      @map("output_tokens")
+  
+  latencyMs Int     @map("latency_ms")
+  success   Boolean
+  errorMsg  String? @map("error_msg")
+  
+  model String
+  cost  Float?
+  
+  userId      String? @map("user_id")
+  classroomId String? @map("classroom_id")
+  studentId   String? @map("student_id")
+  
+  feedback Json?
+  
+  @@index([tenantId, requestTimestamp])
+  @@index([requestType])
+  @@map("ai_interaction_logs")
+}

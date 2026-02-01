@@ -1,0 +1,12 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: scholarly
+  namespace: scholarly
+  labels:
+    app.kubernetes.io/name: scholarly
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: scholarly

@@ -243,12 +243,13 @@ export abstract class ScholarlyBaseService {
   /**
    * Validate required fields
    */
-  protected validateRequired<T extends Record<string, unknown>>(
+  protected validateRequired<T extends object>(
     data: T,
     requiredFields: (keyof T)[]
   ): Result<void> {
     const missing = requiredFields.filter(
-      (field) => data[field] === undefined || data[field] === null
+      (field) => (data as Record<string, unknown>)[field as string] === undefined ||
+                 (data as Record<string, unknown>)[field as string] === null
     );
 
     if (missing.length > 0) {

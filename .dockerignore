@@ -1,0 +1,64 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+.next
+**/.next
+dist
+**/dist
+*.tsbuildinfo
+
+# Git
+.git
+.gitignore
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (except README)
+docs/
+*.md
+!README.md
+
+# Tests
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+coverage/
+.nyc_output
+
+# Development
+.eslintrc*
+.prettierrc*
+tsconfig.tsbuildinfo
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Infra
+infra/
+
+# Logs
+logs/
+*.log
+
+# Secrets
+*.pem
+*.key
+*.crt

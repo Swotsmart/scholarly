@@ -233,6 +233,10 @@ model User {
   earlyYearsFamilies      EarlyYearsFamily[]
   languageLearnerProfiles LanguageLearnerProfile[]
 
+  // KYC/WWCC Verifications
+  identityVerifications IdentityVerification[]
+  wwccVerifications     WWCCVerification[]
+
   @@unique([tenantId, email])
   @@index([tenantId])
   @@index([tenantId, status])
@@ -4959,4 +4963,600 @@ model LanguageExchangeSession {
 
   @@index([tenantId, status])
   @@index([tenantId, scheduledAt])
+}
+
+// ============================================================================
+// SCHOLARLY HOSTING - Educational Provider Web Hosting Platform
+// ============================================================================
+
+/// Educational provider (school, tutor, micro-school, etc.)
+model HostingProvider {
+  id       String @id @default(cuid())
+  tenantId String
+
+  // Provider type
+  type String // school, micro_school, tutoring_centre, solo_tutor, homeschool_coop, curriculum_provider, enrichment, online_academy
+
+  // Identity
+  displayName String
+  legalName   String?
+  description String  @db.Text
+  tagline     String?
+
+  // Branding
+  logoUrl    String?
+  faviconUrl String?
+  theme      Json    @default("{}")
+
+  // Location(s) - stored as JSON array
+  locations   Json @default("[]")
+  serviceArea Json? // Geographic service area
+
+  // Primary contact
+  primaryContact Json
+
+  // Primary domain (denormalized for quick lookup)
+  primaryDomain String?
+
+  // Quality profile (embedded for performance)
+  qualityProfile Json @default("{}")
+
+  // Features enabled for this provider
+  features Json @default("{}")
+
+  // SEO configuration
+  seoConfig Json @default("{}")
+
+  // Agent API configuration
+  agentConfig Json @default("{}")
+
+  // LIS integration identifiers
+  lisIdentifiers Json?
+
+  // Link back to Scholarly tenant
+  scholarlyTenantId String?
+
+  // Status
+  status String @default("pending_setup") // pending_setup, active, suspended, archived
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  domains       HostingDomain[]
+  enquiries     HostingEnquiry[]
+  tourBookings  HostingTourBooking[]
+  reviews       HostingReview[]
+  offerings     HostingOffering[]
+  qualityEvents HostingQualityEvent[]
+
+  @@unique([tenantId, primaryDomain])
+  @@index([tenantId, status])
+  @@index([tenantId, type])
+  @@index([primaryDomain])
+  @@index([status])
+}
+
+/// Domain configuration for a provider
+model HostingDomain {
+  id         String @id @default(cuid())
+  providerId String
+
+  domain String @unique // e.g., school.scholarly.io or www.school.edu.au
+  type   String // subdomain, custom, alias
+
+  status            String // pending_verification, verified, failed_verification, suspended
+  sslStatus         String @default("pending") // pending, provisioning, active, expiring_soon, expired, failed
+  sslExpiresAt      DateTime?
+  verificationToken String?
+  verifiedAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider HostingProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+  @@index([domain])
+  @@index([status])
+}
+
+/// Educational offering (course, tutoring package, workshop, etc.)
+model HostingOffering {
+  id         String @id @default(cuid())
+  providerId String
+
+  // Offering details
+  type             String // school_program, course, tutoring_package, tutoring_session, workshop, camp, curriculum, assessment, enrichment_program
+  name             String
+  shortDescription String
+  description      String  @db.Text
+  slug             String
+
+  // Target audience
+  yearLevels   String[] // early_years, foundation, year_1, etc.
+  subjectAreas String[]
+  prerequisites String?
+
+  // Delivery
+  deliveryModes String[] // in_person, online_live, online_self_paced, hybrid, home_visit
+  duration      Json? // { value: number, unit: string }
+  schedule      Json? // Scheduling details
+
+  // Pricing
+  pricing Json // { type, amount, currency, inclusions, etc. }
+
+  // Capacity
+  capacity Json? // { min, max, spotsAvailable, etc. }
+
+  // Content
+  curriculum     Json? // Curriculum alignment
+  learningOutcomes String[]
+  materials      Json?
+
+  // Media
+  featuredImage String?
+  gallery       String[]
+  videoUrl      String?
+
+  // Status
+  status    String   @default("draft") // draft, published, archived
+  publishedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider HostingProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, slug])
+  @@index([providerId, status])
+  @@index([providerId, type])
+  @@index([status])
+}
+
+/// Enquiry from prospective parent/student
+model HostingEnquiry {
+  id         String @id @default(cuid())
+  providerId String
+  offeringId String?
+
+  // Contact details
+  contactName      String
+  contactEmail     String
+  contactPhone     String?
+  preferredContact String @default("email")
+
+  // Student details (optional)
+  studentName      String?
+  studentAge       Int?
+  studentYearLevel String?
+
+  // Enquiry details
+  enquiryType String // general, enrollment, tour, pricing, availability
+  message     String @db.Text
+
+  // Source tracking
+  source  String @default("website") // website, agent_api, referral, other
+  agentId String? // If via agent API
+
+  // Response
+  status          String    @default("new") // new, in_progress, responded, closed
+  responseMessage String?   @db.Text
+  respondedAt     DateTime?
+  respondedBy     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider HostingProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId, status])
+  @@index([providerId, createdAt])
+  @@index([contactEmail])
+}
+
+/// Tour/visit booking
+model HostingTourBooking {
+  id         String @id @default(cuid())
+  providerId String
+  locationId String
+
+  // Contact details
+  contactName  String
+  contactEmail String
+  contactPhone String?
+
+  // Booking details
+  scheduledAt   DateTime
+  duration      Int      @default(60) // minutes
+  tourType      String // in_person, virtual
+  attendeeCount Int      @default(1)
+  studentNames  String[]
+
+  // Request details
+  specialRequests String? @db.Text
+
+  // Status
+  status             String    @default("pending") // pending, confirmed, completed, cancelled, no_show
+  confirmedAt        DateTime?
+  completedAt        DateTime?
+  cancellationReason String?
+
+  // Provider notes
+  providerNotes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider HostingProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId, status])
+  @@index([providerId, scheduledAt])
+  @@index([contactEmail])
+}
+
+/// Review/testimonial from parent/student/alumni
+model HostingReview {
+  id         String @id @default(cuid())
+  providerId String
+  authorId   String? // If linked to a user
+
+  // Author details
+  authorType String // parent, student, staff, alumni
+  authorName String?
+
+  // Rating
+  overallRating   Float // 1-5
+  categoryRatings Json  @default("[]") // Array of { category, rating, weight }
+
+  // Review content
+  title   String?
+  content String  @db.Text
+
+  // Recommendation
+  wouldRecommend Boolean @default(true)
+
+  // Verification
+  isVerified     Boolean   @default(false)
+  verificationMethod String?
+  verifiedAt     DateTime?
+
+  // Provider response
+  providerResponse    String?   @db.Text
+  providerRespondedAt DateTime?
+
+  // Engagement
+  helpfulCount Int @default(0)
+
+  // Moderation
+  status         String    @default("pending") // pending, published, rejected, flagged
+  moderatedAt    DateTime?
+  moderationNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider HostingProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId, status])
+  @@index([providerId, overallRating])
+  @@index([status])
+}
+
+/// Quality events (outcomes, accreditations, compliance records)
+model HostingQualityEvent {
+  id         String @id @default(cuid())
+  providerId String
+
+  eventType String // outcome, accreditation, compliance, registration, staff_qualification
+
+  // Event data (structure depends on eventType)
+  data Json
+
+  // Verification
+  isVerified     Boolean   @default(false)
+  verifiedAt     DateTime?
+  verifiedBy     String?
+  verificationMethod String?
+  supportingDocumentUrl String?
+
+  // Validity
+  validFrom DateTime?
+  validUntil DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider HostingProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId, eventType])
+  @@index([providerId, isVerified])
+}
+
+// ============================================================================
+// KYC/KYB VERIFICATION MODELS
+// ============================================================================
+
+/// Identity verification record (KYC)
+/// Provider-agnostic design supporting Stripe Identity, Onfido, Persona, etc.
+model IdentityVerification {
+  id       String @id @default(cuid())
+  tenantId String
+  userId   String
+
+  // Provider configuration (supports multiple providers)
+  provider        String // stripe_identity, onfido, persona, jumio, veriff, manual
+  providerSessionId String? @unique // Provider's session/workflow ID
+  providerIntentId  String? // Provider's verification intent ID
+  providerAccountId String? // For multi-tenant provider accounts
+
+  // Verification type
+  verificationType String // document_only, document_and_selfie, document_and_video, enhanced
+
+  // Personal details (captured during verification)
+  firstName       String?
+  lastName        String?
+  dateOfBirth     DateTime?
+  idNumber        String? // Encrypted/hashed
+  idNumberType    String? // drivers_license, passport, national_id
+
+  // Address details
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  postalCode   String?
+  country      String?
+
+  // Document details
+  documentType      String? // passport, drivers_license, id_card
+  documentCountry   String?
+  documentNumber    String? // Encrypted/hashed
+  documentExpiresAt DateTime?
+  documentFrontUrl  String? // Secure URL to document image
+  documentBackUrl   String?
+
+  // Biometric details
+  selfieUrl     String?
+  selfieScore   Float? // Confidence score 0-1
+  livenessScore Float? // Liveness detection score 0-1
+
+  // Verification outcome
+  status       String @default("pending") // pending, processing, requires_input, verified, failed, expired
+  verifiedAt   DateTime?
+  failureCode  String? // document_expired, selfie_mismatch, etc.
+  failureMessage String?
+
+  // Risk assessment
+  riskScore    Float? // 0-100 risk score
+  riskSignals  Json   @default("[]") // Array of risk signals detected
+
+  // Audit trail
+  ipAddress    String?
+  userAgent    String?
+  deviceInfo   Json? // Device fingerprint data
+
+  // Metadata
+  metadata Json @default("{}")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime? // Verification expiry (annual re-verification)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId])
+  @@index([tenantId, status])
+  @@index([provider, providerSessionId])
+  @@index([userId, status])
+}
+
+/// Working With Children Check verification
+/// Supports Australian state-based WWCC systems
+model WWCCVerification {
+  id       String @id @default(cuid())
+  tenantId String
+  userId   String
+
+  // WWCC details
+  wwccNumber String  // The WWCC/Blue Card number
+  state      String  // NSW, VIC, QLD, WA, SA, TAS, NT, ACT
+  cardType   String? // employee, volunteer, both
+
+  // Holder details (for verification)
+  firstName   String
+  lastName    String
+  dateOfBirth DateTime
+
+  // Verification status
+  status             String @default("pending") // pending, checking, verified, failed, expired, revoked
+  registryStatus     String? // Current status from registry (current, expired, barred, etc.)
+  registryLastChecked DateTime?
+
+  // Verification details
+  verifiedAt       DateTime?
+  verificationMethod String? // api_check, manual_check, employer_portal
+  verifierNotes    String?
+
+  // Validity period
+  issuedAt  DateTime?
+  expiresAt DateTime?
+
+  // Employer/Organisation registration (required by some states)
+  employerRegistrationNumber String?
+  organisationName           String?
+
+  // Document storage
+  cardFrontUrl String? // Secure URL to card image
+  cardBackUrl  String?
+
+  // Ongoing monitoring
+  lastMonitoredAt      DateTime?
+  monitoringEnabled    Boolean @default(true)
+  alertOnStatusChange  Boolean @default(true)
+
+  // Failure details
+  failureCode    String?
+  failureMessage String?
+
+  // Audit
+  ipAddress String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, state])
+  @@index([tenantId, status])
+  @@index([wwccNumber, state])
+  @@index([userId, status])
+  @@index([expiresAt])
+}
+
+/// Business verification (KYB) for schools, micro-schools, organisations
+model BusinessVerification {
+  id       String @id @default(cuid())
+  tenantId String
+
+  // Entity being verified (polymorphic)
+  entityType String // micro_school, school, coop, hosting_provider, organisation
+  entityId   String
+
+  // Business identifiers (Australian)
+  abn               String? // Australian Business Number
+  acn               String? // Australian Company Number
+  abnStatus         String? // active, cancelled
+  abnStatusDate     DateTime?
+  gstRegistered     Boolean?
+
+  // Business details (from ABR/ASIC)
+  legalName         String?
+  tradingName       String?
+  businessType      String? // sole_trader, partnership, company, trust, etc.
+  businessAddress   Json?   // Full registered address
+  businessStartDate DateTime?
+
+  // ASIC details (for companies)
+  asicStatus         String? // registered, deregistered, etc.
+  asicRegistrationDate DateTime?
+  asicReviewDate     DateTime?
+
+  // Directors/Principals (for companies)
+  directors Json @default("[]") // Array of { name, appointedDate, role }
+
+  // Education-specific verification
+  registrationAuthority String? // NESA, VRQA, QCAA, etc.
+  registrationNumber    String?
+  registrationStatus    String?
+  registrationExpiresAt DateTime?
+
+  // Verification outcome
+  status       String @default("pending") // pending, checking, verified, failed, requires_review
+  verifiedAt   DateTime?
+  verifierNotes String?
+
+  // Risk assessment
+  riskLevel    String? // low, medium, high
+  riskSignals  Json    @default("[]")
+
+  // Document storage
+  documents Json @default("[]") // Array of { type, url, uploadedAt }
+
+  // Failure details
+  failureCode    String?
+  failureMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, entityType, entityId])
+  @@index([tenantId, status])
+  @@index([abn])
+  @@index([entityType, entityId])
+}
+
+/// Verification document storage
+/// Stores metadata for all verification-related documents
+model VerificationDocument {
+  id       String @id @default(cuid())
+  tenantId String
+
+  // Document ownership (polymorphic)
+  ownerType String // user, organisation, identity_verification, wwcc_verification, business_verification
+  ownerId   String
+
+  // Document details
+  documentType   String // passport, drivers_license, wwcc_card, abn_certificate, registration_cert, etc.
+  fileName       String
+  mimeType       String
+  fileSize       Int    // bytes
+
+  // Storage
+  storageProvider String @default("azure") // azure, s3, gcs
+  storagePath     String // Encrypted path to document
+  storageUrl      String? // Temporary signed URL (expires)
+
+  // Document metadata
+  extractedData Json    @default("{}") // OCR/extracted data
+  metadata      Json    @default("{}")
+
+  // Verification
+  isVerified    Boolean   @default(false)
+  verifiedAt    DateTime?
+  verifiedBy    String?
+
+  // Expiry tracking
+  documentExpiresAt DateTime?
+
+  // Retention
+  retentionPolicy String    @default("standard") // standard, extended, legal_hold
+  deleteAfter     DateTime? // Auto-delete after this date
+
+  // Audit
+  uploadedBy    String?
+  uploadedAt    DateTime @default(now())
+  lastAccessedAt DateTime?
+  accessCount   Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, ownerType, ownerId])
+  @@index([documentType])
+  @@index([deleteAfter])
+}
+
+/// Verification audit log
+/// Tracks all verification-related events for compliance
+model VerificationAuditLog {
+  id       String @id @default(cuid())
+  tenantId String
+
+  // Event details
+  eventType    String // verification_started, document_uploaded, check_initiated, status_changed, etc.
+  verificationType String // kyc, wwcc, kyb
+  verificationId String // ID of the verification record
+
+  // Actor
+  actorType String // user, system, admin, api
+  actorId   String?
+
+  // Event data
+  previousStatus String?
+  newStatus      String?
+  eventData      Json    @default("{}")
+  errorDetails   Json?
+
+  // Request context
+  ipAddress String?
+  userAgent String?
+  requestId String?
+
+  timestamp DateTime @default(now())
+
+  @@index([tenantId, verificationId])
+  @@index([tenantId, verificationType, timestamp])
+  @@index([actorId, timestamp])
 }

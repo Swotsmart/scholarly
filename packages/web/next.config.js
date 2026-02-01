@@ -1,9 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
   transpilePackages: ['@scholarly/shared'],
   images: {
-    domains: ['localhost', 'scholarly.ai', 'portfolio.scholarly.ai'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'scholarly.ai' },
+      { protocol: 'https', hostname: 'portfolio.scholarly.ai' },
+      { protocol: 'https', hostname: '*.azurecontainerapps.io' },
+    ],
+  },
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   },
 };
 

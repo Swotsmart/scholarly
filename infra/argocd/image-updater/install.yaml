@@ -1,0 +1,31 @@
+# ArgoCD Image Updater
+# Automatically updates container images when new versions are pushed to ACR
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+resources:
+  - https://raw.githubusercontent.com/argoproj-labs/argocd-image-updater/stable/manifests/install.yaml
+
+patches:
+  # Configure for Azure Container Registry
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: argocd-image-updater-config
+        namespace: argocd
+      data:
+        registries.conf: |
+          registries:
+            - name: Azure Container Registry
+              prefix: scholarlyacr.azurecr.io
+              api_url: https://scholarlyacr.azurecr.io
+              credentials: pullsecret:argocd/acr-credentials
+              default: true
+        applications.conf: |
+          # How often to check for updates (default: 2m)
+          check_interval: 5m
+        log.level: info

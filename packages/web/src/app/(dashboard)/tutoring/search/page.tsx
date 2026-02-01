@@ -14,6 +14,8 @@ import {
   MapPin,
   Filter,
   GraduationCap,
+  ShieldCheck,
+  BadgeCheck,
 } from 'lucide-react';
 
 const tutors = [
@@ -30,6 +32,9 @@ const tutors = [
     responseTime: '< 1 hour',
     availability: 'Weekday afternoons, Saturdays',
     languages: ['English', 'Mandarin'],
+    kycVerified: true,
+    wwccVerified: true,
+    wwccState: 'NSW',
   },
   {
     id: 'tutor_2',
@@ -44,6 +49,9 @@ const tutors = [
     responseTime: '< 2 hours',
     availability: 'Evenings, Weekends',
     languages: ['English'],
+    kycVerified: true,
+    wwccVerified: true,
+    wwccState: 'VIC',
   },
   {
     id: 'tutor_3',
@@ -58,6 +66,9 @@ const tutors = [
     responseTime: '< 3 hours',
     availability: 'Flexible',
     languages: ['English'],
+    kycVerified: true,
+    wwccVerified: true,
+    wwccState: 'QLD',
   },
 ];
 
@@ -105,8 +116,22 @@ export default function TutorSearchPage() {
                 <div className="flex-1 space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold">{tutor.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold">{tutor.name}</h3>
+                        {tutor.kycVerified && tutor.wwccVerified && (
+                          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 gap-1">
+                            <ShieldCheck className="h-3 w-3" />
+                            Verified
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-muted-foreground">{tutor.bio}</p>
+                      {tutor.wwccVerified && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                          <BadgeCheck className="h-3 w-3 text-green-600" />
+                          WWCC verified ({tutor.wwccState})
+                        </div>
+                      )}
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold">${tutor.hourlyRate}</p>

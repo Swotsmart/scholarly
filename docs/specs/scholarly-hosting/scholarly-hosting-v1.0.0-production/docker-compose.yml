@@ -1,0 +1,116 @@
+# ============================================================================
+# SCHOLARLY HOSTING - DOCKER COMPOSE
+# ============================================================================
+# Local development environment with PostgreSQL and Redis
+
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # APPLICATION
+  # ==========================================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=postgresql://scholarly:scholarly_dev@postgres:5432/scholarly_hosting
+      - REDIS_URL=redis://redis:6379
+      - BASE_DOMAIN=scholar.ly
+      - LOG_LEVEL=debug
+      - CORS_ORIGIN=http://localhost:3001,http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./src:/app/src:ro
+    restart: unless-stopped
+    networks:
+      - scholarly-network
+
+  # ==========================================================================
+  # DATABASE
+  # ==========================================================================
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: scholarly
+      POSTGRES_PASSWORD: scholarly_dev
+      POSTGRES_DB: scholarly_hosting
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./prisma/schema.prisma:/docker-entrypoint-initdb.d/schema.prisma:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scholarly -d scholarly_hosting"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - scholarly-network
+
+  # ==========================================================================
+  # CACHE
+  # ==========================================================================
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    networks:
+      - scholarly-network
+
+  # ==========================================================================
+  # DATABASE MIGRATIONS
+  # ==========================================================================
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npx prisma migrate deploy
+    environment:
+      - DATABASE_URL=postgresql://scholarly:scholarly_dev@postgres:5432/scholarly_hosting
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - scholarly-network
+    profiles:
+      - migrate
+
+  # ==========================================================================
+  # DATABASE SEED
+  # ==========================================================================
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npx prisma db seed
+    environment:
+      - DATABASE_URL=postgresql://scholarly:scholarly_dev@postgres:5432/scholarly_hosting
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - scholarly-network
+    profiles:
+      - seed
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  scholarly-network:
+    driver: bridge
