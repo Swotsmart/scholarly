@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { useDashboardIntelligence } from '@/hooks/use-dashboard-intelligence';
 import {
@@ -324,26 +326,49 @@ function AdminDashboard() {
 }
 
 // =============================================================================
-// MAIN DASHBOARD PAGE — routes to the right persona dashboard
+// MAIN DASHBOARD PAGE — redirects to role-specific dashboards
 // =============================================================================
 
 export default function IntelligentDashboardPage() {
-  const { user } = useAuthStore();
+  const router = useRouter();
+  const { user, isLoading } = useAuthStore();
   const role = user?.role || 'learner';
 
+  useEffect(() => {
+    if (isLoading) return;
+
+    // Redirect to role-specific dashboards that have dedicated pages
+    switch (role) {
+      case 'teacher':
+      case 'educator':
+        router.replace('/teacher/dashboard');
+        break;
+      case 'parent':
+      case 'guardian':
+        router.replace('/parent/dashboard');
+        break;
+      case 'platform_admin':
+      case 'admin':
+        router.replace('/admin/dashboard');
+        break;
+      // Tutors and learners stay on this page
+    }
+  }, [role, isLoading, router]);
+
+  // Show loading or redirect state for roles that have dedicated pages
+  if (!isLoading && (role === 'teacher' || role === 'educator' || role === 'parent' || role === 'guardian' || role === 'platform_admin' || role === 'admin')) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-pulse text-muted-foreground">Redirecting to your dashboard...</div>
+      </div>
+    );
+  }
+
+  // Render role-specific dashboard for tutors and learners
   switch (role) {
-    case 'teacher':
-    case 'educator':
-      return <TeacherDashboard />;
-    case 'parent':
-    case 'guardian':
-      return <ParentDashboard />;
     case 'tutor':
     case 'tutor_professional':
       return <TutorDashboard />;
-    case 'platform_admin':
-    case 'admin':
-      return <AdminDashboard />;
     default:
       return <LearnerDashboard />;
   }
