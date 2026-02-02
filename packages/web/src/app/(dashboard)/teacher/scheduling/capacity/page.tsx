@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -49,7 +50,26 @@ import {
   Pause,
   Info,
   Plus,
+  ShieldAlert,
+  ArrowLeft,
 } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth-store';
+
+// RBAC Helper - checks if user has capacity planning permissions
+function hasCapacityPlanningAccess(user: { role?: string; permissions?: string[]; groups?: string[] } | null): boolean {
+  if (!user) return false;
+
+  // Admins always have access
+  if (user.role === 'platform_admin' || user.role === 'admin') return true;
+
+  // Check for specific permission
+  if (user.permissions?.includes('capacity_planner')) return true;
+
+  // Check for specific group
+  if (user.groups?.includes('capacity_planning')) return true;
+
+  return false;
+}
 
 // Types
 interface RoomUtilization {
@@ -265,6 +285,9 @@ function getImpactBadge(impact: string) {
 }
 
 export default function CapacityDashboardPage() {
+  const { user } = useAuthStore();
+  const hasAccess = hasCapacityPlanningAccess(user);
+
   const [activeTab, setActiveTab] = useState('metrics');
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [scenarioDialogOpen, setScenarioDialogOpen] = useState(false);
@@ -287,6 +310,33 @@ export default function CapacityDashboardPage() {
     setSelectedScenario(scenario);
     setScenarioDialogOpen(true);
   };
+
+  // Access denied view for unauthorized users
+  if (!hasAccess) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20 mb-6">
+            <ShieldAlert className="h-10 w-10 text-red-600 dark:text-red-400" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight mb-2">Access Restricted</h1>
+          <p className="text-muted-foreground max-w-md mb-6">
+            The Capacity Dashboard is only available to administrators and teachers assigned to the
+            &quot;Capacity Planner&quot; role or &quot;Capacity Planning&quot; group.
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">
+            If you believe you should have access to this tool, please contact your school administrator.
+          </p>
+          <Button asChild>
+            <Link href="/teacher/dashboard">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Dashboard
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -45,6 +45,23 @@ import {
   Search,
   ClipboardList,
 } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth-store';
+
+// RBAC Helper - checks if user has relief management permissions
+function hasReliefManagementAccess(user: { role?: string; permissions?: string[]; groups?: string[] } | null): boolean {
+  if (!user) return false;
+
+  // Admins always have access
+  if (user.role === 'platform_admin' || user.role === 'admin') return true;
+
+  // Check for specific permission
+  if (user.permissions?.includes('manage_relief')) return true;
+
+  // Check for specific group
+  if (user.groups?.includes('relief_managers')) return true;
+
+  return false;
+}
 
 // Types
 interface ReliefSlot {
@@ -214,11 +231,14 @@ function getStatusLabel(status: string) {
 }
 
 export default function ReliefMarketplacePage() {
+  const { user } = useAuthStore();
+  const hasMarketplaceAccess = hasReliefManagementAccess(user);
+
   const [reportAbsenceOpen, setReportAbsenceOpen] = useState(false);
   const [handoverOpen, setHandoverOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<ReliefSlot | null>(null);
   const [aiMatchesOpen, setAiMatchesOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('browse');
+  const [activeTab, setActiveTab] = useState(hasMarketplaceAccess ? 'browse' : 'accepted');
   const [searchQuery, setSearchQuery] = useState('');
 
   const [absenceForm, setAbsenceForm] = useState({
@@ -321,8 +341,8 @@ export default function ReliefMarketplacePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Relief Marketplace"
-        description="Find relief coverage or report your absence"
+        title={hasMarketplaceAccess ? 'Relief Marketplace' : 'My Relief Schedule'}
+        description={hasMarketplaceAccess ? 'Manage relief coverage across the school' : 'View your relief assignments and report absences'}
         actions={
           <Button onClick={() => setReportAbsenceOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
@@ -331,14 +351,16 @@ export default function ReliefMarketplacePage() {
         }
       />
 
-      {/* Stats */}
+      {/* Stats - Different views for admin vs teacher */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          label="Open Slots"
-          value={openSlots.filter((s) => s.status === 'open').length}
-          icon={Clock}
-          variant="warning"
-        />
+        {hasMarketplaceAccess && (
+          <StatsCard
+            label="Open Slots"
+            value={openSlots.filter((s) => s.status === 'open').length}
+            icon={Clock}
+            variant="warning"
+          />
+        )}
         <StatsCard
           label="My Accepted"
           value={myAcceptedSlots.length}
@@ -346,93 +368,109 @@ export default function ReliefMarketplacePage() {
           variant="success"
         />
         <StatsCard
+          label="My Requests"
+          value={myRequests.length}
+          icon={Calendar}
+          variant="primary"
+        />
+        <StatsCard
           label="Completed This Term"
           value={history.length}
           icon={Calendar}
           variant="primary"
         />
-        <StatsCard
-          label="Coverage Rate"
-          value={`${analytics.coverageRate}%`}
-          icon={TrendingUp}
-          variant="success"
-          change={2}
-        />
+        {hasMarketplaceAccess && (
+          <StatsCard
+            label="Coverage Rate"
+            value={`${analytics.coverageRate}%`}
+            icon={TrendingUp}
+            variant="success"
+            change={2}
+          />
+        )}
       </div>
 
-      {/* Real-time Notifications Banner */}
-      <Card className="border-violet-200 bg-violet-50 dark:border-violet-900 dark:bg-violet-950">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-violet-500/20 p-2">
-              <Bell className="h-5 w-5 text-violet-500" />
+      {/* Real-time Notifications Banner - Only show for admins */}
+      {hasMarketplaceAccess && (
+        <Card className="border-violet-200 bg-violet-50 dark:border-violet-900 dark:bg-violet-950">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-violet-500/20 p-2">
+                <Bell className="h-5 w-5 text-violet-500" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-violet-800 dark:text-violet-200">Real-time Alerts Active</p>
+                <p className="text-sm text-violet-700 dark:text-violet-300">
+                  You will receive instant notifications when new relief slots matching your qualifications become available.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" className="border-violet-300 text-violet-700 hover:bg-violet-100">
+                Manage Alerts
+              </Button>
             </div>
-            <div className="flex-1">
-              <p className="font-medium text-violet-800 dark:text-violet-200">Real-time Alerts Active</p>
-              <p className="text-sm text-violet-700 dark:text-violet-300">
-                You will receive instant notifications when new relief slots matching your qualifications become available.
-              </p>
-            </div>
-            <Button variant="outline" size="sm" className="border-violet-300 text-violet-700 hover:bg-violet-100">
-              Manage Alerts
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="browse">Browse Slots ({openSlots.length})</TabsTrigger>
+          {hasMarketplaceAccess && (
+            <TabsTrigger value="browse">Browse Slots ({openSlots.length})</TabsTrigger>
+          )}
           <TabsTrigger value="accepted">My Accepted ({myAcceptedSlots.length})</TabsTrigger>
           <TabsTrigger value="requests">My Requests ({myRequests.length})</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          {hasMarketplaceAccess && (
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          )}
         </TabsList>
 
-        {/* Browse Slots */}
-        <TabsContent value="browse" className="mt-4 space-y-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by subject, year level, or teacher..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+        {/* Browse Slots - Only for admins/relief managers */}
+        {hasMarketplaceAccess && (
+          <TabsContent value="browse" className="mt-4 space-y-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by subject, year level, or teacher..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select defaultValue="all">
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Subjects</SelectItem>
+                      <SelectItem value="maths">Mathematics</SelectItem>
+                      <SelectItem value="english">English</SelectItem>
+                      <SelectItem value="science">Science</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select defaultValue="all">
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Year Level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Years</SelectItem>
+                      <SelectItem value="7-8">Years 7-8</SelectItem>
+                      <SelectItem value="9-10">Years 9-10</SelectItem>
+                      <SelectItem value="11-12">Years 11-12</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Subject" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Subjects</SelectItem>
-                    <SelectItem value="maths">Mathematics</SelectItem>
-                    <SelectItem value="english">English</SelectItem>
-                    <SelectItem value="science">Science</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Year Level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Years</SelectItem>
-                    <SelectItem value="7-8">Years 7-8</SelectItem>
-                    <SelectItem value="9-10">Years 9-10</SelectItem>
-                    <SelectItem value="11-12">Years 11-12</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <div className="space-y-4">
-            {openSlots.map((slot) => renderSlotCard(slot, true, true))}
-          </div>
-        </TabsContent>
+            <div className="space-y-4">
+              {openSlots.map((slot) => renderSlotCard(slot, true, true))}
+            </div>
+          </TabsContent>
+        )}
 
         {/* My Accepted */}
         <TabsContent value="accepted" className="mt-4 space-y-4">
@@ -552,88 +590,90 @@ export default function ReliefMarketplacePage() {
           </Card>
         </TabsContent>
 
-        {/* Analytics */}
-        <TabsContent value="analytics" className="mt-4 space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatsCard
-              label="Coverage Rate"
-              value={`${analytics.coverageRate}%`}
-              icon={TrendingUp}
-              variant="success"
-              change={2}
-            />
-            <StatsCard
-              label="Avg Fill Time"
-              value={analytics.averageFillTime}
-              icon={Clock}
-              variant="primary"
-              change={-15}
-            />
-            <StatsCard
-              label="Monthly Cost"
-              value={analytics.totalCost}
-              icon={DollarSign}
-              variant="warning"
-            />
-            <StatsCard
-              label="Slots This Month"
-              value={analytics.monthlySlots}
-              icon={Calendar}
-              variant="primary"
-            />
-          </div>
+        {/* Analytics - Only for admins/relief managers */}
+        {hasMarketplaceAccess && (
+          <TabsContent value="analytics" className="mt-4 space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <StatsCard
+                label="Coverage Rate"
+                value={`${analytics.coverageRate}%`}
+                icon={TrendingUp}
+                variant="success"
+                change={2}
+              />
+              <StatsCard
+                label="Avg Fill Time"
+                value={analytics.averageFillTime}
+                icon={Clock}
+                variant="primary"
+                change={-15}
+              />
+              <StatsCard
+                label="Monthly Cost"
+                value={analytics.totalCost}
+                icon={DollarSign}
+                variant="warning"
+              />
+              <StatsCard
+                label="Slots This Month"
+                value={analytics.monthlySlots}
+                icon={Calendar}
+                variant="primary"
+              />
+            </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Coverage Rate Trend</CardTitle>
-                <CardDescription>Last 4 weeks performance</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { week: 'Week 4', rate: 94 },
-                    { week: 'Week 3', rate: 91 },
-                    { week: 'Week 2', rate: 88 },
-                    { week: 'Week 1', rate: 92 },
-                  ].map((item) => (
-                    <div key={item.week} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>{item.week}</span>
-                        <span className="font-medium">{item.rate}%</span>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Coverage Rate Trend</CardTitle>
+                  <CardDescription>Last 4 weeks performance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { week: 'Week 4', rate: 94 },
+                      { week: 'Week 3', rate: 91 },
+                      { week: 'Week 2', rate: 88 },
+                      { week: 'Week 1', rate: 92 },
+                    ].map((item) => (
+                      <div key={item.week} className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>{item.week}</span>
+                          <span className="font-medium">{item.rate}%</span>
+                        </div>
+                        <Progress value={item.rate} className="h-2" />
                       </div>
-                      <Progress value={item.rate} className="h-2" />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Top Subjects Needing Coverage</CardTitle>
-                <CardDescription>Most requested subject areas</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { subject: 'Mathematics', count: 12, color: 'bg-blue-500' },
-                    { subject: 'English', count: 9, color: 'bg-green-500' },
-                    { subject: 'Science', count: 8, color: 'bg-purple-500' },
-                    { subject: 'HSIE', count: 6, color: 'bg-amber-500' },
-                    { subject: 'PDHPE', count: 4, color: 'bg-red-500' },
-                  ].map((item) => (
-                    <div key={item.subject} className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${item.color}`} />
-                      <span className="flex-1">{item.subject}</span>
-                      <Badge variant="secondary">{item.count} slots</Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Top Subjects Needing Coverage</CardTitle>
+                  <CardDescription>Most requested subject areas</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { subject: 'Mathematics', count: 12, color: 'bg-blue-500' },
+                      { subject: 'English', count: 9, color: 'bg-green-500' },
+                      { subject: 'Science', count: 8, color: 'bg-purple-500' },
+                      { subject: 'HSIE', count: 6, color: 'bg-amber-500' },
+                      { subject: 'PDHPE', count: 4, color: 'bg-red-500' },
+                    ].map((item) => (
+                      <div key={item.subject} className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${item.color}`} />
+                        <span className="flex-1">{item.subject}</span>
+                        <Badge variant="secondary">{item.count} slots</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Report Absence Dialog */}

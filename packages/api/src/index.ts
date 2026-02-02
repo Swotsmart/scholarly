@@ -53,7 +53,7 @@ import { authMiddleware } from './middleware/auth';
 import { initializeHostingServices } from './lib/hosting-init';
 
 const app: Application = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 // Global middleware
 app.use(helmet());
