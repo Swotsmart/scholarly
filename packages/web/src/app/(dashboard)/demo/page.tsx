@@ -149,6 +149,15 @@ const demoSlides = [
     highlights: ['Visual ETL', 'Data Catalog', 'Quality Scores', 'Multi-source'],
     component: DataLakePreview,
   },
+  {
+    id: 'voice-intelligence',
+    title: 'Voice Intelligence',
+    category: 'AI Features',
+    description: 'ElevenLabs-powered text-to-speech, pronunciation assessment, and AI conversation agents',
+    href: '/demo/voice-intelligence',
+    highlights: ['Text-to-Speech', 'Pronunciation', 'Voice Cloning', 'AI Agents'],
+    component: VoiceIntelligencePreview,
+  },
 ];
 
 // Preview Components
@@ -917,6 +926,77 @@ function CompliancePreview() {
   );
 }
 
+function VoiceIntelligencePreview() {
+  return (
+    <div className="space-y-4 p-4">
+      {/* Header */}
+      <div className="rounded-xl bg-gradient-to-r from-purple-500/10 to-blue-500/10 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-lg font-bold">Voice Intelligence</div>
+            <div className="text-sm text-muted-foreground">Powered by ElevenLabs</div>
+          </div>
+          <Badge className="bg-purple-500">AI</Badge>
+        </div>
+      </div>
+
+      {/* Features Grid */}
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { name: 'Text-to-Speech', icon: '🔊', desc: '21+ voices' },
+          { name: 'Pronunciation', icon: '🎯', desc: 'Score & feedback' },
+          { name: 'AI Agents', icon: '🤖', desc: 'Voice tutors' },
+          { name: 'Voice Clone', icon: '🎤', desc: 'Custom voices' },
+        ].map((feature) => (
+          <div key={feature.name} className="rounded-lg border bg-card p-3">
+            <div className="text-2xl">{feature.icon}</div>
+            <div className="mt-1 font-medium">{feature.name}</div>
+            <div className="text-xs text-muted-foreground">{feature.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* TTS Preview */}
+      <div className="rounded-lg border bg-card p-4">
+        <div className="mb-3 font-semibold">Text-to-Speech Demo</div>
+        <div className="rounded-lg bg-muted p-3 text-sm">
+          &quot;Welcome to Scholarly, your unified learning platform.&quot;
+        </div>
+        <div className="mt-3 flex items-center gap-3">
+          <Button size="sm" className="bg-purple-500 hover:bg-purple-600">
+            <Volume2 className="mr-2 h-4 w-4" />
+            Generate Speech
+          </Button>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Voice:</span>
+            <Badge variant="outline">Sarah (American)</Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* Voice Settings */}
+      <div className="rounded-lg border bg-card p-4">
+        <div className="mb-3 font-semibold">Voice Settings</div>
+        <div className="space-y-3">
+          {[
+            { name: 'Stability', value: 50 },
+            { name: 'Similarity', value: 75 },
+            { name: 'Style', value: 30 },
+          ].map((setting) => (
+            <div key={setting.name}>
+              <div className="flex justify-between text-sm">
+                <span>{setting.name}</span>
+                <span className="text-muted-foreground">{setting.value}%</span>
+              </div>
+              <Progress value={setting.value} className="h-2" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DataLakePreview() {
   return (
     <div className="space-y-4 p-4">
@@ -1158,6 +1238,7 @@ export default function DemoShowcasePage() {
               { name: 'Languages', icon: Languages, slides: [7] },
               { name: 'Teacher Tools', icon: GraduationCap, slides: [8, 9] },
               { name: 'Compliance', icon: Shield, slides: [10] },
+              { name: 'Voice AI', icon: Volume2, slides: [12] },
             ].map((section) => (
               <button
                 key={section.name}

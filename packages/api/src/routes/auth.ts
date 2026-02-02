@@ -21,7 +21,7 @@ export const authRouter: Router = Router();
 
 const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(6), // Allow demo password (demo123)
   tenantSlug: z.string().optional(),
 });
 

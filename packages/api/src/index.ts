@@ -3,6 +3,9 @@
  * RESTful API for the Unified Learning Nexus
  */
 
+import dotenv from 'dotenv';
+dotenv.config({ path: '../../.env' });
+
 import 'express-async-errors';
 import express, { Application } from 'express';
 import cors from 'cors';
@@ -44,6 +47,9 @@ import { createPaymentRouter } from './routes/payment';
 import { hostingRouter } from './routes/hosting';
 import { verificationRouter } from './routes/verification';
 import voiceIntelligenceRouter from './routes/voice-intelligence';
+import knowledgeWorkspaceRouter from './routes/knowledge-workspace';
+import { googleDriveRouter } from './routes/google-drive';
+import oneDriveRouter from './routes/onedrive';
 
 // Middleware
 import { errorHandler } from './middleware/error-handler';
@@ -51,6 +57,7 @@ import { authMiddleware } from './middleware/auth';
 
 // Service initialization
 import { initializeHostingServices } from './lib/hosting-init';
+import { initializeKeys } from './config/keys';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3002;
@@ -113,6 +120,9 @@ api.use('/payment', authMiddleware, createPaymentRouter());
 api.use('/hosting', hostingRouter); // Has both public and protected routes
 api.use('/verification', verificationRouter); // Has both public (webhooks) and protected routes
 api.use('/voice', voiceIntelligenceRouter); // Voice Intelligence with TTS, STT, agents
+api.use('/workspace', knowledgeWorkspaceRouter); // Knowledge Workspace (AFFiNE) integration
+api.use('/integrations/google-drive', googleDriveRouter); // Google Drive Integration (has webhook route that's public)
+api.use('/integrations/onedrive', oneDriveRouter); // OneDrive/SharePoint Integration
 
 app.use('/api/v1', api);
 
@@ -130,6 +140,10 @@ async function start() {
     console.log('Connecting to database...');
     await prisma.$connect();
     console.log('Database connected');
+
+    // Initialize JWT keys
+    await initializeKeys();
+    console.log('JWT keys initialized');
 
     // Initialize hosting services
     initializeHostingServices();

@@ -64,7 +64,7 @@ const prismaClientSingleton = () => {
           if (isSoftDeleteModel(model)) {
             // Convert to findFirst to allow deletedAt filter
             const result = await query(args);
-            if (result && (result as any).deletedAt !== null) {
+            if (result && (result as any).deletedAt != null) {
               return null;
             }
             return result;
