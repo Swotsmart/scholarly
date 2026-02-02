@@ -12,13 +12,32 @@ import { GraduationCap, Loader2, Mail, Lock, AlertCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { initiateOAuth, type OAuthProvider } from '@/lib/oauth';
 
+// Helper function to get role-based dashboard path
+function getDashboardPath(role?: string): string {
+  switch (role) {
+    case 'teacher':
+    case 'educator':
+      return '/teacher/dashboard';
+    case 'parent':
+    case 'guardian':
+      return '/parent/dashboard';
+    case 'admin':
+    case 'platform_admin':
+      return '/admin/dashboard';
+    case 'tutor':
+      return '/tutoring';
+    default:
+      return '/dashboard';
+  }
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<OAuthProvider | null>(null);
   const [error, setError] = useState('');
-  const { login } = useAuthStore();
+  const login = useAuthStore((state) => state.login);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,11 +49,15 @@ export default function LoginPage() {
       const result = await login(email, password);
 
       if (result.success) {
+        // Get the user from the store after login to determine the correct dashboard
+        const user = useAuthStore.getState().user;
+        const dashboardPath = getDashboardPath(user?.role);
+
         toast({
           title: 'Welcome back!',
           description: 'You have successfully logged in.',
         });
-        router.push('/dashboard');
+        router.push(dashboardPath);
       } else {
         setError(result.error || 'Invalid credentials');
       }

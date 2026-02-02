@@ -20,6 +20,25 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 
+// Helper function to get role-based dashboard path
+function getDashboardPath(role?: string): string {
+  switch (role) {
+    case 'teacher':
+    case 'educator':
+      return '/teacher/dashboard';
+    case 'parent':
+    case 'guardian':
+      return '/parent/dashboard';
+    case 'admin':
+    case 'platform_admin':
+      return '/admin/dashboard';
+    case 'tutor':
+      return '/tutoring';
+    default:
+      return '/dashboard';
+  }
+}
+
 const DEMO_PASSWORD = 'demo123';
 
 const demoAccounts = [
@@ -97,7 +116,10 @@ export default function DemoCredentialsPage() {
     setLoggingIn(email);
     const result = await login(email, DEMO_PASSWORD);
     if (result.success) {
-      router.push('/dashboard');
+      // Get the user from the store after login to determine the correct dashboard
+      const user = useAuthStore.getState().user;
+      const dashboardPath = getDashboardPath(user?.role);
+      router.push(dashboardPath);
     }
     setLoggingIn(null);
   };
