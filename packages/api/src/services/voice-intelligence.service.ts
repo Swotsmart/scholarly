@@ -497,9 +497,10 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
       const response = await client.voices.getAll();
 
       // Transform to LinguaFlow format
+      // Note: ElevenLabs SDK may use voiceId or voice_id depending on version
       const voices: LinguaFlowVoice[] = (response.voices || []).map((v: any) => ({
-        id: v.voice_id,
-        elevenLabsVoiceId: v.voice_id,
+        id: v.voice_id || v.voiceId || '',
+        elevenLabsVoiceId: v.voice_id || v.voiceId || '',
         displayName: v.name,
         language: v.labels?.language || 'en',
         region: v.labels?.accent || 'neutral',
