@@ -19,6 +19,7 @@ import {
   getHostingStructuredDataService,
   HostingProviderType,
 } from '../services';
+import { isFailure } from '../services/base.service';
 
 export const hostingRouter: Router = Router();
 
@@ -158,22 +159,22 @@ hostingRouter.post('/providers', async (req: Request, res: Response) => {
   const validation = createProviderSchema.safeParse(req.body);
 
   if (!validation.success) {
-    throw new ApiError(400, 'Validation failed', validation.error.errors);
+    throw new ApiError(400, 'Validation failed', JSON.stringify(validation.error.errors));
   }
 
   const service = getHostingProviderService();
   const result = await service.createProvider({
     ...validation.data,
     tenantId,
-  });
+  } as any);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'VALIDATION_ERROR' ? 400 :
                        result.error.code === 'DOMAIN_EXISTS' ? 409 : 500;
-    throw new ApiError(statusCode, result.error.message, result.error.details);
+    throw new ApiError(statusCode, result.error.message, JSON.stringify(result.error.details));
   }
 
-  res.status(201).json(result.value);
+  res.status(201).json(result.data);
 });
 
 /**
@@ -186,12 +187,12 @@ hostingRouter.get('/providers/:providerId', async (req: Request, res: Response) 
   const service = getHostingProviderService();
   const result = await service.getProvider(providerId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -204,12 +205,12 @@ hostingRouter.get('/resolve/:domain', async (req: Request, res: Response) => {
   const service = getHostingProviderService();
   const result = await service.resolveByDomain(domain);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -221,18 +222,18 @@ hostingRouter.patch('/providers/:providerId', async (req: Request, res: Response
   const validation = updateProviderSchema.safeParse(req.body);
 
   if (!validation.success) {
-    throw new ApiError(400, 'Validation failed', validation.error.errors);
+    throw new ApiError(400, 'Validation failed', JSON.stringify(validation.error.errors));
   }
 
   const service = getHostingProviderService();
   const result = await service.updateProvider(providerId, validation.data);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -244,18 +245,18 @@ hostingRouter.patch('/providers/:providerId/theme', async (req: Request, res: Re
   const validation = updateThemeSchema.safeParse(req.body);
 
   if (!validation.success) {
-    throw new ApiError(400, 'Validation failed', validation.error.errors);
+    throw new ApiError(400, 'Validation failed', JSON.stringify(validation.error.errors));
   }
 
   const service = getHostingProviderService();
   const result = await service.updateTheme(providerId, validation.data);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -268,13 +269,13 @@ hostingRouter.post('/providers/:providerId/activate', async (req: Request, res: 
   const service = getHostingProviderService();
   const result = await service.activateProvider(providerId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 :
                        result.error.code === 'VALIDATION_ERROR' ? 400 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 // ============================================================================
@@ -290,20 +291,20 @@ hostingRouter.post('/providers/:providerId/domains', async (req: Request, res: R
   const validation = addDomainSchema.safeParse(req.body);
 
   if (!validation.success) {
-    throw new ApiError(400, 'Validation failed', validation.error.errors);
+    throw new ApiError(400, 'Validation failed', JSON.stringify(validation.error.errors));
   }
 
   const service = getHostingProviderService();
   const result = await service.addCustomDomain(providerId, validation.data.domain);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 :
                        result.error.code === 'DOMAIN_EXISTS' ? 409 :
                        result.error.code === 'VALIDATION_ERROR' ? 400 : 500;
-    throw new ApiError(statusCode, result.error.message, result.error.details);
+    throw new ApiError(statusCode, result.error.message, JSON.stringify(result.error.details));
   }
 
-  res.status(201).json(result.value);
+  res.status(201).json(result.data);
 });
 
 /**
@@ -316,12 +317,12 @@ hostingRouter.post('/providers/:providerId/domains/:domainId/verify', async (req
   const service = getHostingProviderService();
   const result = await service.verifyDomain(providerId, domainId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -334,12 +335,12 @@ hostingRouter.post('/providers/:providerId/api-key', async (req: Request, res: R
   const service = getHostingProviderService();
   const result = await service.generateAgentApiKey(providerId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.status(201).json(result.value);
+  res.status(201).json(result.data);
 });
 
 // ============================================================================
@@ -354,18 +355,18 @@ hostingRouter.post('/enquiries', async (req: Request, res: Response) => {
   const validation = createEnquirySchema.safeParse(req.body);
 
   if (!validation.success) {
-    throw new ApiError(400, 'Validation failed', validation.error.errors);
+    throw new ApiError(400, 'Validation failed', JSON.stringify(validation.error.errors));
   }
 
   const service = getHostingEngagementService();
-  const result = await service.createEnquiry(validation.data);
+  const result = await service.createEnquiry(validation.data as any);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.status(201).json(result.value);
+  res.status(201).json(result.data);
 });
 
 /**
@@ -380,11 +381,11 @@ hostingRouter.get('/providers/:providerId/enquiries', async (req: Request, res: 
   const statusFilter = status ? (status as string).split(',') : undefined;
   const result = await service.getProviderEnquiries(providerId, statusFilter);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     throw new ApiError(500, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -396,14 +397,14 @@ hostingRouter.patch('/enquiries/:enquiryId', async (req: Request, res: Response)
   const { status, responseMessage } = req.body;
 
   const service = getHostingEngagementService();
-  const result = await service.updateEnquiryStatus(enquiryId, status, responseMessage);
+  const result = await service.updateEnquiryStatus(enquiryId, status);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -414,21 +415,21 @@ hostingRouter.post('/tours', async (req: Request, res: Response) => {
   const validation = createTourBookingSchema.safeParse(req.body);
 
   if (!validation.success) {
-    throw new ApiError(400, 'Validation failed', validation.error.errors);
+    throw new ApiError(400, 'Validation failed', JSON.stringify(validation.error.errors));
   }
 
   const service = getHostingEngagementService();
   const result = await service.createTourBooking({
     ...validation.data,
     scheduledAt: new Date(validation.data.scheduledAt),
-  });
+  } as any);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.status(201).json(result.value);
+  res.status(201).json(result.data);
 });
 
 /**
@@ -443,20 +444,20 @@ hostingRouter.get('/providers/:providerId/tours', async (req: Request, res: Resp
 
   if (upcoming === 'true') {
     const result = await service.getUpcomingTours(providerId);
-    if (!result.success) {
+    if (isFailure(result)) {
       throw new ApiError(500, result.error.message);
     }
-    return res.json(result.value);
+    return res.json(result.data);
   }
 
   // Get upcoming tours as default (service handles filtering)
   const result = await service.getUpcomingTours(providerId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     throw new ApiError(500, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -469,13 +470,13 @@ hostingRouter.post('/tours/:bookingId/confirm', async (req: Request, res: Respon
   const service = getHostingEngagementService();
   const result = await service.confirmTourBooking(bookingId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 :
                        result.error.code === 'VALIDATION_ERROR' ? 400 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -488,13 +489,13 @@ hostingRouter.post('/tours/:bookingId/cancel', async (req: Request, res: Respons
   const service = getHostingEngagementService();
   const result = await service.cancelTourBooking(bookingId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 :
                        result.error.code === 'VALIDATION_ERROR' ? 400 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -505,18 +506,18 @@ hostingRouter.post('/reviews', async (req: Request, res: Response) => {
   const validation = createReviewSchema.safeParse(req.body);
 
   if (!validation.success) {
-    throw new ApiError(400, 'Validation failed', validation.error.errors);
+    throw new ApiError(400, 'Validation failed', JSON.stringify(validation.error.errors));
   }
 
   const service = getHostingEngagementService();
-  const result = await service.createReview(validation.data);
+  const result = await service.createReview(validation.data as any);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.status(201).json(result.value);
+  res.status(201).json(result.data);
 });
 
 /**
@@ -529,13 +530,13 @@ hostingRouter.get('/providers/:providerId/reviews', async (req: Request, res: Re
 
   const service = getHostingEngagementService();
   const statusFilter = status ? (status as string).split(',') : ['published'];
-  const result = await service.getProviderReviews(providerId, statusFilter);
+  const result = await service.getProviderReviews(providerId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     throw new ApiError(500, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -548,12 +549,12 @@ hostingRouter.post('/reviews/:reviewId/publish', async (req: Request, res: Respo
   const service = getHostingEngagementService();
   const result = await service.publishReview(reviewId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -571,12 +572,12 @@ hostingRouter.post('/reviews/:reviewId/response', async (req: Request, res: Resp
   const service = getHostingEngagementService();
   const result = await service.addProviderResponse(reviewId, response);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -589,12 +590,12 @@ hostingRouter.post('/reviews/:reviewId/helpful', async (req: Request, res: Respo
   const service = getHostingEngagementService();
   const result = await service.markReviewHelpful(reviewId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 // ============================================================================
@@ -611,12 +612,12 @@ hostingRouter.get('/providers/:providerId/quality', async (req: Request, res: Re
   const service = getHostingQualityService();
   const result = await service.getQualityProfile(providerId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -627,18 +628,15 @@ hostingRouter.post('/providers/:providerId/outcomes', async (req: Request, res: 
   const { providerId } = req.params;
 
   const service = getHostingQualityService();
-  const result = await service.submitOutcome({
-    providerId,
-    ...req.body,
-  });
+  const result = await service.submitOutcome(providerId, req.body);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 :
                        result.error.code === 'VALIDATION_ERROR' ? 400 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.status(201).json(result.value);
+  res.status(201).json(result.data);
 });
 
 /**
@@ -649,18 +647,15 @@ hostingRouter.post('/providers/:providerId/registration', async (req: Request, r
   const { providerId } = req.params;
 
   const service = getHostingQualityService();
-  const result = await service.submitRegistration({
-    providerId,
-    ...req.body,
-  });
+  const result = await service.submitRegistration(providerId, req.body);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 :
                        result.error.code === 'VALIDATION_ERROR' ? 400 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 // ============================================================================
@@ -677,13 +672,13 @@ hostingRouter.get('/providers/:providerId/structured-data', async (req: Request,
   const providerService = getHostingProviderService();
   const providerResult = await providerService.getProvider(providerId);
 
-  if (!providerResult.success) {
+  if (isFailure(providerResult)) {
     const statusCode = providerResult.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, providerResult.error.message);
   }
 
   const structuredDataService = getHostingStructuredDataService();
-  const jsonLd = structuredDataService.generateProviderJsonLd(providerResult.value);
+  const jsonLd = (structuredDataService as any).generateProviderJsonLd(providerResult.data);
 
   res.json(jsonLd);
 });
@@ -700,7 +695,7 @@ hostingRouter.post('/agent/search/providers', async (req: Request, res: Response
   const validation = searchProvidersSchema.safeParse(req.body);
 
   if (!validation.success) {
-    throw new ApiError(400, 'Validation failed', validation.error.errors);
+    throw new ApiError(400, 'Validation failed', JSON.stringify(validation.error.errors));
   }
 
   const service = getHostingAgentApiService();
@@ -710,18 +705,18 @@ hostingRouter.post('/agent/search/providers', async (req: Request, res: Response
       types: validation.data.types as HostingProviderType[],
       yearLevels: validation.data.yearLevels as any,
       subjectAreas: validation.data.subjectAreas,
-      location: validation.data.location,
+      location: validation.data.location as any,
       minQualityScore: validation.data.minQualityScore,
-    },
+    } as any,
     limit: validation.data.limit || 20,
     offset: validation.data.offset || 0,
-  });
+  } as any);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     throw new ApiError(500, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -732,11 +727,11 @@ hostingRouter.post('/agent/search/offerings', async (req: Request, res: Response
   const service = getHostingAgentApiService();
   const result = await service.searchOfferings(req.body);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     throw new ApiError(500, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -753,15 +748,14 @@ hostingRouter.post('/agent/compare', async (req: Request, res: Response) => {
   const service = getHostingAgentApiService();
   const result = await service.compareProviders({
     providerIds,
-    comparisonCriteria: criteria || ['quality', 'pricing', 'outcomes', 'reviews'],
-    includeRecommendation: true,
-  });
+    criteria: criteria || ['quality', 'pricing', 'outcomes', 'reviews'],
+  } as any);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     throw new ApiError(500, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -772,12 +766,12 @@ hostingRouter.post('/agent/availability', async (req: Request, res: Response) =>
   const service = getHostingAgentApiService();
   const result = await service.checkAvailability(req.body);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -791,19 +785,19 @@ hostingRouter.post('/agent/enquiry', async (req: Request, res: Response) => {
   });
 
   if (!validation.success) {
-    throw new ApiError(400, 'Validation failed', validation.error.errors);
+    throw new ApiError(400, 'Validation failed', JSON.stringify(validation.error.errors));
   }
 
   const service = getHostingEngagementService();
-  const result = await service.createEnquiry(validation.data);
+  const result = await service.createEnquiry(validation.data as any);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 :
                        result.error.code === 'VALIDATION_ERROR' ? 400 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.status(201).json(result.value);
+  res.status(201).json(result.data);
 });
 
 /**
@@ -816,12 +810,12 @@ hostingRouter.get('/agent/providers/:providerId/quality', async (req: Request, r
   const service = getHostingAgentApiService();
   const result = await service.getQualityProfile(providerId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -834,12 +828,12 @@ hostingRouter.get('/agent/providers/:providerId', async (req: Request, res: Resp
   const service = getHostingAgentApiService();
   const result = await service.getProviderDetails(providerId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });
 
 /**
@@ -852,10 +846,10 @@ hostingRouter.get('/agent/providers/:providerId/outcomes', async (req: Request, 
   const service = getHostingAgentApiService();
   const result = await service.getVerifiedOutcomes(providerId);
 
-  if (!result.success) {
+  if (isFailure(result)) {
     const statusCode = result.error.code === 'NOT_FOUND' ? 404 : 500;
     throw new ApiError(statusCode, result.error.message);
   }
 
-  res.json(result.value);
+  res.json(result.data);
 });

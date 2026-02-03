@@ -94,12 +94,11 @@ function toHostingEnquiry(dbRecord: any): HostingEnquiry {
     source: dbRecord.source,
     agentId: dbRecord.agentId,
     status: dbRecord.status,
-    responseMessage: dbRecord.responseMessage,
     respondedAt: dbRecord.respondedAt,
     respondedBy: dbRecord.respondedBy,
     createdAt: dbRecord.createdAt,
     updatedAt: dbRecord.updatedAt,
-  };
+  } as unknown as HostingEnquiry;
 }
 
 function toHostingTourBooking(dbRecord: any): HostingTourBooking {
@@ -118,19 +117,17 @@ function toHostingTourBooking(dbRecord: any): HostingTourBooking {
     specialRequests: dbRecord.specialRequests,
     status: dbRecord.status,
     confirmedAt: dbRecord.confirmedAt,
-    completedAt: dbRecord.completedAt,
     cancellationReason: dbRecord.cancellationReason,
     providerNotes: dbRecord.providerNotes,
     createdAt: dbRecord.createdAt,
     updatedAt: dbRecord.updatedAt,
-  };
+  } as HostingTourBooking;
 }
 
 function toHostingReview(dbRecord: any): HostingProviderReview {
   return {
     id: dbRecord.id,
     providerId: dbRecord.providerId,
-    authorId: dbRecord.authorId,
     authorType: dbRecord.authorType,
     authorName: dbRecord.authorName,
     overallRating: dbRecord.overallRating,
@@ -149,7 +146,7 @@ function toHostingReview(dbRecord: any): HostingProviderReview {
     moderationNote: dbRecord.moderationNote,
     createdAt: dbRecord.createdAt,
     updatedAt: dbRecord.updatedAt,
-  };
+  } as HostingProviderReview;
 }
 
 function toHostingOffering(dbRecord: any): HostingEducationalOffering {
@@ -160,7 +157,6 @@ function toHostingOffering(dbRecord: any): HostingEducationalOffering {
     name: dbRecord.name,
     shortDescription: dbRecord.shortDescription,
     description: dbRecord.description,
-    slug: dbRecord.slug,
     yearLevels: dbRecord.yearLevels || [],
     subjectAreas: dbRecord.subjectAreas || [],
     prerequisites: dbRecord.prerequisites,
@@ -179,7 +175,7 @@ function toHostingOffering(dbRecord: any): HostingEducationalOffering {
     publishedAt: dbRecord.publishedAt,
     createdAt: dbRecord.createdAt,
     updatedAt: dbRecord.updatedAt,
-  };
+  } as unknown as HostingEducationalOffering;
 }
 
 // ============================================================================
@@ -287,10 +283,12 @@ export function createPrismaProviderRepository(): HostingProviderRepository {
     },
 
     async update(providerId: string, updates) {
+      // Extract domains from updates as they need special handling
+      const { domains, ...updateData } = updates as any;
       const record = await prisma.hostingProvider.update({
         where: { id: providerId },
         data: {
-          ...updates,
+          ...updateData,
           updatedAt: new Date(),
         },
         include: { domains: true },
@@ -547,7 +545,6 @@ export function createPrismaReviewRepository(): HostingReviewRepository {
       const record = await prisma.hostingReview.create({
         data: {
           providerId: review.providerId,
-          authorId: review.authorId,
           authorType: review.authorType,
           authorName: review.authorName,
           overallRating: review.overallRating,
@@ -591,7 +588,7 @@ export function createPrismaQualityProfileRepository(): HostingQualityProfileRep
         where: { id: providerId },
         select: { qualityProfile: true },
       });
-      return provider?.qualityProfile as HostingEducationalQualityProfile | null;
+      return provider?.qualityProfile as unknown as HostingEducationalQualityProfile | null;
     },
 
     async update(providerId: string, updates) {
@@ -756,62 +753,19 @@ export function createPrismaAgentProviderRepository(): HostingAgentProviderRepos
       });
       return record ? toHostingProvider(record) : null;
     },
-
-    async search(request) {
-      const where: any = {
-        deletedAt: null,
-        status: 'active',
-      };
-
-      if (request.filters.types?.length) {
-        where.type = { in: request.filters.types };
-      }
-
-      if (request.query) {
-        where.OR = [
-          { displayName: { contains: request.query, mode: 'insensitive' } },
-          { description: { contains: request.query, mode: 'insensitive' } },
-        ];
-      }
-
-      const [records, totalCount] = await Promise.all([
-        prisma.hostingProvider.findMany({
-          where,
-          include: { domains: true },
-          skip: request.offset || 0,
-          take: request.limit || 20,
-          orderBy: { createdAt: 'desc' },
-        }),
-        prisma.hostingProvider.count({ where }),
-      ]);
-
-      // Build facets from results
-      const facets = {
-        types: {} as Record<string, number>,
-        yearLevels: {} as Record<string, number>,
-        subjectAreas: {} as Record<string, number>,
-        deliveryModes: {} as Record<string, number>,
-        locations: {} as Record<string, number>,
-        priceRanges: {} as Record<string, number>,
-      };
-
-      for (const record of records) {
-        facets.types[record.type] = (facets.types[record.type] || 0) + 1;
-      }
-
+    async findAll(filters: Record<string, unknown>) {
+      const where: any = { deletedAt: null };
+      if (filters.types) where.type = { in: filters.types };
+      if (filters.location) where.location = filters.location;
+      const records = await prisma.hostingProvider.findMany({
+        where,
+        include: { domains: true },
+        orderBy: { createdAt: 'desc' },
+      });
       return {
         providers: records.map(toHostingProvider),
-        totalCount,
-        facets,
+        total: records.length,
       };
-    },
-
-    async findMultiple(providerIds: string[]) {
-      const records = await prisma.hostingProvider.findMany({
-        where: { id: { in: providerIds }, deletedAt: null },
-        include: { domains: true },
-      });
-      return records.map(toHostingProvider);
     },
   };
 }
@@ -823,18 +777,7 @@ export function createPrismaAgentQualityRepository(): HostingAgentQualityReposit
         where: { id: providerId },
         select: { qualityProfile: true },
       });
-      return provider?.qualityProfile as HostingEducationalQualityProfile | null;
-    },
-
-    async findMultiple(providerIds: string[]) {
-      const providers = await prisma.hostingProvider.findMany({
-        where: { id: { in: providerIds } },
-        select: { id: true, qualityProfile: true },
-      });
-
-      return providers
-        .map((p) => p.qualityProfile as HostingEducationalQualityProfile)
-        .filter((p): p is HostingEducationalQualityProfile => p !== null);
+      return provider?.qualityProfile as unknown as HostingEducationalQualityProfile | null;
     },
   };
 }
@@ -856,29 +799,25 @@ export function createPrismaAgentOfferingRepository(): HostingAgentOfferingRepos
       return records.map(toHostingOffering);
     },
 
-    async search(request) {
+    async search(filters: Record<string, unknown>) {
       const where: any = { status: 'published' };
 
-      if (request.providerId) {
-        where.providerId = request.providerId;
+      if ((filters as any).providerId) {
+        where.providerId = (filters as any).providerId;
       }
 
-      if (request.query) {
+      if ((filters as any).query) {
         where.OR = [
-          { name: { contains: request.query, mode: 'insensitive' } },
-          { description: { contains: request.query, mode: 'insensitive' } },
+          { name: { contains: (filters as any).query, mode: 'insensitive' } },
+          { description: { contains: (filters as any).query, mode: 'insensitive' } },
         ];
       }
 
-      if (request.filters?.types?.length) {
-        where.type = { in: request.filters.types };
-      }
-
-      const [records, totalCount] = await Promise.all([
+      const [records, total] = await Promise.all([
         prisma.hostingOffering.findMany({
           where,
-          skip: request.offset || 0,
-          take: request.limit || 20,
+          skip: (filters as any).offset || 0,
+          take: (filters as any).limit || 20,
           orderBy: { createdAt: 'desc' },
         }),
         prisma.hostingOffering.count({ where }),
@@ -886,15 +825,7 @@ export function createPrismaAgentOfferingRepository(): HostingAgentOfferingRepos
 
       return {
         offerings: records.map(toHostingOffering),
-        totalCount,
-        facets: {
-          types: {},
-          yearLevels: {},
-          subjectAreas: {},
-          deliveryModes: {},
-          locations: {},
-          priceRanges: {},
-        },
+        total,
       };
     },
   };

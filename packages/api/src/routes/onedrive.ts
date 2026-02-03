@@ -16,8 +16,9 @@ import {
   OneDriveSharingRequest,
   OneDriveEducationalContext,
 } from '../services/onedrive-integration.service';
+import { isFailure } from '../services/base.service';
 
-const router = Router();
+const router: Router = Router();
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -149,14 +150,14 @@ router.post('/oauth/initiate', authMiddleware, async (req: Request, res: Respons
       body.redirectUri
     );
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
         error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -181,14 +182,14 @@ router.post('/oauth/callback', authMiddleware, async (req: Request, res: Respons
       body.redirectUri || ''
     );
 
-    if (result.success) {
-      res.status(201).json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
         error: result.error.message,
         requestId,
       });
+    } else {
+      res.status(201).json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -212,14 +213,14 @@ router.get('/connections', authMiddleware, async (req: Request, res: Response) =
     const service = getOneDriveService();
     const result = await service.getUserConnections(tenantId, userId);
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
         error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -239,14 +240,14 @@ router.get('/connections/:connectionId', authMiddleware, async (req: Request, re
     const service = getOneDriveService();
     const result = await service.getConnection(tenantId, connectionId);
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(404).json({
         success: false,
         error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -266,14 +267,14 @@ router.delete('/connections/:connectionId', authMiddleware, async (req: Request,
     const service = getOneDriveService();
     const result = await service.disconnect(tenantId, connectionId);
 
-    if (result.success) {
-      res.json({ success: true, message: 'Connection disconnected' });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
         error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, message: 'Connection disconnected' });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -293,14 +294,14 @@ router.post('/connections/:connectionId/refresh', authMiddleware, async (req: Re
     const service = getOneDriveService();
     const result = await service.refreshAccessToken(tenantId, connectionId);
 
-    if (result.success) {
-      res.json({ success: true, message: 'Token refreshed' });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
         error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, message: 'Token refreshed' });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -332,14 +333,14 @@ router.post(
         body.role
       );
 
-      if (result.success) {
-        res.status(201).json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
           error: result.error.message,
           requestId,
         });
+      } else {
+        res.status(201).json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -365,14 +366,14 @@ router.get('/connections/:connectionId/files', authMiddleware, async (req: Reque
     const service = getOneDriveService();
     const result = await service.listFolderItems(tenantId, connectionId, folderId);
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
         error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -406,14 +407,14 @@ router.post('/connections/:connectionId/files', authMiddleware, async (req: Requ
       educationalContext: body.educationalContext as OneDriveEducationalContext,
     });
 
-    if (result.success) {
-      res.status(201).json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
         error: result.error.message,
         requestId,
       });
+    } else {
+      res.status(201).json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -440,14 +441,14 @@ router.post('/connections/:connectionId/search', authMiddleware, async (req: Req
     const service = getOneDriveService();
     const result = await service.searchItems(tenantId, connectionId, query);
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
         error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -469,22 +470,22 @@ router.post('/connections/:connectionId/share', authMiddleware, async (req: Requ
     const { connectionId } = req.params;
     const body = ShareItemSchema.parse(req.body);
 
-    const request: OneDriveSharingRequest = {
+    const request = {
       ...body,
       expiresAt: body.expiresAt ? new Date(body.expiresAt) : undefined,
-    };
+    } as OneDriveSharingRequest;
 
     const service = getOneDriveService();
     const result = await service.shareItem(tenantId, connectionId, request);
 
-    if (result.success) {
-      res.status(201).json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
         error: result.error.message,
         requestId,
       });
+    } else {
+      res.status(201).json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -508,14 +509,14 @@ router.post('/connections/:connectionId/sync', authMiddleware, async (req: Reque
     const service = getOneDriveService();
     const result = await service.processDeltaChanges(tenantId, connectionId);
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
         error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -547,14 +548,14 @@ router.get(
         searchQuery
       );
 
-      if (result.success) {
-        res.json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
           error: result.error.message,
           requestId,
         });
+      } else {
+        res.json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -584,14 +585,14 @@ router.post(
         body.libraryId
       );
 
-      if (result.success) {
-        res.status(201).json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
           error: result.error.message,
           requestId,
         });
+      } else {
+        res.status(201).json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -619,14 +620,14 @@ router.get(
       const service = getOneDriveService();
       const result = await service.getVersionHistory(tenantId, connectionId, itemId);
 
-      if (result.success) {
-        res.json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
           error: result.error.message,
           requestId,
         });
+      } else {
+        res.json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);

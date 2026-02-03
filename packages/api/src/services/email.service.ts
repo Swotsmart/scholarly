@@ -13,6 +13,7 @@ import {
   Result,
   success,
   failure,
+  isFailure,
   ScholarlyBaseService,
 } from './base.service';
 
@@ -452,7 +453,7 @@ export class EmailService extends ScholarlyBaseService {
 
         if (!response.ok) {
           const errorBody = await response.text();
-          log.error('SendGrid API error', { status: response.status, body: errorBody });
+          log.error('SendGrid API error', undefined, { status: response.status, body: errorBody });
           return failure({
             code: 'EMAIL_SEND_FAILED',
             message: `Failed to send email: ${response.statusText}`,
@@ -763,9 +764,9 @@ export class EmailService extends ScholarlyBaseService {
 
       if (result.success) {
         sent += batch.length;
-      } else {
+      } else if (isFailure(result)) {
         failed += batch.length;
-        log.error('Bulk email batch failed', { batchIndex: i / batchSize, error: result.error });
+        log.error('Bulk email batch failed', undefined, { batchIndex: i / batchSize, error: result.error });
       }
 
       // Delay between batches to avoid rate limiting

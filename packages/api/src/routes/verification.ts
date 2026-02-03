@@ -110,7 +110,7 @@ verificationRouter.post('/kyc/start', authenticateUser, async (req: Request, res
     const user = (req as any).user;
 
     // Import service dynamically to avoid circular dependencies
-    const { getKycService } = await import('../services/kyc-engine.service');
+    const { getKycService } = await import('../services/kyc-engine.service.js');
     const kycService = getKycService();
 
     const result = await kycService.startVerification(user.tenantId, user.identityId, {
@@ -118,7 +118,7 @@ verificationRouter.post('/kyc/start', authenticateUser, async (req: Request, res
       preferredProvider: provider as any,
       returnUrl,
       metadata,
-    });
+    } as any);
 
     if (!result.success) {
       return res.status(400).json({
@@ -157,7 +157,7 @@ verificationRouter.get('/kyc/:sessionId', authenticateUser, async (req: Request,
     const { sessionId } = req.params;
     const user = (req as any).user;
 
-    const { getKycService } = await import('../services/kyc-engine.service');
+    const { getKycService } = await import('../services/kyc-engine.service.js');
     const kycService = getKycService();
 
     const result = await kycService.getSession(user.tenantId, sessionId);
@@ -195,7 +195,7 @@ verificationRouter.get('/kyc/user/status', authenticateUser, async (req: Request
   try {
     const user = (req as any).user;
 
-    const { getKycService } = await import('../services/kyc-engine.service');
+    const { getKycService } = await import('../services/kyc-engine.service.js');
     const kycService = getKycService();
 
     const result = await kycService.getUserKycStatus(user.tenantId, user.id);
@@ -232,7 +232,7 @@ verificationRouter.post('/kyc/webhook/:provider', async (req: Request, res: Resp
                       req.headers['x-onfido-signature'] as string ||
                       req.headers['persona-signature'] as string;
 
-    const { getKycService } = await import('../services/kyc-engine.service');
+    const { getKycService } = await import('../services/kyc-engine.service.js');
     const kycService = getKycService();
 
     const result = await kycService.handleProviderWebhook(
@@ -287,7 +287,7 @@ verificationRouter.post('/wwcc', authenticateUser, async (req: Request, res: Res
     const data = validation.data;
     const user = (req as any).user;
 
-    const { getWWCCService } = await import('../services/wwcc-verification.service');
+    const { getWWCCService } = await import('../services/wwcc-verification.service.js');
     const wwccService = getWWCCService();
 
     const result = await wwccService.verifyWWCC({
@@ -306,12 +306,12 @@ verificationRouter.post('/wwcc', authenticateUser, async (req: Request, res: Res
     if (!result.success) {
       return res.status(400).json({
         error: 'Verification Failed',
-        code: result.error.code,
-        message: result.error.message,
+        code: (result as any).error?.code,
+        message: (result as any).error?.message,
       });
     }
 
-    const verification = result.data;
+    const verification = (result as any).data;
 
     log.info('WWCC verification submitted', {
       userId: user.id,
@@ -345,7 +345,7 @@ verificationRouter.get('/wwcc/:id', authenticateUser, async (req: Request, res: 
     const { id } = req.params;
     const user = (req as any).user;
 
-    const { getWWCCService } = await import('../services/wwcc-verification.service');
+    const { getWWCCService } = await import('../services/wwcc-verification.service.js');
     const wwccService = getWWCCService();
 
     const result = await wwccService.recheckStatus(id);
@@ -353,11 +353,11 @@ verificationRouter.get('/wwcc/:id', authenticateUser, async (req: Request, res: 
     if (!result.success) {
       return res.status(404).json({
         error: 'Verification Not Found',
-        message: result.error.message,
+        message: (result as any).error?.message,
       });
     }
 
-    const verification = result.data;
+    const verification = (result as any).data;
 
     res.json({
       id: verification.id,
@@ -390,7 +390,7 @@ verificationRouter.get('/wwcc/user/:userId', authenticateUser, async (req: Reque
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    const { getWWCCService } = await import('../services/wwcc-verification.service');
+    const { getWWCCService } = await import('../services/wwcc-verification.service.js');
     const wwccService = getWWCCService();
 
     const verifications = await wwccService.getUserVerifications(userId);
@@ -415,7 +415,7 @@ verificationRouter.get('/wwcc/user/:userId', authenticateUser, async (req: Reque
 verificationRouter.post(
   '/wwcc/:id/manual-verify',
   authenticateUser,
-  requireRoles(['admin', 'compliance_officer']),
+  requireRoles('admin', 'compliance_officer'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -431,7 +431,7 @@ verificationRouter.post(
       const { verifierNotes, documentUrls } = validation.data;
       const user = (req as any).user;
 
-      const { getWWCCService } = await import('../services/wwcc-verification.service');
+      const { getWWCCService } = await import('../services/wwcc-verification.service.js');
       const wwccService = getWWCCService();
 
       const result = await wwccService.manuallyVerify(id, verifierNotes, documentUrls);
@@ -439,8 +439,8 @@ verificationRouter.post(
       if (!result.success) {
         return res.status(400).json({
           error: 'Manual Verification Failed',
-          code: result.error.code,
-          message: result.error.message,
+          code: (result as any).error?.code,
+          message: (result as any).error?.message,
         });
       }
 
@@ -469,7 +469,7 @@ verificationRouter.get('/wwcc/check/:userId', authenticateUser, async (req: Requ
     const { userId } = req.params;
     const state = req.query.state as string | undefined;
 
-    const { getWWCCService } = await import('../services/wwcc-verification.service');
+    const { getWWCCService } = await import('../services/wwcc-verification.service.js');
     const wwccService = getWWCCService();
 
     let isValid: boolean;
@@ -497,7 +497,7 @@ verificationRouter.get('/wwcc/check/:userId', authenticateUser, async (req: Requ
  */
 verificationRouter.get('/wwcc/states', async (_req: Request, res: Response) => {
   try {
-    const { getWWCCService } = await import('../services/wwcc-verification.service');
+    const { getWWCCService } = await import('../services/wwcc-verification.service.js');
     const wwccService = getWWCCService();
 
     const allStates = wwccService.getSupportedStates();
@@ -538,7 +538,7 @@ verificationRouter.post('/kyb', authenticateUser, async (req: Request, res: Resp
 
     // For now, use the existing KYB service from kyb-engine.service.ts
     // We'll create a simplified ABR lookup until the full service is available
-    const { getKybService } = await import('../services/kyb-engine.service');
+    const { getKybService } = await import('../services/kyb-engine.service.js');
 
     try {
       const kybService = getKybService();
@@ -550,11 +550,15 @@ verificationRouter.post('/kyb', authenticateUser, async (req: Request, res: Resp
           type: 'abn',
           number: data.abn,
           jurisdiction: 'AU' as any,
+          status: 'pending',
         }] : [],
         registeredAddress: {
+          line1: '',
+          city: '',
+          postalCode: '',
           country: 'Australia',
         },
-      });
+      } as any);
 
       if (!result.success) {
         return res.status(400).json({
@@ -769,7 +773,7 @@ verificationRouter.get('/status', authenticateUser, async (req: Request, res: Re
     // Get KYC status
     let kycStatus = { kycLevel: 0, isVerified: false };
     try {
-      const { getKycService } = await import('../services/kyc-engine.service');
+      const { getKycService } = await import('../services/kyc-engine.service.js');
       const kycService = getKycService();
       const kycResult = await kycService.getUserKycStatus(user.tenantId, user.id);
       if (kycResult.success) {
@@ -783,7 +787,7 @@ verificationRouter.get('/status', authenticateUser, async (req: Request, res: Re
     let hasValidWWCC = false;
     let wwccVerifications: any[] = [];
     try {
-      const { getWWCCService } = await import('../services/wwcc-verification.service');
+      const { getWWCCService } = await import('../services/wwcc-verification.service.js');
       const wwccService = getWWCCService();
       hasValidWWCC = await wwccService.hasValidWWCC(user.id);
       wwccVerifications = await wwccService.getUserVerifications(user.id);

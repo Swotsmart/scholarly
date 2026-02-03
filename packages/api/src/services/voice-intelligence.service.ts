@@ -8,7 +8,7 @@
  * @module VoiceIntelligenceService
  */
 
-import { ScholarlyBaseService, Result } from './base.service';
+import { ScholarlyBaseService, Result, isFailure } from './base.service';
 import { prisma } from '@scholarly/database';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { log } from '../lib/logger';
@@ -266,12 +266,12 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
 
       const audio = await client.textToSpeech.convert(request.voiceId, {
         text: request.text,
-        model_id: request.modelId || 'eleven_multilingual_v2',
-        voice_settings: request.voiceSettings ? {
+        modelId: request.modelId || 'eleven_multilingual_v2',
+        voiceSettings: request.voiceSettings ? {
           stability: request.voiceSettings.stability ?? 0.5,
-          similarity_boost: request.voiceSettings.similarityBoost ?? 0.75,
+          similarityBoost: request.voiceSettings.similarityBoost ?? 0.75,
           style: request.voiceSettings.style ?? 0.0,
-          use_speaker_boost: request.voiceSettings.useSpeakerBoost ?? true,
+          useSpeakerBoost: request.voiceSettings.useSpeakerBoost ?? true,
         } : undefined,
       });
 
@@ -314,17 +314,21 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
       const audioBlob = new Blob([request.audioData]);
 
       const result = await client.speechToText.convert({
-        audio: audioBlob,
-        language_code: request.language,
+        file: audioBlob,
+        modelId: 'scribe_v1',
+        languageCode: request.language,
       });
+
+      // Cast to the expected single-channel response type
+      const sttResult = result as { text?: string; words?: Array<{ text: string; start: number; end: number }> };
 
       return {
         success: true,
         data: {
-          transcript: result.text || '',
+          transcript: sttResult.text || '',
           confidence: 0.95, // Scribe doesn't return confidence
           language: request.language || 'en',
-          words: result.words?.map((w: any) => ({
+          words: sttResult.words?.map((w) => ({
             word: w.text,
             startMs: Math.floor(w.start * 1000),
             endMs: Math.floor(w.end * 1000),
@@ -356,8 +360,11 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
         enableWordTimestamps: true,
       });
 
-      if (!transcription.success || !transcription.data) {
+      if (isFailure(transcription)) {
         return { success: false, error: transcription.error };
+      }
+      if (!transcription.data) {
+        return { success: false, error: { code: 'TRANSCRIPTION_FAILED', message: 'Transcription failed' } };
       }
 
       // Compare with expected text
@@ -547,16 +554,16 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
       // Create agent on ElevenLabs
       const agentResponse = await client.conversationalAi.agents.create({
         name: config.name,
-        conversation_config: {
+        conversationConfig: {
           agent: {
             prompt: {
               prompt: config.systemPrompt,
             },
-            first_message: config.firstMessage,
+            firstMessage: config.firstMessage,
             language: config.primaryLanguage,
           },
           tts: {
-            voice_id: config.voiceId,
+            voiceId: config.voiceId,
           },
         },
       });
@@ -564,7 +571,7 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
       const agent: ConversationAgent = {
         id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
         tenantId,
-        elevenLabsAgentId: agentResponse.agent_id || '',
+        elevenLabsAgentId: agentResponse.agentId || '',
         ...config,
       };
 
@@ -689,7 +696,7 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
         sampleBlobs.push(new Blob([buffer]));
       }
 
-      const cloneResponse = await client.voices.ivc.createVoice({
+      const cloneResponse = await client.voices.ivc.create({
         name: request.name,
         files: sampleBlobs,
       });
@@ -698,7 +705,7 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
         success: true,
         data: {
           cloneId: `clone_${Date.now()}`,
-          voiceId: cloneResponse.voice_id || '',
+          voiceId: cloneResponse.voiceId || '',
         },
       };
     } catch (error) {

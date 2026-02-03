@@ -29,7 +29,7 @@ export interface SecurityConfig {
 }
 
 export interface RequestWithId extends Request {
-  id?: string;
+  requestId?: string;
   startTime?: number;
 }
 
@@ -77,14 +77,15 @@ const STRIPE_WEBHOOK_IPS = [
  * Adds a unique request ID to each request for tracing
  */
 export function requestIdMiddleware(): RequestHandler {
-  return (req: RequestWithId, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const reqWithId = req as RequestWithId;
     // Use existing ID from header or generate new one
     const requestId = req.headers['x-request-id'] as string ||
                       req.headers['x-correlation-id'] as string ||
                       generateRequestId();
 
-    req.id = requestId;
-    req.startTime = Date.now();
+    reqWithId.requestId = requestId;
+    reqWithId.startTime = Date.now();
 
     // Set response headers
     res.setHeader('X-Request-Id', requestId);
@@ -394,12 +395,13 @@ export function stripeIpAllowlistMiddleware(
  * Logs requests and responses with timing information
  */
 export function requestLoggingMiddleware(): RequestHandler {
-  return (req: RequestWithId, res: Response, next: NextFunction) => {
-    const startTime = req.startTime || Date.now();
+  return (req: Request, res: Response, next: NextFunction) => {
+    const reqWithId = req as RequestWithId;
+    const startTime = reqWithId.startTime || Date.now();
 
     // Log request
     log.info('Incoming request', {
-      requestId: req.id,
+      requestId: reqWithId.requestId,
       method: req.method,
       path: req.path,
       query: Object.keys(req.query).length > 0 ? req.query : undefined,
@@ -414,7 +416,7 @@ export function requestLoggingMiddleware(): RequestHandler {
       const level = res.statusCode >= 400 ? 'warn' : 'info';
 
       log[level]('Request completed', {
-        requestId: req.id,
+        requestId: reqWithId.requestId,
         method: req.method,
         path: req.path,
         statusCode: res.statusCode,
@@ -438,7 +440,7 @@ export function inputSanitizationMiddleware(): RequestHandler {
   return (req: Request, _res: Response, next: NextFunction) => {
     // Sanitize query parameters
     if (req.query) {
-      req.query = sanitizeObject(req.query);
+      req.query = sanitizeObject(req.query) as typeof req.query;
     }
 
     // Sanitize body (if JSON)

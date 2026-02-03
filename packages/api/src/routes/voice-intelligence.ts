@@ -13,8 +13,9 @@ import { z } from 'zod';
 import { authMiddleware, requireRoles } from '../middleware/auth';
 import { voiceIntelligenceService } from '../services/voice-intelligence.service';
 import { voiceWebSocketServer } from '../services/voice-intelligence-websocket.service';
+import { isFailure } from '../services/base.service';
 
-const router = Router();
+const router: Router = Router();
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -156,19 +157,19 @@ router.post('/tts', authMiddleware, async (req: Request, res: Response) => {
     const result = await voiceIntelligenceService.textToSpeech({
       tenantId,
       ...body,
-    });
+    } as any);
 
-    if (result.success && result.data) {
+    if (isFailure(result)) {
+      res.status(400).json({
+        success: false,
+        error: result.error.message,
+        requestId,
+      });
+    } else {
       res.set('Content-Type', 'audio/mpeg');
       res.set('X-Character-Count', result.data.characterCount.toString());
       res.set('X-Credits-Used', result.data.creditsUsed.toString());
       res.send(result.data.audioData);
-    } else {
-      res.status(400).json({
-        success: false,
-        error: result.error?.message,
-        requestId,
-      });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -201,14 +202,14 @@ router.post('/stt', authMiddleware, async (req: Request, res: Response) => {
       enableWordTimestamps: req.body.enableWordTimestamps,
     });
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -244,14 +245,14 @@ router.post('/pronunciation/assess', authMiddleware, async (req: Request, res: R
       strictness: body.strictness,
     });
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -277,14 +278,14 @@ router.get('/voices', authMiddleware, async (req: Request, res: Response) => {
       suitableFor: req.query.suitableFor as string,
     });
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -317,14 +318,14 @@ router.post('/agents', authMiddleware, requireRoles('platform_admin', 'content_c
       status: 'draft',
     });
 
-    if (result.success) {
-      res.status(201).json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.status(201).json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -349,14 +350,14 @@ router.post('/sessions', authMiddleware, async (req: Request, res: Response) => 
       { scenarioId: body.scenarioId, learnerId: body.learnerId }
     );
 
-    if (result.success) {
-      res.status(201).json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.status(201).json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -379,14 +380,14 @@ router.delete('/sessions/:sessionId', authMiddleware, async (req: Request, res: 
       userId
     );
 
-    if (result.success) {
-      res.json({ success: true, message: 'Session ended' });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, message: 'Session ended' });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -410,16 +411,16 @@ router.post('/clones', authMiddleware, requireRoles('platform_admin', 'tutor', '
     const result = await voiceIntelligenceService.createVoiceClone({
       tenantId,
       ...body,
-    });
+    } as any);
 
-    if (result.success) {
-      res.status(201).json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.status(201).json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -440,16 +441,16 @@ router.post('/dialogues', authMiddleware, async (req: Request, res: Response) =>
     const tenantId = getTenantId(req);
     const body = DialogueScriptSchema.parse(req.body);
 
-    const result = await voiceIntelligenceService.generateDialogue(tenantId, body);
+    const result = await voiceIntelligenceService.generateDialogue(tenantId, body as any);
 
-    if (result.success) {
-      res.status(201).json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.status(201).json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);

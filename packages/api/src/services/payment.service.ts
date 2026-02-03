@@ -102,7 +102,7 @@ export class PaymentService extends ScholarlyBaseService {
 
     if (this.config.secretKey && this.config.secretKey !== 'PLACEHOLDER-ADD-VIA-PORTAL') {
       this.stripe = new Stripe(this.config.secretKey, {
-        apiVersion: '2024-04-10',
+        apiVersion: '2026-01-28.clover',
         typescript: true,
       });
     }
@@ -701,7 +701,7 @@ export class PaymentService extends ScholarlyBaseService {
   }
 
   private async handlePayoutFailed(payout: Stripe.Payout): Promise<void> {
-    log.error('Payout failed', {
+    log.error('Payout failed', undefined, {
       payoutId: payout.id,
       failureCode: payout.failure_code,
       failureMessage: payout.failure_message,

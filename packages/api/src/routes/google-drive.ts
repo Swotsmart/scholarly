@@ -14,8 +14,9 @@ import {
   googleDriveIntegrationService,
   EducationalFileType,
 } from '../services/google-drive-integration.service';
+import { isFailure } from '../services/base.service';
 
-const router = Router();
+const router: Router = Router();
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -163,15 +164,15 @@ router.post('/oauth/initiate', authMiddleware, async (req: Request, res: Respons
       body.redirectUri
     );
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
-        code: result.error?.code,
+        error: result.error.message,
+        code: result.error.code,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -195,15 +196,15 @@ router.post('/oauth/callback', authMiddleware, async (req: Request, res: Respons
       body.redirectUri
     );
 
-    if (result.success) {
-      res.status(201).json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
-        code: result.error?.code,
+        error: result.error.message,
+        code: result.error.code,
         requestId,
       });
+    } else {
+      res.status(201).json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -226,15 +227,15 @@ router.get('/connections', authMiddleware, async (req: Request, res: Response) =
 
     const result = await googleDriveIntegrationService.getConnectionStatus(tenantId, userId);
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
-        code: result.error?.code,
+        error: result.error.message,
+        code: result.error.code,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -253,15 +254,15 @@ router.get('/connections/:connectionId', authMiddleware, async (req: Request, re
 
     const result = await googleDriveIntegrationService.getConnection(tenantId, connectionId);
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
-      res.status(result.error?.code === 'NOT_FOUND' ? 404 : 400).json({
+    if (isFailure(result)) {
+      res.status(result.error.code === 'NOT_FOUND' ? 404 : 400).json({
         success: false,
-        error: result.error?.message,
-        code: result.error?.code,
+        error: result.error.message,
+        code: result.error.code,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -280,15 +281,15 @@ router.delete('/connections/:connectionId', authMiddleware, async (req: Request,
 
     const result = await googleDriveIntegrationService.disconnect(tenantId, connectionId);
 
-    if (result.success) {
-      res.json({ success: true, message: 'Connection disconnected successfully' });
-    } else {
-      res.status(result.error?.code === 'NOT_FOUND' ? 404 : 400).json({
+    if (isFailure(result)) {
+      res.status(result.error.code === 'NOT_FOUND' ? 404 : 400).json({
         success: false,
-        error: result.error?.message,
-        code: result.error?.code,
+        error: result.error.message,
+        code: result.error.code,
         requestId,
       });
+    } else {
+      res.json({ success: true, message: 'Connection disconnected successfully' });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -307,15 +308,15 @@ router.post('/connections/:connectionId/refresh', authMiddleware, async (req: Re
 
     const result = await googleDriveIntegrationService.refreshAccessToken(tenantId, connectionId);
 
-    if (result.success) {
-      res.json({ success: true, data: { expiresAt: result.data.expiresAt } });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
-        code: result.error?.code,
+        error: result.error.message,
+        code: result.error.code,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: { expiresAt: result.data.expiresAt } });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -347,15 +348,15 @@ router.post(
         body.subjectName
       );
 
-      if (result.success) {
-        res.json({ success: true, data: { folderId: result.data } });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
-          error: result.error?.message,
-          code: result.error?.code,
+          error: result.error.message,
+          code: result.error.code,
           requestId,
         });
+      } else {
+        res.json({ success: true, data: { folderId: result.data } });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -388,18 +389,18 @@ router.post('/connections/:connectionId/files', authMiddleware, async (req: Requ
       mimeType: metadata.mimeType,
       content,
       parentFolderId: metadata.parentFolderId,
-      educationalContext: metadata.educationalContext,
+      educationalContext: metadata.educationalContext as any,
     });
 
-    if (result.success) {
-      res.status(201).json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
-        code: result.error?.code,
+        error: result.error.message,
+        code: result.error.code,
         requestId,
       });
+    } else {
+      res.status(201).json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -423,15 +424,15 @@ router.post('/connections/:connectionId/files/search', authMiddleware, async (re
       modifiedBefore: query.modifiedBefore ? new Date(query.modifiedBefore) : undefined,
     });
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
-        code: result.error?.code,
+        error: result.error.message,
+        code: result.error.code,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -460,18 +461,18 @@ router.post(
       const result = await googleDriveIntegrationService.distributeToClassroom(
         tenantId,
         connectionId,
-        distribution
+        distribution as any
       );
 
-      if (result.success) {
-        res.status(201).json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
-          error: result.error?.message,
-          code: result.error?.code,
+          error: result.error.message,
+          code: result.error.code,
           requestId,
         });
+      } else {
+        res.status(201).json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -495,15 +496,15 @@ router.post('/connections/:connectionId/sync', authMiddleware, async (req: Reque
 
     const result = await googleDriveIntegrationService.processDriveChanges(tenantId, connectionId);
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
-        code: result.error?.code,
+        error: result.error.message,
+        code: result.error.code,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -539,14 +540,14 @@ router.post('/webhooks', async (req: Request, res: Response) => {
       type: req.headers['x-goog-resource-state'] as string,
     });
 
-    const result = await googleDriveIntegrationService.handleWebhook(tenantId, payload);
+    const result = await googleDriveIntegrationService.handleWebhook(tenantId, payload as any);
 
-    if (result.success) {
-      // Google expects a 200 response with empty body
-      res.status(200).send();
-    } else {
+    if (isFailure(result)) {
       // Log the error but still return 200 to prevent Google from retrying
       console.error('Webhook processing failed:', result.error);
+      res.status(200).send();
+    } else {
+      // Google expects a 200 response with empty body
       res.status(200).send();
     }
   } catch (error) {
@@ -576,15 +577,15 @@ router.post('/connections/:connectionId/analytics', authMiddleware, async (req: 
       end: new Date(period.end),
     });
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
-        code: result.error?.code,
+        error: result.error.message,
+        code: result.error.code,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);

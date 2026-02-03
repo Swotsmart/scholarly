@@ -60,6 +60,7 @@ import {
   Result,
   success,
   failure,
+  isFailure,
   ScholarlyBaseService,
   ServiceDependencies,
   ValidationError,
@@ -728,7 +729,7 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, userId, role, redirectUri },
       ['tenantId', 'userId', 'role', 'redirectUri']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
@@ -770,7 +771,7 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, code, stateNonce },
       ['tenantId', 'code', 'stateNonce']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
@@ -878,7 +879,7 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, connectionId },
       ['tenantId', 'connectionId']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
@@ -929,7 +930,7 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, connectionId },
       ['tenantId', 'connectionId']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
@@ -973,7 +974,7 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, userId },
       ['tenantId', 'userId']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
@@ -994,7 +995,7 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, connectionId },
       ['tenantId', 'connectionId']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
@@ -1026,18 +1027,18 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, connectionId },
       ['tenantId', 'connectionId']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
     return this.withTiming('provisionFolderStructure', async () => {
       const connection = await this.getActiveConnection(tenantId, connectionId);
-      if (!connection.success) {
+      if (isFailure(connection)) {
         return failure(connection.error);
       }
 
       const accessToken = await this.ensureValidToken(tenantId, connection.data);
-      if (!accessToken.success) {
+      if (isFailure(accessToken)) {
         return failure(accessToken.error);
       }
 
@@ -1123,18 +1124,18 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, connectionId, fileName: file.name },
       ['tenantId', 'connectionId', 'fileName']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
     return this.withTiming('uploadFile', async () => {
       const connection = await this.getActiveConnection(tenantId, connectionId);
-      if (!connection.success) {
+      if (isFailure(connection)) {
         return failure(connection.error);
       }
 
       const accessToken = await this.ensureValidToken(tenantId, connection.data);
-      if (!accessToken.success) {
+      if (isFailure(accessToken)) {
         return failure(accessToken.error);
       }
 
@@ -1203,18 +1204,18 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, connectionId },
       ['tenantId', 'connectionId']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
     return this.withTiming('listFolderItems', async () => {
       const connection = await this.getActiveConnection(tenantId, connectionId);
-      if (!connection.success) {
+      if (isFailure(connection)) {
         return failure(connection.error);
       }
 
       const accessToken = await this.ensureValidToken(tenantId, connection.data);
-      if (!accessToken.success) {
+      if (isFailure(accessToken)) {
         return failure(accessToken.error);
       }
 
@@ -1252,7 +1253,7 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, connectionId },
       ['tenantId', 'connectionId']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
@@ -1264,12 +1265,12 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       }
 
       const connection = await this.getActiveConnection(tenantId, connectionId);
-      if (!connection.success) {
+      if (isFailure(connection)) {
         return failure(connection.error);
       }
 
       const accessToken = await this.ensureValidToken(tenantId, connection.data);
-      if (!accessToken.success) {
+      if (isFailure(accessToken)) {
         return failure(accessToken.error);
       }
 
@@ -1314,18 +1315,18 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, connectionId, itemId: request.itemId },
       ['tenantId', 'connectionId', 'itemId']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
     return this.withTiming('shareItem', async () => {
       const connection = await this.getActiveConnection(tenantId, connectionId);
-      if (!connection.success) {
+      if (isFailure(connection)) {
         return failure(connection.error);
       }
 
       const accessToken = await this.ensureValidToken(tenantId, connection.data);
-      if (!accessToken.success) {
+      if (isFailure(accessToken)) {
         return failure(accessToken.error);
       }
 
@@ -1389,18 +1390,18 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, connectionId },
       ['tenantId', 'connectionId']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
     return this.withTiming('processDeltaChanges', async () => {
       const connection = await this.getActiveConnection(tenantId, connectionId);
-      if (!connection.success) {
+      if (isFailure(connection)) {
         return failure(connection.error);
       }
 
       const accessToken = await this.ensureValidToken(tenantId, connection.data);
-      if (!accessToken.success) {
+      if (isFailure(accessToken)) {
         return failure(accessToken.error);
       }
 
@@ -1531,18 +1532,18 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, connectionId },
       ['tenantId', 'connectionId']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
     return this.withTiming('discoverSharePointSites', async () => {
       const connection = await this.getActiveConnection(tenantId, connectionId);
-      if (!connection.success) {
+      if (isFailure(connection)) {
         return failure(connection.error);
       }
 
       const accessToken = await this.ensureValidToken(tenantId, connection.data);
-      if (!accessToken.success) {
+      if (isFailure(accessToken)) {
         return failure(accessToken.error);
       }
 
@@ -1595,18 +1596,18 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, connectionId, siteId, libraryId },
       ['tenantId', 'connectionId', 'siteId', 'libraryId']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
     return this.withTiming('connectSharePointLibrary', async () => {
       const connection = await this.getActiveConnection(tenantId, connectionId);
-      if (!connection.success) {
+      if (isFailure(connection)) {
         return failure(connection.error);
       }
 
       const accessToken = await this.ensureValidToken(tenantId, connection.data);
-      if (!accessToken.success) {
+      if (isFailure(accessToken)) {
         return failure(accessToken.error);
       }
 
@@ -1659,18 +1660,18 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       { tenantId, connectionId, graphItemId },
       ['tenantId', 'connectionId', 'graphItemId']
     );
-    if (!validationResult.success) {
+    if (isFailure(validationResult)) {
       return failure(validationResult.error);
     }
 
     return this.withTiming('getVersionHistory', async () => {
       const connection = await this.getActiveConnection(tenantId, connectionId);
-      if (!connection.success) {
+      if (isFailure(connection)) {
         return failure(connection.error);
       }
 
       const accessToken = await this.ensureValidToken(tenantId, connection.data);
-      if (!accessToken.success) {
+      if (isFailure(accessToken)) {
         return failure(accessToken.error);
       }
 
@@ -1737,7 +1738,7 @@ export class OneDriveIntegrationService extends ScholarlyBaseService {
       new Date(connection.credentials.expiresAt).getTime()
     ) {
       const result = await this.refreshAccessToken(tenantId, connection.id);
-      if (!result.success) return failure(result.error);
+      if (isFailure(result)) return failure(result.error);
       return success(result.data.accessToken);
     }
     return success(connection.credentials.accessToken);

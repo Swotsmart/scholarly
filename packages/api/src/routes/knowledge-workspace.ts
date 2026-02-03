@@ -18,8 +18,9 @@ import {
   EducationalPageType,
   TemplateCategory,
 } from '../services/knowledge-workspace.service';
+import { isFailure } from '../services/base.service';
 
-const router = Router();
+const router: Router = Router();
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -144,7 +145,7 @@ router.post(
   authMiddleware,
   requireRoles('platform_admin', 'school_admin'),
   async (req: Request, res: Response) => {
-    const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+    const requestId = (req as any).id as string || 'unknown';
     try {
       const tenantId = getTenantId(req);
       const body = ProvisionUserSchema.parse(req.body);
@@ -153,17 +154,17 @@ router.post(
       const result = await knowledgeWorkspaceService.provisionUser(
         tenantId,
         scholarlyUserId,
-        body
+        body as any
       );
 
-      if (result.success) {
-        res.status(201).json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
-          error: result.error?.message,
+          error: result.error.message,
           requestId,
         });
+      } else {
+        res.status(201).json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -180,7 +181,7 @@ router.post(
  * Create a personal learning notebook
  */
 router.post('/personal', authMiddleware, async (req: Request, res: Response) => {
-  const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+  const requestId = (req as any).id as string || 'unknown';
   try {
     const tenantId = getTenantId(req);
     const userId = getUserId(req);
@@ -192,14 +193,14 @@ router.post('/personal', authMiddleware, async (req: Request, res: Response) => 
       body.displayName
     );
 
-    if (result.success) {
-      res.status(201).json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.status(201).json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -215,7 +216,7 @@ router.post(
   authMiddleware,
   requireRoles('teacher', 'school_admin', 'platform_admin'),
   async (req: Request, res: Response) => {
-    const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+    const requestId = (req as any).id as string || 'unknown';
     try {
       const tenantId = getTenantId(req);
       const teacherId = getUserId(req);
@@ -224,17 +225,17 @@ router.post(
       const result = await knowledgeWorkspaceService.createClassroomWorkspace(
         tenantId,
         teacherId,
-        body
+        body as any
       );
 
-      if (result.success) {
-        res.status(201).json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
-          error: result.error?.message,
+          error: result.error.message,
           requestId,
         });
+      } else {
+        res.status(201).json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -251,7 +252,7 @@ router.post(
   authMiddleware,
   requireRoles('tutor', 'platform_admin'),
   async (req: Request, res: Response) => {
-    const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+    const requestId = (req as any).id as string || 'unknown';
     try {
       const tenantId = getTenantId(req);
       const body = CreateTutorSessionWorkspaceSchema.parse(req.body);
@@ -263,14 +264,14 @@ router.post(
         body.subjectName
       );
 
-      if (result.success) {
-        res.status(201).json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
-          error: result.error?.message,
+          error: result.error.message,
           requestId,
         });
+      } else {
+        res.status(201).json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -283,7 +284,7 @@ router.post(
  * List workspaces for the current user
  */
 router.get('/', authMiddleware, async (req: Request, res: Response) => {
-  const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+  const requestId = (req as any).id as string || 'unknown';
   try {
     const tenantId = getTenantId(req);
     const userId = getUserId(req);
@@ -302,14 +303,14 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
       filters
     );
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -321,7 +322,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
  * Get a workspace by ID
  */
 router.get('/:workspaceId', authMiddleware, async (req: Request, res: Response) => {
-  const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+  const requestId = (req as any).id as string || 'unknown';
   try {
     const tenantId = getTenantId(req);
     const { workspaceId } = req.params;
@@ -331,14 +332,14 @@ router.get('/:workspaceId', authMiddleware, async (req: Request, res: Response) 
       workspaceId
     );
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(404).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -350,7 +351,7 @@ router.get('/:workspaceId', authMiddleware, async (req: Request, res: Response) 
  * Update a workspace
  */
 router.patch('/:workspaceId', authMiddleware, async (req: Request, res: Response) => {
-  const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+  const requestId = (req as any).id as string || 'unknown';
   try {
     const tenantId = getTenantId(req);
     const { workspaceId } = req.params;
@@ -362,14 +363,14 @@ router.patch('/:workspaceId', authMiddleware, async (req: Request, res: Response
       body
     );
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -388,7 +389,7 @@ router.post(
   '/:workspaceId/members',
   authMiddleware,
   async (req: Request, res: Response) => {
-    const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+    const requestId = (req as any).id as string || 'unknown';
     try {
       const tenantId = getTenantId(req);
       const { workspaceId } = req.params;
@@ -402,14 +403,14 @@ router.post(
         body.scholarlyRole
       );
 
-      if (result.success) {
-        res.status(201).json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
-          error: result.error?.message,
+          error: result.error.message,
           requestId,
         });
+      } else {
+        res.status(201).json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -425,7 +426,7 @@ router.delete(
   '/:workspaceId/members/:memberId',
   authMiddleware,
   async (req: Request, res: Response) => {
-    const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+    const requestId = (req as any).id as string || 'unknown';
     try {
       const tenantId = getTenantId(req);
       const { workspaceId, memberId } = req.params;
@@ -436,14 +437,14 @@ router.delete(
         memberId
       );
 
-      if (result.success) {
-        res.json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
-          error: result.error?.message,
+          error: result.error.message,
           requestId,
         });
+      } else {
+        res.json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -463,7 +464,7 @@ router.post(
   '/:workspaceId/pages',
   authMiddleware,
   async (req: Request, res: Response) => {
-    const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+    const requestId = (req as any).id as string || 'unknown';
     try {
       const tenantId = getTenantId(req);
       const userId = getUserId(req);
@@ -474,17 +475,17 @@ router.post(
         tenantId,
         workspaceId,
         userId,
-        body
+        body as any
       );
 
-      if (result.success) {
-        res.status(201).json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
-          error: result.error?.message,
+          error: result.error.message,
           requestId,
         });
+      } else {
+        res.status(201).json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -500,7 +501,7 @@ router.get(
   '/:workspaceId/pages',
   authMiddleware,
   async (req: Request, res: Response) => {
-    const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+    const requestId = (req as any).id as string || 'unknown';
     try {
       const tenantId = getTenantId(req);
       const { workspaceId } = req.params;
@@ -519,14 +520,14 @@ router.get(
         filters
       );
 
-      if (result.success) {
-        res.json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
-          error: result.error?.message,
+          error: result.error.message,
           requestId,
         });
+      } else {
+        res.json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -539,21 +540,21 @@ router.get(
  * Get a page by ID
  */
 router.get('/pages/:pageId', authMiddleware, async (req: Request, res: Response) => {
-  const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+  const requestId = (req as any).id as string || 'unknown';
   try {
     const tenantId = getTenantId(req);
     const { pageId } = req.params;
 
     const result = await knowledgeWorkspaceService.getPage(tenantId, pageId);
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(404).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -565,7 +566,7 @@ router.get('/pages/:pageId', authMiddleware, async (req: Request, res: Response)
  * Update a page
  */
 router.patch('/pages/:pageId', authMiddleware, async (req: Request, res: Response) => {
-  const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+  const requestId = (req as any).id as string || 'unknown';
   try {
     const tenantId = getTenantId(req);
     const { pageId } = req.params;
@@ -577,14 +578,14 @@ router.patch('/pages/:pageId', authMiddleware, async (req: Request, res: Respons
       body
     );
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -596,21 +597,21 @@ router.patch('/pages/:pageId', authMiddleware, async (req: Request, res: Respons
  * Delete a page
  */
 router.delete('/pages/:pageId', authMiddleware, async (req: Request, res: Response) => {
-  const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+  const requestId = (req as any).id as string || 'unknown';
   try {
     const tenantId = getTenantId(req);
     const { pageId } = req.params;
 
     const result = await knowledgeWorkspaceService.deletePage(tenantId, pageId);
 
-    if (result.success) {
-      res.json({ success: true, message: 'Page deleted' });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, message: 'Page deleted' });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -626,7 +627,7 @@ router.delete('/pages/:pageId', authMiddleware, async (req: Request, res: Respon
  * Search across all accessible workspaces
  */
 router.post('/search', authMiddleware, async (req: Request, res: Response) => {
-  const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+  const requestId = (req as any).id as string || 'unknown';
   try {
     const tenantId = getTenantId(req);
     const userId = getUserId(req);
@@ -638,14 +639,14 @@ router.post('/search', authMiddleware, async (req: Request, res: Response) => {
       body
     );
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -661,7 +662,7 @@ router.post('/search', authMiddleware, async (req: Request, res: Response) => {
  * List available templates
  */
 router.get('/templates', authMiddleware, async (req: Request, res: Response) => {
-  const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+  const requestId = (req as any).id as string || 'unknown';
   try {
     const tenantId = getTenantId(req);
 
@@ -678,14 +679,14 @@ router.get('/templates', authMiddleware, async (req: Request, res: Response) => 
       filters
     );
 
-    if (result.success) {
-      res.json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(400).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      res.json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);
@@ -700,7 +701,7 @@ router.post(
   '/:workspaceId/apply-template',
   authMiddleware,
   async (req: Request, res: Response) => {
-    const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+    const requestId = (req as any).id as string || 'unknown';
     try {
       const tenantId = getTenantId(req);
       const { workspaceId } = req.params;
@@ -721,14 +722,14 @@ router.post(
         templateId
       );
 
-      if (result.success) {
-        res.json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
-          error: result.error?.message,
+          error: result.error.message,
           requestId,
         });
+      } else {
+        res.json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -748,7 +749,7 @@ router.post(
   '/:workspaceId/activity',
   authMiddleware,
   async (req: Request, res: Response) => {
-    const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+    const requestId = (req as any).id as string || 'unknown';
     try {
       const tenantId = getTenantId(req);
       const { workspaceId } = req.params;
@@ -757,17 +758,17 @@ router.post(
       const result = await knowledgeWorkspaceService.getWorkspaceActivity(
         tenantId,
         workspaceId,
-        period
+        period as any
       );
 
-      if (result.success) {
-        res.json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
-          error: result.error?.message,
+          error: result.error.message,
           requestId,
         });
+      } else {
+        res.json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -783,7 +784,7 @@ router.get(
   '/students/:studentId/learning-profile',
   authMiddleware,
   async (req: Request, res: Response) => {
-    const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+    const requestId = (req as any).id as string || 'unknown';
     try {
       const tenantId = getTenantId(req);
       const { studentId } = req.params;
@@ -793,14 +794,14 @@ router.get(
         studentId
       );
 
-      if (result.success) {
-        res.json({ success: true, data: result.data });
-      } else {
+      if (isFailure(result)) {
         res.status(400).json({
           success: false,
-          error: result.error?.message,
+          error: result.error.message,
           requestId,
         });
+      } else {
+        res.json({ success: true, data: result.data });
       }
     } catch (error) {
       handleError(res, error, requestId);
@@ -817,21 +818,21 @@ router.get(
  * Check the health of the AFFiNE connection
  */
 router.get('/health', authMiddleware, async (req: Request, res: Response) => {
-  const requestId = (req as Record<string, unknown>).id as string || 'unknown';
+  const requestId = (req as any).id as string || 'unknown';
   try {
     const tenantId = getTenantId(req);
 
     const result = await knowledgeWorkspaceService.checkHealth(tenantId);
 
-    if (result.success) {
-      const statusCode = result.data.status === 'healthy' ? 200 : 503;
-      res.status(statusCode).json({ success: true, data: result.data });
-    } else {
+    if (isFailure(result)) {
       res.status(503).json({
         success: false,
-        error: result.error?.message,
+        error: result.error.message,
         requestId,
       });
+    } else {
+      const statusCode = result.data.status === 'healthy' ? 200 : 503;
+      res.status(statusCode).json({ success: true, data: result.data });
     }
   } catch (error) {
     handleError(res, error, requestId);

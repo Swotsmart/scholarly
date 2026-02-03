@@ -13,6 +13,7 @@ import { IncomingMessage } from 'http';
 import { URL } from 'url';
 import { log } from '../lib/logger';
 import { voiceIntelligenceService } from './voice-intelligence.service';
+import { isFailure } from './base.service';
 
 // ============================================================================
 // MESSAGE TYPES
@@ -365,7 +366,7 @@ export class VoiceWebSocketServer {
       {}
     );
 
-    if (!sessionResult.success) {
+    if (isFailure(sessionResult)) {
       this.sendMessage(ws, {
         type: 'error',
         code: 'SESSION_START_FAILED',
