@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curriculum Intelligence — Semantic Knowledge Graphs — Scholarly</title>
+<meta name="description" content="AI-enabled curriculum system that ingests ACARA, UK National Curriculum, and IB frameworks to build semantic knowledge graphs, auto-align content, and generate lesson plans.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sapphire-900: #0C1B3A; --sapphire-800: #142952; --sapphire-700: #1B3A6B;
+  --sapphire-600: #234E8F; --sapphire-500: #2B62B3; --sapphire-400: #4A80CC;
+  --sapphire-300: #7BA5DD; --sapphire-200: #B0CCEE; --sapphire-100: #DAE6F7; --sapphire-50: #EEF3FB;
+  --amber-600: #B8860B; --amber-500: #D4A017; --amber-400: #E8BF33; --amber-300: #F0D060;
+  --amber-200: #F5E0A0; --amber-100: #FBF0D0; --amber-50: #FDF8EB;
+  --teal-700: #0D6E6E; --teal-600: #109090; --teal-500: #14B8B8; --teal-400: #3DD4D4;
+  --teal-300: #80E5E5; --teal-200: #B3F0F0; --teal-100: #E0FAFA; --teal-50: #F0FDFD;
+  --rose-600: #B44D6C; --rose-500: #D4587E; --rose-400: #E87C9E; --rose-100: #FCE8EF;
+  --ivory-900: #2D2418; --ivory-100: #F5F1EB; --ivory-50: #FAF8F5;
+  --text-primary: #1A1A2E; --text-secondary: #4A4A5A; --text-tertiary: #8D8D9B;
+  --bg-primary: #FAFBFE; --bg-card: #FFFFFF; --bg-elevated: #F2F4F8;
+  --border-subtle: rgba(28, 28, 60, 0.06); --border-medium: rgba(28, 28, 60, 0.12);
+  --shadow-sm: 0 1px 3px rgba(12, 27, 58, 0.05); --shadow-md: 0 4px 16px rgba(12, 27, 58, 0.07);
+  --shadow-lg: 0 8px 32px rgba(12, 27, 58, 0.09); --shadow-xl: 0 16px 48px rgba(12, 27, 58, 0.11);
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px; --radius-xl: 24px; --radius-full: 9999px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 200ms; --duration-normal: 350ms;
+  --nav-height: 72px; --max-width: 1280px;
+  --space-xs: 0.25rem; --space-sm: 0.5rem; --space-md: 1rem; --space-lg: 1.5rem;
+  --space-xl: 2rem; --space-2xl: 3rem; --space-3xl: 4rem; --space-4xl: 6rem; --space-5xl: 8rem;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font-body); color: var(--text-primary); background: var(--bg-primary); line-height: 1.6; overflow-x: hidden; }
+a { text-decoration: none; color: inherit; }
+button { border: none; background: none; cursor: pointer; font-family: inherit; }
+.container { max-width: var(--max-width); margin: 0 auto; padding: 0 var(--space-xl); }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 0.5; } 80%, 100% { transform: scale(2); opacity: 0; } }
+.reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; } .reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; } .reveal-delay-4 { transition-delay: 0.4s; }
+
+/* Nav */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: var(--nav-height); }
+.nav::before { content: ''; position: absolute; inset: 0; background: rgba(250, 251, 254, 0.92); backdrop-filter: blur(20px) saturate(1.5); border-bottom: 1px solid var(--border-subtle); }
+.nav-inner { position: relative; display: flex; align-items: center; justify-content: space-between; height: 100%; max-width: var(--max-width); margin: 0 auto; padding: 0 var(--space-xl); }
+.nav-logo { display: flex; align-items: center; gap: var(--space-sm); font-family: var(--font-display); font-size: 1.4rem; color: var(--sapphire-800); }
+.nav-logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--sapphire-700), var(--sapphire-500)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; font-weight: 700; box-shadow: 0 2px 8px rgba(27, 58, 107, 0.3); }
+.nav-actions { display: flex; align-items: center; gap: var(--space-sm); }
+.btn { display: inline-flex; align-items: center; gap: var(--space-sm); padding: 10px 20px; font-size: 0.875rem; font-weight: 600; border-radius: var(--radius-sm); transition: all var(--duration-fast) var(--ease-out); white-space: nowrap; }
+.btn-ghost { color: var(--text-secondary); }
+.btn-ghost:hover { color: var(--sapphire-700); background: var(--sapphire-50); }
+.btn-primary { background: linear-gradient(135deg, var(--sapphire-700), var(--sapphire-600)); color: white; box-shadow: 0 2px 8px rgba(27, 58, 107, 0.25); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(27, 58, 107, 0.35); }
+.btn-outline { border: 1.5px solid var(--border-medium); color: var(--text-primary); }
+.btn-outline:hover { border-color: var(--sapphire-400); color: var(--sapphire-700); background: var(--sapphire-50); }
+.btn-lg { padding: 14px 28px; font-size: 1rem; border-radius: var(--radius-md); }
+.btn-icon { font-size: 1.1em; transition: transform var(--duration-fast) var(--ease-out); }
+.btn:hover .btn-icon { transform: translateX(3px); }
+.back-link { display: inline-flex; align-items: center; gap: var(--space-sm); font-size: 0.85rem; color: var(--text-tertiary); transition: color var(--duration-fast); }
+.back-link:hover { color: var(--sapphire-600); }
+
+/* Inner Page Hero */
+.inner-hero { padding-top: calc(var(--nav-height) + var(--space-4xl)); padding-bottom: var(--space-4xl); position: relative; overflow: hidden; }
+.inner-hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--teal-50) 0%, var(--bg-primary) 60%, var(--ivory-100) 100%); z-index: 0; }
+.inner-hero-content { position: relative; z-index: 1; max-width: 800px; }
+.inner-hero-badge { display: inline-flex; align-items: center; gap: var(--space-sm); padding: 6px 16px; background: rgba(16, 144, 144, 0.08); border: 1px solid rgba(16, 144, 144, 0.15); border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; color: var(--teal-700); margin-bottom: var(--space-xl); }
+.inner-hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal-600); position: relative; }
+.inner-hero-badge-dot::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid var(--teal-600); animation: pulse-ring 2s ease-out infinite; }
+.inner-hero h1 { font-family: var(--font-display); font-size: clamp(2.2rem, 4.5vw, 3.2rem); line-height: 1.12; color: var(--sapphire-900); letter-spacing: -0.02em; margin-bottom: var(--space-lg); }
+.inner-hero h1 em { font-style: italic; color: var(--teal-600); }
+.inner-hero-desc { font-size: 1.1rem; line-height: 1.7; color: var(--text-secondary); max-width: 640px; margin-bottom: var(--space-2xl); }
+.inner-hero-actions { display: flex; gap: var(--space-md); flex-wrap: wrap; }
+.inner-hero-icon { font-size: 3rem; margin-bottom: var(--space-lg); }
+
+/* Content Sections */
+.section { padding: var(--space-5xl) 0; }
+.section-alt { background: var(--bg-elevated); }
+.section-dark { background: var(--sapphire-900); color: white; }
+.section-label { display: inline-flex; align-items: center; gap: var(--space-sm); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--teal-600); margin-bottom: var(--space-md); }
+.section-label-line { width: 24px; height: 2px; background: var(--teal-600); border-radius: 1px; }
+.section-title { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.4rem); line-height: 1.15; color: var(--sapphire-900); letter-spacing: -0.02em; margin-bottom: var(--space-md); }
+.section-dark .section-title { color: white; }
+.section-subtitle { font-size: 1.05rem; line-height: 1.7; color: var(--text-secondary); max-width: 600px; }
+.section-dark .section-subtitle { color: rgba(255,255,255,0.65); }
+
+/* Feature Grid */
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-xl); margin-top: var(--space-3xl); }
+.feature-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: var(--space-2xl); transition: all var(--duration-normal) var(--ease-out); }
+.feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: transparent; }
+.feature-card-icon { width: 52px; height: 52px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: var(--space-lg); background: var(--teal-50); }
+.feature-card h3 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: var(--space-sm); }
+.feature-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+
+/* Split Section */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4xl); align-items: center; }
+.split-reverse .split-visual { order: -1; }
+.split-visual-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: var(--space-2xl); box-shadow: var(--shadow-lg); }
+.split .section-subtitle { margin-bottom: var(--space-xl); }
+
+/* How It Works */
+.steps { display: flex; flex-direction: column; gap: var(--space-xl); margin-top: var(--space-2xl); }
+.step { display: flex; gap: var(--space-xl); align-items: flex-start; }
+.step-number { width: 48px; height: 48px; border-radius: 50%; background: var(--teal-50); color: var(--teal-600); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.1rem; flex-shrink: 0; font-weight: 700; }
+.step-content h4 { font-size: 1rem; font-weight: 600; margin-bottom: var(--space-xs); }
+.step-content p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+
+/* Tech Specs */
+.specs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-md); margin-top: var(--space-2xl); }
+.spec { display: flex; gap: var(--space-md); padding: var(--space-lg); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); }
+.spec-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+.spec-text { font-size: 0.85rem; }
+.spec-text strong { display: block; color: white; margin-bottom: 2px; }
+.spec-text span { color: rgba(255,255,255,0.55); }
+
+/* Code Block */
+.code-block { background: var(--sapphire-900); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-xl); }
+.code-block-header { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-lg); background: rgba(0,0,0,0.2); }
+.code-block-dots { display: flex; gap: 6px; }
+.code-block-dot { width: 10px; height: 10px; border-radius: 50%; }
+.code-block-dot:nth-child(1) { background: #FF5F57; }
+.code-block-dot:nth-child(2) { background: #FEBC2E; }
+.code-block-dot:nth-child(3) { background: #28C840; }
+.code-block-tab { font-size: 0.7rem; font-family: var(--font-mono); color: rgba(255,255,255,0.5); padding: 4px 12px; background: rgba(255,255,255,0.06); border-radius: 4px; }
+.code-block-body { padding: var(--space-lg) var(--space-xl); font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.8; color: rgba(255,255,255,0.8); white-space: pre; overflow-x: auto; }
+.cm { color: rgba(255,255,255,0.35); } .kw { color: #7BA5DD; } .fn { color: #E8BF33; } .str { color: #80E5E5; } .num { color: #E87C9E; }
+
+/* Integration Cards */
+.integration-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-md); margin-top: var(--space-2xl); }
+.integration-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-lg); text-align: center; transition: all var(--duration-fast) var(--ease-out); }
+.integration-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.integration-card-icon { font-size: 1.8rem; margin-bottom: var(--space-sm); }
+.integration-card-name { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+
+/* CTA */
+.cta-section { padding: var(--space-5xl) 0; }
+.cta-card { background: linear-gradient(135deg, var(--sapphire-700), var(--sapphire-600)); border-radius: var(--radius-xl); padding: var(--space-4xl); text-align: center; color: white; position: relative; overflow: hidden; }
+.cta-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 60% at 30% 20%, rgba(255,255,255,0.08), transparent); }
+.cta-title { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.4rem); margin-bottom: var(--space-md); position: relative; }
+.cta-subtitle { font-size: 1.05rem; color: rgba(255,255,255,0.75); max-width: 500px; margin: 0 auto var(--space-xl); position: relative; }
+.cta-actions { display: flex; gap: var(--space-md); justify-content: center; flex-wrap: wrap; position: relative; }
+.cta-actions .btn-primary { background: white; color: var(--sapphire-800); }
+.cta-actions .btn-primary:hover { background: var(--ivory-50); transform: translateY(-2px); }
+.cta-actions .btn-outline { border-color: rgba(255,255,255,0.3); color: white; }
+.cta-actions .btn-outline:hover { border-color: white; background: rgba(255,255,255,0.1); }
+
+/* Footer */
+.footer { background: var(--sapphire-900); color: white; padding: var(--space-2xl) 0; }
+.footer-inner { display: flex; justify-content: space-between; align-items: center; }
+.footer-brand { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+.footer-links-row { display: flex; gap: var(--space-xl); }
+.footer-links-row a { font-size: 0.8rem; color: rgba(255,255,255,0.5); transition: color var(--duration-fast); }
+.footer-links-row a:hover { color: white; }
+
+/* Connected Services */
+.connected { margin-top: var(--space-2xl); padding: var(--space-xl); background: var(--teal-50); border-radius: var(--radius-lg); border: 1px solid rgba(16, 144, 144, 0.15); }
+.connected-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal-600); margin-bottom: var(--space-md); }
+.connected-grid { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.connected-chip { display: inline-flex; align-items: center; gap: var(--space-xs); padding: 6px 14px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 500; color: var(--text-secondary); transition: all var(--duration-fast); }
+.connected-chip:hover { border-color: var(--teal-600); color: var(--teal-600); }
+
+@media (max-width: 1024px) {
+  .feature-grid { grid-template-columns: 1fr 1fr; }
+  .split { grid-template-columns: 1fr; }
+  .split-reverse .split-visual { order: 0; }
+  .specs-grid { grid-template-columns: 1fr; }
+  .integration-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .feature-grid { grid-template-columns: 1fr; }
+  .footer-inner { flex-direction: column; gap: var(--space-md); text-align: center; }
+  .footer-links-row { flex-wrap: wrap; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">S</div>
+      Scholarly
+    </a>
+    <div class="nav-actions">
+      <a href="index.html" class="btn btn-ghost">← Back to Platform</a>
+      <a href="#docs" target="_blank" class="btn btn-primary">Read the Docs <span class="btn-icon">→</span></a>
+    </div>
+  </div>
+</nav>
+
+<section class="inner-hero">
+  <div class="container">
+    <div class="inner-hero-content" style="animation: fadeUp 0.8s var(--ease-out) 0.1s both;">
+      <a href="index.html" class="back-link" style="margin-bottom: var(--space-lg); display: inline-flex;">← Back to Platform Overview</a>
+      <div class="inner-hero-icon">🧠</div>
+      <div class="inner-hero-badge">
+        <span class="inner-hero-badge-dot"></span>
+        Intelligence Layer · 2,502 Lines
+      </div>
+      <h1>Curriculum Intelligence that <em>understands</em> what it teaches</h1>
+      <p class="inner-hero-desc">A 2,502-line AI-enabled semantic curriculum system that doesn't just store standards — it understands their relationships. Ingests curriculum frameworks from ACARA, UK National Curriculum, and IB, builds knowledge graphs, auto-aligns content, discovers cross-curricular connections, and generates lesson plans with Bloom's Taxonomy mapping.</p>
+      <div class="inner-hero-actions">
+        <a href="#docs" target="_blank" class="btn btn-primary btn-lg">View Documentation <span class="btn-icon">→</span></a>
+        <a href="index.html#ecosystem" class="btn btn-outline btn-lg">All Services</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section"><div class="container"><div class="reveal" style="text-align:center;max-width:600px;margin:0 auto;"><div class="section-label"><span class="section-label-line"></span>Core Capabilities</div><h2 class="section-title">From static standards to living intelligence</h2><p class="section-subtitle" style="margin:0 auto;">Nine key methods transform how institutions interact with curriculum — from ingestion through enrichment to generation.</p></div>
+<div class="feature-grid">
+<div class="feature-card reveal"><div class="feature-card-icon">📥</div><h3>Curriculum Ingestion</h3><p>Parse RDF/XML formats from ACARA (Australia), UK National Curriculum, IB (PYP/MYP/DP), and other international frameworks into a unified internal representation.</p></div>
+<div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon">🕸️</div><h3>Knowledge Graph</h3><p>Build semantic connections between concepts, skills, and standards. Understand prerequisites, extensions, and conceptual relationships that span across year levels and subjects.</p></div>
+<div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon">🎯</div><h3>Auto-Alignment</h3><p>AI matches educational content to curriculum codes automatically. Upload a resource and the system identifies which standards it addresses, saving hours of manual mapping.</p></div>
+<div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon">🔀</div><h3>Cross-Curricular Discovery</h3><p>Find connections across subjects that traditional siloed curricula miss. A maths concept might connect to science experiments, history timelines, and art patterns.</p></div>
+<div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon">📝</div><h3>Lesson Plan Generation</h3><p>AI-powered lesson plan creation that's curriculum-aligned, differentiated, and includes learning intentions, success criteria, and assessment strategies.</p></div>
+<div class="feature-card reveal"><div class="feature-card-icon">🏗️</div><h3>Bloom's Taxonomy Mapping</h3><p>Automatic cognitive level classification ensures assessments and activities target appropriate levels — from remembering and understanding to evaluating and creating.</p></div>
+</div></div></section>
+<section class="section section-dark"><div class="container"><div class="split reveal"><div><div class="section-label" style="color:var(--teal-300);"><span class="section-label-line" style="background:var(--teal-400);"></span>API Methods</div><h2 class="section-title" style="color:white;">Nine methods, infinite possibilities</h2><p class="section-subtitle">Every method returns Result&lt;T&gt; for explicit error handling, accepts tenantId for multi-tenant isolation, and publishes events for cross-service integration.</p></div><div><div class="specs-grid">
+<div class="spec"><div class="spec-icon">📥</div><div class="spec-text"><strong>ingestCurriculum()</strong><span>Parse and store framework from RDF/XML</span></div></div>
+<div class="spec"><div class="spec-icon">✨</div><div class="spec-text"><strong>enrichCurriculum()</strong><span>AI enrichment with concepts & prerequisites</span></div></div>
+<div class="spec"><div class="spec-icon">🕸️</div><div class="spec-text"><strong>buildKnowledgeGraph()</strong><span>Create semantic knowledge graph</span></div></div>
+<div class="spec"><div class="spec-icon">📈</div><div class="spec-text"><strong>getLearningProgression()</strong><span>Get prerequisite/extension chain</span></div></div>
+<div class="spec"><div class="spec-icon">🎯</div><div class="spec-text"><strong>alignContent()</strong><span>Auto-align content to curriculum codes</span></div></div>
+<div class="spec"><div class="spec-icon">🔀</div><div class="spec-text"><strong>discoverCrossCurricular()</strong><span>Find cross-subject connections</span></div></div>
+<div class="spec"><div class="spec-icon">📝</div><div class="spec-text"><strong>generateLessonPlan()</strong><span>AI-powered lesson plan generation</span></div></div>
+<div class="spec"><div class="spec-icon">📚</div><div class="spec-text"><strong>generateUnitPlan()</strong><span>Multi-lesson unit planning</span></div></div>
+<div class="spec"><div class="spec-icon">🔍</div><div class="spec-text"><strong>searchCurriculum()</strong><span>Natural language curriculum search</span></div></div>
+</div></div></div></div></section>
+
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-card reveal">
+      <h2 class="cta-title">Curriculum that thinks</h2>
+      <p class="cta-subtitle">Explore how semantic knowledge graphs transform static standards into living, connected intelligence.</p>
+      <div class="cta-actions">
+        <a href="#docs" target="_blank" class="btn btn-primary btn-lg">Explore the Docs <span class="btn-icon">→</span></a>
+        <a href="index.html" class="btn btn-outline btn-lg">Back to Platform</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">© 2026 Scholarly — The Unified Learning Nexus. Built in Perth, WA 🇦🇺</div>
+      <div class="footer-links-row">
+        <a href="index.html">Home</a>
+        <a href="index.html#ecosystem">All Services</a>
+        <a href="developer-platform.html">Developers</a>
+        <a href="#docs" target="_blank">Docs</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

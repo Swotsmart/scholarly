@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scholarly — The Unified Learning Nexus</title>
+<meta name="description" content="AI-powered education ecosystem unifying personalized learning, smart tutoring, curriculum intelligence, and community governance. The platform that learns how you learn.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   SCHOLARLY DESIGN SYSTEM v1.0
+   Academic Warmth meets Intelligent Innovation
+   Landing Page — aligned with 16 inner-page ecosystem
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Primary Palette — Sapphire & Knowledge */
+  --sapphire-900: #0C1B3A;
+  --sapphire-800: #142952;
+  --sapphire-700: #1B3A6B;
+  --sapphire-600: #234E8F;
+  --sapphire-500: #2B62B3;
+  --sapphire-400: #4A80CC;
+  --sapphire-300: #7BA5DD;
+  --sapphire-200: #B0CCEE;
+  --sapphire-100: #DAE6F7;
+  --sapphire-50:  #EEF3FB;
+
+  /* Warm Accent — Amber & Achievement */
+  --amber-600: #B8860B;
+  --amber-500: #D4A017;
+  --amber-400: #E8BF33;
+  --amber-300: #F0D060;
+  --amber-200: #F5E0A0;
+  --amber-100: #FBF0D0;
+  --amber-50:  #FDF8EB;
+
+  /* Growth — Teal & Progress */
+  --teal-700: #0D6E6E;
+  --teal-600: #109090;
+  --teal-500: #14B8B8;
+  --teal-400: #3DD4D4;
+  --teal-300: #80E5E5;
+  --teal-200: #B3F0F0;
+  --teal-100: #E0FAFA;
+  --teal-50:  #F0FDFD;
+
+  /* Warmth — Rose & Care */
+  --rose-600: #B44D6C;
+  --rose-500: #D4587E;
+  --rose-400: #E87C9E;
+  --rose-100: #FCE8EF;
+
+  /* Warm Neutrals — Ivory & Linen */
+  --ivory-900: #2D2418;
+  --ivory-800: #4A3C2E;
+  --ivory-700: #6B5A46;
+  --ivory-600: #8D7A62;
+  --ivory-500: #A89680;
+  --ivory-400: #C4B6A4;
+  --ivory-300: #DDD3C6;
+  --ivory-200: #EDE7DC;
+  --ivory-100: #F5F1EB;
+  --ivory-50:  #FAF8F5;
+
+  /* Semantic */
+  --text-primary: #1A1A2E;
+  --text-secondary: #4A4A5A;
+  --text-tertiary: #8D8D9B;
+  --text-inverse: #FAF8F5;
+  --bg-primary: #FAFBFE;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #F2F4F8;
+  --border-subtle: rgba(28, 28, 60, 0.06);
+  --border-medium: rgba(28, 28, 60, 0.12);
+  --shadow-sm: 0 1px 3px rgba(12, 27, 58, 0.05);
+  --shadow-md: 0 4px 16px rgba(12, 27, 58, 0.07);
+  --shadow-lg: 0 8px 32px rgba(12, 27, 58, 0.09);
+  --shadow-xl: 0 16px 48px rgba(12, 27, 58, 0.11);
+  --shadow-glow: 0 0 40px rgba(43, 98, 179, 0.12);
+
+  /* Typography */
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+  --space-5xl: 8rem;
+
+  /* Layout */
+  --max-width: 1280px;
+  --nav-height: 72px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 200ms;
+  --duration-normal: 350ms;
+  --duration-slow: 600ms;
+}
+
+/* ═══════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { font-family: var(--font-body); color: var(--text-primary); background: var(--bg-primary); line-height: 1.6; overflow-x: hidden; }
+img { max-width: 100%; display: block; }
+a { text-decoration: none; color: inherit; }
+button { border: none; background: none; cursor: pointer; font-family: inherit; }
+
+.container { max-width: var(--max-width); margin: 0 auto; padding: 0 var(--space-xl); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* ═══════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════ */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 0.5; } 80%, 100% { transform: scale(2); opacity: 0; } }
+@keyframes orbit { 0% { transform: rotate(0deg) translateX(120px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(120px) rotate(-360deg); } }
+@keyframes grain { 0%, 100% { transform: translate(0, 0); } 10% { transform: translate(-5%, -10%); } 30% { transform: translate(3%, -15%); } 50% { transform: translate(12%, 9%); } 70% { transform: translate(9%, 4%); } 90% { transform: translate(-1%, 7%); } }
+
+.reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-delay-5 { transition-delay: 0.5s; }
+
+/* ═══════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════ */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: var(--nav-height); transition: all var(--duration-normal) var(--ease-out); }
+.nav::before { content: ''; position: absolute; inset: 0; background: rgba(250, 251, 254, 0.85); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); border-bottom: 1px solid var(--border-subtle); transition: all var(--duration-normal) var(--ease-out); }
+.nav.scrolled::before { background: rgba(250, 251, 254, 0.95); box-shadow: var(--shadow-md); }
+.nav-inner { position: relative; display: flex; align-items: center; justify-content: space-between; height: 100%; max-width: var(--max-width); margin: 0 auto; padding: 0 var(--space-xl); }
+
+.nav-logo { display: flex; align-items: center; gap: var(--space-sm); font-family: var(--font-display); font-size: 1.4rem; color: var(--sapphire-800); letter-spacing: -0.02em; }
+.nav-logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--sapphire-700), var(--sapphire-500)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; font-weight: 700; box-shadow: 0 2px 8px rgba(27, 58, 107, 0.3); }
+
+.nav-links { display: flex; align-items: center; gap: var(--space-xs); list-style: none; }
+.nav-link { padding: var(--space-sm) var(--space-md); font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); border-radius: var(--radius-sm); transition: all var(--duration-fast) var(--ease-out); position: relative; }
+.nav-link:hover { color: var(--sapphire-700); background: var(--sapphire-50); }
+.nav-link.has-dropdown::after { content: ''; display: inline-block; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 4px solid currentColor; margin-left: 6px; vertical-align: middle; opacity: 0.5; }
+
+.nav-actions { display: flex; align-items: center; gap: var(--space-sm); }
+
+.btn { display: inline-flex; align-items: center; gap: var(--space-sm); padding: 10px 20px; font-size: 0.875rem; font-weight: 600; border-radius: var(--radius-sm); transition: all var(--duration-fast) var(--ease-out); white-space: nowrap; }
+.btn-ghost { color: var(--text-secondary); }
+.btn-ghost:hover { color: var(--sapphire-700); background: var(--sapphire-50); }
+.btn-primary { background: linear-gradient(135deg, var(--sapphire-700), var(--sapphire-600)); color: white; box-shadow: 0 2px 8px rgba(27, 58, 107, 0.25); }
+.btn-primary:hover { background: linear-gradient(135deg, var(--sapphire-800), var(--sapphire-700)); box-shadow: 0 4px 16px rgba(27, 58, 107, 0.35); transform: translateY(-1px); }
+.btn-outline { border: 1.5px solid var(--border-medium); color: var(--text-primary); }
+.btn-outline:hover { border-color: var(--sapphire-400); color: var(--sapphire-700); background: var(--sapphire-50); }
+.btn-lg { padding: 14px 28px; font-size: 1rem; border-radius: var(--radius-md); }
+.btn-icon { font-size: 1.1em; transition: transform var(--duration-fast) var(--ease-out); }
+.btn:hover .btn-icon { transform: translateX(3px); }
+
+.nav-toggle { display: none; width: 40px; height: 40px; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
+@media (max-width: 1024px) { .nav-links { display: none; } .nav-toggle { display: flex; } }
+
+/* ═══════════════════════════════════════
+   MEGA DROPDOWN
+   ═══════════════════════════════════════ */
+.nav-dropdown-trigger { position: relative; }
+.mega-dropdown { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%) scale(0.95); opacity: 0; pointer-events: none; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); padding: var(--space-xl); min-width: 820px; transition: all var(--duration-normal) var(--ease-out); z-index: 100; }
+.nav-dropdown-trigger:hover .mega-dropdown, .mega-dropdown:hover { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
+.mega-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-xl); }
+.mega-col-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-tertiary); margin-bottom: var(--space-sm); padding: 0 var(--space-sm); }
+.mega-col-items { display: flex; flex-direction: column; gap: 2px; }
+.mega-item { display: flex; gap: var(--space-md); padding: 8px var(--space-sm); border-radius: var(--radius-sm); transition: background var(--duration-fast) var(--ease-out); }
+.mega-item:hover { background: var(--sapphire-50); }
+.mega-item-icon { width: 34px; height: 34px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.05rem; flex-shrink: 0; }
+.mega-item-text h4 { font-size: 0.82rem; font-weight: 600; margin-bottom: 1px; }
+.mega-item-text p { font-size: 0.7rem; color: var(--text-tertiary); line-height: 1.3; }
+
+/* ═══════════════════════════════════════
+   HERO SECTION
+   ═══════════════════════════════════════ */
+.hero { position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; padding-top: var(--nav-height); }
+.hero-bg { position: absolute; inset: 0; z-index: 0; }
+.hero-bg::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 20% 50%, rgba(218, 230, 247, 0.5) 0%, transparent 70%), radial-gradient(ellipse 60% 80% at 80% 30%, rgba(176, 204, 238, 0.3) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 60% 80%, rgba(245, 241, 235, 0.8) 0%, transparent 50%), linear-gradient(180deg, var(--bg-primary) 0%, var(--ivory-100) 100%); }
+.hero-bg::after { content: ''; position: absolute; inset: -50%; width: 200%; height: 200%; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"); animation: grain 8s steps(10) infinite; pointer-events: none; opacity: 0.4; }
+
+.hero-deco { position: absolute; border-radius: 50%; opacity: 0.05; background: var(--sapphire-500); pointer-events: none; }
+.hero-deco-1 { width: 600px; height: 600px; top: -200px; right: -150px; animation: float 12s ease-in-out infinite; }
+.hero-deco-2 { width: 400px; height: 400px; bottom: -100px; left: -100px; animation: float 15s ease-in-out infinite reverse; }
+.hero-deco-3 { width: 200px; height: 200px; top: 40%; left: 60%; opacity: 0.03; animation: float 10s ease-in-out infinite 2s; }
+
+.hero-content { position: relative; z-index: 1; max-width: var(--max-width); margin: 0 auto; padding: var(--space-4xl) var(--space-xl); display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4xl); align-items: center; }
+.hero-text { animation: fadeUp 1s var(--ease-out) 0.2s both; }
+
+.hero-badge { display: inline-flex; align-items: center; gap: var(--space-sm); padding: 6px 16px; background: rgba(43, 98, 179, 0.08); border: 1px solid rgba(43, 98, 179, 0.15); border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; color: var(--sapphire-700); margin-bottom: var(--space-xl); }
+.hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sapphire-500); position: relative; }
+.hero-badge-dot::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid var(--sapphire-400); animation: pulse-ring 2s ease-out infinite; }
+
+.hero-title { font-family: var(--font-display); font-size: clamp(2.5rem, 5vw, 3.8rem); line-height: 1.1; color: var(--sapphire-900); letter-spacing: -0.02em; margin-bottom: var(--space-lg); }
+.hero-title em { font-style: italic; color: var(--sapphire-600); position: relative; }
+.hero-title em::after { content: ''; position: absolute; bottom: 4px; left: 0; width: 100%; height: 8px; background: rgba(43, 98, 179, 0.12); border-radius: 4px; z-index: -1; }
+
+.hero-subtitle { font-size: 1.125rem; line-height: 1.7; color: var(--text-secondary); max-width: 520px; margin-bottom: var(--space-2xl); }
+.hero-actions { display: flex; gap: var(--space-md); flex-wrap: wrap; }
+
+.hero-proof { display: flex; align-items: center; gap: var(--space-md); margin-top: var(--space-2xl); padding-top: var(--space-xl); border-top: 1px solid var(--border-subtle); }
+.hero-proof-avatars { display: flex; }
+.hero-proof-avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid white; margin-left: -10px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; }
+.hero-proof-avatar:first-child { margin-left: 0; }
+.hero-proof-text { font-size: 0.85rem; color: var(--text-secondary); }
+.hero-proof-text strong { color: var(--text-primary); }
+
+/* Hero Visual — Intelligence Mesh */
+.hero-visual { position: relative; animation: fadeUp 1s var(--ease-out) 0.5s both; }
+.hero-platform-card { background: var(--bg-card); border-radius: var(--radius-xl); box-shadow: var(--shadow-xl), var(--shadow-glow); border: 1px solid var(--border-subtle); overflow: hidden; position: relative; }
+.hero-platform-header { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md) var(--space-lg); background: linear-gradient(135deg, var(--sapphire-800), var(--sapphire-700)); color: white; }
+.hero-platform-dots { display: flex; gap: 6px; }
+.hero-platform-dot { width: 10px; height: 10px; border-radius: 50%; }
+.hero-platform-dot:nth-child(1) { background: #FF5F57; }
+.hero-platform-dot:nth-child(2) { background: #FEBC2E; }
+.hero-platform-dot:nth-child(3) { background: #28C840; }
+.hero-platform-url { flex: 1; text-align: center; font-size: 0.75rem; font-family: var(--font-mono); opacity: 0.7; }
+
+.hero-platform-body { padding: var(--space-xl); }
+.hero-services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-sm); }
+.hero-service-chip { display: flex; align-items: center; gap: var(--space-sm); padding: 10px 14px; background: var(--bg-elevated); border-radius: var(--radius-md); font-size: 0.72rem; font-weight: 500; color: var(--text-secondary); transition: all var(--duration-fast) var(--ease-out); border: 1px solid transparent; }
+.hero-service-chip:hover { background: var(--sapphire-50); border-color: var(--sapphire-200); color: var(--sapphire-800); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.hero-service-chip-icon { width: 26px; height: 26px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+
+.hero-intelligence-bar { margin-top: var(--space-lg); padding: var(--space-md) var(--space-lg); background: linear-gradient(135deg, var(--sapphire-50), rgba(218, 230, 247, 0.5)); border-radius: var(--radius-md); border: 1px solid var(--sapphire-100); display: flex; align-items: center; gap: var(--space-md); }
+.hero-intelligence-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--sapphire-600), var(--sapphire-500)); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; }
+.hero-intelligence-text { flex: 1; }
+.hero-intelligence-text strong { display: block; font-size: 0.85rem; color: var(--sapphire-800); }
+.hero-intelligence-text span { font-size: 0.75rem; color: var(--text-tertiary); }
+.hero-intelligence-score { font-family: var(--font-mono); font-size: 1.3rem; font-weight: 700; color: var(--sapphire-600); }
+
+@media (max-width: 1024px) {
+  .hero-content { grid-template-columns: 1fr; text-align: center; gap: var(--space-2xl); padding: var(--space-2xl) var(--space-xl); }
+  .hero-subtitle { margin-left: auto; margin-right: auto; }
+  .hero-actions { justify-content: center; }
+  .hero-proof { justify-content: center; }
+}
+
+/* ═══════════════════════════════════════
+   STATS BANNER
+   ═══════════════════════════════════════ */
+.stats-banner { padding: var(--space-3xl) 0; background: linear-gradient(135deg, var(--sapphire-800), var(--sapphire-900)); color: white; position: relative; overflow: hidden; }
+.stats-banner::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 30% 50% at 0% 50%, rgba(255,255,255,0.05), transparent), radial-gradient(ellipse 30% 50% at 100% 50%, rgba(255,255,255,0.03), transparent); }
+.stats-grid { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-xl); text-align: center; }
+.stat-number { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.6rem); line-height: 1; margin-bottom: var(--space-xs); }
+.stat-label { font-size: 0.75rem; color: rgba(255,255,255,0.6); font-weight: 500; }
+@media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); gap: var(--space-xl); } }
+
+/* ═══════════════════════════════════════
+   SECTION SHARED STYLES
+   ═══════════════════════════════════════ */
+.section-label { display: inline-flex; align-items: center; gap: var(--space-sm); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--sapphire-600); margin-bottom: var(--space-md); }
+.section-label-line { width: 24px; height: 2px; background: var(--sapphire-400); border-radius: 1px; }
+.section-title { font-family: var(--font-display); font-size: clamp(2rem, 3.5vw, 2.8rem); line-height: 1.15; color: var(--sapphire-900); letter-spacing: -0.02em; margin-bottom: var(--space-md); }
+.section-subtitle { font-size: 1.05rem; line-height: 1.7; color: var(--text-secondary); max-width: 600px; }
+
+/* ═══════════════════════════════════════
+   WHO IT'S FOR — PERSONA PATHWAYS
+   ═══════════════════════════════════════ */
+.personas { padding: var(--space-5xl) 0; position: relative; }
+.personas-header { text-align: center; margin-bottom: var(--space-3xl); }
+.personas-header .section-subtitle { margin: 0 auto; }
+.persona-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-xl); }
+
+.persona-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: var(--space-2xl); transition: all var(--duration-normal) var(--ease-out); position: relative; overflow: hidden; }
+.persona-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; border-radius: var(--radius-xl) var(--radius-xl) 0 0; transition: height var(--duration-normal) var(--ease-out); }
+.persona-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: transparent; }
+.persona-card:hover::before { height: 6px; }
+.persona-card:nth-child(1)::before { background: var(--sapphire-500); }
+.persona-card:nth-child(2)::before { background: var(--amber-500); }
+.persona-card:nth-child(3)::before { background: var(--teal-600); }
+.persona-card:nth-child(4)::before { background: var(--rose-500); }
+.persona-card:nth-child(5)::before { background: var(--sapphire-400); }
+
+.persona-icon { width: 56px; height: 56px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: var(--space-lg); }
+.persona-card:nth-child(1) .persona-icon { background: var(--sapphire-50); }
+.persona-card:nth-child(2) .persona-icon { background: var(--amber-50); }
+.persona-card:nth-child(3) .persona-icon { background: var(--teal-50); }
+.persona-card:nth-child(4) .persona-icon { background: var(--rose-100); }
+.persona-card:nth-child(5) .persona-icon { background: var(--sapphire-50); }
+
+.persona-title { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: var(--space-sm); }
+.persona-desc { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: var(--space-lg); }
+.persona-features { list-style: none; display: flex; flex-direction: column; gap: var(--space-sm); margin-bottom: var(--space-xl); }
+.persona-feature { display: flex; align-items: flex-start; gap: var(--space-sm); font-size: 0.85rem; color: var(--text-secondary); }
+.persona-feature-icon { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--sapphire-50); color: var(--sapphire-600); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; margin-top: 1px; }
+.persona-cta { display: inline-flex; align-items: center; gap: var(--space-sm); font-size: 0.875rem; font-weight: 600; color: var(--sapphire-700); transition: gap var(--duration-fast) var(--ease-out); }
+.persona-cta:hover { gap: var(--space-md); }
+
+@media (max-width: 1024px) { .persona-cards { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 768px) { .persona-cards { grid-template-columns: 1fr; } }
+
+/* ═══════════════════════════════════════
+   FOUR PILLARS
+   ═══════════════════════════════════════ */
+.pillars { padding: var(--space-5xl) 0; background: var(--bg-elevated); position: relative; }
+.pillars-header { text-align: center; margin-bottom: var(--space-3xl); }
+.pillars-header .section-subtitle { margin: 0 auto; }
+
+.pillar-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3xl); align-items: center; margin-bottom: var(--space-4xl); }
+.pillar-row:nth-child(even) .pillar-visual { order: -1; }
+.pillar-row:last-child { margin-bottom: 0; }
+
+.pillar-text .section-subtitle { margin-bottom: var(--space-xl); }
+.pillar-features { display: flex; flex-direction: column; gap: var(--space-md); margin-bottom: var(--space-xl); }
+.pillar-feature { display: flex; gap: var(--space-md); align-items: flex-start; }
+.pillar-feature-icon { width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+.pillar-feature-text h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 2px; }
+.pillar-feature-text p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+
+.pillar-visual-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: var(--space-2xl); box-shadow: var(--shadow-lg); }
+
+@media (max-width: 1024px) {
+  .pillar-row { grid-template-columns: 1fr; }
+  .pillar-row:nth-child(even) .pillar-visual { order: 0; }
+}
+
+/* ═══════════════════════════════════════
+   ECOSYSTEM SHOWCASE — 16 Inner Pages
+   ═══════════════════════════════════════ */
+.ecosystem { padding: var(--space-5xl) 0; background: var(--sapphire-900); color: white; position: relative; overflow: hidden; }
+.ecosystem::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 40% 60% at 10% 90%, rgba(43, 98, 179, 0.15), transparent), radial-gradient(ellipse 50% 40% at 90% 20%, rgba(43, 98, 179, 0.1), transparent); }
+.ecosystem-header { position: relative; text-align: center; margin-bottom: var(--space-4xl); }
+.ecosystem-header .section-label { color: var(--sapphire-300); }
+.ecosystem-header .section-label-line { background: var(--sapphire-400); }
+.ecosystem-header .section-title { color: white; }
+.ecosystem-header .section-subtitle { color: rgba(255,255,255,0.65); margin: 0 auto; }
+
+.ecosystem-grid { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-md); }
+.eco-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-lg); padding: var(--space-xl); transition: all var(--duration-normal) var(--ease-out); position: relative; overflow: hidden; display: flex; flex-direction: column; }
+.eco-card::after { content: ''; position: absolute; inset: 0; border-radius: var(--radius-lg); background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent); opacity: 0; transition: opacity var(--duration-normal) var(--ease-out); }
+.eco-card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); transform: translateY(-3px); }
+.eco-card:hover::after { opacity: 1; }
+.eco-card-icon { width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: var(--space-md); position: relative; z-index: 1; }
+.eco-card-title { font-family: var(--font-display); font-size: 1.1rem; margin-bottom: var(--space-xs); position: relative; z-index: 1; }
+.eco-card-desc { font-size: 0.8rem; color: rgba(255,255,255,0.55); line-height: 1.5; position: relative; z-index: 1; flex: 1; }
+.eco-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: var(--space-md); position: relative; z-index: 1; }
+.eco-card-tag { display: inline-block; padding: 3px 10px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; border-radius: var(--radius-full); }
+.eco-card-link { font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.5); transition: color var(--duration-fast); }
+.eco-card:hover .eco-card-link { color: rgba(255,255,255,0.85); }
+.eco-card.featured { grid-column: span 2; background: rgba(43, 98, 179, 0.12); border-color: rgba(43, 98, 179, 0.2); }
+
+@media (max-width: 1024px) { .ecosystem-grid { grid-template-columns: repeat(2, 1fr); } .eco-card.featured { grid-column: span 2; } }
+@media (max-width: 640px) { .ecosystem-grid { grid-template-columns: 1fr; } .eco-card.featured { grid-column: span 1; } }
+
+/* ═══════════════════════════════════════
+   AI INTELLIGENCE STORY
+   ═══════════════════════════════════════ */
+.intelligence { padding: var(--space-5xl) 0; position: relative; }
+.intelligence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4xl); align-items: center; }
+.intelligence-visual { position: relative; }
+
+.intelligence-mesh { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: var(--space-2xl); box-shadow: var(--shadow-lg); }
+.mesh-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-xl); }
+.mesh-title { font-family: var(--font-display); font-size: 1.2rem; }
+.mesh-status { display: flex; align-items: center; gap: var(--space-xs); font-size: 0.75rem; font-weight: 600; color: var(--teal-600); }
+.mesh-status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal-500); animation: pulse-ring 2s ease-out infinite; }
+
+.mesh-nodes { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); }
+.mesh-node { padding: var(--space-md); border-radius: var(--radius-md); text-align: center; transition: all var(--duration-fast) var(--ease-out); border: 1px solid var(--border-subtle); }
+.mesh-node:hover { border-color: var(--sapphire-200); background: var(--sapphire-50); transform: translateY(-2px); }
+.mesh-node-icon { font-size: 1.5rem; margin-bottom: var(--space-xs); }
+.mesh-node-label { font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); }
+.mesh-node-status { font-size: 0.6rem; color: var(--teal-600); font-family: var(--font-mono); margin-top: 2px; }
+
+.intelligence-points { display: flex; flex-direction: column; gap: var(--space-lg); }
+.intelligence-point { display: flex; gap: var(--space-lg); }
+.intelligence-point-number { width: 40px; height: 40px; border-radius: 50%; background: var(--sapphire-50); color: var(--sapphire-700); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1rem; flex-shrink: 0; }
+.intelligence-point-content h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+.intelligence-point-content p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+
+@media (max-width: 1024px) { .intelligence-grid { grid-template-columns: 1fr; } }
+
+/* ═══════════════════════════════════════
+   DEVELOPER SECTION
+   ═══════════════════════════════════════ */
+.developer-section { padding: var(--space-5xl) 0; background: var(--ivory-100); position: relative; overflow: hidden; }
+.developer-section::before { content: ''; position: absolute; top: 0; right: 0; width: 50%; height: 100%; background: repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(28, 28, 60, 0.03) 39px, rgba(28, 28, 60, 0.03) 40px), repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(28, 28, 60, 0.03) 39px, rgba(28, 28, 60, 0.03) 40px); pointer-events: none; }
+.dev-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: var(--space-4xl); align-items: center; }
+.dev-text .section-subtitle { margin-bottom: var(--space-xl); }
+.dev-features { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-md); margin-bottom: var(--space-xl); }
+.dev-feature { display: flex; gap: var(--space-sm); font-size: 0.85rem; color: var(--text-secondary); }
+.dev-feature-icon { color: var(--sapphire-600); flex-shrink: 0; margin-top: 2px; }
+.dev-code-card { position: relative; z-index: 1; }
+
+.code-block { background: var(--sapphire-900); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-xl); }
+.code-block-header { display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-lg); background: rgba(0,0,0,0.2); }
+.code-block-dots { display: flex; gap: 6px; }
+.code-block-dot { width: 10px; height: 10px; border-radius: 50%; }
+.code-block-dot:nth-child(1) { background: #FF5F57; }
+.code-block-dot:nth-child(2) { background: #FEBC2E; }
+.code-block-dot:nth-child(3) { background: #28C840; }
+.code-block-tab { font-size: 0.7rem; font-family: var(--font-mono); color: rgba(255,255,255,0.5); padding: 4px 12px; background: rgba(255,255,255,0.06); border-radius: 4px; }
+.code-block-body { padding: var(--space-lg) var(--space-xl); font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.8; color: rgba(255,255,255,0.8); white-space: pre; overflow-x: auto; }
+.cm { color: rgba(255,255,255,0.35); }
+.kw { color: #7BA5DD; }
+.fn { color: #E8BF33; }
+.str { color: #80E5E5; }
+.num { color: #E87C9E; }
+
+@media (max-width: 1024px) { .dev-grid { grid-template-columns: 1fr; } }
+
+/* ═══════════════════════════════════════
+   CTA
+   ═══════════════════════════════════════ */
+.cta-section { padding: var(--space-5xl) 0; }
+.cta-card { background: linear-gradient(135deg, var(--sapphire-700), var(--sapphire-600)); border-radius: var(--radius-xl); padding: var(--space-4xl); text-align: center; color: white; position: relative; overflow: hidden; }
+.cta-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 60% at 30% 20%, rgba(255,255,255,0.08), transparent), radial-gradient(ellipse 40% 40% at 80% 80%, rgba(255,255,255,0.05), transparent); }
+.cta-title { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.4rem); margin-bottom: var(--space-md); position: relative; }
+.cta-subtitle { font-size: 1.05rem; color: rgba(255,255,255,0.75); max-width: 500px; margin: 0 auto var(--space-xl); position: relative; }
+.cta-actions { display: flex; gap: var(--space-md); justify-content: center; flex-wrap: wrap; position: relative; }
+.cta-actions .btn-primary { background: white; color: var(--sapphire-800); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+.cta-actions .btn-primary:hover { background: var(--ivory-50); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+.cta-actions .btn-outline { border-color: rgba(255,255,255,0.3); color: white; }
+.cta-actions .btn-outline:hover { border-color: white; background: rgba(255,255,255,0.1); }
+.cta-note { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: var(--space-lg); position: relative; }
+
+/* ═══════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════ */
+.footer { background: var(--sapphire-900); color: white; padding: var(--space-4xl) 0 var(--space-xl); }
+.footer-grid { display: grid; grid-template-columns: 1.5fr repeat(4, 1fr); gap: var(--space-2xl); margin-bottom: var(--space-3xl); }
+.footer-brand-desc { font-size: 0.85rem; color: rgba(255,255,255,0.5); line-height: 1.6; margin-top: var(--space-md); max-width: 280px; }
+.footer-col-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.4); margin-bottom: var(--space-md); }
+.footer-links { list-style: none; display: flex; flex-direction: column; gap: var(--space-sm); }
+.footer-link { font-size: 0.85rem; color: rgba(255,255,255,0.6); transition: color var(--duration-fast); }
+.footer-link:hover { color: white; }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: var(--space-xl); border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.8rem; color: rgba(255,255,255,0.35); }
+
+@media (max-width: 1024px) { .footer-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .footer-grid { grid-template-columns: 1fr; } .footer-bottom { flex-direction: column; gap: var(--space-sm); text-align: center; } }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════ -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon">S</div>
+      Scholarly
+    </a>
+
+    <ul class="nav-links">
+      <li class="nav-dropdown-trigger">
+        <a href="#ecosystem" class="nav-link has-dropdown">Platform</a>
+        <div class="mega-dropdown">
+          <div class="mega-columns">
+            <div>
+              <div class="mega-col-title">Foundation</div>
+              <div class="mega-col-items">
+                <a href="ai-buddy.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--sapphire-50);">🤖</div>
+                  <div class="mega-item-text"><h4>AI Buddy</h4><p>24/7 Socratic tutoring companion</p></div>
+                </a>
+                <a href="golden-learning-path.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--amber-50);">✨</div>
+                  <div class="mega-item-text"><h4>Golden Learning Path</h4><p>AI-driven adaptive personalization</p></div>
+                </a>
+                <a href="tutor-booking.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--teal-50);">👨‍🏫</div>
+                  <div class="mega-item-text"><h4>Smart Tutor Booking</h4><p>AI-powered tutor matching</p></div>
+                </a>
+                <a href="content-marketplace.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--rose-100);">📚</div>
+                  <div class="mega-item-text"><h4>Content Marketplace</h4><p>Educational resource trading</p></div>
+                </a>
+                <a href="assessment-engine.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--sapphire-50);">📝</div>
+                  <div class="mega-item-text"><h4>Assessment Engine</h4><p>AI-powered evaluation & analytics</p></div>
+                </a>
+              </div>
+            </div>
+            <div>
+              <div class="mega-col-title">Intelligence</div>
+              <div class="mega-col-items">
+                <a href="curriculum-intelligence.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--sapphire-50);">🧠</div>
+                  <div class="mega-item-text"><h4>Curriculum Intelligence</h4><p>Semantic knowledge graphs</p></div>
+                </a>
+                <a href="scheduling-engine.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--teal-50);">📅</div>
+                  <div class="mega-item-text"><h4>Scheduling Engine</h4><p>6-stage AI optimization pipeline</p></div>
+                </a>
+                <a href="eduscrum.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--amber-50);">🏃</div>
+                  <div class="mega-item-text"><h4>EduScrum</h4><p>Agile learning management</p></div>
+                </a>
+                <a href="lis-bridge.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--sapphire-50);">🔗</div>
+                  <div class="mega-item-text"><h4>LIS Bridge</h4><p>Learner intelligence integration</p></div>
+                </a>
+                <a href="relief-marketplace.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--rose-100);">🔄</div>
+                  <div class="mega-item-text"><h4>Relief Marketplace</h4><p>Predictive absence management</p></div>
+                </a>
+              </div>
+            </div>
+            <div>
+              <div class="mega-col-title">Community & Economy</div>
+              <div class="mega-col-items">
+                <a href="homeschool-hub.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--amber-50);">🏡</div>
+                  <div class="mega-item-text"><h4>Homeschool Hub</h4><p>Family connection platform</p></div>
+                </a>
+                <a href="micro-schools.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--teal-50);">🏫</div>
+                  <div class="mega-item-text"><h4>Micro-Schools</h4><p>Small school management</p></div>
+                </a>
+                <a href="lingua-flow.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--sapphire-50);">🌍</div>
+                  <div class="mega-item-text"><h4>LinguaFlow</h4><p>Immersive language learning</p></div>
+                </a>
+                <a href="token-economy.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--amber-50);">🪙</div>
+                  <div class="mega-item-text"><h4>Token Economy & DAO</h4><p>Decentralized governance</p></div>
+                </a>
+                <a href="learning-portfolio.html" class="mega-item">
+                  <div class="mega-item-icon" style="background: var(--teal-50);">🎓</div>
+                  <div class="mega-item-text"><h4>Learning Portfolio</h4><p>Verifiable credentials & SSI</p></div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+      <li><a href="#personas" class="nav-link">Who It's For</a></li>
+      <li><a href="#intelligence" class="nav-link">AI Intelligence</a></li>
+      <li><a href="#developers" class="nav-link">Developers</a></li>
+      <li><a href="developer-platform.html" class="nav-link">API Docs</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <a href="#" class="btn btn-ghost">Sign In</a>
+      <a href="#cta" class="btn btn-primary">Get Started <span class="btn-icon">→</span></a>
+    </div>
+
+    <button class="nav-toggle" aria-label="Menu">☰</button>
+  </div>
+</nav>
+
+
+<!-- ═══════════════════════════════════════
+     HERO SECTION
+     ═══════════════════════════════════════ -->
+<section class="hero" id="hero">
+  <div class="hero-bg">
+    <div class="hero-deco hero-deco-1"></div>
+    <div class="hero-deco hero-deco-2"></div>
+    <div class="hero-deco hero-deco-3"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        12 AI-Powered Services · 575,000+ Lines of TypeScript
+      </div>
+
+      <h1 class="hero-title">
+        Education that<br><em>learns how you learn</em>
+      </h1>
+
+      <p class="hero-subtitle">
+        Scholarly is the unified learning nexus — an AI-powered ecosystem connecting adaptive personalization, smart tutoring, curriculum intelligence, and community governance in a single platform that grows with every learner.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#cta" class="btn btn-primary btn-lg">
+          Explore the Platform <span class="btn-icon">→</span>
+        </a>
+        <a href="#docs" target="_blank" class="btn btn-outline btn-lg">
+          Read the Docs
+        </a>
+      </div>
+
+      <div class="hero-proof">
+        <div class="hero-proof-avatars">
+          <div class="hero-proof-avatar" style="background: var(--sapphire-500);">👩‍🎓</div>
+          <div class="hero-proof-avatar" style="background: var(--amber-500);">👨‍🏫</div>
+          <div class="hero-proof-avatar" style="background: var(--teal-600);">👩‍👧</div>
+          <div class="hero-proof-avatar" style="background: var(--rose-500);">🏫</div>
+          <div class="hero-proof-avatar" style="background: var(--sapphire-400);">👨‍💻</div>
+        </div>
+        <p class="hero-proof-text">
+          Serving <strong>learners, educators, parents, institutions & developers</strong> across AU, UK, Canada & beyond
+        </p>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-platform-card">
+        <div class="hero-platform-header">
+          <div class="hero-platform-dots">
+            <span class="hero-platform-dot"></span>
+            <span class="hero-platform-dot"></span>
+            <span class="hero-platform-dot"></span>
+          </div>
+          <span class="hero-platform-url">scholarly.app/intelligence-mesh</span>
+        </div>
+        <div class="hero-platform-body">
+          <div class="hero-services-grid">
+            <a href="ai-buddy.html" class="hero-service-chip">
+              <span class="hero-service-chip-icon" style="background: var(--sapphire-50);">🤖</span>
+              AI Buddy
+            </a>
+            <a href="curriculum-intelligence.html" class="hero-service-chip">
+              <span class="hero-service-chip-icon" style="background: var(--teal-50);">🧠</span>
+              Curriculum AI
+            </a>
+            <a href="tutor-booking.html" class="hero-service-chip">
+              <span class="hero-service-chip-icon" style="background: var(--amber-50);">👨‍🏫</span>
+              Tutor Matching
+            </a>
+            <a href="scheduling-engine.html" class="hero-service-chip">
+              <span class="hero-service-chip-icon" style="background: var(--rose-100);">📅</span>
+              Scheduling
+            </a>
+            <a href="content-marketplace.html" class="hero-service-chip">
+              <span class="hero-service-chip-icon" style="background: var(--sapphire-50);">📚</span>
+              Marketplace
+            </a>
+            <a href="eduscrum.html" class="hero-service-chip">
+              <span class="hero-service-chip-icon" style="background: var(--teal-50);">🏃</span>
+              EduScrum
+            </a>
+            <a href="homeschool-hub.html" class="hero-service-chip">
+              <span class="hero-service-chip-icon" style="background: var(--amber-50);">🏡</span>
+              Homeschool
+            </a>
+            <a href="relief-marketplace.html" class="hero-service-chip">
+              <span class="hero-service-chip-icon" style="background: var(--sapphire-50);">🔄</span>
+              Relief Teachers
+            </a>
+            <a href="token-economy.html" class="hero-service-chip">
+              <span class="hero-service-chip-icon" style="background: var(--amber-50);">🪙</span>
+              Token Economy
+            </a>
+          </div>
+          <div class="hero-intelligence-bar">
+            <div class="hero-intelligence-icon">🔗</div>
+            <div class="hero-intelligence-text">
+              <strong>Learner Intelligence System Connected</strong>
+              <span>Cognitive model synced · Knowledge graph active · Affective state monitored</span>
+            </div>
+            <div class="hero-intelligence-score">LIS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     STATS BANNER
+     ═══════════════════════════════════════ -->
+<section class="stats-banner">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="reveal">
+        <div class="stat-number">12</div>
+        <div class="stat-label">AI-Powered Services</div>
+      </div>
+      <div class="reveal reveal-delay-1">
+        <div class="stat-number">575K+</div>
+        <div class="stat-label">Lines of Production TypeScript</div>
+      </div>
+      <div class="reveal reveal-delay-2">
+        <div class="stat-number">6-Stage</div>
+        <div class="stat-label">Scheduling Optimization Pipeline</div>
+      </div>
+      <div class="reveal reveal-delay-3">
+        <div class="stat-number">4</div>
+        <div class="stat-label">Jurisdictions Supported (AU, UK, CA, NZ)</div>
+      </div>
+      <div class="reveal reveal-delay-4">
+        <div class="stat-number">∞</div>
+        <div class="stat-label">Adaptive Learning Pathways</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     WHO IT'S FOR — PERSONA PATHWAYS
+     ═══════════════════════════════════════ -->
+<section class="personas" id="personas">
+  <div class="container">
+    <div class="personas-header reveal">
+      <div class="section-label">
+        <span class="section-label-line"></span>
+        Built For Everyone In Education
+      </div>
+      <h2 class="section-title">One platform, many journeys</h2>
+      <p class="section-subtitle">
+        Whether you're a curious 7-year-old, a seasoned teacher, a homeschool parent juggling compliance, or an administrator optimizing timetables — Scholarly adapts to your world.
+      </p>
+    </div>
+
+    <div class="persona-cards">
+      <div class="persona-card reveal">
+        <div class="persona-icon">👩‍🎓</div>
+        <h3 class="persona-title">Learners</h3>
+        <p class="persona-desc">
+          From early childhood (ages 3–7) through K-12 and beyond. Every learner gets an AI-powered companion that adapts to how they think, not just what they know.
+        </p>
+        <ul class="persona-features">
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> AI Buddy — 24/7 Socratic tutoring companion</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> Golden Learning Path — adaptive personalization engine</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> Verifiable credentials in your Learning Portfolio</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> EDU-Nexus tokens earned for milestones</li>
+        </ul>
+        <a href="golden-learning-path.html" class="persona-cta">Explore Learner Journey <span>→</span></a>
+      </div>
+
+      <div class="persona-card reveal reveal-delay-1">
+        <div class="persona-icon">👨‍🏫</div>
+        <h3 class="persona-title">Educators</h3>
+        <p class="persona-desc">
+          An AI Co-Pilot that handles differentiation, automates curriculum alignment, and gives you a predictive early warning system so no student falls through the cracks.
+        </p>
+        <ul class="persona-features">
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> Educator Cockpit with real-time analytics</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> Curriculum Curator auto-aligns to ACARA, UK NC, IB</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> Content Marketplace to earn from your resources</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> Video coaching & mentoring tools</li>
+        </ul>
+        <a href="curriculum-intelligence.html" class="persona-cta">Explore Educator Tools <span>→</span></a>
+      </div>
+
+      <div class="persona-card reveal reveal-delay-2">
+        <div class="persona-icon">👩‍👧</div>
+        <h3 class="persona-title">Parents & Homeschoolers</h3>
+        <p class="persona-desc">
+          Find compatible families, form co-ops with AI-assisted planning, navigate jurisdiction-specific compliance, and access specialist tutors on demand.
+        </p>
+        <ul class="persona-features">
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> AI-powered family matching & co-op formation</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> Compliance engine for AU (EYLF), UK (EYFS), CA</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> Curriculum-aligned excursion planning</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> Shared resource library & group sessions</li>
+        </ul>
+        <a href="homeschool-hub.html" class="persona-cta">Explore Homeschool Hub <span>→</span></a>
+      </div>
+
+      <div class="persona-card reveal reveal-delay-3">
+        <div class="persona-icon">🏫</div>
+        <h3 class="persona-title">Schools & Institutions</h3>
+        <p class="persona-desc">
+          Enterprise-grade scheduling, predictive relief teacher management, capacity planning, and multi-tenant isolation — purpose-built for educational administration.
+        </p>
+        <ul class="persona-features">
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> 6-stage AI scheduling pipeline (CSP → ILP → GA → SA → ML → Scenario)</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> Relief Marketplace with 14-day absence forecasting</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> Capacity planning with what-if scenario analysis</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> Multi-tenant architecture with WWCC/DBS integration</li>
+        </ul>
+        <a href="scheduling-engine.html" class="persona-cta">Explore Institutional Tools <span>→</span></a>
+      </div>
+
+      <div class="persona-card reveal reveal-delay-4">
+        <div class="persona-icon">👨‍💻</div>
+        <h3 class="persona-title">Developers & Partners</h3>
+        <p class="persona-desc">
+          Build on an open, event-driven architecture with typed APIs, webhook integrations, and a developer marketplace. Extend the platform or create on top of it.
+        </p>
+        <ul class="persona-features">
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> OpenAPI with full TypeScript SDK</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> NATS event bus for real-time integration</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> 1EdTech certified (LTI, OneRoster, CASE, CLR)</li>
+          <li class="persona-feature"><span class="persona-feature-icon">✓</span> OAuth 2.0 + JWT multi-tenant auth</li>
+        </ul>
+        <a href="developer-platform.html" class="persona-cta">Explore Developer Platform <span>→</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     ECOSYSTEM SHOWCASE — 16 Inner Pages
+     ═══════════════════════════════════════ -->
+<section class="ecosystem" id="ecosystem">
+  <div class="container">
+    <div class="ecosystem-header reveal">
+      <div class="section-label">
+        <span class="section-label-line"></span>
+        The Complete Platform
+      </div>
+      <h2 class="section-title">16 integrated services. One intelligent ecosystem.</h2>
+      <p class="section-subtitle">
+        Every service delivers standalone value while becoming exponentially more powerful in combination. Intelligence flows between services through the LIS Bridge and event-driven architecture.
+      </p>
+    </div>
+
+    <div class="ecosystem-grid">
+      <!-- Row 1: Featured + 2 regular -->
+      <a href="ai-buddy.html" class="eco-card featured reveal">
+        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);">🤖</div>
+        <div class="eco-card-title">AI Buddy — Socratic Learning Companion</div>
+        <div class="eco-card-desc">A 24/7 conversational AI built on speech-to-speech architecture. It never gives answers — it asks the right questions, scaffolds understanding, and adapts its approach to each learner's cognitive style. Powered by NLP with context-aware dialogue.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(43, 98, 179, 0.3); color: var(--sapphire-200);">Core Experience</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <a href="golden-learning-path.html" class="eco-card reveal reveal-delay-1">
+        <div class="eco-card-icon" style="background: rgba(212, 160, 23, 0.2);">✨</div>
+        <div class="eco-card-title">Golden Learning Path</div>
+        <div class="eco-card-desc">Adaptive personalization engine that optimizes trajectories using academic data, engagement metrics, and a unique Curiosity-Driven Data Layer that captures intrinsic motivations.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(212, 160, 23, 0.3); color: var(--amber-200);">Personalization</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <a href="curriculum-intelligence.html" class="eco-card reveal reveal-delay-2">
+        <div class="eco-card-icon" style="background: rgba(16, 144, 144, 0.2);">🧠</div>
+        <div class="eco-card-title">Curriculum Intelligence</div>
+        <div class="eco-card-desc">Semantic knowledge graphs built from ACARA, UK National Curriculum, and IB frameworks. Auto-aligns content, discovers cross-curricular connections, and generates lesson plans.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(16, 144, 144, 0.3); color: var(--teal-200);">Intelligence</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <!-- Row 2 -->
+      <a href="tutor-booking.html" class="eco-card reveal">
+        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);">👨‍🏫</div>
+        <div class="eco-card-title">Smart Tutor Booking</div>
+        <div class="eco-card-desc">Multi-dimensional AI matching: subject expertise (35%), teaching style (25%), trust score (25%), price fit (15%). Jurisdiction-aware WWCC/DBS safeguarding built in.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(43, 98, 179, 0.3); color: var(--sapphire-200);">Foundation</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <a href="content-marketplace.html" class="eco-card reveal reveal-delay-1">
+        <div class="eco-card-icon" style="background: rgba(180, 77, 108, 0.2);">📚</div>
+        <div class="eco-card-title">Content Marketplace</div>
+        <div class="eco-card-desc">Teachers Pay Teachers-style marketplace with demand-driven creation. The Learning Asset Request system lets educators vote on what's needed, then creators fulfil requests.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(180, 77, 108, 0.3); color: var(--rose-400);">Economy</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <a href="scheduling-engine.html" class="eco-card reveal reveal-delay-2">
+        <div class="eco-card-icon" style="background: rgba(16, 144, 144, 0.2);">📅</div>
+        <div class="eco-card-title">Scheduling Engine</div>
+        <div class="eco-card-desc">Institutional timetabling with a 6-stage AI pipeline: CSP hard constraints → ILP mathematical optimization → Genetic Algorithm → Simulated Annealing → ML patterns → Scenario analysis.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(16, 144, 144, 0.3); color: var(--teal-200);">Scheduling</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <a href="eduscrum.html" class="eco-card reveal reveal-delay-3">
+        <div class="eco-card-icon" style="background: rgba(212, 160, 23, 0.2);">🏃</div>
+        <div class="eco-card-title">EduScrum Orchestrator</div>
+        <div class="eco-card-desc">Agile methodology for learning: sprint-based cycles, AI Scrum Master coaching, team formation based on complementary strengths, burndown tracking, and AI-facilitated retrospectives.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(212, 160, 23, 0.3); color: var(--amber-200);">Agile Learning</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <!-- Row 3: Featured + 2 regular -->
+      <a href="lis-bridge.html" class="eco-card featured reveal">
+        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);">🔗</div>
+        <div class="eco-card-title">LIS Bridge — Learner Intelligence System</div>
+        <div class="eco-card-desc">The nervous system of Scholarly. Connects the cognitive model (Knowledge Graph, Affective State, Forecasts) with every service. Gap-to-Tutor matching translates knowledge gaps into recommended tutors. Affective-aware scheduling respects emotional state. Predictive interventions catch struggling learners before they fall behind. Privacy-first: learners control exactly what data flows where.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(43, 98, 179, 0.3); color: var(--sapphire-200);">Core Intelligence</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <a href="relief-marketplace.html" class="eco-card reveal reveal-delay-1">
+        <div class="eco-card-icon" style="background: rgba(180, 77, 108, 0.2);">🔄</div>
+        <div class="eco-card-title">Relief Marketplace</div>
+        <div class="eco-card-desc">Super-intelligent relief teacher management with 14-day absence forecasting via ML, proactive pool management, autonomous operations, and multi-dimensional matching that learns from every booking.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(180, 77, 108, 0.3); color: var(--rose-400);">Prediction</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <!-- Row 4 -->
+      <a href="homeschool-hub.html" class="eco-card reveal">
+        <div class="eco-card-icon" style="background: rgba(212, 160, 23, 0.2);">🏡</div>
+        <div class="eco-card-title">Homeschool Hub</div>
+        <div class="eco-card-desc">AI-powered family matching by philosophy, location, children's ages and interests. Co-op formation wizard, curriculum-aligned excursion planning, and jurisdiction-specific compliance engines for AU, UK, and Canada.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(212, 160, 23, 0.3); color: var(--amber-200);">Community</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <a href="micro-schools.html" class="eco-card reveal reveal-delay-1">
+        <div class="eco-card-icon" style="background: rgba(16, 144, 144, 0.2);">🏫</div>
+        <div class="eco-card-title">Micro-Schools</div>
+        <div class="eco-card-desc">Full lifecycle management for small learning communities (5–30 students). Compliance engine, enrollment system with waitlist management, staff WWCC verification, and AI health analysis with risk scoring.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(16, 144, 144, 0.3); color: var(--teal-200);">Community</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <a href="lingua-flow.html" class="eco-card reveal reveal-delay-2">
+        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);">🌍</div>
+        <div class="eco-card-title">LinguaFlow</div>
+        <div class="eco-card-desc">Immersive language learning supporting 6 languages with CEFR progression tracking, virtual language exchange partners, cross-reality immersion, and heritage speaker pathways.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(43, 98, 179, 0.3); color: var(--sapphire-200);">Languages</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <a href="token-economy.html" class="eco-card reveal reveal-delay-3">
+        <div class="eco-card-icon" style="background: rgba(212, 160, 23, 0.2);">🪙</div>
+        <div class="eco-card-title">Token Economy & DAO</div>
+        <div class="eco-card-desc">EDU-Nexus utility tokens power the platform economy. Earn for learning milestones, content creation, and peer feedback. Stake to become a content validator. DAO governance gives the community a vote on platform direction.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(212, 160, 23, 0.3); color: var(--amber-200);">Governance</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <!-- Row 5 -->
+      <a href="learning-portfolio.html" class="eco-card reveal">
+        <div class="eco-card-icon" style="background: rgba(16, 144, 144, 0.2);">🎓</div>
+        <div class="eco-card-title">Learning Portfolio</div>
+        <div class="eco-card-desc">Lifelong, self-owned record of achievement powered by Self-Sovereign Identity. Verifiable Credentials for every milestone — micro-credentials, digital badges, and formal certificates in a tamper-proof digital wallet.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(16, 144, 144, 0.3); color: var(--teal-200);">Credentials</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <a href="assessment-engine.html" class="eco-card reveal reveal-delay-1">
+        <div class="eco-card-icon" style="background: rgba(180, 77, 108, 0.2);">📝</div>
+        <div class="eco-card-title">Assessment Engine</div>
+        <div class="eco-card-desc">Dual-mode formative and summative evaluation with AI-powered grading, standards-based gradebook, project-based assessment rubrics, and AI-resilient design that promotes genuine understanding over recitation.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(180, 77, 108, 0.3); color: var(--rose-400);">Evaluation</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+
+      <a href="developer-platform.html" class="eco-card reveal reveal-delay-2">
+        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);">⚡</div>
+        <div class="eco-card-title">Developer Platform</div>
+        <div class="eco-card-desc">API-first architecture with OpenAPI specs, NATS event bus, WebSocket real-time events, and a developer marketplace for extensions. Build on Scholarly or integrate it into your existing stack.</div>
+        <div class="eco-card-footer">
+          <span class="eco-card-tag" style="background: rgba(43, 98, 179, 0.3); color: var(--sapphire-200);">Platform</span>
+          <span class="eco-card-link">Explore →</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     AI INTELLIGENCE STORY
+     ═══════════════════════════════════════ -->
+<section class="intelligence" id="intelligence">
+  <div class="container">
+    <div class="intelligence-grid">
+      <div class="intelligence-visual reveal">
+        <div class="intelligence-mesh">
+          <div class="mesh-header">
+            <div class="mesh-title">Intelligence Mesh</div>
+            <div class="mesh-status">
+              <span class="mesh-status-dot"></span>
+              All Systems Active
+            </div>
+          </div>
+          <div class="mesh-nodes">
+            <div class="mesh-node">
+              <div class="mesh-node-icon">🧠</div>
+              <div class="mesh-node-label">Knowledge Graph</div>
+              <div class="mesh-node-status">● SYNCED</div>
+            </div>
+            <div class="mesh-node">
+              <div class="mesh-node-icon">💭</div>
+              <div class="mesh-node-label">Affective State</div>
+              <div class="mesh-node-status">● MONITORING</div>
+            </div>
+            <div class="mesh-node">
+              <div class="mesh-node-icon">📊</div>
+              <div class="mesh-node-label">Forecasts</div>
+              <div class="mesh-node-status">● ACTIVE</div>
+            </div>
+            <div class="mesh-node">
+              <div class="mesh-node-icon">🎯</div>
+              <div class="mesh-node-label">Curriculum AI</div>
+              <div class="mesh-node-status">● ALIGNED</div>
+            </div>
+            <div class="mesh-node">
+              <div class="mesh-node-icon">🔮</div>
+              <div class="mesh-node-label">Predictive Engine</div>
+              <div class="mesh-node-status">● SCANNING</div>
+            </div>
+            <div class="mesh-node">
+              <div class="mesh-node-icon">🤝</div>
+              <div class="mesh-node-label">Tutor Matching</div>
+              <div class="mesh-node-status">● READY</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal reveal-delay-2">
+        <div class="section-label">
+          <span class="section-label-line"></span>
+          Intelligence at Every Layer
+        </div>
+        <h2 class="section-title">AI that serves learners, not surveils them</h2>
+        <p class="section-subtitle" style="margin-bottom: var(--space-xl);">
+          Traditional EdTech is transactional — book a tutor, generate a timetable. Scholarly inverts this: every service incorporates AI that learns, predicts, and adapts. But always with the learner's consent and control.
+        </p>
+
+        <div class="intelligence-points">
+          <div class="intelligence-point">
+            <div class="intelligence-point-number">1</div>
+            <div class="intelligence-point-content">
+              <h4>Privacy-First Intelligence</h4>
+              <p>Learners and parents control exactly what data flows between services through explicit Privacy Settings. A parent might allow the Knowledge Graph to inform tutor matching while keeping emotional state data private.</p>
+            </div>
+          </div>
+          <div class="intelligence-point">
+            <div class="intelligence-point-number">2</div>
+            <div class="intelligence-point-content">
+              <h4>Gap-to-Tutor Pipeline</h4>
+              <p>When the LIS detects a knowledge gap, it doesn't just flag it — it translates that gap into actionable recommendations: the best tutors for that specific concept, the most effective content, and the optimal learning approach.</p>
+            </div>
+          </div>
+          <div class="intelligence-point">
+            <div class="intelligence-point-number">3</div>
+            <div class="intelligence-point-content">
+              <h4>Affective-Aware Scheduling</h4>
+              <p>The scheduling engine respects emotional state when planning. If a learner is fatigued, it won't schedule their hardest subject next. The system understands that cognition and emotion are inseparable.</p>
+            </div>
+          </div>
+          <div class="intelligence-point">
+            <div class="intelligence-point-number">4</div>
+            <div class="intelligence-point-content">
+              <h4>Predictive Interventions</h4>
+              <p>The system continuously scans for learners who may be struggling — detecting patterns across engagement, performance, and behaviour long before traditional measures like failing grades would flag a concern.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     DEVELOPER SECTION
+     ═══════════════════════════════════════ -->
+<section class="developer-section" id="developers">
+  <div class="container">
+    <div class="dev-grid">
+      <div class="dev-text reveal">
+        <div class="section-label">
+          <span class="section-label-line"></span>
+          Developer Programme
+        </div>
+        <h2 class="section-title">Build on Scholarly</h2>
+        <p class="section-subtitle">
+          Event-driven architecture with typed APIs, multi-tenant isolation, and an
+          <a href="developer-platform.html" style="color: var(--sapphire-700); font-weight: 600;">OpenAPI-first design</a>. Extend the platform or integrate it into your existing education stack.
+        </p>
+
+        <div class="dev-features">
+          <div class="dev-feature">
+            <span class="dev-feature-icon">⚡</span>
+            TypeScript SDK with full type safety
+          </div>
+          <div class="dev-feature">
+            <span class="dev-feature-icon">🔌</span>
+            NATS event bus for real-time events
+          </div>
+          <div class="dev-feature">
+            <span class="dev-feature-icon">🔗</span>
+            <a href="developer-platform.html" style="color: inherit;">1EdTech certified (LTI, OneRoster, CASE)</a>
+          </div>
+          <div class="dev-feature">
+            <span class="dev-feature-icon">🛡️</span>
+            OAuth 2.0 + JWT multi-tenant auth
+          </div>
+          <div class="dev-feature">
+            <span class="dev-feature-icon">📦</span>
+            Result&lt;T&gt; explicit error handling
+          </div>
+          <div class="dev-feature">
+            <span class="dev-feature-icon">🏗️</span>
+            ScholarlyBaseService inheritance
+          </div>
+        </div>
+
+        <div style="display: flex; gap: var(--space-md);">
+          <a href="developer-platform.html" class="btn btn-primary">Developer Docs <span class="btn-icon">→</span></a>
+          <a href="#docs" target="_blank" class="btn btn-outline">Documentation</a>
+        </div>
+      </div>
+
+      <div class="dev-code-card reveal reveal-delay-2">
+        <div class="code-block">
+          <div class="code-block-header">
+            <div class="code-block-dots">
+              <span class="code-block-dot"></span>
+              <span class="code-block-dot"></span>
+              <span class="code-block-dot"></span>
+            </div>
+            <span class="code-block-tab">gap-to-tutor.ts</span>
+          </div>
+          <div class="code-block-body">
+<span class="cm">// Match knowledge gaps to the best support</span>
+<span class="kw">const</span> result = <span class="kw">await</span> lisBridge.<span class="fn">matchGapsToSupport</span>(
+  tenantId,
+  learnerId,
+  {
+    maxResults: <span class="num">5</span>,
+    includeResources: <span class="num">true</span>,
+    respectPrivacy: <span class="num">true</span>
+  }
+);
+
+<span class="kw">if</span> (result.success) {
+  <span class="cm">// Each match includes weighted scores</span>
+  result.data.matches.<span class="fn">forEach</span>(match =&gt; {
+    console.<span class="fn">log</span>(match.tutor.trustScore);
+    console.<span class="fn">log</span>(match.gapAlignment);
+    console.<span class="fn">log</span>(match.teachingStyleFit);
+  });
+}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     CTA
+     ═══════════════════════════════════════ -->
+<section class="cta-section" id="cta">
+  <div class="container">
+    <div class="cta-card reveal">
+      <h2 class="cta-title">Ready to transform education?</h2>
+      <p class="cta-subtitle">
+        Explore the platform, dive into the codebase, or get in touch to discuss how Scholarly fits your institution's needs.
+      </p>
+      <div class="cta-actions">
+        <a href="#docs" target="_blank" class="btn btn-primary btn-lg">
+          Read the Docs <span class="btn-icon">→</span>
+        </a>
+        <a href="#" class="btn btn-outline btn-lg">
+          Book a Demo
+        </a>
+      </div>
+      <p class="cta-note">
+        Open-source core · Multi-tenant · Privacy-first · Built in Perth, Western Australia
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="nav-logo" style="color: white;">
+          <div class="nav-logo-icon">S</div>
+          Scholarly
+        </div>
+        <p class="footer-brand-desc">
+          The unified learning nexus. AI-powered education that adapts to every learner, augments every educator, and connects every community.
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-col-title">Foundation</h4>
+        <ul class="footer-links">
+          <li><a href="ai-buddy.html" class="footer-link">AI Buddy</a></li>
+          <li><a href="golden-learning-path.html" class="footer-link">Golden Learning Path</a></li>
+          <li><a href="tutor-booking.html" class="footer-link">Smart Tutor Booking</a></li>
+          <li><a href="content-marketplace.html" class="footer-link">Content Marketplace</a></li>
+          <li><a href="assessment-engine.html" class="footer-link">Assessment Engine</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-col-title">Intelligence & Scheduling</h4>
+        <ul class="footer-links">
+          <li><a href="curriculum-intelligence.html" class="footer-link">Curriculum Intelligence</a></li>
+          <li><a href="scheduling-engine.html" class="footer-link">Scheduling Engine</a></li>
+          <li><a href="eduscrum.html" class="footer-link">EduScrum</a></li>
+          <li><a href="lis-bridge.html" class="footer-link">LIS Bridge</a></li>
+          <li><a href="relief-marketplace.html" class="footer-link">Relief Marketplace</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-col-title">Community & Economy</h4>
+        <ul class="footer-links">
+          <li><a href="homeschool-hub.html" class="footer-link">Homeschool Hub</a></li>
+          <li><a href="micro-schools.html" class="footer-link">Micro-Schools</a></li>
+          <li><a href="lingua-flow.html" class="footer-link">LinguaFlow</a></li>
+          <li><a href="token-economy.html" class="footer-link">Token Economy & DAO</a></li>
+          <li><a href="learning-portfolio.html" class="footer-link">Learning Portfolio</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-col-title">Developers & Resources</h4>
+        <ul class="footer-links">
+          <li><a href="developer-platform.html" class="footer-link">Developer Platform</a></li>
+          <li><a href="#docs" target="_blank" class="footer-link">Documentationsitory</a></li>
+          <li><a href="#" class="footer-link">API Documentation</a></li>
+          <li><a href="#" class="footer-link">Architecture Guide</a></li>
+          <li><a href="#" class="footer-link">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 Scholarly — The Unified Learning Nexus. Part of the Chekd ecosystem.</span>
+      <div>
+        <span>Built in Perth, Western Australia 🇦🇺</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ═══════════════════════════════════════
+     SCRIPTS
+     ═══════════════════════════════════════ -->
+<script>
+// Scroll-reveal observer
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Nav scroll effect
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 20);
+}, { passive: true });
+
+// Smooth anchor scrolling
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// Service chips hover effect
+document.querySelectorAll('.hero-service-chip').forEach(chip => {
+  chip.addEventListener('mouseenter', () => {
+    chip.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+  });
+});
+</script>
+
+</body>
+</html>

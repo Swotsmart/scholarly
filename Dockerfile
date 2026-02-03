@@ -37,6 +37,9 @@ COPY packages/database/src ./packages/database/src
 COPY packages/api ./packages/api
 COPY packages/web ./packages/web
 
+# Copy landing site to public folder
+COPY site/*.html ./packages/web/public/
+
 # Create public directory if it doesn't exist
 RUN mkdir -p packages/web/public
 
