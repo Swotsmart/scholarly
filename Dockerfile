@@ -37,11 +37,9 @@ COPY packages/database/src ./packages/database/src
 COPY packages/api ./packages/api
 COPY packages/web ./packages/web
 
-# Copy landing site to public folder
-COPY site/*.html ./packages/web/public/
-
-# Create public directory if it doesn't exist
+# Create public directory and copy landing site
 RUN mkdir -p packages/web/public
+COPY site/*.html ./packages/web/public/
 
 # Build packages in order
 ENV NEXT_TELEMETRY_DISABLED=1
