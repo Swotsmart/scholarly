@@ -3,115 +3,140 @@
 @tailwind utilities;
 
 /* ============================================
-   Design System v2.0 - Scholarly UI/UX
+   Scholarly UI Theme - Catppuccin-inspired
+   Purple Primary + Cyan Accent
    ============================================ */
 
 @layer base {
   :root {
-    /* Background & Foreground */
-    --background: 0 0% 100%;           /* Surface White: #FFFFFF */
-    --foreground: 222.2 84% 4.9%;      /* Dark text */
+    /* Primary Theme Colors */
+    --background: 228 33% 97%;              /* #eff1f5 */
+    --foreground: 234 16% 35%;              /* #4c4f69 */
 
     /* Card & Popover */
-    --card: 0 0% 100%;                 /* Surface White: #FFFFFF */
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;                      /* #ffffff */
+    --card-foreground: 234 16% 35%;         /* #4c4f69 */
+    --popover: 230 21% 80%;                 /* #ccd0da */
+    --popover-foreground: 234 16% 35%;      /* #4c4f69 */
 
-    /* Primary Blue: #2563EB - Scholarly Blue (Actions, links, primary buttons) */
-    --primary: 217 83% 53%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary Purple: #8839ef */
+    --primary: 270 85% 58%;
+    --primary-foreground: 0 0% 100%;        /* #ffffff */
 
-    /* Secondary Indigo: #6366F1 - Secondary actions, highlights */
-    --secondary: 239 84% 67%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary: #ccd0da */
+    --secondary: 230 21% 80%;
+    --secondary-foreground: 234 16% 35%;    /* #4c4f69 */
 
-    /* Muted - Surface Alt: #F9FAFB */
-    --muted: 210 20% 98%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted: #dce0e8 */
+    --muted: 228 33% 89%;
+    --muted-foreground: 233 10% 47%;        /* #6c6f85 */
 
-    /* Accent Violet: #8B5CF6 - Special features, gamification */
-    --accent: 258 90% 66%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent Cyan: #04a5e5 */
+    --accent: 193 97% 46%;
+    --accent-foreground: 0 0% 100%;         /* #ffffff */
 
-    /* Error Red: #EF4444 - Errors, critical alerts */
-    --destructive: 0 84% 60%;
+    /* Destructive Red: #d20f39 */
+    --destructive: 351 89% 44%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Success Emerald: #10B981 - Positive feedback, completion */
-    --success: 160 84% 39%;
+    /* Success Green: #40a02b */
+    --success: 109 57% 40%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning Amber: #F59E0B - Caution states, deadlines */
-    --warning: 38 92% 50%;
+    /* Warning Orange: #fe640b */
+    --warning: 23 99% 52%;
     --warning-foreground: 0 0% 100%;
 
-    /* Border: #E5E7EB - Subtle dividers, card borders */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 83% 53%;         /* Matches primary */
+    /* Border & Input: #bcc0cc */
+    --border: 227 18% 77%;
+    --input: 230 21% 80%;                   /* #ccd0da */
+    --ring: 270 85% 58%;                    /* matches primary */
 
-    /* Border Radius - Design System v2.0 */
-    --radius: 6px;                     /* DEFAULT radius */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
+    /* Chart Colors */
+    --chart-1: 270 85% 58%;                 /* #8839ef purple */
+    --chart-2: 193 97% 46%;                 /* #04a5e5 cyan */
+    --chart-3: 109 57% 40%;                 /* #40a02b green */
+    --chart-4: 23 99% 52%;                  /* #fe640b orange */
+    --chart-5: 19 41% 67%;                  /* #dc8a78 peach */
 
-    /* Spacing - Design System v2.0 (base unit: 4px) */
-    --spacing-unit: 4px;
-    --spacing-tight: 16px;             /* gap-4 for tight layouts */
-    --spacing-relaxed: 24px;           /* gap-6 for relaxed layouts */
-    --spacing-section: 32px;           /* Section spacing min */
-    --spacing-section-lg: 48px;        /* Section spacing max */
+    /* Sidebar Colors */
+    --sidebar: 228 25% 92%;                 /* #e6e9ef */
+    --sidebar-foreground: 234 16% 35%;      /* #4c4f69 */
+    --sidebar-primary: 270 85% 58%;         /* #8839ef */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 193 97% 46%;          /* #04a5e5 */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 227 18% 77%;          /* #bcc0cc */
+    --sidebar-ring: 270 85% 58%;
 
-    /* Max Content Width */
-    --max-content-width: 1280px;       /* max-w-7xl */
+    /* Border Radius */
+    --radius: 0.35rem;
+
+    /* Font families */
+    --font-sans: 'Montserrat', system-ui, sans-serif;
+    --font-serif: Georgia, serif;
+    --font-mono: 'Fira Code', monospace;
   }
 
   .dark {
-    /* Background & Foreground - Dark mode */
-    --background: 222 84% 5%;
-    --foreground: 210 40% 98%;
+    /* Dark Mode - Catppuccin Mocha inspired */
+    --background: 240 21% 12%;              /* #181825 */
+    --foreground: 226 64% 88%;              /* #cdd6f4 */
 
-    /* Card & Popover - Dark mode */
-    --card: 222 84% 6%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 84% 6%;
-    --popover-foreground: 210 40% 98%;
+    --card: 240 21% 15%;                    /* #1e1e2e */
+    --card-foreground: 226 64% 88%;
+    --popover: 231 16% 34%;                 /* #45475a */
+    --popover-foreground: 226 64% 88%;
 
-    /* Primary Blue: #3B82F6 - Lighter for dark mode visibility */
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
+    /* Primary Purple - lighter for dark mode */
+    --primary: 267 84% 81%;                 /* #cba6f7 */
+    --primary-foreground: 240 21% 15%;      /* #1e1e2e */
 
-    /* Secondary Indigo: #818CF8 - Adjusted for dark mode */
-    --secondary: 239 84% 74%;
-    --secondary-foreground: 222 47% 11%;
+    /* Secondary */
+    --secondary: 233 12% 39%;               /* #585b70 */
+    --secondary-foreground: 226 64% 88%;
 
-    /* Muted - Dark surface */
-    --muted: 217 33% 18%;
-    --muted-foreground: 215 20% 65%;
+    /* Muted */
+    --muted: 236 23% 20%;                   /* #292c3c */
+    --muted-foreground: 228 24% 72%;        /* #a6adc8 */
 
-    /* Accent Violet: #A78BFA - Adjusted for dark mode */
-    --accent: 258 90% 76%;
-    --accent-foreground: 222 47% 11%;
+    /* Accent Cyan - lighter for dark mode */
+    --accent: 189 71% 73%;                  /* #89dceb */
+    --accent-foreground: 240 21% 15%;
 
-    /* Error Red - Dark mode */
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive Pink */
+    --destructive: 343 81% 75%;             /* #f38ba8 */
+    --destructive-foreground: 240 21% 15%;
 
-    /* Success Emerald - Dark mode */
-    --success: 160 84% 45%;
-    --success-foreground: 145 80% 10%;
+    /* Success Green */
+    --success: 115 54% 76%;                 /* #a6e3a1 */
+    --success-foreground: 240 21% 15%;
 
-    /* Warning Amber - Dark mode */
-    --warning: 38 92% 55%;
-    --warning-foreground: 21 90% 10%;
+    /* Warning Peach */
+    --warning: 23 92% 75%;                  /* #fab387 */
+    --warning-foreground: 240 21% 15%;
 
-    /* Border - Dark mode */
-    --border: 217 33% 18%;
-    --input: 217 33% 18%;
-    --ring: 217 91% 60%;
+    /* Border & Input */
+    --border: 240 17% 23%;                  /* #313244 */
+    --input: 240 17% 23%;
+    --ring: 267 84% 81%;
+
+    /* Chart Colors - Dark mode */
+    --chart-1: 267 84% 81%;                 /* #cba6f7 */
+    --chart-2: 189 71% 73%;                 /* #89dceb */
+    --chart-3: 115 54% 76%;                 /* #a6e3a1 */
+    --chart-4: 23 92% 75%;                  /* #fab387 */
+    --chart-5: 10 56% 91%;                  /* #f5e0dc */
+
+    /* Sidebar - Dark mode */
+    --sidebar: 240 21% 9%;                  /* #11111b */
+    --sidebar-foreground: 226 64% 88%;
+    --sidebar-primary: 267 84% 81%;
+    --sidebar-primary-foreground: 240 21% 15%;
+    --sidebar-accent: 189 71% 73%;
+    --sidebar-accent-foreground: 240 21% 15%;
+    --sidebar-border: 231 16% 34%;          /* #45475a */
+    --sidebar-ring: 267 84% 81%;
   }
 }
 
@@ -184,13 +209,10 @@
 }
 
 /* ============================================
-   Typography Utilities - Design System v2.0
-   Font: Inter (SF Pro alternative)
-   Line height: 1.5 body, 1.2 headings
-   Letter spacing: -0.01em for large text
+   Typography Utilities
    ============================================ */
 @layer utilities {
-  /* Display headings - largest text */
+  /* Display headings */
   .display-1 {
     @apply scroll-m-20 text-7xl font-extrabold;
     line-height: 1.2;
@@ -275,35 +297,34 @@
 }
 
 /* ============================================
-   Spacing Utilities - Design System v2.0
-   Base unit: 4px (0.25rem)
+   Spacing Utilities
    ============================================ */
 @layer utilities {
   /* Component padding */
   .padding-standard {
-    @apply p-4; /* 16px */
+    @apply p-4;
   }
 
   .padding-card {
-    @apply p-6; /* 24px */
+    @apply p-6;
   }
 
   /* Section spacing */
   .section-spacing {
-    @apply py-8; /* 32px */
+    @apply py-8;
   }
 
   .section-spacing-lg {
-    @apply py-12; /* 48px */
+    @apply py-12;
   }
 
   /* Grid gaps */
   .gap-tight {
-    @apply gap-4; /* 16px */
+    @apply gap-4;
   }
 
   .gap-relaxed {
-    @apply gap-6; /* 24px */
+    @apply gap-6;
   }
 
   /* Content container */
@@ -313,69 +334,54 @@
 }
 
 /* ============================================
-   Color Utility Classes - Design System v2.0
+   Brand Color Utilities
    ============================================ */
 @layer utilities {
-  /* Scholarly brand color utilities */
-  .bg-scholarly-blue {
-    background-color: #2563EB;
+  /* Primary Purple */
+  .bg-scholarly-primary {
+    background-color: #8839ef;
+  }
+  .text-scholarly-primary {
+    color: #8839ef;
   }
 
-  .bg-scholarly-indigo {
-    background-color: #6366F1;
+  /* Accent Cyan */
+  .bg-scholarly-accent {
+    background-color: #04a5e5;
+  }
+  .text-scholarly-accent {
+    color: #04a5e5;
   }
 
-  .bg-scholarly-violet {
-    background-color: #8B5CF6;
+  /* Success Green */
+  .bg-scholarly-success {
+    background-color: #40a02b;
+  }
+  .text-scholarly-success {
+    color: #40a02b;
   }
 
-  .bg-scholarly-emerald {
-    background-color: #10B981;
+  /* Warning Orange */
+  .bg-scholarly-warning {
+    background-color: #fe640b;
+  }
+  .text-scholarly-warning {
+    color: #fe640b;
   }
 
-  .bg-scholarly-amber {
-    background-color: #F59E0B;
+  /* Error Red */
+  .bg-scholarly-error {
+    background-color: #d20f39;
+  }
+  .text-scholarly-error {
+    color: #d20f39;
   }
 
-  .bg-scholarly-red {
-    background-color: #EF4444;
+  /* Peach */
+  .bg-scholarly-peach {
+    background-color: #dc8a78;
   }
-
-  .bg-surface {
-    background-color: #FFFFFF;
-  }
-
-  .bg-surface-alt {
-    background-color: #F9FAFB;
-  }
-
-  /* Text colors */
-  .text-scholarly-blue {
-    color: #2563EB;
-  }
-
-  .text-scholarly-indigo {
-    color: #6366F1;
-  }
-
-  .text-scholarly-violet {
-    color: #8B5CF6;
-  }
-
-  .text-scholarly-emerald {
-    color: #10B981;
-  }
-
-  .text-scholarly-amber {
-    color: #F59E0B;
-  }
-
-  .text-scholarly-red {
-    color: #EF4444;
-  }
-
-  /* Border colors */
-  .border-scholarly {
-    border-color: #E5E7EB;
+  .text-scholarly-peach {
+    color: #dc8a78;
   }
 }
