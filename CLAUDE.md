@@ -262,7 +262,7 @@ The API `tsconfig.json` excludes sprint module directories to prevent compilatio
 - **Resource Group**: `scholarly-rg` (Australia East)
 - **Container Registry (ACR)**: `scholarlyacr` (login server: `scholarlyacr.azurecr.io`, admin enabled)
 - **Web Container App**: `scholarly`
-  - Image: `scholarlyacr.azurecr.io/scholarly-web:latest`
+  - Image: `scholarlyacr.azurecr.io/scholarly-web:<git-sha>` (NEVER use `latest` — always tag with git SHA)
   - FQDN: `scholarly.bravefield-dce0abaf.australiaeast.azurecontainerapps.io`
   - Port: 3000
 - **API Container App**: `scholarly-api`
@@ -291,25 +291,24 @@ The API `tsconfig.json` excludes sprint module directories to prevent compilatio
 - **Port**: 3000
 - Health check: `wget http://localhost:3000/`
 
-### CRITICAL: Platform Architecture
-**Always build with `--platform linux/amd64` when deploying to Azure.** macOS (Apple Silicon) defaults to arm64 which will fail on Azure Container Apps:
+### CRITICAL: Deployment Rules
+1. **ALWAYS use Azure CLI** (`az`) for builds and deployments — never use local `docker build`/`docker push`
+2. **NEVER use `latest` tag in production** — always tag images with the git SHA (`git rev-parse --short HEAD`)
+3. **Use `az acr build`** to build images remotely in ACR (handles platform architecture automatically, no local Docker needed)
+
+### Production Deployment (Azure CLI)
 ```bash
-docker build --platform linux/amd64 -t scholarlyacr.azurecr.io/scholarly-web:latest -f Dockerfile .
-```
+# 1. Get the git SHA for the image tag
+TAG=$(git rev-parse --short HEAD)
 
-### Manual Deployment
-```bash
-# Login to ACR
-az acr login --name scholarlyacr
+# 2. Build in ACR (remote build — no local Docker required)
+az acr build --registry scholarlyacr --image scholarly-web:$TAG --platform linux/amd64 --file Dockerfile .
 
-# Build for linux/amd64
-docker build --platform linux/amd64 -t scholarlyacr.azurecr.io/scholarly-web:latest -f Dockerfile .
+# 3. Deploy to Container Apps
+az containerapp update --name scholarly --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-web:$TAG
 
-# Push
-docker push scholarlyacr.azurecr.io/scholarly-web:latest
-
-# Deploy
-az containerapp update --name scholarly --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-web:latest
+# 4. Verify
+az containerapp show --name scholarly --resource-group scholarly-rg --query "{image:properties.template.containers[0].image, state:properties.provisioningState, status:properties.runningStatus}" -o json
 ```
 
 ## Environment Variables
