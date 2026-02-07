@@ -31,6 +31,25 @@ import {
   Heart,
   Volume2,
   Palette,
+  Sun,
+  Rainbow,
+  TreePine,
+  Hash,
+  Mic,
+  Crown,
+  Rabbit,
+  Cat,
+  Leaf,
+  Eye,
+  Pizza,
+  HeartHandshake,
+  Ear,
+  Download,
+  Settings,
+  Link2,
+  Upload,
+  Cookie,
+  PawPrint,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -171,7 +190,7 @@ function StudentDashboardPreview() {
             <AvatarFallback className="bg-primary text-white">SJ</AvatarFallback>
           </Avatar>
           <div>
-            <div className="text-lg font-semibold">Good morning, Sarah! 👋</div>
+            <div className="text-lg font-semibold flex items-center gap-2">Good morning, Sarah! <Heart className="h-5 w-5 text-pink-500" /></div>
             <div className="text-sm text-muted-foreground">Ready to continue your learning journey?</div>
           </div>
         </div>
@@ -465,13 +484,13 @@ function EarlyYearsHomePreview() {
   return (
     <div className="relative min-h-[400px] overflow-hidden rounded-xl bg-gradient-to-b from-sky-300 via-sky-200 to-green-200 p-4">
       {/* Decorations */}
-      <div className="absolute right-4 top-4 text-4xl">☀️</div>
-      <div className="absolute left-10 top-8 text-2xl">🦋</div>
-      <div className="absolute bottom-20 right-8 text-2xl">🌈</div>
+      <div className="absolute right-4 top-4"><Sun className="h-10 w-10 text-yellow-400" /></div>
+      <div className="absolute left-10 top-8"><Leaf className="h-6 w-6 text-pink-400" /></div>
+      <div className="absolute bottom-20 right-8"><Rainbow className="h-6 w-6 text-purple-400" /></div>
 
       {/* Welcome */}
       <div className="mb-6 text-center">
-        <div className="mb-2 text-3xl font-bold text-purple-800">Welcome, Explorer! 🎉</div>
+        <div className="mb-2 text-3xl font-bold text-purple-800 flex items-center justify-center gap-2">Welcome, Explorer! <Sparkles className="h-7 w-7 text-yellow-500" /></div>
         <div className="flex justify-center gap-1">
           {[1,2,3,4,5].map((i) => (
             <Star key={i} className={`h-6 w-6 ${i <= 3 ? 'fill-yellow-400 text-yellow-400' : 'text-yellow-200'}`} />
@@ -483,16 +502,16 @@ function EarlyYearsHomePreview() {
       {/* Learning Worlds */}
       <div className="grid grid-cols-2 gap-4">
         {[
-          { name: 'Phonics Forest', emoji: '🌲', color: 'from-green-400 to-emerald-500', stars: 12 },
-          { name: 'Number Land', emoji: '🔢', color: 'from-blue-400 to-blue-500', stars: 8 },
-          { name: 'Story Garden', emoji: '📖', color: 'from-purple-400 to-purple-500', stars: 5 },
-          { name: 'Creative Cove', emoji: '🎨', color: 'from-pink-400 to-pink-500', stars: 3 },
+          { name: 'Phonics Forest', icon: TreePine, color: 'from-green-400 to-emerald-500', stars: 12 },
+          { name: 'Number Land', icon: Hash, color: 'from-blue-400 to-blue-500', stars: 8 },
+          { name: 'Story Garden', icon: BookOpen, color: 'from-purple-400 to-purple-500', stars: 5 },
+          { name: 'Creative Cove', icon: Palette, color: 'from-pink-400 to-pink-500', stars: 3 },
         ].map((world) => (
           <button
             key={world.name}
             className={`rounded-2xl bg-gradient-to-br ${world.color} p-4 text-white shadow-lg transition-transform hover:scale-105`}
           >
-            <div className="text-4xl">{world.emoji}</div>
+            <world.icon className="h-10 w-10 text-white" />
             <div className="mt-2 font-bold">{world.name}</div>
             <div className="flex items-center justify-center gap-1 text-sm">
               <Star className="h-4 w-4 fill-yellow-300 text-yellow-300" />
@@ -504,7 +523,7 @@ function EarlyYearsHomePreview() {
 
       {/* Mentor */}
       <div className="absolute bottom-4 left-4 flex items-end gap-2">
-        <div className="text-5xl">🦉</div>
+        <Eye className="h-12 w-12 text-amber-600" />
         <div className="rounded-xl bg-white/90 p-2 text-sm shadow">
           <div className="font-bold text-purple-800">Ollie says:</div>
           <div className="text-gray-700">&quot;Let&apos;s learn together!&quot;</div>
@@ -542,7 +561,7 @@ function PhonicsEnginePreview() {
       {/* Current Sound */}
       <div className="rounded-xl bg-white/80 p-6 text-center">
         <div className="mb-4 text-6xl font-bold text-green-700">ch</div>
-        <div className="mb-2 text-lg text-green-600">as in &quot;chip&quot; 🍪</div>
+        <div className="mb-2 text-lg text-green-600 flex items-center justify-center gap-1">as in &quot;chip&quot; <Cookie className="h-5 w-5 text-amber-600" /></div>
         <button className="rounded-full bg-green-500 px-6 py-3 text-white shadow-lg">
           <Volume2 className="mr-2 inline h-5 w-5" />
           Hear the sound
@@ -568,7 +587,7 @@ function PhonicsEnginePreview() {
 
       {/* Mentor */}
       <div className="flex items-center gap-3 rounded-xl bg-white/80 p-3">
-        <div className="text-3xl">🐻</div>
+        <PawPrint className="h-8 w-8 text-amber-700" />
         <div className="text-sm text-green-800">
           <div className="font-bold">Bongo says:</div>
           &quot;Great job! You&apos;ve mastered 7 sounds!&quot;
@@ -584,7 +603,7 @@ function ExplorerPointsPreview() {
       {/* Class Progress */}
       <div className="rounded-xl bg-white/80 p-4">
         <div className="mb-2 flex items-center justify-between">
-          <div className="font-bold text-purple-800">Class Goal: Pizza Party! 🍕</div>
+          <div className="font-bold text-purple-800 flex items-center gap-1">Class Goal: Pizza Party! <Pizza className="h-5 w-5 text-orange-500" /></div>
           <Badge className="bg-purple-500">234 / 300 points</Badge>
         </div>
         <Progress value={78} className="h-4" />
@@ -593,15 +612,15 @@ function ExplorerPointsPreview() {
       {/* Award Categories */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { name: 'Kind Hearts', emoji: '💜', color: 'from-purple-400 to-purple-500' },
-          { name: 'Helping Hands', emoji: '🤝', color: 'from-blue-400 to-blue-500' },
-          { name: 'Great Listening', emoji: '👂', color: 'from-green-400 to-green-500' },
+          { name: 'Kind Hearts', icon: Heart, color: 'from-purple-400 to-purple-500' },
+          { name: 'Helping Hands', icon: HeartHandshake, color: 'from-blue-400 to-blue-500' },
+          { name: 'Great Listening', icon: Ear, color: 'from-green-400 to-green-500' },
         ].map((cat) => (
           <button
             key={cat.name}
             className={`rounded-xl bg-gradient-to-br ${cat.color} p-3 text-white shadow-lg transition-transform hover:scale-105`}
           >
-            <div className="text-2xl">{cat.emoji}</div>
+            <cat.icon className="h-6 w-6 text-white" />
             <div className="mt-1 text-xs font-bold">{cat.name}</div>
           </button>
         ))}
@@ -612,14 +631,14 @@ function ExplorerPointsPreview() {
         <div className="mb-3 font-bold text-purple-800">Explorers</div>
         <div className="space-y-2">
           {[
-            { name: 'Emma', points: 45, avatar: '🐰' },
-            { name: 'Liam', points: 42, avatar: '🦁' },
-            { name: 'Sophie', points: 38, avatar: '🦋' },
+            { name: 'Emma', points: 45, icon: Rabbit },
+            { name: 'Liam', points: 42, icon: Cat },
+            { name: 'Sophie', points: 38, icon: Leaf },
           ].map((student, i) => (
             <div key={student.name} className="flex items-center justify-between rounded-lg bg-purple-50 p-2">
               <div className="flex items-center gap-2">
-                {i === 0 && <span className="text-yellow-500">👑</span>}
-                <span className="text-xl">{student.avatar}</span>
+                {i === 0 && <Crown className="h-5 w-5 text-yellow-500" />}
+                <student.icon className="h-5 w-5 text-purple-500" />
                 <span className="font-medium">{student.name}</span>
               </div>
               <div className="flex items-center gap-2">
@@ -943,13 +962,13 @@ function VoiceIntelligencePreview() {
       {/* Features Grid */}
       <div className="grid grid-cols-2 gap-3">
         {[
-          { name: 'Text-to-Speech', icon: '🔊', desc: '21+ voices' },
-          { name: 'Pronunciation', icon: '🎯', desc: 'Score & feedback' },
-          { name: 'AI Agents', icon: '🤖', desc: 'Voice tutors' },
-          { name: 'Voice Clone', icon: '🎤', desc: 'Custom voices' },
+          { name: 'Text-to-Speech', icon: Volume2, desc: '21+ voices' },
+          { name: 'Pronunciation', icon: Target, desc: 'Score & feedback' },
+          { name: 'AI Agents', icon: Brain, desc: 'Voice tutors' },
+          { name: 'Voice Clone', icon: Mic, desc: 'Custom voices' },
         ].map((feature) => (
           <div key={feature.name} className="rounded-lg border bg-card p-3">
-            <div className="text-2xl">{feature.icon}</div>
+            <feature.icon className="h-6 w-6 text-purple-500" />
             <div className="mt-1 font-medium">{feature.name}</div>
             <div className="text-xs text-muted-foreground">{feature.desc}</div>
           </div>
@@ -1023,18 +1042,18 @@ function DataLakePreview() {
         <div className="mb-3 font-semibold">ETL Pipeline: Student Progress</div>
         <div className="flex items-center gap-2">
           {[
-            { name: 'Source', icon: '📥', status: 'success' },
-            { name: 'Transform', icon: '⚙️', status: 'success' },
-            { name: 'Validate', icon: '✓', status: 'success' },
-            { name: 'Enrich', icon: '🔗', status: 'running' },
-            { name: 'Load', icon: '📤', status: 'pending' },
+            { name: 'Source', icon: Download, status: 'success' },
+            { name: 'Transform', icon: Settings, status: 'success' },
+            { name: 'Validate', icon: CheckCircle2, status: 'success' },
+            { name: 'Enrich', icon: Link2, status: 'running' },
+            { name: 'Load', icon: Upload, status: 'pending' },
           ].map((stage, i) => (
             <div key={stage.name} className="flex items-center">
               <div className={`flex flex-col items-center rounded-lg border p-2 ${
                 stage.status === 'success' ? 'border-emerald-500 bg-emerald-50' :
                 stage.status === 'running' ? 'border-blue-500 bg-blue-50' : ''
               }`}>
-                <span className="text-xl">{stage.icon}</span>
+                <stage.icon className="h-5 w-5" />
                 <span className="text-xs">{stage.name}</span>
               </div>
               {i < 4 && <ChevronRight className="mx-1 h-4 w-4 text-muted-foreground" />}

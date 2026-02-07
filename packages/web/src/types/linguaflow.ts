@@ -3,6 +3,9 @@
  * CEFR-based language learning with IB Diploma integration
  */
 
+import { BookOpen, PenTool, Headphones, Mic } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
 // =============================================================================
 // CORE TYPES
 // =============================================================================
@@ -260,9 +263,9 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'ru', name: 'Russian', flag: '🇷🇺' },
 ];
 
-export const SKILL_ICONS: Record<SkillType, string> = {
-  reading: '📖',
-  writing: '✍️',
-  listening: '🎧',
-  speaking: '🗣️',
+export const SKILL_ICONS: Record<SkillType, LucideIcon> = {
+  reading: BookOpen,
+  writing: PenTool,
+  listening: Headphones,
+  speaking: Mic,
 };

@@ -18,7 +18,12 @@ import {
   Code,
   Puzzle,
   BarChart3,
+  Ruler,
+  Microscope,
+  Languages,
+  Monitor,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 const apps = [
   {
@@ -30,7 +35,7 @@ const apps = [
     installs: 12500,
     status: 'approved',
     price: 'Free',
-    icon: '📐',
+    icon: Ruler,
   },
   {
     id: 2,
@@ -41,7 +46,7 @@ const apps = [
     installs: 8900,
     status: 'approved',
     price: '$4.99/mo',
-    icon: '🔬',
+    icon: Microscope,
   },
   {
     id: 3,
@@ -52,7 +57,7 @@ const apps = [
     installs: 23400,
     status: 'approved',
     price: 'Free',
-    icon: '🗣️',
+    icon: Languages,
   },
   {
     id: 4,
@@ -63,7 +68,7 @@ const apps = [
     installs: 15600,
     status: 'pending',
     price: '$2.99/mo',
-    icon: '💻',
+    icon: Monitor,
   },
 ];
 
@@ -154,7 +159,7 @@ export default function MarketplacePage() {
               <Card key={app.id}>
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
-                    <div className="text-4xl">{app.icon}</div>
+                    <app.icon className="h-10 w-10 text-primary" />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold">{app.name}</h3>

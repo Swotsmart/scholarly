@@ -33,6 +33,7 @@ import {
   Lightbulb,
   RefreshCw,
   SlidersHorizontal,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -309,7 +310,7 @@ export default function GoldenPathPage() {
                       </span>
                     )}
                     {node.status === 'locked' && (
-                      <span className="text-xs">🔒</span>
+                      <Lock className="h-3 w-3" />
                     )}
                   </div>
                   <div className="mt-2 text-center">

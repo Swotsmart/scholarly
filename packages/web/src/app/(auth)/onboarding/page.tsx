@@ -45,7 +45,9 @@ import {
   Microscope,
   Dumbbell,
   PartyPopper,
+  Rocket,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 // Learning interests for students
@@ -71,15 +73,15 @@ const LEARNING_GOALS = [
 ];
 
 // Avatar options
-const AVATARS = [
-  { id: 'avatar-1', color: 'bg-blue-500', emoji: '🎓' },
-  { id: 'avatar-2', color: 'bg-green-500', emoji: '📚' },
-  { id: 'avatar-3', color: 'bg-purple-500', emoji: '🚀' },
-  { id: 'avatar-4', color: 'bg-orange-500', emoji: '🌟' },
-  { id: 'avatar-5', color: 'bg-pink-500', emoji: '🎨' },
-  { id: 'avatar-6', color: 'bg-teal-500', emoji: '🔬' },
-  { id: 'avatar-7', color: 'bg-amber-500', emoji: '🎮' },
-  { id: 'avatar-8', color: 'bg-indigo-500', emoji: '🎵' },
+const AVATARS: { id: string; color: string; icon: LucideIcon }[] = [
+  { id: 'avatar-1', color: 'bg-blue-500', icon: GraduationCap },
+  { id: 'avatar-2', color: 'bg-green-500', icon: BookOpen },
+  { id: 'avatar-3', color: 'bg-purple-500', icon: Rocket },
+  { id: 'avatar-4', color: 'bg-orange-500', icon: Sparkles },
+  { id: 'avatar-5', color: 'bg-pink-500', icon: Palette },
+  { id: 'avatar-6', color: 'bg-teal-500', icon: Microscope },
+  { id: 'avatar-7', color: 'bg-amber-500', icon: Gamepad2 },
+  { id: 'avatar-8', color: 'bg-indigo-500', icon: Music },
 ];
 
 // Subject areas for teachers
@@ -490,7 +492,7 @@ export default function OnboardingPage() {
                             key={avatar.id}
                             type="button"
                             onClick={() => setSelectedAvatar(avatar.id)}
-                            className={`aspect-square rounded-2xl flex items-center justify-center text-3xl transition-all ${
+                            className={`aspect-square rounded-2xl flex items-center justify-center transition-all ${
                               avatar.color
                             } ${
                               isSelected
@@ -498,18 +500,22 @@ export default function OnboardingPage() {
                                 : 'hover:scale-105'
                             }`}
                           >
-                            {avatar.emoji}
+                            <avatar.icon className="w-8 h-8 text-white" />
                           </button>
                         );
                       })}
                     </div>
                     {selectedAvatar && (
                       <div className="mt-6 flex justify-center">
-                        <div className={`h-24 w-24 rounded-3xl flex items-center justify-center text-5xl ${
-                          AVATARS.find((a) => a.id === selectedAvatar)?.color
-                        }`}>
-                          {AVATARS.find((a) => a.id === selectedAvatar)?.emoji}
-                        </div>
+                        {(() => {
+                          const selected = AVATARS.find((a) => a.id === selectedAvatar);
+                          const SelectedIcon = selected?.icon;
+                          return (
+                            <div className={`h-24 w-24 rounded-3xl flex items-center justify-center ${selected?.color}`}>
+                              {SelectedIcon && <SelectedIcon className="w-12 h-12 text-white" />}
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </CardContent>

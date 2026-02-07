@@ -60,7 +60,9 @@ import {
   Zap,
   ToggleLeft,
   Link2,
+  Circle,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 // Feature flags
 const featureFlagsData = [
@@ -81,7 +83,7 @@ const integrationsData = [
     id: 'int1',
     name: 'Google Workspace',
     description: 'Single sign-on, Google Classroom sync, and Drive integration',
-    icon: '🔵',
+    iconColor: 'text-blue-500 fill-blue-500',
     status: 'connected' as const,
     lastSync: '2026-01-29T09:00:00Z',
   },
@@ -89,7 +91,7 @@ const integrationsData = [
     id: 'int2',
     name: 'Microsoft 365',
     description: 'Teams integration, OneDrive sync, and Azure AD authentication',
-    icon: '🟠',
+    iconColor: 'text-orange-500 fill-orange-500',
     status: 'connected' as const,
     lastSync: '2026-01-29T08:45:00Z',
   },
@@ -97,7 +99,7 @@ const integrationsData = [
     id: 'int3',
     name: 'Canvas LMS',
     description: 'Grade passback, assignment sync, and course import',
-    icon: '🔴',
+    iconColor: 'text-red-500 fill-red-500',
     status: 'disconnected' as const,
     lastSync: '2026-01-15T12:00:00Z',
   },
@@ -105,7 +107,7 @@ const integrationsData = [
     id: 'int4',
     name: 'NAPLAN Online',
     description: 'National assessment results import and analytics',
-    icon: '🟢',
+    iconColor: 'text-green-500 fill-green-500',
     status: 'connected' as const,
     lastSync: '2025-12-01T00:00:00Z',
   },
@@ -113,7 +115,7 @@ const integrationsData = [
     id: 'int5',
     name: 'Compass School Manager',
     description: 'Attendance sync, timetable integration, and parent communications',
-    icon: '🟣',
+    iconColor: 'text-purple-500 fill-purple-500',
     status: 'connected' as const,
     lastSync: '2026-01-29T07:30:00Z',
   },
@@ -121,7 +123,7 @@ const integrationsData = [
     id: 'int6',
     name: 'Xero Accounting',
     description: 'Invoice sync, payment reconciliation, and financial reporting',
-    icon: '🔵',
+    iconColor: 'text-blue-500 fill-blue-500',
     status: 'error' as const,
     lastSync: '2026-01-28T10:15:00Z',
   },
@@ -654,8 +656,8 @@ export default function AdminSettingsPage() {
                   className="flex items-start justify-between rounded-lg border p-4"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center text-2xl">
-                      {integration.icon}
+                    <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center">
+                      <Circle className={`h-6 w-6 ${integration.iconColor}`} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
