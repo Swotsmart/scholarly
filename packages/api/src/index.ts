@@ -51,6 +51,15 @@ import knowledgeWorkspaceRouter from './routes/knowledge-workspace';
 import { googleDriveRouter } from './routes/google-drive';
 import oneDriveRouter from './routes/onedrive';
 
+// Sprint Module Routes (Sprints 1-18)
+import { storybookRouter } from './routes/storybook';
+import { arenaRouter } from './routes/arena';
+import { developerPortalRouter } from './routes/developer-portal';
+import { aiEngineRouter } from './routes/ai-engine';
+import { complianceRouter } from './routes/compliance';
+import { parentPortalRouter } from './routes/parent-portal';
+import { collaborationRouter } from './routes/collaboration';
+
 // Middleware
 import { errorHandler } from './middleware/error-handler';
 import { authMiddleware } from './middleware/auth';
@@ -123,6 +132,15 @@ api.use('/voice', voiceIntelligenceRouter); // Voice Intelligence with TTS, STT,
 api.use('/workspace', knowledgeWorkspaceRouter); // Knowledge Workspace (AFFiNE) integration
 api.use('/integrations/google-drive', googleDriveRouter); // Google Drive Integration (has webhook route that's public)
 api.use('/integrations/onedrive', oneDriveRouter); // OneDrive/SharePoint Integration
+
+// Sprint Module Routes (Sprints 1-18)
+api.use('/storybook', authMiddleware, storybookRouter);       // Storybook engine, generation, review, marketplace
+api.use('/arena', authMiddleware, arenaRouter);                // Competitions, tournaments, teams, tokens, bounties
+api.use('/developer', authMiddleware, developerPortalRouter);  // Developer portal, SDK, webhooks, LMS, studio
+api.use('/ai-engine', authMiddleware, aiEngineRouter);         // AI providers, tutor, BKT, ML personalisation
+api.use('/compliance', authMiddleware, complianceRouter);      // Data retention, experiments, security, monitoring
+api.use('/parent', authMiddleware, parentPortalRouter);        // Parent mobile app, child progress, family
+api.use('/collaboration', authMiddleware, collaborationRouter); // Collaborative stories, lesson plans, resources
 
 app.use('/api/v1', api);
 

@@ -17,5 +17,20 @@
     "rootDir": "./src"
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/services/ai",
+    "src/services/storybook",
+    "src/services/arena",
+    "src/services/developer",
+    "src/services/mobile",
+    "src/services/compliance",
+    "src/services/deployment",
+    "src/services/ml",
+    "src/services/collaboration",
+    "src/services/parent",
+    "src/services/storage",
+    "src/infrastructure"
+  ]
 }

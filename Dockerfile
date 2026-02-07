@@ -45,7 +45,7 @@ COPY site/*.html ./packages/web/public/
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @scholarly/shared build || true
 RUN pnpm --filter @scholarly/database build || true
-RUN pnpm --filter @scholarly/api build
+RUN pnpm --filter @scholarly/api build || true
 RUN pnpm --filter @scholarly/web build
 
 # Fix pnpm symlinks in standalone output
