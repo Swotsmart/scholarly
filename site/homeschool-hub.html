@@ -179,6 +179,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   .footer-inner { flex-direction: column; gap: var(--space-md); text-align: center; }
   .footer-links-row { flex-wrap: wrap; justify-content: center; }
 }
+
+/* Lucide SVG icon sizing */
+.lucide {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  stroke-width: 1.75;
+}
+.hero-proof-avatar .lucide {
+  width: 20px;
+  height: 20px;
+}
+.connected-chip .lucide {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+}
 </style>
 </head>
 <body>
@@ -200,7 +217,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   <div class="container">
     <div class="inner-hero-content" style="animation: fadeUp 0.8s var(--ease-out) 0.1s both;">
       <a href="index.html" class="back-link" style="margin-bottom: var(--space-lg); display: inline-flex;">← Back to Platform Overview</a>
-      <div class="inner-hero-icon">🏡</div>
+      <div class="inner-hero-icon"><i data-lucide="home"></i></div>
       <div class="inner-hero-badge">
         <span class="inner-hero-badge-dot"></span>
         Community · 2,364 Lines
@@ -215,7 +232,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   </div>
 </section>
 
-<section class="section"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon">👨‍👩‍👧‍👦</div><h3>AI Family Matching</h3><p>Compatibility scoring based on educational philosophy (Montessori, Classical, Unschooling, Charlotte Mason), location, children's ages, interests, and teaching capabilities.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon">🏠</div><h3>Co-op Formation Wizard</h3><p>AI suggests optimal co-op members, structure, and schedule based on collective capabilities. If one parent teaches science and another teaches art, the wizard spots the synergy.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon">📋</div><h3>Compliance Engine</h3><p>Jurisdiction-specific requirements for AU (each state differs), UK, and Canada. Document tracking, deadline reminders, and automatic report generation for regulatory submissions.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon">🗺️</div><h3>Excursion Planning</h3><p>AI-powered venue suggestions with curriculum connections. Planning a trip to the museum? The system maps exhibits to relevant curriculum codes and generates pre/post activities.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon">💊</div><h3>Co-op Health Analysis</h3><p>AI health scoring for established co-ops — tracking participation balance, resource sharing equity, communication health, and providing recommendations for improvement.</p></div><div class="feature-card reveal"><div class="feature-card-icon">📚</div><h3>Shared Resources</h3><p>Community posts, shared resource libraries, and group discussions. Pool resources with compatible families and access specialist content through the Content Marketplace.</p></div></div></div></section>
+<section class="section"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon">👨‍<i data-lucide="users"></i>‍👦</div><h3>AI Family Matching</h3><p>Compatibility scoring based on educational philosophy (Montessori, Classical, Unschooling, Charlotte Mason), location, children's ages, interests, and teaching capabilities.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon"><i data-lucide="home"></i></div><h3>Co-op Formation Wizard</h3><p>AI suggests optimal co-op members, structure, and schedule based on collective capabilities. If one parent teaches science and another teaches art, the wizard spots the synergy.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon"><i data-lucide="clipboard-list"></i></div><h3>Compliance Engine</h3><p>Jurisdiction-specific requirements for AU (each state differs), UK, and Canada. Document tracking, deadline reminders, and automatic report generation for regulatory submissions.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon"><i data-lucide="map"></i></div><h3>Excursion Planning</h3><p>AI-powered venue suggestions with curriculum connections. Planning a trip to the museum? The system maps exhibits to relevant curriculum codes and generates pre/post activities.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon"><i data-lucide="pill"></i></div><h3>Co-op Health Analysis</h3><p>AI health scoring for established co-ops — tracking participation balance, resource sharing equity, communication health, and providing recommendations for improvement.</p></div><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="book-open"></i></div><h3>Shared Resources</h3><p>Community posts, shared resource libraries, and group discussions. Pool resources with compatible families and access specialist content through the Content Marketplace.</p></div></div></div></section>
 
 <section class="cta-section">
   <div class="container">
@@ -250,5 +267,7 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+<script src="https://unpkg.com/lucide@0.303.0/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
 </body>
 </html>

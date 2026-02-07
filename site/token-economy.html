@@ -179,6 +179,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   .footer-inner { flex-direction: column; gap: var(--space-md); text-align: center; }
   .footer-links-row { flex-wrap: wrap; justify-content: center; }
 }
+
+/* Lucide SVG icon sizing */
+.lucide {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  stroke-width: 1.75;
+}
+.hero-proof-avatar .lucide {
+  width: 20px;
+  height: 20px;
+}
+.connected-chip .lucide {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+}
 </style>
 </head>
 <body>
@@ -200,7 +217,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   <div class="container">
     <div class="inner-hero-content" style="animation: fadeUp 0.8s var(--ease-out) 0.1s both;">
       <a href="index.html" class="back-link" style="margin-bottom: var(--space-lg); display: inline-flex;">← Back to Platform Overview</a>
-      <div class="inner-hero-icon">🪙</div>
+      <div class="inner-hero-icon"><i data-lucide="coins"></i></div>
       <div class="inner-hero-badge">
         <span class="inner-hero-badge-dot"></span>
         Governance · Blockchain · DAO
@@ -215,7 +232,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   </div>
 </section>
 
-<section class="section"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon">💱</div><h3>Medium of Exchange</h3><p>Use EDU-Nexus tokens to pay for premium content, tutoring sessions, and specialised services. The token creates a unified economy across all platform services.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon">🔒</div><h3>Staking & Access</h3><p>Stake tokens to unlock advanced features, become a certified content validator, or gain priority access to new programs. Staking signals commitment to the ecosystem.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon">🗳️</div><h3>DAO Governance</h3><p>Token holders vote on platform upgrades, fee structures, ecosystem fund allocation, and featured content curation. Control shifts from a single entity to the community.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon">🏆</div><h3>Rewards & Incentives</h3><p>Earn tokens for completing learning milestones, providing high-quality peer feedback, creating popular content, and successful mentoring. The system rewards the behaviours that build a healthy ecosystem.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon">✅</div><h3>Content Validation</h3><p>Staked validators review marketplace content against pedagogical rubrics. Approve quality and earn fees. Approve poor content and forfeit your stake. Incentives align with educational quality.</p></div><div class="feature-card reveal"><div class="feature-card-icon">🔥</div><h3>Deflationary Mechanics</h3><p>A percentage of transaction fees can be burned or sent to the Treasury, creating sustainable token economics that balance value creation with long-term stability.</p></div></div></div></section>
+<section class="section"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="arrow-left-right"></i></div><h3>Medium of Exchange</h3><p>Use EDU-Nexus tokens to pay for premium content, tutoring sessions, and specialised services. The token creates a unified economy across all platform services.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon"><i data-lucide="lock"></i></div><h3>Staking & Access</h3><p>Stake tokens to unlock advanced features, become a certified content validator, or gain priority access to new programs. Staking signals commitment to the ecosystem.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon"><i data-lucide="vote"></i></div><h3>DAO Governance</h3><p>Token holders vote on platform upgrades, fee structures, ecosystem fund allocation, and featured content curation. Control shifts from a single entity to the community.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon"><i data-lucide="trophy"></i></div><h3>Rewards & Incentives</h3><p>Earn tokens for completing learning milestones, providing high-quality peer feedback, creating popular content, and successful mentoring. The system rewards the behaviours that build a healthy ecosystem.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon"><i data-lucide="check-circle"></i></div><h3>Content Validation</h3><p>Staked validators review marketplace content against pedagogical rubrics. Approve quality and earn fees. Approve poor content and forfeit your stake. Incentives align with educational quality.</p></div><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="flame"></i></div><h3>Deflationary Mechanics</h3><p>A percentage of transaction fees can be burned or sent to the Treasury, creating sustainable token economics that balance value creation with long-term stability.</p></div></div></div></section>
 
 <section class="cta-section">
   <div class="container">
@@ -250,5 +267,7 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+<script src="https://unpkg.com/lucide@0.303.0/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
 </body>
 </html>

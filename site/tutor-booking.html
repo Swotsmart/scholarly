@@ -179,6 +179,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   .footer-inner { flex-direction: column; gap: var(--space-md); text-align: center; }
   .footer-links-row { flex-wrap: wrap; justify-content: center; }
 }
+
+/* Lucide SVG icon sizing */
+.lucide {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  stroke-width: 1.75;
+}
+.hero-proof-avatar .lucide {
+  width: 20px;
+  height: 20px;
+}
+.connected-chip .lucide {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+}
 </style>
 </head>
 <body>
@@ -200,7 +217,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   <div class="container">
     <div class="inner-hero-content" style="animation: fadeUp 0.8s var(--ease-out) 0.1s both;">
       <a href="index.html" class="back-link" style="margin-bottom: var(--space-lg); display: inline-flex;">← Back to Platform Overview</a>
-      <div class="inner-hero-icon">👨‍🏫</div>
+      <div class="inner-hero-icon"><i data-lucide="user-check"></i></div>
       <div class="inner-hero-badge">
         <span class="inner-hero-badge-dot"></span>
         Foundation Service · 519 Lines
@@ -215,7 +232,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   </div>
 </section>
 
-<section class="section"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon">🎯</div><h3>Multi-Dimensional Matching</h3><p>Subject expertise (35%) + teaching style compatibility (25%) + trust score (25%) + price fit (15%) = composite match score that finds the perfect tutor, not just an available one.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon">🛡️</div><h3>Jurisdiction Safeguarding</h3><p>Australia uses WWCC, UK uses DBS, Scotland uses PVG, Canada uses VSC. The service knows which checks apply where and verifies them automatically before any child interaction.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon">👥</div><h3>Group Sessions</h3><p>Tutors can open sessions to others, forming ad-hoc groups with dynamic pricing. Group discounts are automatically applied based on participant count.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon">✨</div><h3>AI Profile Builder</h3><p>New tutors answer guided questions; AI extracts keywords and generates suggested bios, reducing onboarding friction from days to minutes.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon">💡</div><h3>Proactive Suggestions</h3><p>LIS-informed recommendations that suggest tutors before a student even asks — based on detected knowledge gaps and learning trajectory forecasts.</p></div><div class="feature-card reveal"><div class="feature-card-icon">🔗</div><h3>Gap-to-Tutor Pipeline</h3><p>When the LIS Bridge detects a knowledge gap, it translates that gap into the best tutors for that specific concept — connecting intelligence to action.</p></div></div></div></section>
+<section class="section"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="target"></i></div><h3>Multi-Dimensional Matching</h3><p>Subject expertise (35%) + teaching style compatibility (25%) + trust score (25%) + price fit (15%) = composite match score that finds the perfect tutor, not just an available one.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon"><i data-lucide="shield"></i></div><h3>Jurisdiction Safeguarding</h3><p>Australia uses WWCC, UK uses DBS, Scotland uses PVG, Canada uses VSC. The service knows which checks apply where and verifies them automatically before any child interaction.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon"><i data-lucide="users"></i></div><h3>Group Sessions</h3><p>Tutors can open sessions to others, forming ad-hoc groups with dynamic pricing. Group discounts are automatically applied based on participant count.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon"><i data-lucide="sparkles"></i></div><h3>AI Profile Builder</h3><p>New tutors answer guided questions; AI extracts keywords and generates suggested bios, reducing onboarding friction from days to minutes.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon"><i data-lucide="lightbulb"></i></div><h3>Proactive Suggestions</h3><p>LIS-informed recommendations that suggest tutors before a student even asks — based on detected knowledge gaps and learning trajectory forecasts.</p></div><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="link"></i></div><h3>Gap-to-Tutor Pipeline</h3><p>When the LIS Bridge detects a knowledge gap, it translates that gap into the best tutors for that specific concept — connecting intelligence to action.</p></div></div></div></section>
 
 <section class="cta-section">
   <div class="container">
@@ -250,5 +267,7 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+<script src="https://unpkg.com/lucide@0.303.0/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
 </body>
 </html>

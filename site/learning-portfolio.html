@@ -179,6 +179,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   .footer-inner { flex-direction: column; gap: var(--space-md); text-align: center; }
   .footer-links-row { flex-wrap: wrap; justify-content: center; }
 }
+
+/* Lucide SVG icon sizing */
+.lucide {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  stroke-width: 1.75;
+}
+.hero-proof-avatar .lucide {
+  width: 20px;
+  height: 20px;
+}
+.connected-chip .lucide {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+}
 </style>
 </head>
 <body>
@@ -200,7 +217,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   <div class="container">
     <div class="inner-hero-content" style="animation: fadeUp 0.8s var(--ease-out) 0.1s both;">
       <a href="index.html" class="back-link" style="margin-bottom: var(--space-lg); display: inline-flex;">← Back to Platform Overview</a>
-      <div class="inner-hero-icon">🎓</div>
+      <div class="inner-hero-icon"><i data-lucide="graduation-cap"></i></div>
       <div class="inner-hero-badge">
         <span class="inner-hero-badge-dot"></span>
         Credentials · SSI · Verifiable
@@ -215,7 +232,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   </div>
 </section>
 
-<section class="section"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon">🔐</div><h3>Self-Sovereign Identity</h3><p>Your data lives in your personal digital wallet, not on someone else's server. You decide who sees what, when, and for how long. True data ownership for education.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon">✅</div><h3>Verifiable Credentials</h3><p>Cryptographically secure, tamper-proof credentials for every achievement. Micro-credentials, digital badges, and formal certificates — all instantly verifiable without contacting the issuing institution.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon">🌐</div><h3>Portable & Persistent</h3><p>Your portfolio travels with you across institutions, employers, and borders. No more requesting transcripts or proving qualifications — your wallet contains the proof.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon">👩‍🏫</div><h3>Educator Portfolios</h3><p>Teachers build evidence-based portfolios from PD completions, mentoring evaluations, peer observations, and content creation achievements. Professional growth, documented and verified.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon">🎨</div><h3>Rich Multimedia</h3><p>Not just certificates — showcase project presentations, pitch recordings, peer review contributions, and collaborative work. A living portfolio that shows not just what you learned, but how.</p></div><div class="feature-card reveal"><div class="feature-card-icon">🔗</div><h3>Cross-Platform Aggregation</h3><p>Aggregate credentials from formal education, professional development, and real-world work experiences. One unified view of your entire learning journey, verified and shareable.</p></div></div></div></section>
+<section class="section"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="key-round"></i></div><h3>Self-Sovereign Identity</h3><p>Your data lives in your personal digital wallet, not on someone else's server. You decide who sees what, when, and for how long. True data ownership for education.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon"><i data-lucide="check-circle"></i></div><h3>Verifiable Credentials</h3><p>Cryptographically secure, tamper-proof credentials for every achievement. Micro-credentials, digital badges, and formal certificates — all instantly verifiable without contacting the issuing institution.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon"><i data-lucide="globe"></i></div><h3>Portable & Persistent</h3><p>Your portfolio travels with you across institutions, employers, and borders. No more requesting transcripts or proving qualifications — your wallet contains the proof.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon">👩‍<i data-lucide="school"></i></div><h3>Educator Portfolios</h3><p>Teachers build evidence-based portfolios from PD completions, mentoring evaluations, peer observations, and content creation achievements. Professional growth, documented and verified.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon"><i data-lucide="palette"></i></div><h3>Rich Multimedia</h3><p>Not just certificates — showcase project presentations, pitch recordings, peer review contributions, and collaborative work. A living portfolio that shows not just what you learned, but how.</p></div><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="link"></i></div><h3>Cross-Platform Aggregation</h3><p>Aggregate credentials from formal education, professional development, and real-world work experiences. One unified view of your entire learning journey, verified and shareable.</p></div></div></div></section>
 
 <section class="cta-section">
   <div class="container">
@@ -250,5 +267,7 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+<script src="https://unpkg.com/lucide@0.303.0/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
 </body>
 </html>

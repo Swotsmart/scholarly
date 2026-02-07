@@ -456,6 +456,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 
 @media (max-width: 1024px) { .footer-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .footer-grid { grid-template-columns: 1fr; } .footer-bottom { flex-direction: column; gap: var(--space-sm); text-align: center; } }
+
+/* Lucide SVG icon sizing */
+.lucide {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  stroke-width: 1.75;
+}
+.hero-proof-avatar .lucide {
+  width: 20px;
+  height: 20px;
+}
+.connected-chip .lucide {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+}
 </style>
 </head>
 <body>
@@ -479,23 +496,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
               <div class="mega-col-title">Foundation</div>
               <div class="mega-col-items">
                 <a href="ai-buddy.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--sapphire-50);">🤖</div>
+                  <div class="mega-item-icon" style="background: var(--sapphire-50);"><i data-lucide="bot"></i></div>
                   <div class="mega-item-text"><h4>AI Buddy</h4><p>24/7 Socratic tutoring companion</p></div>
                 </a>
                 <a href="golden-learning-path.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--amber-50);">✨</div>
+                  <div class="mega-item-icon" style="background: var(--amber-50);"><i data-lucide="sparkles"></i></div>
                   <div class="mega-item-text"><h4>Golden Learning Path</h4><p>AI-driven adaptive personalization</p></div>
                 </a>
                 <a href="tutor-booking.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--teal-50);">👨‍🏫</div>
+                  <div class="mega-item-icon" style="background: var(--teal-50);"><i data-lucide="user-check"></i></div>
                   <div class="mega-item-text"><h4>Smart Tutor Booking</h4><p>AI-powered tutor matching</p></div>
                 </a>
                 <a href="content-marketplace.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--rose-100);">📚</div>
+                  <div class="mega-item-icon" style="background: var(--rose-100);"><i data-lucide="book-open"></i></div>
                   <div class="mega-item-text"><h4>Content Marketplace</h4><p>Educational resource trading</p></div>
                 </a>
                 <a href="assessment-engine.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--sapphire-50);">📝</div>
+                  <div class="mega-item-icon" style="background: var(--sapphire-50);"><i data-lucide="file-text"></i></div>
                   <div class="mega-item-text"><h4>Assessment Engine</h4><p>AI-powered evaluation & analytics</p></div>
                 </a>
               </div>
@@ -504,23 +521,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
               <div class="mega-col-title">Intelligence</div>
               <div class="mega-col-items">
                 <a href="curriculum-intelligence.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--sapphire-50);">🧠</div>
+                  <div class="mega-item-icon" style="background: var(--sapphire-50);"><i data-lucide="brain"></i></div>
                   <div class="mega-item-text"><h4>Curriculum Intelligence</h4><p>Semantic knowledge graphs</p></div>
                 </a>
                 <a href="scheduling-engine.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--teal-50);">📅</div>
+                  <div class="mega-item-icon" style="background: var(--teal-50);"><i data-lucide="calendar"></i></div>
                   <div class="mega-item-text"><h4>Scheduling Engine</h4><p>6-stage AI optimization pipeline</p></div>
                 </a>
                 <a href="eduscrum.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--amber-50);">🏃</div>
+                  <div class="mega-item-icon" style="background: var(--amber-50);"><i data-lucide="gauge"></i></div>
                   <div class="mega-item-text"><h4>EduScrum</h4><p>Agile learning management</p></div>
                 </a>
                 <a href="lis-bridge.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--sapphire-50);">🔗</div>
+                  <div class="mega-item-icon" style="background: var(--sapphire-50);"><i data-lucide="link"></i></div>
                   <div class="mega-item-text"><h4>LIS Bridge</h4><p>Learner intelligence integration</p></div>
                 </a>
                 <a href="relief-marketplace.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--rose-100);">🔄</div>
+                  <div class="mega-item-icon" style="background: var(--rose-100);"><i data-lucide="refresh-cw"></i></div>
                   <div class="mega-item-text"><h4>Relief Marketplace</h4><p>Predictive absence management</p></div>
                 </a>
               </div>
@@ -529,23 +546,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
               <div class="mega-col-title">Community & Economy</div>
               <div class="mega-col-items">
                 <a href="homeschool-hub.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--amber-50);">🏡</div>
+                  <div class="mega-item-icon" style="background: var(--amber-50);"><i data-lucide="home"></i></div>
                   <div class="mega-item-text"><h4>Homeschool Hub</h4><p>Family connection platform</p></div>
                 </a>
                 <a href="micro-schools.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--teal-50);">🏫</div>
+                  <div class="mega-item-icon" style="background: var(--teal-50);"><i data-lucide="school"></i></div>
                   <div class="mega-item-text"><h4>Micro-Schools</h4><p>Small school management</p></div>
                 </a>
                 <a href="lingua-flow.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--sapphire-50);">🌍</div>
+                  <div class="mega-item-icon" style="background: var(--sapphire-50);"><i data-lucide="globe"></i></div>
                   <div class="mega-item-text"><h4>LinguaFlow</h4><p>Immersive language learning</p></div>
                 </a>
                 <a href="token-economy.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--amber-50);">🪙</div>
+                  <div class="mega-item-icon" style="background: var(--amber-50);"><i data-lucide="coins"></i></div>
                   <div class="mega-item-text"><h4>Token Economy & DAO</h4><p>Decentralized governance</p></div>
                 </a>
                 <a href="learning-portfolio.html" class="mega-item">
-                  <div class="mega-item-icon" style="background: var(--teal-50);">🎓</div>
+                  <div class="mega-item-icon" style="background: var(--teal-50);"><i data-lucide="graduation-cap"></i></div>
                   <div class="mega-item-text"><h4>Learning Portfolio</h4><p>Verifiable credentials & SSI</p></div>
                 </a>
               </div>
@@ -560,11 +577,11 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
     </ul>
 
     <div class="nav-actions">
-      <a href="#" class="btn btn-ghost">Sign In</a>
+      <a href="/login" class="btn btn-ghost">Sign In</a>
       <a href="#cta" class="btn btn-primary">Get Started <span class="btn-icon">→</span></a>
     </div>
 
-    <button class="nav-toggle" aria-label="Menu">☰</button>
+    <button class="nav-toggle" aria-label="Menu"><i data-lucide="menu"></i></button>
   </div>
 </nav>
 
@@ -605,11 +622,11 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 
       <div class="hero-proof">
         <div class="hero-proof-avatars">
-          <div class="hero-proof-avatar" style="background: var(--sapphire-500);">👩‍🎓</div>
-          <div class="hero-proof-avatar" style="background: var(--amber-500);">👨‍🏫</div>
-          <div class="hero-proof-avatar" style="background: var(--teal-600);">👩‍👧</div>
-          <div class="hero-proof-avatar" style="background: var(--rose-500);">🏫</div>
-          <div class="hero-proof-avatar" style="background: var(--sapphire-400);">👨‍💻</div>
+          <div class="hero-proof-avatar" style="background: var(--sapphire-500);"><i data-lucide="graduation-cap"></i></div>
+          <div class="hero-proof-avatar" style="background: var(--amber-500);"><i data-lucide="user-check"></i></div>
+          <div class="hero-proof-avatar" style="background: var(--teal-600);"><i data-lucide="users"></i></div>
+          <div class="hero-proof-avatar" style="background: var(--rose-500);"><i data-lucide="school"></i></div>
+          <div class="hero-proof-avatar" style="background: var(--sapphire-400);"><i data-lucide="code"></i></div>
         </div>
         <p class="hero-proof-text">
           Serving <strong>learners, educators, parents, institutions & developers</strong> across AU, UK, Canada & beyond
@@ -630,44 +647,44 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
         <div class="hero-platform-body">
           <div class="hero-services-grid">
             <a href="ai-buddy.html" class="hero-service-chip">
-              <span class="hero-service-chip-icon" style="background: var(--sapphire-50);">🤖</span>
+              <span class="hero-service-chip-icon" style="background: var(--sapphire-50);"><i data-lucide="bot"></i></span>
               AI Buddy
             </a>
             <a href="curriculum-intelligence.html" class="hero-service-chip">
-              <span class="hero-service-chip-icon" style="background: var(--teal-50);">🧠</span>
+              <span class="hero-service-chip-icon" style="background: var(--teal-50);"><i data-lucide="brain"></i></span>
               Curriculum AI
             </a>
             <a href="tutor-booking.html" class="hero-service-chip">
-              <span class="hero-service-chip-icon" style="background: var(--amber-50);">👨‍🏫</span>
+              <span class="hero-service-chip-icon" style="background: var(--amber-50);"><i data-lucide="user-check"></i></span>
               Tutor Matching
             </a>
             <a href="scheduling-engine.html" class="hero-service-chip">
-              <span class="hero-service-chip-icon" style="background: var(--rose-100);">📅</span>
+              <span class="hero-service-chip-icon" style="background: var(--rose-100);"><i data-lucide="calendar"></i></span>
               Scheduling
             </a>
             <a href="content-marketplace.html" class="hero-service-chip">
-              <span class="hero-service-chip-icon" style="background: var(--sapphire-50);">📚</span>
+              <span class="hero-service-chip-icon" style="background: var(--sapphire-50);"><i data-lucide="book-open"></i></span>
               Marketplace
             </a>
             <a href="eduscrum.html" class="hero-service-chip">
-              <span class="hero-service-chip-icon" style="background: var(--teal-50);">🏃</span>
+              <span class="hero-service-chip-icon" style="background: var(--teal-50);"><i data-lucide="gauge"></i></span>
               EduScrum
             </a>
             <a href="homeschool-hub.html" class="hero-service-chip">
-              <span class="hero-service-chip-icon" style="background: var(--amber-50);">🏡</span>
+              <span class="hero-service-chip-icon" style="background: var(--amber-50);"><i data-lucide="home"></i></span>
               Homeschool
             </a>
             <a href="relief-marketplace.html" class="hero-service-chip">
-              <span class="hero-service-chip-icon" style="background: var(--sapphire-50);">🔄</span>
+              <span class="hero-service-chip-icon" style="background: var(--sapphire-50);"><i data-lucide="refresh-cw"></i></span>
               Relief Teachers
             </a>
             <a href="token-economy.html" class="hero-service-chip">
-              <span class="hero-service-chip-icon" style="background: var(--amber-50);">🪙</span>
+              <span class="hero-service-chip-icon" style="background: var(--amber-50);"><i data-lucide="coins"></i></span>
               Token Economy
             </a>
           </div>
           <div class="hero-intelligence-bar">
-            <div class="hero-intelligence-icon">🔗</div>
+            <div class="hero-intelligence-icon"><i data-lucide="link"></i></div>
             <div class="hero-intelligence-text">
               <strong>Learner Intelligence System Connected</strong>
               <span>Cognitive model synced · Knowledge graph active · Affective state monitored</span>
@@ -730,7 +747,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 
     <div class="persona-cards">
       <div class="persona-card reveal">
-        <div class="persona-icon">👩‍🎓</div>
+        <div class="persona-icon"><i data-lucide="graduation-cap"></i></div>
         <h3 class="persona-title">Learners</h3>
         <p class="persona-desc">
           From early childhood (ages 3–7) through K-12 and beyond. Every learner gets an AI-powered companion that adapts to how they think, not just what they know.
@@ -745,7 +762,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </div>
 
       <div class="persona-card reveal reveal-delay-1">
-        <div class="persona-icon">👨‍🏫</div>
+        <div class="persona-icon"><i data-lucide="user-check"></i></div>
         <h3 class="persona-title">Educators</h3>
         <p class="persona-desc">
           An AI Co-Pilot that handles differentiation, automates curriculum alignment, and gives you a predictive early warning system so no student falls through the cracks.
@@ -760,7 +777,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </div>
 
       <div class="persona-card reveal reveal-delay-2">
-        <div class="persona-icon">👩‍👧</div>
+        <div class="persona-icon"><i data-lucide="users"></i></div>
         <h3 class="persona-title">Parents & Homeschoolers</h3>
         <p class="persona-desc">
           Find compatible families, form co-ops with AI-assisted planning, navigate jurisdiction-specific compliance, and access specialist tutors on demand.
@@ -775,7 +792,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </div>
 
       <div class="persona-card reveal reveal-delay-3">
-        <div class="persona-icon">🏫</div>
+        <div class="persona-icon"><i data-lucide="school"></i></div>
         <h3 class="persona-title">Schools & Institutions</h3>
         <p class="persona-desc">
           Enterprise-grade scheduling, predictive relief teacher management, capacity planning, and multi-tenant isolation — purpose-built for educational administration.
@@ -790,7 +807,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </div>
 
       <div class="persona-card reveal reveal-delay-4">
-        <div class="persona-icon">👨‍💻</div>
+        <div class="persona-icon"><i data-lucide="code"></i></div>
         <h3 class="persona-title">Developers & Partners</h3>
         <p class="persona-desc">
           Build on an open, event-driven architecture with typed APIs, webhook integrations, and a developer marketplace. Extend the platform or create on top of it.
@@ -827,7 +844,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
     <div class="ecosystem-grid">
       <!-- Row 1: Featured + 2 regular -->
       <a href="ai-buddy.html" class="eco-card featured reveal">
-        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);">🤖</div>
+        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);"><i data-lucide="bot"></i></div>
         <div class="eco-card-title">AI Buddy — Socratic Learning Companion</div>
         <div class="eco-card-desc">A 24/7 conversational AI built on speech-to-speech architecture. It never gives answers — it asks the right questions, scaffolds understanding, and adapts its approach to each learner's cognitive style. Powered by NLP with context-aware dialogue.</div>
         <div class="eco-card-footer">
@@ -837,7 +854,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </a>
 
       <a href="golden-learning-path.html" class="eco-card reveal reveal-delay-1">
-        <div class="eco-card-icon" style="background: rgba(212, 160, 23, 0.2);">✨</div>
+        <div class="eco-card-icon" style="background: rgba(212, 160, 23, 0.2);"><i data-lucide="sparkles"></i></div>
         <div class="eco-card-title">Golden Learning Path</div>
         <div class="eco-card-desc">Adaptive personalization engine that optimizes trajectories using academic data, engagement metrics, and a unique Curiosity-Driven Data Layer that captures intrinsic motivations.</div>
         <div class="eco-card-footer">
@@ -847,7 +864,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </a>
 
       <a href="curriculum-intelligence.html" class="eco-card reveal reveal-delay-2">
-        <div class="eco-card-icon" style="background: rgba(16, 144, 144, 0.2);">🧠</div>
+        <div class="eco-card-icon" style="background: rgba(16, 144, 144, 0.2);"><i data-lucide="brain"></i></div>
         <div class="eco-card-title">Curriculum Intelligence</div>
         <div class="eco-card-desc">Semantic knowledge graphs built from ACARA, UK National Curriculum, and IB frameworks. Auto-aligns content, discovers cross-curricular connections, and generates lesson plans.</div>
         <div class="eco-card-footer">
@@ -858,7 +875,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 
       <!-- Row 2 -->
       <a href="tutor-booking.html" class="eco-card reveal">
-        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);">👨‍🏫</div>
+        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);"><i data-lucide="user-check"></i></div>
         <div class="eco-card-title">Smart Tutor Booking</div>
         <div class="eco-card-desc">Multi-dimensional AI matching: subject expertise (35%), teaching style (25%), trust score (25%), price fit (15%). Jurisdiction-aware WWCC/DBS safeguarding built in.</div>
         <div class="eco-card-footer">
@@ -868,7 +885,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </a>
 
       <a href="content-marketplace.html" class="eco-card reveal reveal-delay-1">
-        <div class="eco-card-icon" style="background: rgba(180, 77, 108, 0.2);">📚</div>
+        <div class="eco-card-icon" style="background: rgba(180, 77, 108, 0.2);"><i data-lucide="book-open"></i></div>
         <div class="eco-card-title">Content Marketplace</div>
         <div class="eco-card-desc">Teachers Pay Teachers-style marketplace with demand-driven creation. The Learning Asset Request system lets educators vote on what's needed, then creators fulfil requests.</div>
         <div class="eco-card-footer">
@@ -878,7 +895,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </a>
 
       <a href="scheduling-engine.html" class="eco-card reveal reveal-delay-2">
-        <div class="eco-card-icon" style="background: rgba(16, 144, 144, 0.2);">📅</div>
+        <div class="eco-card-icon" style="background: rgba(16, 144, 144, 0.2);"><i data-lucide="calendar"></i></div>
         <div class="eco-card-title">Scheduling Engine</div>
         <div class="eco-card-desc">Institutional timetabling with a 6-stage AI pipeline: CSP hard constraints → ILP mathematical optimization → Genetic Algorithm → Simulated Annealing → ML patterns → Scenario analysis.</div>
         <div class="eco-card-footer">
@@ -888,7 +905,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </a>
 
       <a href="eduscrum.html" class="eco-card reveal reveal-delay-3">
-        <div class="eco-card-icon" style="background: rgba(212, 160, 23, 0.2);">🏃</div>
+        <div class="eco-card-icon" style="background: rgba(212, 160, 23, 0.2);"><i data-lucide="gauge"></i></div>
         <div class="eco-card-title">EduScrum Orchestrator</div>
         <div class="eco-card-desc">Agile methodology for learning: sprint-based cycles, AI Scrum Master coaching, team formation based on complementary strengths, burndown tracking, and AI-facilitated retrospectives.</div>
         <div class="eco-card-footer">
@@ -899,7 +916,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 
       <!-- Row 3: Featured + 2 regular -->
       <a href="lis-bridge.html" class="eco-card featured reveal">
-        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);">🔗</div>
+        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);"><i data-lucide="link"></i></div>
         <div class="eco-card-title">LIS Bridge — Learner Intelligence System</div>
         <div class="eco-card-desc">The nervous system of Scholarly. Connects the cognitive model (Knowledge Graph, Affective State, Forecasts) with every service. Gap-to-Tutor matching translates knowledge gaps into recommended tutors. Affective-aware scheduling respects emotional state. Predictive interventions catch struggling learners before they fall behind. Privacy-first: learners control exactly what data flows where.</div>
         <div class="eco-card-footer">
@@ -909,7 +926,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </a>
 
       <a href="relief-marketplace.html" class="eco-card reveal reveal-delay-1">
-        <div class="eco-card-icon" style="background: rgba(180, 77, 108, 0.2);">🔄</div>
+        <div class="eco-card-icon" style="background: rgba(180, 77, 108, 0.2);"><i data-lucide="refresh-cw"></i></div>
         <div class="eco-card-title">Relief Marketplace</div>
         <div class="eco-card-desc">Super-intelligent relief teacher management with 14-day absence forecasting via ML, proactive pool management, autonomous operations, and multi-dimensional matching that learns from every booking.</div>
         <div class="eco-card-footer">
@@ -920,7 +937,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 
       <!-- Row 4 -->
       <a href="homeschool-hub.html" class="eco-card reveal">
-        <div class="eco-card-icon" style="background: rgba(212, 160, 23, 0.2);">🏡</div>
+        <div class="eco-card-icon" style="background: rgba(212, 160, 23, 0.2);"><i data-lucide="home"></i></div>
         <div class="eco-card-title">Homeschool Hub</div>
         <div class="eco-card-desc">AI-powered family matching by philosophy, location, children's ages and interests. Co-op formation wizard, curriculum-aligned excursion planning, and jurisdiction-specific compliance engines for AU, UK, and Canada.</div>
         <div class="eco-card-footer">
@@ -930,7 +947,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </a>
 
       <a href="micro-schools.html" class="eco-card reveal reveal-delay-1">
-        <div class="eco-card-icon" style="background: rgba(16, 144, 144, 0.2);">🏫</div>
+        <div class="eco-card-icon" style="background: rgba(16, 144, 144, 0.2);"><i data-lucide="school"></i></div>
         <div class="eco-card-title">Micro-Schools</div>
         <div class="eco-card-desc">Full lifecycle management for small learning communities (5–30 students). Compliance engine, enrollment system with waitlist management, staff WWCC verification, and AI health analysis with risk scoring.</div>
         <div class="eco-card-footer">
@@ -940,7 +957,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </a>
 
       <a href="lingua-flow.html" class="eco-card reveal reveal-delay-2">
-        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);">🌍</div>
+        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);"><i data-lucide="globe"></i></div>
         <div class="eco-card-title">LinguaFlow</div>
         <div class="eco-card-desc">Immersive language learning supporting 6 languages with CEFR progression tracking, virtual language exchange partners, cross-reality immersion, and heritage speaker pathways.</div>
         <div class="eco-card-footer">
@@ -950,7 +967,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </a>
 
       <a href="token-economy.html" class="eco-card reveal reveal-delay-3">
-        <div class="eco-card-icon" style="background: rgba(212, 160, 23, 0.2);">🪙</div>
+        <div class="eco-card-icon" style="background: rgba(212, 160, 23, 0.2);"><i data-lucide="coins"></i></div>
         <div class="eco-card-title">Token Economy & DAO</div>
         <div class="eco-card-desc">EDU-Nexus utility tokens power the platform economy. Earn for learning milestones, content creation, and peer feedback. Stake to become a content validator. DAO governance gives the community a vote on platform direction.</div>
         <div class="eco-card-footer">
@@ -961,7 +978,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 
       <!-- Row 5 -->
       <a href="learning-portfolio.html" class="eco-card reveal">
-        <div class="eco-card-icon" style="background: rgba(16, 144, 144, 0.2);">🎓</div>
+        <div class="eco-card-icon" style="background: rgba(16, 144, 144, 0.2);"><i data-lucide="graduation-cap"></i></div>
         <div class="eco-card-title">Learning Portfolio</div>
         <div class="eco-card-desc">Lifelong, self-owned record of achievement powered by Self-Sovereign Identity. Verifiable Credentials for every milestone — micro-credentials, digital badges, and formal certificates in a tamper-proof digital wallet.</div>
         <div class="eco-card-footer">
@@ -971,7 +988,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </a>
 
       <a href="assessment-engine.html" class="eco-card reveal reveal-delay-1">
-        <div class="eco-card-icon" style="background: rgba(180, 77, 108, 0.2);">📝</div>
+        <div class="eco-card-icon" style="background: rgba(180, 77, 108, 0.2);"><i data-lucide="file-text"></i></div>
         <div class="eco-card-title">Assessment Engine</div>
         <div class="eco-card-desc">Dual-mode formative and summative evaluation with AI-powered grading, standards-based gradebook, project-based assessment rubrics, and AI-resilient design that promotes genuine understanding over recitation.</div>
         <div class="eco-card-footer">
@@ -981,7 +998,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
       </a>
 
       <a href="developer-platform.html" class="eco-card reveal reveal-delay-2">
-        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);">⚡</div>
+        <div class="eco-card-icon" style="background: rgba(43, 98, 179, 0.2);"><i data-lucide="zap"></i></div>
         <div class="eco-card-title">Developer Platform</div>
         <div class="eco-card-desc">API-first architecture with OpenAPI specs, NATS event bus, WebSocket real-time events, and a developer marketplace for extensions. Build on Scholarly or integrate it into your existing stack.</div>
         <div class="eco-card-footer">
@@ -1011,32 +1028,32 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
           </div>
           <div class="mesh-nodes">
             <div class="mesh-node">
-              <div class="mesh-node-icon">🧠</div>
+              <div class="mesh-node-icon"><i data-lucide="brain"></i></div>
               <div class="mesh-node-label">Knowledge Graph</div>
               <div class="mesh-node-status">● SYNCED</div>
             </div>
             <div class="mesh-node">
-              <div class="mesh-node-icon">💭</div>
+              <div class="mesh-node-icon"><i data-lucide="message-circle"></i></div>
               <div class="mesh-node-label">Affective State</div>
               <div class="mesh-node-status">● MONITORING</div>
             </div>
             <div class="mesh-node">
-              <div class="mesh-node-icon">📊</div>
+              <div class="mesh-node-icon"><i data-lucide="bar-chart-3"></i></div>
               <div class="mesh-node-label">Forecasts</div>
               <div class="mesh-node-status">● ACTIVE</div>
             </div>
             <div class="mesh-node">
-              <div class="mesh-node-icon">🎯</div>
+              <div class="mesh-node-icon"><i data-lucide="target"></i></div>
               <div class="mesh-node-label">Curriculum AI</div>
               <div class="mesh-node-status">● ALIGNED</div>
             </div>
             <div class="mesh-node">
-              <div class="mesh-node-icon">🔮</div>
+              <div class="mesh-node-icon"><i data-lucide="eye"></i></div>
               <div class="mesh-node-label">Predictive Engine</div>
               <div class="mesh-node-status">● SCANNING</div>
             </div>
             <div class="mesh-node">
-              <div class="mesh-node-icon">🤝</div>
+              <div class="mesh-node-icon"><i data-lucide="handshake"></i></div>
               <div class="mesh-node-label">Tutor Matching</div>
               <div class="mesh-node-status">● READY</div>
             </div>
@@ -1109,27 +1126,27 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 
         <div class="dev-features">
           <div class="dev-feature">
-            <span class="dev-feature-icon">⚡</span>
+            <span class="dev-feature-icon"><i data-lucide="zap"></i></span>
             TypeScript SDK with full type safety
           </div>
           <div class="dev-feature">
-            <span class="dev-feature-icon">🔌</span>
+            <span class="dev-feature-icon"><i data-lucide="plug"></i></span>
             NATS event bus for real-time events
           </div>
           <div class="dev-feature">
-            <span class="dev-feature-icon">🔗</span>
+            <span class="dev-feature-icon"><i data-lucide="link"></i></span>
             <a href="developer-platform.html" style="color: inherit;">1EdTech certified (LTI, OneRoster, CASE)</a>
           </div>
           <div class="dev-feature">
-            <span class="dev-feature-icon">🛡️</span>
+            <span class="dev-feature-icon"><i data-lucide="shield"></i></span>
             OAuth 2.0 + JWT multi-tenant auth
           </div>
           <div class="dev-feature">
-            <span class="dev-feature-icon">📦</span>
+            <span class="dev-feature-icon"><i data-lucide="package"></i></span>
             Result&lt;T&gt; explicit error handling
           </div>
           <div class="dev-feature">
-            <span class="dev-feature-icon">🏗️</span>
+            <span class="dev-feature-icon"><i data-lucide="building"></i></span>
             ScholarlyBaseService inheritance
           </div>
         </div>
@@ -1313,5 +1330,7 @@ document.querySelectorAll('.hero-service-chip').forEach(chip => {
 });
 </script>
 
+<script src="https://unpkg.com/lucide@0.303.0/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
 </body>
 </html>

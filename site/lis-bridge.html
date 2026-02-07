@@ -179,6 +179,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   .footer-inner { flex-direction: column; gap: var(--space-md); text-align: center; }
   .footer-links-row { flex-wrap: wrap; justify-content: center; }
 }
+
+/* Lucide SVG icon sizing */
+.lucide {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  stroke-width: 1.75;
+}
+.hero-proof-avatar .lucide {
+  width: 20px;
+  height: 20px;
+}
+.connected-chip .lucide {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+}
 </style>
 </head>
 <body>
@@ -200,7 +217,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   <div class="container">
     <div class="inner-hero-content" style="animation: fadeUp 0.8s var(--ease-out) 0.1s both;">
       <a href="index.html" class="back-link" style="margin-bottom: var(--space-lg); display: inline-flex;">← Back to Platform Overview</a>
-      <div class="inner-hero-icon">🔗</div>
+      <div class="inner-hero-icon"><i data-lucide="link"></i></div>
       <div class="inner-hero-badge">
         <span class="inner-hero-badge-dot"></span>
         Core Intelligence · 1,535 Lines
@@ -215,7 +232,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   </div>
 </section>
 
-<section class="section"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon">🎯</div><h3>Gap-to-Tutor Matching</h3><p>Knowledge gaps detected by the LIS are automatically translated into recommended tutors and resources. The system finds not just any tutor, but the best one for that specific concept and learning style.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon">🗺️</div><h3>Curriculum-Aligned Pathways</h3><p>Combines LIS cognitive data with curriculum intelligence to generate personalised learning paths that respect both where the learner is and where the curriculum says they should be heading.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon">💭</div><h3>Affective-Aware Scheduling</h3><p>The scheduling engine receives emotional state data (with consent) so it won't schedule a student's hardest subject when they're fatigued. Cognition and emotion are inseparable.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon">🔮</div><h3>Predictive Interventions</h3><p>Continuously scans for struggling learners by analysing patterns across engagement, performance, and behaviour — detecting problems long before traditional measures would flag them.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon">📊</div><h3>Cross-System Analytics</h3><p>Unified analytics view across LIS and all Scholarly services. See the complete picture of a learner's journey — knowledge state, emotional wellbeing, engagement, and academic progress in one dashboard.</p></div><div class="feature-card reveal"><div class="feature-card-icon">🔒</div><h3>Privacy-First Architecture</h3><p>Learners and parents control exactly what data flows between systems through explicit PrivacySettings. Share knowledge graphs but keep emotional data private. Intelligence serves users — it never exploits them.</p></div></div></div></section>
+<section class="section"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="target"></i></div><h3>Gap-to-Tutor Matching</h3><p>Knowledge gaps detected by the LIS are automatically translated into recommended tutors and resources. The system finds not just any tutor, but the best one for that specific concept and learning style.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon"><i data-lucide="map"></i></div><h3>Curriculum-Aligned Pathways</h3><p>Combines LIS cognitive data with curriculum intelligence to generate personalised learning paths that respect both where the learner is and where the curriculum says they should be heading.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon"><i data-lucide="message-circle"></i></div><h3>Affective-Aware Scheduling</h3><p>The scheduling engine receives emotional state data (with consent) so it won't schedule a student's hardest subject when they're fatigued. Cognition and emotion are inseparable.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon"><i data-lucide="eye"></i></div><h3>Predictive Interventions</h3><p>Continuously scans for struggling learners by analysing patterns across engagement, performance, and behaviour — detecting problems long before traditional measures would flag them.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon"><i data-lucide="bar-chart-3"></i></div><h3>Cross-System Analytics</h3><p>Unified analytics view across LIS and all Scholarly services. See the complete picture of a learner's journey — knowledge state, emotional wellbeing, engagement, and academic progress in one dashboard.</p></div><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="lock"></i></div><h3>Privacy-First Architecture</h3><p>Learners and parents control exactly what data flows between systems through explicit PrivacySettings. Share knowledge graphs but keep emotional data private. Intelligence serves users — it never exploits them.</p></div></div></div></section>
 
 <section class="cta-section">
   <div class="container">
@@ -250,5 +267,7 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+<script src="https://unpkg.com/lucide@0.303.0/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
 </body>
 </html>

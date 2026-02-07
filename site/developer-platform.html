@@ -179,6 +179,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   .footer-inner { flex-direction: column; gap: var(--space-md); text-align: center; }
   .footer-links-row { flex-wrap: wrap; justify-content: center; }
 }
+
+/* Lucide SVG icon sizing */
+.lucide {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  stroke-width: 1.75;
+}
+.hero-proof-avatar .lucide {
+  width: 20px;
+  height: 20px;
+}
+.connected-chip .lucide {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+}
 </style>
 </head>
 <body>
@@ -200,7 +217,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   <div class="container">
     <div class="inner-hero-content" style="animation: fadeUp 0.8s var(--ease-out) 0.1s both;">
       <a href="index.html" class="back-link" style="margin-bottom: var(--space-lg); display: inline-flex;">← Back to Platform Overview</a>
-      <div class="inner-hero-icon">⚡</div>
+      <div class="inner-hero-icon"><i data-lucide="zap"></i></div>
       <div class="inner-hero-badge">
         <span class="inner-hero-badge-dot"></span>
         Platform · API-First · Event-Driven
@@ -216,7 +233,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 </section>
 
 <section class="section"><div class="container"><div class="split reveal"><div><div class="section-label"><span class="section-label-line"></span>Architecture Patterns</div><h2 class="section-title">Built for developers, by developers</h2><p class="section-subtitle">Every service follows established patterns: ScholarlyBaseService inheritance, Result&lt;T&gt; error handling, repository pattern abstractions, and event-driven communication through NATS.</p>
-<div class="connected"><div class="connected-title">Integrations & Standards</div><div class="connected-grid"><span class="connected-chip">📐 OpenAPI 3.0</span><span class="connected-chip">🔗 LTI 1.3</span><span class="connected-chip">📊 OneRoster</span><span class="connected-chip">🎯 CASE</span><span class="connected-chip">🎓 CLR</span><span class="connected-chip">📡 Ed-Fi Alliance</span><span class="connected-chip">🔐 OAuth 2.0</span><span class="connected-chip">🔑 JWT</span><span class="connected-chip">📨 NATS</span><span class="connected-chip">🐳 Docker</span><span class="connected-chip">☸️ Kubernetes</span><span class="connected-chip">🧪 Jest + Supertest</span></div></div></div>
+<div class="connected"><div class="connected-title">Integrations & Standards</div><div class="connected-grid"><span class="connected-chip"><i data-lucide="ruler"></i> OpenAPI 3.0</span><span class="connected-chip"><i data-lucide="link"></i> LTI 1.3</span><span class="connected-chip"><i data-lucide="bar-chart-3"></i> OneRoster</span><span class="connected-chip"><i data-lucide="target"></i> CASE</span><span class="connected-chip"><i data-lucide="graduation-cap"></i> CLR</span><span class="connected-chip"><i data-lucide="radio"></i> Ed-Fi Alliance</span><span class="connected-chip"><i data-lucide="key-round"></i> OAuth 2.0</span><span class="connected-chip"><i data-lucide="key"></i> JWT</span><span class="connected-chip"><i data-lucide="mail"></i> NATS</span><span class="connected-chip"><i data-lucide="box"></i> Docker</span><span class="connected-chip"><i data-lucide="settings"></i> Kubernetes</span><span class="connected-chip"><i data-lucide="flask-conical"></i> Jest + Supertest</span></div></div></div>
 <div><div class="code-block"><div class="code-block-header"><div class="code-block-dots"><span class="code-block-dot"></span><span class="code-block-dot"></span><span class="code-block-dot"></span></div><span class="code-block-tab">scholarly-service-pattern.ts</span></div><div class="code-block-body"><span class="cm">// Every service follows this pattern</span>
 <span class="kw">class</span> MyService <span class="kw">extends</span> <span class="fn">ScholarlyBaseService</span> {
 
@@ -243,7 +260,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
     );
   }
 }</div></div></div></div></div></section>
-<section class="section section-alt"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon">📐</div><h3>TypeScript SDK</h3><p>Full type safety across all 12 services. Every method, parameter, and response is strongly typed with comprehensive JSDoc documentation. IDE autocompletion just works.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon">📡</div><h3>Event-Driven Architecture</h3><p>NATS event bus enables real-time cross-service communication. Subscribe to events like 'scholarly.bridge.intervention_created' to build reactive integrations.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon">🏗️</div><h3>Multi-Tenant Isolation</h3><p>Every service accepts tenantId as its first parameter. Complete data isolation at the database level with shared infrastructure for cost efficiency.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon">🧪</div><h3>Testing Infrastructure</h3><p>Jest and Supertest for comprehensive unit, integration, and end-to-end testing. CI/CD pipelines via GitHub Actions ensure code quality at every commit.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon">🐳</div><h3>Container-Ready</h3><p>Docker containerisation with Kubernetes orchestration. Each service scales independently based on its specific triggers — request rate, CPU utilisation, or event backlog.</p></div><div class="feature-card reveal"><div class="feature-card-icon">📊</div><h3>Observability</h3><p>Built-in timing, logging, and caching via ScholarlyBaseService. Every operation is instrumented for performance monitoring, error tracking, and usage analytics.</p></div></div></div></section>
+<section class="section section-alt"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="ruler"></i></div><h3>TypeScript SDK</h3><p>Full type safety across all 12 services. Every method, parameter, and response is strongly typed with comprehensive JSDoc documentation. IDE autocompletion just works.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon"><i data-lucide="radio"></i></div><h3>Event-Driven Architecture</h3><p>NATS event bus enables real-time cross-service communication. Subscribe to events like 'scholarly.bridge.intervention_created' to build reactive integrations.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon"><i data-lucide="building"></i></div><h3>Multi-Tenant Isolation</h3><p>Every service accepts tenantId as its first parameter. Complete data isolation at the database level with shared infrastructure for cost efficiency.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon"><i data-lucide="flask-conical"></i></div><h3>Testing Infrastructure</h3><p>Jest and Supertest for comprehensive unit, integration, and end-to-end testing. CI/CD pipelines via GitHub Actions ensure code quality at every commit.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon"><i data-lucide="box"></i></div><h3>Container-Ready</h3><p>Docker containerisation with Kubernetes orchestration. Each service scales independently based on its specific triggers — request rate, CPU utilisation, or event backlog.</p></div><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="bar-chart-3"></i></div><h3>Observability</h3><p>Built-in timing, logging, and caching via ScholarlyBaseService. Every operation is instrumented for performance monitoring, error tracking, and usage analytics.</p></div></div></div></section>
 
 <section class="cta-section">
   <div class="container">
@@ -278,5 +295,7 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+<script src="https://unpkg.com/lucide@0.303.0/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
 </body>
 </html>

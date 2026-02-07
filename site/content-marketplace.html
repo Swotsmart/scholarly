@@ -179,6 +179,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   .footer-inner { flex-direction: column; gap: var(--space-md); text-align: center; }
   .footer-links-row { flex-wrap: wrap; justify-content: center; }
 }
+
+/* Lucide SVG icon sizing */
+.lucide {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  stroke-width: 1.75;
+}
+.hero-proof-avatar .lucide {
+  width: 20px;
+  height: 20px;
+}
+.connected-chip .lucide {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+}
 </style>
 </head>
 <body>
@@ -200,7 +217,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   <div class="container">
     <div class="inner-hero-content" style="animation: fadeUp 0.8s var(--ease-out) 0.1s both;">
       <a href="index.html" class="back-link" style="margin-bottom: var(--space-lg); display: inline-flex;">← Back to Platform Overview</a>
-      <div class="inner-hero-icon">📚</div>
+      <div class="inner-hero-icon"><i data-lucide="book-open"></i></div>
       <div class="inner-hero-badge">
         <span class="inner-hero-badge-dot"></span>
         Economy · 849 Lines
@@ -215,7 +232,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   </div>
 </section>
 
-<section class="section"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon">📤</div><h3>Content Publishing</h3><p>Publish educational resources with automatic curriculum alignment. The Curriculum Curator maps your content to relevant standards so buyers find exactly what they need.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon">🗳️</div><h3>Learning Asset Requests</h3><p>Can't find what you need? Create a Learning Asset Request. Other teachers vote on it, showing demand. Creators see what's needed and fulfil requests — demand drives supply.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon">⭐</div><h3>Creator Economy</h3><p>Level-based creator progression with earnings tracking. Build a reputation, earn from downloads, and climb from new creator to featured expert as your content gains traction.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon">🪙</div><h3>Token Integration</h3><p>Purchases can be made with EDU-Nexus tokens. Earn tokens for creating popular content, and spend them on resources from other educators — a self-sustaining economy.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon">📊</div><h3>Reviews & Ratings</h3><p>Community-driven quality signals help the best content rise. Detailed reviews include alignment accuracy, classroom effectiveness, and differentiation quality.</p></div><div class="feature-card reveal"><div class="feature-card-icon">🔍</div><h3>Trending Requests</h3><p>See what teachers across the platform are asking for. Trending requests reveal gaps in available resources — opportunities for creators who want to make an impact.</p></div></div></div></section>
+<section class="section"><div class="container"><div class="feature-grid"><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="upload"></i></div><h3>Content Publishing</h3><p>Publish educational resources with automatic curriculum alignment. The Curriculum Curator maps your content to relevant standards so buyers find exactly what they need.</p></div><div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon"><i data-lucide="vote"></i></div><h3>Learning Asset Requests</h3><p>Can't find what you need? Create a Learning Asset Request. Other teachers vote on it, showing demand. Creators see what's needed and fulfil requests — demand drives supply.</p></div><div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon"><i data-lucide="star"></i></div><h3>Creator Economy</h3><p>Level-based creator progression with earnings tracking. Build a reputation, earn from downloads, and climb from new creator to featured expert as your content gains traction.</p></div><div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon"><i data-lucide="coins"></i></div><h3>Token Integration</h3><p>Purchases can be made with EDU-Nexus tokens. Earn tokens for creating popular content, and spend them on resources from other educators — a self-sustaining economy.</p></div><div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon"><i data-lucide="bar-chart-3"></i></div><h3>Reviews & Ratings</h3><p>Community-driven quality signals help the best content rise. Detailed reviews include alignment accuracy, classroom effectiveness, and differentiation quality.</p></div><div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="search"></i></div><h3>Trending Requests</h3><p>See what teachers across the platform are asking for. Trending requests reveal gaps in available resources — opportunities for creators who want to make an impact.</p></div></div></div></section>
 
 <section class="cta-section">
   <div class="container">
@@ -250,5 +267,7 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+<script src="https://unpkg.com/lucide@0.303.0/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
 </body>
 </html>

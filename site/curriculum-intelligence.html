@@ -179,6 +179,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   .footer-inner { flex-direction: column; gap: var(--space-md); text-align: center; }
   .footer-links-row { flex-wrap: wrap; justify-content: center; }
 }
+
+/* Lucide SVG icon sizing */
+.lucide {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  stroke-width: 1.75;
+}
+.hero-proof-avatar .lucide {
+  width: 20px;
+  height: 20px;
+}
+.connected-chip .lucide {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+}
 </style>
 </head>
 <body>
@@ -200,7 +217,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   <div class="container">
     <div class="inner-hero-content" style="animation: fadeUp 0.8s var(--ease-out) 0.1s both;">
       <a href="index.html" class="back-link" style="margin-bottom: var(--space-lg); display: inline-flex;">← Back to Platform Overview</a>
-      <div class="inner-hero-icon">🧠</div>
+      <div class="inner-hero-icon"><i data-lucide="brain"></i></div>
       <div class="inner-hero-badge">
         <span class="inner-hero-badge-dot"></span>
         Intelligence Layer · 2,502 Lines
@@ -218,23 +235,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 
 <section class="section"><div class="container"><div class="reveal" style="text-align:center;max-width:600px;margin:0 auto;"><div class="section-label"><span class="section-label-line"></span>Core Capabilities</div><h2 class="section-title">From static standards to living intelligence</h2><p class="section-subtitle" style="margin:0 auto;">Nine key methods transform how institutions interact with curriculum — from ingestion through enrichment to generation.</p></div>
 <div class="feature-grid">
-<div class="feature-card reveal"><div class="feature-card-icon">📥</div><h3>Curriculum Ingestion</h3><p>Parse RDF/XML formats from ACARA (Australia), UK National Curriculum, IB (PYP/MYP/DP), and other international frameworks into a unified internal representation.</p></div>
-<div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon">🕸️</div><h3>Knowledge Graph</h3><p>Build semantic connections between concepts, skills, and standards. Understand prerequisites, extensions, and conceptual relationships that span across year levels and subjects.</p></div>
-<div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon">🎯</div><h3>Auto-Alignment</h3><p>AI matches educational content to curriculum codes automatically. Upload a resource and the system identifies which standards it addresses, saving hours of manual mapping.</p></div>
-<div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon">🔀</div><h3>Cross-Curricular Discovery</h3><p>Find connections across subjects that traditional siloed curricula miss. A maths concept might connect to science experiments, history timelines, and art patterns.</p></div>
-<div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon">📝</div><h3>Lesson Plan Generation</h3><p>AI-powered lesson plan creation that's curriculum-aligned, differentiated, and includes learning intentions, success criteria, and assessment strategies.</p></div>
-<div class="feature-card reveal"><div class="feature-card-icon">🏗️</div><h3>Bloom's Taxonomy Mapping</h3><p>Automatic cognitive level classification ensures assessments and activities target appropriate levels — from remembering and understanding to evaluating and creating.</p></div>
+<div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="inbox"></i></div><h3>Curriculum Ingestion</h3><p>Parse RDF/XML formats from ACARA (Australia), UK National Curriculum, IB (PYP/MYP/DP), and other international frameworks into a unified internal representation.</p></div>
+<div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon"><i data-lucide="network"></i></div><h3>Knowledge Graph</h3><p>Build semantic connections between concepts, skills, and standards. Understand prerequisites, extensions, and conceptual relationships that span across year levels and subjects.</p></div>
+<div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon"><i data-lucide="target"></i></div><h3>Auto-Alignment</h3><p>AI matches educational content to curriculum codes automatically. Upload a resource and the system identifies which standards it addresses, saving hours of manual mapping.</p></div>
+<div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon"><i data-lucide="git-merge"></i></div><h3>Cross-Curricular Discovery</h3><p>Find connections across subjects that traditional siloed curricula miss. A maths concept might connect to science experiments, history timelines, and art patterns.</p></div>
+<div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon"><i data-lucide="file-text"></i></div><h3>Lesson Plan Generation</h3><p>AI-powered lesson plan creation that's curriculum-aligned, differentiated, and includes learning intentions, success criteria, and assessment strategies.</p></div>
+<div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="building"></i></div><h3>Bloom's Taxonomy Mapping</h3><p>Automatic cognitive level classification ensures assessments and activities target appropriate levels — from remembering and understanding to evaluating and creating.</p></div>
 </div></div></section>
 <section class="section section-dark"><div class="container"><div class="split reveal"><div><div class="section-label" style="color:var(--teal-300);"><span class="section-label-line" style="background:var(--teal-400);"></span>API Methods</div><h2 class="section-title" style="color:white;">Nine methods, infinite possibilities</h2><p class="section-subtitle">Every method returns Result&lt;T&gt; for explicit error handling, accepts tenantId for multi-tenant isolation, and publishes events for cross-service integration.</p></div><div><div class="specs-grid">
-<div class="spec"><div class="spec-icon">📥</div><div class="spec-text"><strong>ingestCurriculum()</strong><span>Parse and store framework from RDF/XML</span></div></div>
-<div class="spec"><div class="spec-icon">✨</div><div class="spec-text"><strong>enrichCurriculum()</strong><span>AI enrichment with concepts & prerequisites</span></div></div>
-<div class="spec"><div class="spec-icon">🕸️</div><div class="spec-text"><strong>buildKnowledgeGraph()</strong><span>Create semantic knowledge graph</span></div></div>
-<div class="spec"><div class="spec-icon">📈</div><div class="spec-text"><strong>getLearningProgression()</strong><span>Get prerequisite/extension chain</span></div></div>
-<div class="spec"><div class="spec-icon">🎯</div><div class="spec-text"><strong>alignContent()</strong><span>Auto-align content to curriculum codes</span></div></div>
-<div class="spec"><div class="spec-icon">🔀</div><div class="spec-text"><strong>discoverCrossCurricular()</strong><span>Find cross-subject connections</span></div></div>
-<div class="spec"><div class="spec-icon">📝</div><div class="spec-text"><strong>generateLessonPlan()</strong><span>AI-powered lesson plan generation</span></div></div>
-<div class="spec"><div class="spec-icon">📚</div><div class="spec-text"><strong>generateUnitPlan()</strong><span>Multi-lesson unit planning</span></div></div>
-<div class="spec"><div class="spec-icon">🔍</div><div class="spec-text"><strong>searchCurriculum()</strong><span>Natural language curriculum search</span></div></div>
+<div class="spec"><div class="spec-icon"><i data-lucide="inbox"></i></div><div class="spec-text"><strong>ingestCurriculum()</strong><span>Parse and store framework from RDF/XML</span></div></div>
+<div class="spec"><div class="spec-icon"><i data-lucide="sparkles"></i></div><div class="spec-text"><strong>enrichCurriculum()</strong><span>AI enrichment with concepts & prerequisites</span></div></div>
+<div class="spec"><div class="spec-icon"><i data-lucide="network"></i></div><div class="spec-text"><strong>buildKnowledgeGraph()</strong><span>Create semantic knowledge graph</span></div></div>
+<div class="spec"><div class="spec-icon"><i data-lucide="trending-up"></i></div><div class="spec-text"><strong>getLearningProgression()</strong><span>Get prerequisite/extension chain</span></div></div>
+<div class="spec"><div class="spec-icon"><i data-lucide="target"></i></div><div class="spec-text"><strong>alignContent()</strong><span>Auto-align content to curriculum codes</span></div></div>
+<div class="spec"><div class="spec-icon"><i data-lucide="git-merge"></i></div><div class="spec-text"><strong>discoverCrossCurricular()</strong><span>Find cross-subject connections</span></div></div>
+<div class="spec"><div class="spec-icon"><i data-lucide="file-text"></i></div><div class="spec-text"><strong>generateLessonPlan()</strong><span>AI-powered lesson plan generation</span></div></div>
+<div class="spec"><div class="spec-icon"><i data-lucide="book-open"></i></div><div class="spec-text"><strong>generateUnitPlan()</strong><span>Multi-lesson unit planning</span></div></div>
+<div class="spec"><div class="spec-icon"><i data-lucide="search"></i></div><div class="spec-text"><strong>searchCurriculum()</strong><span>Natural language curriculum search</span></div></div>
 </div></div></div></div></section>
 
 <section class="cta-section">
@@ -270,5 +287,7 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+<script src="https://unpkg.com/lucide@0.303.0/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
 </body>
 </html>

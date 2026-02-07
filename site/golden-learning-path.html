@@ -179,6 +179,23 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   .footer-inner { flex-direction: column; gap: var(--space-md); text-align: center; }
   .footer-links-row { flex-wrap: wrap; justify-content: center; }
 }
+
+/* Lucide SVG icon sizing */
+.lucide {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+  stroke-width: 1.75;
+}
+.hero-proof-avatar .lucide {
+  width: 20px;
+  height: 20px;
+}
+.connected-chip .lucide {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.1em;
+}
 </style>
 </head>
 <body>
@@ -200,7 +217,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
   <div class="container">
     <div class="inner-hero-content" style="animation: fadeUp 0.8s var(--ease-out) 0.1s both;">
       <a href="index.html" class="back-link" style="margin-bottom: var(--space-lg); display: inline-flex;">← Back to Platform Overview</a>
-      <div class="inner-hero-icon">✨</div>
+      <div class="inner-hero-icon"><i data-lucide="sparkles"></i></div>
       <div class="inner-hero-badge">
         <span class="inner-hero-badge-dot"></span>
         Personalization Engine · Adaptive AI
@@ -218,16 +235,16 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 
 <section class="section"><div class="container"><div class="reveal" style="text-align:center;max-width:600px;margin:0 auto;"><div class="section-label"><span class="section-label-line"></span>How It Works</div><h2 class="section-title">Beyond quiz scores — holistic personalization</h2><p class="section-subtitle" style="margin:0 auto;">The engine creates a multi-faceted learner profile that includes academic performance, engagement patterns, time-on-task metrics, and the curiosity signals that reveal emerging passions.</p></div>
 <div class="feature-grid">
-<div class="feature-card reveal"><div class="feature-card-icon">📊</div><h3>Academic Data</h3><p>Traditional grades and assessment performance form the foundation, but the engine looks deeper — at patterns within answers, time spent on different question types, and conceptual gaps revealed by specific errors.</p></div>
-<div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon">⏱️</div><h3>Engagement Metrics</h3><p>Time spent on tasks, interaction patterns with content, assignment completion rates, and platform navigation behaviours reveal how a student actually engages with learning material.</p></div>
-<div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon">🔮</div><h3>Curiosity-Driven Data</h3><p>The questions students ask the AI Buddy, the topics they explore independently, and the conceptual rabbit holes they follow. This data is a powerful leading indicator of intrinsic motivation — information traditional metrics miss entirely.</p></div>
-<div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon">🎯</div><h3>Adaptive Difficulty</h3><p>If a student masters a concept quickly, the system accelerates to more challenging material. If they struggle, it provides remedial support, alternative explanations, or different content modalities.</p></div>
-<div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon">🔄</div><h3>Modality Switching</h3><p>Automatically switches between text, visual simulations, video, and interactive exercises based on what works best for each learner. A student who struggles with text-based algebra might thrive with visual representations.</p></div>
-<div class="feature-card reveal"><div class="feature-card-icon">🧭</div><h3>Talent Discovery</h3><p>The curiosity data layer transforms the AI from a reactive tutor into a proactive talent scout — identifying nascent interests and suggesting cross-disciplinary projects the student might not have discovered otherwise.</p></div>
+<div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="bar-chart-3"></i></div><h3>Academic Data</h3><p>Traditional grades and assessment performance form the foundation, but the engine looks deeper — at patterns within answers, time spent on different question types, and conceptual gaps revealed by specific errors.</p></div>
+<div class="feature-card reveal reveal-delay-1"><div class="feature-card-icon"><i data-lucide="clock"></i></div><h3>Engagement Metrics</h3><p>Time spent on tasks, interaction patterns with content, assignment completion rates, and platform navigation behaviours reveal how a student actually engages with learning material.</p></div>
+<div class="feature-card reveal reveal-delay-2"><div class="feature-card-icon"><i data-lucide="eye"></i></div><h3>Curiosity-Driven Data</h3><p>The questions students ask the AI Buddy, the topics they explore independently, and the conceptual rabbit holes they follow. This data is a powerful leading indicator of intrinsic motivation — information traditional metrics miss entirely.</p></div>
+<div class="feature-card reveal reveal-delay-3"><div class="feature-card-icon"><i data-lucide="target"></i></div><h3>Adaptive Difficulty</h3><p>If a student masters a concept quickly, the system accelerates to more challenging material. If they struggle, it provides remedial support, alternative explanations, or different content modalities.</p></div>
+<div class="feature-card reveal reveal-delay-4"><div class="feature-card-icon"><i data-lucide="refresh-cw"></i></div><h3>Modality Switching</h3><p>Automatically switches between text, visual simulations, video, and interactive exercises based on what works best for each learner. A student who struggles with text-based algebra might thrive with visual representations.</p></div>
+<div class="feature-card reveal"><div class="feature-card-icon"><i data-lucide="compass"></i></div><h3>Talent Discovery</h3><p>The curiosity data layer transforms the AI from a reactive tutor into a proactive talent scout — identifying nascent interests and suggesting cross-disciplinary projects the student might not have discovered otherwise.</p></div>
 </div></div></section>
 <section class="section section-alt"><div class="container"><div class="split reveal"><div><div class="section-label"><span class="section-label-line"></span>Connected Intelligence</div><h2 class="section-title">Powered by the LIS Bridge</h2><p class="section-subtitle">The Golden Learning Path draws its intelligence from the Learner Intelligence System — a living cognitive model that understands not just what a student knows, but how they think and feel about learning.</p>
-<div class="connected"><div class="connected-title">Connected Services</div><div class="connected-grid"><a href="ai-buddy.html" class="connected-chip">🤖 AI Buddy</a><a href="lis-bridge.html" class="connected-chip">🔗 LIS Bridge</a><a href="curriculum-intelligence.html" class="connected-chip">🧠 Curriculum Intelligence</a><a href="assessment-engine.html" class="connected-chip">📝 Assessment Engine</a><a href="content-marketplace.html" class="connected-chip">📚 Content Marketplace</a></div></div></div>
-<div class="split-visual-card"><div style="text-align:center;padding:var(--space-xl);"><div style="font-size:2.5rem;margin-bottom:var(--space-md);">✨</div><div style="font-family:var(--font-display);font-size:1.3rem;margin-bottom:var(--space-md);">Learner Profile</div><div style="display:grid;gap:var(--space-sm);">
+<div class="connected"><div class="connected-title">Connected Services</div><div class="connected-grid"><a href="ai-buddy.html" class="connected-chip"><i data-lucide="bot"></i> AI Buddy</a><a href="lis-bridge.html" class="connected-chip"><i data-lucide="link"></i> LIS Bridge</a><a href="curriculum-intelligence.html" class="connected-chip"><i data-lucide="brain"></i> Curriculum Intelligence</a><a href="assessment-engine.html" class="connected-chip"><i data-lucide="file-text"></i> Assessment Engine</a><a href="content-marketplace.html" class="connected-chip"><i data-lucide="book-open"></i> Content Marketplace</a></div></div></div>
+<div class="split-visual-card"><div style="text-align:center;padding:var(--space-xl);"><div style="font-size:2.5rem;margin-bottom:var(--space-md);"><i data-lucide="sparkles"></i></div><div style="font-family:var(--font-display);font-size:1.3rem;margin-bottom:var(--space-md);">Learner Profile</div><div style="display:grid;gap:var(--space-sm);">
 <div style="display:flex;justify-content:space-between;font-size:0.8rem;"><span>Mastery Level</span><span style="font-family:var(--font-mono);color:var(--amber-500);font-weight:600;">87%</span></div><div style="height:6px;background:var(--bg-elevated);border-radius:3px;overflow:hidden;"><div style="width:87%;height:100%;background:linear-gradient(90deg,var(--amber-500),var(--amber-300));border-radius:3px;"></div></div>
 <div style="display:flex;justify-content:space-between;font-size:0.8rem;"><span>Engagement</span><span style="font-family:var(--font-mono);color:var(--sapphire-500);font-weight:600;">92%</span></div><div style="height:6px;background:var(--bg-elevated);border-radius:3px;overflow:hidden;"><div style="width:92%;height:100%;background:linear-gradient(90deg,var(--sapphire-500),var(--sapphire-300));border-radius:3px;"></div></div>
 <div style="display:flex;justify-content:space-between;font-size:0.8rem;"><span>Curiosity Index</span><span style="font-family:var(--font-mono);color:var(--teal-500);font-weight:600;">78%</span></div><div style="height:6px;background:var(--bg-elevated);border-radius:3px;overflow:hidden;"><div style="width:78%;height:100%;background:linear-gradient(90deg,var(--teal-500),var(--teal-300));border-radius:3px;"></div></div>
@@ -266,5 +283,7 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
+<script src="https://unpkg.com/lucide@0.303.0/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
 </body>
 </html>
