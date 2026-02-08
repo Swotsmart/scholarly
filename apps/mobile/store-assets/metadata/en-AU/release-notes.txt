@@ -1,0 +1,6 @@
+Welcome to Scholarly - Learn to Read! This is our first release featuring:
+- Phonics Forest: Learn letter sounds through an enchanted forest adventure
+- Story Garden: Read interactive stories that grow with your child
+- Parent Dashboard: Track progress and manage profiles
+- Daily reading reminders via push notifications
+- Full COPPA compliance — no ads, no tracking, no social features

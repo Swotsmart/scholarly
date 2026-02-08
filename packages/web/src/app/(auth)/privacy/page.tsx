@@ -27,9 +27,9 @@ const sections = [
       'Scholarly operates in compliance with the Australian Privacy Principles (APPs) set out in the Privacy Act 1988 (Cth). We are committed to open and transparent management of personal information (APP 1), collecting only information that is reasonably necessary (APP 3), and ensuring information is accurate, up-to-date, and complete (APP 10). We take reasonable steps to protect personal information from misuse, interference, loss, and unauthorised access (APP 11).',
   },
   {
-    title: "5. Children's Privacy",
+    title: "5. Children's Privacy & COPPA Compliance",
     content:
-      'We take the privacy of children seriously and comply with the Australian Privacy Act provisions regarding sensitive information about minors. Parental or guardian consent is required for users under 16 years of age. Parents and guardians can review, modify, or request deletion of their child\'s information at any time. We do not knowingly collect personal information from children under 13 without verified parental consent, in alignment with both Australian regulations and international best practices.',
+      'We take the privacy of children seriously and comply with the Australian Privacy Act provisions regarding sensitive information about minors, as well as the US Children\'s Online Privacy Protection Act (COPPA). Parental or guardian consent is required for users under 16 years of age. Our "Learn to Read" mobile app (ages 3-7) collects no personal information from children: no names, photos, device identifiers (IDFA/GAID), location data, or audio recordings. The app contains no advertisements, no social features, no third-party tracking SDKs, and all parent-facing features are protected by a parental gate. Parents and guardians can review, modify, or request deletion of their child\'s information at any time by contacting privacy@scholarly.edu.au.',
   },
   {
     title: '6. Data Sharing and Third Parties',

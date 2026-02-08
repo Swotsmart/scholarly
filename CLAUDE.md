@@ -15,6 +15,8 @@ scholarly/
 │   ├── shared/       # @scholarly/shared - Shared types/utilities
 │   ├── blockchain/   # @scholarly/blockchain - Token economy (ethers.js)
 │   └── curriculum-processor/  # Curriculum ingestion tooling
+├── apps/
+│   └── mobile/       # @scholarly/mobile - Expo React Native app (Phonics & Storybook)
 ├── site/             # Static landing site (HTML files copied to web/public)
 ├── Dockerfile        # Web production image (multi-stage, standalone Next.js)
 ├── Dockerfile.api    # API production image
@@ -351,10 +353,155 @@ The original sprint delivery specs (Sprints 1-18) are located at:
 
 **NOTE**: This path (`~/claude-code/scholarly/`) is DIFFERENT from the working repo (`~/claude-code/orebot/scholarly/`). Sprint specs have been copied into `packages/api/src/services/` and `packages/api/src/infrastructure/`.
 
+## Mobile App (`apps/mobile`)
+
+### Overview
+- **Package**: `@scholarly/mobile`
+- **App name**: "Scholarly - Learn to Read"
+- **Target**: Ages 3-7 (Phonics Forest + Story Garden)
+- **Architecture**: Expo native shell + WebView for interactive content
+- **iOS Bundle ID**: `com.scholarly.phonics`
+- **Android Package**: `app.scholarly.phonics`
+
+### Stack
+- **Framework**: Expo ~52.0.0 + React Native 0.76.5
+- **Router**: Expo Router ~4.0.0 (file-based routing)
+- **State**: Zustand ^4.4.7
+- **WebView**: react-native-webview 13.12.5
+- **Auth storage**: expo-secure-store
+- **Haptics**: expo-haptics
+- **Notifications**: expo-notifications
+- **IAP**: expo-in-app-purchases
+- **Build/Submit**: EAS CLI (eas.json profiles: development, preview, production)
+
+### Architecture
+
+**Native shell** handles: splash, onboarding, auth, tab navigation, parental gate, subscriptions, push notifications, haptic feedback.
+
+**WebView** loads the deployed Next.js early-years pages at the Container App FQDN for the complex interactive phonics/story content (30,000+ lines of React with Framer Motion, audio, drag-and-drop).
+
+**Bridge protocol**: `postMessage`/`onMessage` for WebView ↔ Native communication. Message types defined in `apps/mobile/lib/bridge.ts`. Web-side hook at `packages/web/src/hooks/use-native-bridge.ts`.
+
+### Project Structure
+
+```
+apps/mobile/
+├── app.config.ts                # Dynamic Expo config (bundle IDs, splash, plugins)
+├── eas.json                     # EAS Build + Submit profiles
+├── package.json                 # @scholarly/mobile
+├── metro.config.js              # Monorepo-aware Metro bundler config
+├── babel.config.js              # Babel + reanimated plugin
+├── tsconfig.json                # Extends expo/tsconfig.base
+├── index.ts                     # Entry (expo-router/entry)
+├── assets/                      # Icon, splash, adaptive icon, fonts
+├── app/                         # Expo Router file-based routes
+│   ├── _layout.tsx              # Root layout (SafeAreaProvider, fonts, splash gate)
+│   ├── (auth)/                  # Auth stack
+│   │   ├── _layout.tsx          # Redirects if authenticated
+│   │   ├── welcome.tsx          # 3-slide onboarding + COPPA consent checkbox
+│   │   └── login.tsx            # Parent email/password login
+│   ├── (tabs)/                  # Main tab navigator
+│   │   ├── _layout.tsx          # 3-tab layout (Home, Learn, Parent)
+│   │   ├── index.tsx            # Home: child greeting, module cards, daily stats
+│   │   ├── learn.tsx            # Learn: WebView → /early-years
+│   │   └── parent.tsx           # Parent: settings, subscription, privacy (gate-protected)
+│   ├── parental-gate.tsx        # Modal: math question gate (30s timeout, 3 attempts)
+│   └── subscription.tsx         # Modal: IAP paywall (3 tiers)
+├── components/
+│   ├── WebViewShell.tsx         # WebView with bridge, offline fallback, domain lock
+│   ├── ParentalGate.tsx         # COPPA math-based gate UI
+│   ├── SplashLoader.tsx         # Animated splash screen
+│   ├── OnboardingSlide.tsx      # Welcome carousel slide
+│   └── SubscriptionCard.tsx     # IAP tier card
+├── hooks/
+│   ├── useWebViewBridge.ts      # WebView ↔ Native messaging helpers
+│   ├── useParentalGate.ts       # Gate state + requireGate() helper
+│   ├── usePushNotifications.ts  # Permission + daily reminder scheduling
+│   └── useSubscription.ts       # IAP products, purchase, restore
+├── lib/
+│   ├── bridge.ts                # WebToNativeMessage/NativeToWebMessage types + serialization
+│   ├── auth.ts                  # expo-secure-store token CRUD
+│   ├── analytics.ts             # Privacy-safe (random session IDs only, no IDFA/GAID)
+│   └── constants.ts             # URLs, bundle IDs, subscription tiers, colors
+├── stores/
+│   ├── app-store.ts             # Online status, active child, parental gate, subscription
+│   └── auth-store.ts            # Auth state with expo-secure-store persistence
+├── ios/scholarly-phonics/
+│   └── PrivacyInfo.xcprivacy    # iOS 17+ privacy manifest (no tracking, no collected data)
+└── store-assets/
+    ├── screenshots/             # 15 mockups: iphone-67/, ipad-129/, android/ (5 each)
+    └── metadata/en-AU/          # title, subtitle, description, keywords, release-notes
+```
+
+### COPPA Compliance
+- No ads, no IDFA/GAID, no third-party tracking, no social features for children
+- Parental gate (math question, 30s timeout, 3 attempts) required before: settings, subscriptions, parent dashboard, external links
+- COPPA consent checkbox on onboarding (must be affirmatively tapped by parent)
+- Gate valid for 15 minutes after passing
+- Privacy-safe analytics: random session IDs only, no personal data
+
+### WebView Bridge Messages
+
+**Web → Native**: `haptic`, `navigate`, `authRequest`, `openParentalGate`, `sessionComplete`, `audioPlay`, `audioStop`, `ready`
+
+**Native → Web**: `authToken`, `parentalGateResult`, `themeChange`, `offlineStatus`, `subscriptionStatus`
+
+### Subscription Tiers (IAP)
+| Tier | Product ID | Price | Trial |
+|------|-----------|-------|-------|
+| Explorer | `scholarly_explorer_monthly` | $4.99/mo | 7 days |
+| Scholar | `scholarly_scholar_monthly` | $9.99/mo | 7 days |
+| Academy | `scholarly_academy_monthly` | $19.99/mo | 14 days |
+
+### Key Commands
+
+| Command | Description |
+|---------|-------------|
+| `cd apps/mobile && npx expo start` | Start Expo dev server |
+| `eas build --profile development --platform ios` | Build dev client (iOS simulator) |
+| `eas build --profile preview --platform all` | Build preview for device testing |
+| `eas build --profile production --platform all` | Build production binaries |
+| `eas submit --platform ios --profile production` | Submit to App Store |
+| `eas submit --platform android --profile production` | Submit to Google Play |
+
+### Prerequisites for App Store Submission
+1. Apple Developer Program membership ($99/year)
+2. Google Play Developer account ($25 one-time)
+3. App ID `com.scholarly.phonics` in Apple Developer portal
+4. App created in App Store Connect and Google Play Console
+5. App Store Connect API key → set in `eas.json`
+6. Google Play service account JSON key → `apps/mobile/google-play-service-account.json` (gitignored)
+7. EAS CLI: `npm install -g eas-cli && eas login`
+8. Replace `YOUR_EAS_PROJECT_ID` in `app.config.ts` after `eas init`
+9. ~~Replace placeholder PNGs in `assets/`~~ — DONE: Production icons (1024x1024) and splash (1284x2778) are in place
+10. Add Montserrat font files to `assets/fonts/` (Regular, Bold, SemiBold .ttf) — directory exists but is **empty**
+
+### App Store Deployment Status (as of 2026-02-08)
+
+**No builds or submissions have been made.** No `.eas/` directory or build artifacts exist.
+
+| Item | Status | Notes |
+|------|--------|-------|
+| App icons & splash | Done | Production art at correct dimensions (1024x1024 icon, 1284x2778 splash) |
+| Store screenshots | Done | 15 mockups across 3 device classes (iPhone 6.7", iPad 12.9", Android) |
+| Store metadata (en-AU) | Done | Title, subtitle, keywords, description, release notes, promotional text |
+| iOS Privacy Manifest | Done | COPPA-compliant, no tracking, no data collection |
+| Subscription IAP config | Done | 3 tiers in `lib/constants.ts` |
+| **EAS Project ID** | **BLOCKED** | `app.config.ts` line 75 still has `YOUR_EAS_PROJECT_ID` — run `eas init` |
+| **Montserrat fonts** | **BLOCKED** | `assets/fonts/` is empty — download Regular/Bold/SemiBold .ttf from Google Fonts |
+| **Apple credentials** | **BLOCKED** | `eas.json` has `YOUR_APPLE_ID`, `YOUR_APP_STORE_CONNECT_APP_ID`, `YOUR_APPLE_TEAM_ID` |
+| **Google Play service account** | **BLOCKED** | `google-play-service-account.json` missing (gitignored) — create in Google Cloud Console |
+
+### Web-Side Integration
+- `packages/web/src/hooks/use-native-bridge.ts` — Detects `window.ReactNativeWebView`, provides haptic/navigate/auth bridge methods
+- Loaded in `packages/web/src/app/(early-years)/layout.tsx` via `useNativeBridge()` hook
+- `packages/web/src/app/(auth)/privacy/page.tsx` — Updated with COPPA/mobile-specific sections (required URL for both stores)
+- `packages/web/src/app/(auth)/support/page.tsx` — Help & support page (required URL for both stores)
+
 ## Conventions
 
-- **Imports**: Use `@/` path alias for web package (maps to `packages/web/src/`)
+- **Imports**: Use `@/` path alias for web package (maps to `packages/web/src/`), and for mobile package (maps to `apps/mobile/`)
 - **Components**: Shadcn/UI components live in `packages/web/src/components/ui/`
 - **Types**: Domain types in `packages/web/src/types/`
-- **No emoji in UI**: Use lucide-react icons exclusively (except Early Years + country flags)
+- **No emoji in UI**: Use lucide-react icons exclusively (except Early Years + country flags + mobile app child-facing screens)
 - **Workspace deps**: Use `workspace:*` for internal package references

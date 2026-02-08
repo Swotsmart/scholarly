@@ -1,0 +1,48 @@
+Scholarly is the fun, safe way for young children to learn to read. Designed by educators for ages 3-7, our app combines proven phonics methods with interactive storytelling to build reading confidence.
+
+PHONICS FOREST
+Explore a magical forest where each tree teaches a new letter sound. Children progress through carefully sequenced phonics lessons with:
+- Letter recognition and formation
+- Phoneme blending and segmenting
+- Sight word practice
+- CVC word building
+- Decodable reading passages
+
+STORY GARDEN
+Watch reading skills bloom in our interactive story garden:
+- AI-generated stories that adapt to your child's reading level
+- Touch-to-hear word pronunciation
+- Comprehension questions woven into the narrative
+- Beautiful illustrations that bring stories to life
+- A growing library of age-appropriate tales
+
+DESIGNED FOR LITTLE LEARNERS
+- Large, colourful touch targets designed for small fingers
+- Encouraging audio feedback and haptic rewards
+- No text-heavy menus — children navigate independently
+- Gentle pacing that respects each child's learning speed
+
+SAFE & PRIVATE (COPPA COMPLIANT)
+- No ads — ever
+- No social features or messaging
+- No personal data collected from children
+- No third-party tracking or analytics SDKs
+- Parental gate protects all settings and purchases
+- All content reviewed for age-appropriateness
+
+FOR PARENTS
+- Track your child's phonics progress
+- See which letters and words they've mastered
+- Set daily reading time reminders
+- Manage up to 3 child profiles (Scholar plan)
+- Detailed progress reports emailed weekly
+
+SUBSCRIPTION OPTIONS
+- Explorer: $4.99/month (7-day free trial) — 1 child profile
+- Scholar: $9.99/month (7-day free trial) — Up to 3 profiles + progress reports
+- Academy: $19.99/month (14-day free trial) — Unlimited profiles + AI tutor
+
+Payment will be charged to your App Store account at confirmation of purchase. Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period. You can manage and cancel your subscriptions by going to your account settings on the App Store after purchase.
+
+Privacy Policy: https://scholarly.bravefield-dce0abaf.australiaeast.azurecontainerapps.io/privacy
+Terms of Use: https://scholarly.bravefield-dce0abaf.australiaeast.azurecontainerapps.io/support

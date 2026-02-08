@@ -8,6 +8,7 @@
 import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
+import { useNativeBridge } from '@/hooks/use-native-bridge';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,6 +24,9 @@ export default function EarlyYearsLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Initialize native bridge (no-op when not in WebView)
+  useNativeBridge();
+
   // Prevent accidental navigation away
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
