@@ -351,7 +351,7 @@ The original sprint delivery specs (Sprints 1-18) are located at:
 └── Sprint18-delivery/  # Real DB ops + auth + file storage + validation
 ```
 
-**NOTE**: This path (`~/claude-code/scholarly/`) is DIFFERENT from the working repo (`~/claude-code/orebot/scholarly/`). Sprint specs have been copied into `packages/api/src/services/` and `packages/api/src/infrastructure/`.
+**NOTE**: The original sprint docs repo that was at this path has been deleted. Sprint specs have been copied into `packages/api/src/services/` and `packages/api/src/infrastructure/`. The working repo is now at `~/claude-code/scholarly/`.
 
 ## Mobile App (`apps/mobile`)
 
