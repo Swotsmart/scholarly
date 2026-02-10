@@ -22,6 +22,7 @@ import {
   Trophy, FolderOpen, Crosshair, Rocket, Award,
   Network, Link2, Shapes, Database, Shield, Cpu, GitBranch,
   Building, Landmark, Store, BarChart3, Mic,
+  Swords, Coins,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -92,6 +93,19 @@ const learnerSections: NavSection[] = [
         { name: 'Artifacts', href: '/portfolio/artifacts', icon: FolderOpen },
         { name: 'Goals', href: '/portfolio/goals', icon: Crosshair },
         { name: 'Showcase', href: '/portfolio/showcase', icon: Eye },
+      ]},
+    ],
+  },
+  {
+    id: 'arena',
+    label: 'Arena',
+    tier: 'primary',
+    items: [
+      { name: 'Arena', href: '/arena', icon: Swords, description: 'Compete, earn, and collaborate', children: [
+        { name: 'Competitions', href: '/arena/competitions', icon: Trophy },
+        { name: 'Teams', href: '/arena/teams', icon: Users },
+        { name: 'Bounties', href: '/arena/bounties', icon: Target },
+        { name: 'Tokens', href: '/arena/tokens', icon: Coins },
       ]},
     ],
   },
@@ -370,6 +384,7 @@ function getQuickActionsForRole(role: string | undefined): QuickAction[] {
       return [
         { label: 'Continue', href: '/learning/courses', icon: BookOpen, color: 'text-blue-500 bg-blue-500/10' },
         { label: 'AI Buddy', href: '/ai-buddy', icon: Bot, color: 'text-purple-500 bg-purple-500/10' },
+        { label: 'Arena', href: '/arena', icon: Swords, color: 'text-orange-500 bg-orange-500/10' },
         { label: 'Portfolio', href: '/portfolio', icon: Briefcase, color: 'text-green-500 bg-green-500/10' },
       ];
   }
