@@ -18,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -25,6 +26,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatsCard } from '@/components/shared/stats-card';
 import { CompetitionCard, ArenaInsightPanel } from '@/components/arena';
@@ -96,6 +106,127 @@ function CompetitionGridSkeleton() {
         </Card>
       ))}
     </div>
+  );
+}
+
+// =============================================================================
+// CREATE COMPETITION DIALOG
+// =============================================================================
+
+function CreateCompetitionDialog({ onCreated }: { onCreated: (comp: ArenaCompetition) => void }) {
+  const [open, setOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [title, setTitle] = useState('');
+  const [format, setFormat] = useState('READING_SPRINT');
+  const [description, setDescription] = useState('');
+  const [maxParticipants, setMaxParticipants] = useState(20);
+  const [durationMinutes, setDurationMinutes] = useState(30);
+
+  async function handleCreate() {
+    if (!title.trim()) return;
+    setCreating(true);
+    try {
+      const res = await arenaApi.createCompetition({
+        title: title.trim(),
+        format,
+        description: description.trim() || undefined,
+        config: { scoringModel: 'GROWTH_BASED', maxParticipants, durationMinutes },
+      });
+      if (res.success && res.data) {
+        onCreated(res.data);
+        setTitle('');
+        setDescription('');
+        setFormat('READING_SPRINT');
+        setMaxParticipants(20);
+        setDurationMinutes(30);
+        setOpen(false);
+      }
+    } catch {
+      // Creation failed
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Competition
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle>Create a Competition</DialogTitle>
+          <DialogDescription>
+            Set up a new competition for your classmates to join.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Title</label>
+            <Input
+              placeholder="e.g. Year 4 Reading Sprint"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Format</label>
+            <Select value={format} onValueChange={setFormat}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FORMAT_OPTIONS.filter((o) => o.value !== 'all').map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Description (optional)</label>
+            <Textarea
+              placeholder="Describe the competition..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Max Participants</label>
+              <Input
+                type="number"
+                min={2}
+                max={100}
+                value={maxParticipants}
+                onChange={(e) => setMaxParticipants(Number(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Duration (minutes)</label>
+              <Input
+                type="number"
+                min={5}
+                max={120}
+                value={durationMinutes}
+                onChange={(e) => setDurationMinutes(Number(e.target.value))}
+              />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleCreate} disabled={creating || !title.trim()}>
+            {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+            Create
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -190,12 +321,7 @@ export default function CompetitionsPage() {
           title="Competitions"
           description="Challenge yourself and your classmates"
           actions={
-            <Button asChild>
-              <Link href="/arena/competitions/create">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Competition
-              </Link>
-            </Button>
+            <CreateCompetitionDialog onCreated={(comp) => setCompetitions((prev) => [comp, ...prev])} />
           }
         />
       </div>
@@ -390,12 +516,7 @@ export default function CompetitionsPage() {
               >
                 Clear Filters
               </Button>
-              <Button size="sm" asChild>
-                <Link href="/arena/competitions/create">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Competition
-                </Link>
-              </Button>
+              <CreateCompetitionDialog onCreated={(comp) => setCompetitions((prev) => [comp, ...prev])} />
             </div>
           </CardContent>
         </Card>
