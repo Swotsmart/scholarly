@@ -3,7 +3,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 
 /**
- * Detects whether we're running inside the Scholarly native app WebView.
+ * Detects whether we're running inside the Mati native app WebView.
  * Provides methods to communicate with the native shell via postMessage bridge.
  */
 
@@ -26,7 +26,7 @@ interface NativeBridge {
 
 declare global {
   interface Window {
-    __SCHOLARLY_NATIVE__?: boolean;
+    __MATI_NATIVE__?: boolean;
     ReactNativeWebView?: {
       postMessage: (data: string) => void;
     };
@@ -46,7 +46,7 @@ export function useNativeBridge(
   callbackRef.current = onMessage;
 
   const isNative =
-    typeof window !== 'undefined' && !!window.__SCHOLARLY_NATIVE__;
+    typeof window !== 'undefined' && !!window.__MATI_NATIVE__;
 
   useEffect(() => {
     if (!isNative) return;

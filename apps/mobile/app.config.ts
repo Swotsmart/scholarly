@@ -2,12 +2,12 @@ import { ExpoConfig, ConfigContext } from 'expo/config';
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'Scholarly - Learn to Read',
-  slug: 'scholarly-phonics',
+  name: 'Mati - Learn to Read',
+  slug: 'mati-phonics',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
-  scheme: 'scholarly-phonics',
+  scheme: 'mati-phonics',
   userInterfaceStyle: 'light',
   splash: {
     image: './assets/splash.png',
@@ -17,7 +17,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   assetBundlePatterns: ['**/*'],
   ios: {
     supportsTablet: true,
-    bundleIdentifier: 'com.scholarly.phonics',
+    bundleIdentifier: 'com.mati.phonics',
     buildNumber: '1',
     infoPlist: {
       NSAppTransportSecurity: {
@@ -48,7 +48,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#8839ef',
     },
-    package: 'app.scholarly.phonics',
+    package: 'app.mati.phonics',
     versionCode: 1,
     permissions: ['NOTIFICATIONS', 'VIBRATE'],
   },

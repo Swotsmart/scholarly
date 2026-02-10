@@ -1,9 +1,9 @@
-export const APP_NAME = 'Scholarly - Learn to Read';
-export const APP_SLUG = 'scholarly-phonics';
+export const APP_NAME = 'Mati - Learn to Read';
+export const APP_SLUG = 'mati-phonics';
 
 export const BUNDLE_IDS = {
-  ios: 'com.scholarly.phonics',
-  android: 'app.scholarly.phonics',
+  ios: 'com.mati.phonics',
+  android: 'app.mati.phonics',
 } as const;
 
 export const BASE_URL =
@@ -25,14 +25,14 @@ export const ALLOWED_DOMAINS = [
 
 export const SUBSCRIPTION_TIERS = {
   explorer: {
-    id: 'scholarly_explorer_monthly',
+    id: 'mati_explorer_monthly',
     name: 'Explorer',
     price: '$4.99/month',
     trialDays: 7,
     features: ['Phonics Forest', 'Story Garden', '1 child profile'],
   },
   scholar: {
-    id: 'scholarly_scholar_monthly',
+    id: 'mati_scholar_monthly',
     name: 'Scholar',
     price: '$9.99/month',
     trialDays: 7,
@@ -44,7 +44,7 @@ export const SUBSCRIPTION_TIERS = {
     ],
   },
   academy: {
-    id: 'scholarly_academy_monthly',
+    id: 'mati_academy_monthly',
     name: 'Academy',
     price: '$19.99/month',
     trialDays: 14,

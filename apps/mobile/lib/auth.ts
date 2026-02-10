@@ -1,8 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 
-const AUTH_TOKEN_KEY = 'scholarly_auth_token';
-const REFRESH_TOKEN_KEY = 'scholarly_refresh_token';
-const USER_DATA_KEY = 'scholarly_user_data';
+const AUTH_TOKEN_KEY = 'mati_auth_token';
+const REFRESH_TOKEN_KEY = 'mati_refresh_token';
+const USER_DATA_KEY = 'mati_user_data';
 
 export async function getAuthToken(): Promise<string | null> {
   return SecureStore.getItemAsync(AUTH_TOKEN_KEY);

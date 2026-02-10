@@ -82,7 +82,7 @@ export function usePushNotifications(): PushNotificationState & {
     await Notifications.scheduleNotificationAsync({
       content: {
         title: 'Time to Read! 📖',
-        body: 'Your daily reading adventure awaits in Scholarly!',
+        body: 'Your daily reading adventure awaits in Mati!',
         sound: 'default',
       },
       trigger: {

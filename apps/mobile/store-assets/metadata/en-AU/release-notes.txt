@@ -1,4 +1,4 @@
-Welcome to Scholarly - Learn to Read! This is our first release featuring:
+Welcome to Mati - Learn to Read! This is our first release featuring:
 - Phonics Forest: Learn letter sounds through an enchanted forest adventure
 - Story Garden: Read interactive stories that grow with your child
 - Parent Dashboard: Track progress and manage profiles

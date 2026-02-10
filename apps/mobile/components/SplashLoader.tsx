@@ -5,7 +5,7 @@ export function SplashLoader() {
   return (
     <View style={styles.container}>
       <Text style={styles.emoji}>📚</Text>
-      <Text style={styles.title}>Scholarly</Text>
+      <Text style={styles.title}>Mati</Text>
       <Text style={styles.subtitle}>Learn to Read</Text>
       <ActivityIndicator
         size="large"

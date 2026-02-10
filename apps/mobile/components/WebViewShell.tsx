@@ -22,8 +22,8 @@ interface WebViewShellProps {
 const INJECTED_JS = `
   (function() {
     // Signal to web app that we're in native container
-    window.__SCHOLARLY_NATIVE__ = true;
-    window.__SCHOLARLY_PLATFORM__ = '${
+    window.__MATI_NATIVE__ = true;
+    window.__MATI_PLATFORM__ = '${
       // Will be replaced at build time, default to iOS
       'mobile'
     }';

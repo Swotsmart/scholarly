@@ -16,7 +16,7 @@ scholarly/
 │   ├── blockchain/   # @scholarly/blockchain - Token economy (ethers.js)
 │   └── curriculum-processor/  # Curriculum ingestion tooling
 ├── apps/
-│   └── mobile/       # @scholarly/mobile - Expo React Native app (Phonics & Storybook)
+│   └── mobile/       # @mati/mobile - Expo React Native app (Phonics & Storybook)
 ├── site/             # Static landing site (HTML files copied to web/public)
 ├── Dockerfile        # Web production image (multi-stage, standalone Next.js)
 ├── Dockerfile.api    # API production image
@@ -356,12 +356,12 @@ The original sprint delivery specs (Sprints 1-18) are located at:
 ## Mobile App (`apps/mobile`)
 
 ### Overview
-- **Package**: `@scholarly/mobile`
-- **App name**: "Scholarly - Learn to Read"
+- **Package**: `@mati/mobile`
+- **App name**: "Mati - Learn to Read"
 - **Target**: Ages 3-7 (Phonics Forest + Story Garden)
 - **Architecture**: Expo native shell + WebView for interactive content
-- **iOS Bundle ID**: `com.scholarly.phonics`
-- **Android Package**: `app.scholarly.phonics`
+- **iOS Bundle ID**: `com.mati.phonics`
+- **Android Package**: `app.mati.phonics`
 
 ### Stack
 - **Framework**: Expo ~52.0.0 + React Native 0.76.5
@@ -388,7 +388,7 @@ The original sprint delivery specs (Sprints 1-18) are located at:
 apps/mobile/
 ├── app.config.ts                # Dynamic Expo config (bundle IDs, splash, plugins)
 ├── eas.json                     # EAS Build + Submit profiles
-├── package.json                 # @scholarly/mobile
+├── package.json                 # @mati/mobile
 ├── metro.config.js              # Monorepo-aware Metro bundler config
 ├── babel.config.js              # Babel + reanimated plugin
 ├── tsconfig.json                # Extends expo/tsconfig.base
@@ -426,7 +426,7 @@ apps/mobile/
 ├── stores/
 │   ├── app-store.ts             # Online status, active child, parental gate, subscription
 │   └── auth-store.ts            # Auth state with expo-secure-store persistence
-├── ios/scholarly-phonics/
+├── ios/mati-phonics/
 │   └── PrivacyInfo.xcprivacy    # iOS 17+ privacy manifest (no tracking, no collected data)
 └── store-assets/
     ├── screenshots/             # 15 mockups: iphone-67/, ipad-129/, android/ (5 each)
@@ -449,9 +449,9 @@ apps/mobile/
 ### Subscription Tiers (IAP)
 | Tier | Product ID | Price | Trial |
 |------|-----------|-------|-------|
-| Explorer | `scholarly_explorer_monthly` | $4.99/mo | 7 days |
-| Scholar | `scholarly_scholar_monthly` | $9.99/mo | 7 days |
-| Academy | `scholarly_academy_monthly` | $19.99/mo | 14 days |
+| Explorer | `mati_explorer_monthly` | $4.99/mo | 7 days |
+| Scholar | `mati_scholar_monthly` | $9.99/mo | 7 days |
+| Academy | `mati_academy_monthly` | $19.99/mo | 14 days |
 
 ### Key Commands
 
@@ -467,7 +467,7 @@ apps/mobile/
 ### Prerequisites for App Store Submission
 1. Apple Developer Program membership ($99/year)
 2. Google Play Developer account ($25 one-time)
-3. App ID `com.scholarly.phonics` in Apple Developer portal
+3. App ID `com.mati.phonics` in Apple Developer portal
 4. App created in App Store Connect and Google Play Console
 5. App Store Connect API key → set in `eas.json`
 6. Google Play service account JSON key → `apps/mobile/google-play-service-account.json` (gitignored)
@@ -476,17 +476,18 @@ apps/mobile/
 9. ~~Replace placeholder PNGs in `assets/`~~ — DONE: Production icons (1024x1024) and splash (1284x2778) are in place
 10. Add Montserrat font files to `assets/fonts/` (Regular, Bold, SemiBold .ttf) — directory exists but is **empty**
 
-### App Store Deployment Status (as of 2026-02-08)
+### App Store Deployment Status (as of 2026-02-10)
 
 **No builds or submissions have been made.** No `.eas/` directory or build artifacts exist.
 
 | Item | Status | Notes |
 |------|--------|-------|
-| App icons & splash | Done | Production art at correct dimensions (1024x1024 icon, 1284x2778 splash) |
+| App icons & splash | Done | Mati-branded art at correct dimensions (1024x1024 icon, 1024x1024 adaptive, 1284x2778 splash) |
 | Store screenshots | Done | 15 mockups across 3 device classes (iPhone 6.7", iPad 12.9", Android) |
 | Store metadata (en-AU) | Done | Title, subtitle, keywords, description, release notes, promotional text |
 | iOS Privacy Manifest | Done | COPPA-compliant, no tracking, no data collection |
-| Subscription IAP config | Done | 3 tiers in `lib/constants.ts` |
+| Google Play feature graphic | Done | Mati-branded 1024x500 at `store-assets/feature-graphic.png` |
+| Subscription IAP config | Done | 3 tiers in `lib/constants.ts` (product IDs: `mati_*_monthly`) |
 | **EAS Project ID** | **BLOCKED** | `app.config.ts` line 75 still has `YOUR_EAS_PROJECT_ID` — run `eas init` |
 | **Montserrat fonts** | **BLOCKED** | `assets/fonts/` is empty — download Regular/Bold/SemiBold .ttf from Google Fonts |
 | **Apple credentials** | **BLOCKED** | `eas.json` has `YOUR_APPLE_ID`, `YOUR_APP_STORE_CONNECT_APP_ID`, `YOUR_APPLE_TEAM_ID` |
