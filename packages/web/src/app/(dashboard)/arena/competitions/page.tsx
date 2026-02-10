@@ -122,7 +122,7 @@ export default function CompetitionsPage() {
         ]);
 
         if (compsRes.success) {
-          setCompetitions(compsRes.data?.data ?? compsRes.data ?? []);
+          setCompetitions(compsRes.data?.competitions ?? []);
         }
         if (statsRes.success) {
           setUserStats(statsRes.data);

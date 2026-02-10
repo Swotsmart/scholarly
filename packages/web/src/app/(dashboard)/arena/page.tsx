@@ -150,11 +150,11 @@ export default function ArenaHubPage() {
           arenaApi.getUserStats(),
         ]);
 
-        if (compsRes.success) setCompetitions(compsRes.data?.data ?? compsRes.data ?? []);
+        if (compsRes.success) setCompetitions(compsRes.data?.competitions ?? []);
         if (balanceRes.success) setTokenBalance(balanceRes.data);
         if (teamsRes.success) setTeams(teamsRes.data ?? []);
-        if (proposalsRes.success) setProposals(proposalsRes.data?.data ?? proposalsRes.data ?? []);
-        if (bountiesRes.success) setBounties(bountiesRes.data?.data ?? bountiesRes.data ?? []);
+        if (proposalsRes.success) setProposals(proposalsRes.data?.proposals ?? []);
+        if (bountiesRes.success) setBounties(bountiesRes.data?.bounties ?? []);
         if (statsRes.success) setUserStats(statsRes.data);
       } catch (err) {
         console.error('Failed to load arena data:', err);
