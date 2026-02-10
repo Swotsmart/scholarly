@@ -237,6 +237,22 @@ model User {
   identityVerifications IdentityVerification[]
   wwccVerifications     WWCCVerification[]
 
+  // Arena
+  arenaParticipants        ArenaParticipant[]
+  arenaTeamsCreated        ArenaTeam[]             @relation("ArenaTeamCreator")
+  arenaTeamMemberships     ArenaTeamMember[]
+  tokenBalances            TokenBalance[]
+  arenaTokenTransactions   ArenaTokenTransaction[]
+  arenaStakePositions      ArenaStakePosition[]
+  arenaProposals           ArenaProposal[]         @relation("ArenaProposalCreator")
+  arenaVotes               ArenaVote[]             @relation("ArenaVoter")
+  arenaDelegationsGiven    ArenaDelegation[]       @relation("ArenaDelegator")
+  arenaDelegationsReceived ArenaDelegation[]       @relation("ArenaDelegate")
+  treasuryVotesProposed    ArenaTreasuryVote[]     @relation("TreasuryVoteProposer")
+  treasuryVotesCast        ArenaTreasuryVoteCast[] @relation("TreasuryVoteCaster")
+  contentBountiesCreated   ContentBounty[]         @relation("BountyCreator")
+  bountySubmissions        BountySubmission[]      @relation("BountySubmitter")
+
   @@unique([tenantId, email])
   @@index([tenantId])
   @@index([tenantId, status])
@@ -476,11 +492,23 @@ model CreatorProfile {
   verificationStatus String    @default("pending")
   verifiedAt         DateTime?
 
+  // Arena fields
+  tenantId           String?
+  tier               String    @default("NEWCOMER")
+  onboardingPhase    String    @default("REGISTERED")
+  specialisations    String[]  @default([])
+  totalPublished     Int       @default(0)
+  totalDrafts        Int       @default(0)
+  avgEngagement      Float     @default(0)
+  isVerifiedEducator Boolean   @default(false)
+  lastActiveAt       DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([level])
   @@index([verificationStatus])
+  @@index([tenantId, tier])
 }
 
 // ============================================================================
@@ -2689,9 +2717,9 @@ model EarlyYearsNumeracyProgress {
   subtractionAccuracy Float @default(0)
 
   // Recognition
-  numeralsRecognized    Int[]    @default([])
-  operationsIntroduced  String[] @default([])
-  shapesKnown           String[] @default([])
+  numeralsRecognized   Int[]    @default([])
+  operationsIntroduced String[] @default([])
+  shapesKnown          String[] @default([])
 
   // Detailed progress
   operationHistory Json @default("[]")
@@ -2769,9 +2797,9 @@ model EarlyYearsActivity {
 
   // Results
   score           Float?
-  attempts        Int     @default(1)
-  hintsUsed       Int     @default(0)
-  errorsCommitted Int     @default(0)
+  attempts        Int    @default(1)
+  hintsUsed       Int    @default(0)
+  errorsCommitted Int    @default(0)
 
   // Response data (for analysis)
   responseData Json @default("{}")
@@ -3093,8 +3121,8 @@ model LanguageOfflinePackage {
   packageType String // vocabulary_review, lesson_unit, conversation_scenarios, practice_tests, full_sync
 
   // Content
-  contentSelection Json    @default("{}")
-  vocabularyCount  Int     @default(0)
+  contentSelection Json @default("{}")
+  vocabularyCount  Int  @default(0)
 
   // Size
   totalItems              Int   @default(0)
@@ -3193,15 +3221,15 @@ model EarlyYearsConversation {
   sessionId   String?
 
   // Conversation state
-  messages      Json     @default("[]")
-  topic         String?
-  learningGoal  String?
-  isActive      Boolean  @default(true)
+  messages     Json    @default("[]")
+  topic        String?
+  learningGoal String?
+  isActive     Boolean @default(true)
 
   // Timestamps
-  startedAt DateTime @default(now())
+  startedAt DateTime  @default(now())
   endedAt   DateTime?
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime  @updatedAt
 
   @@index([tenantId, learnerId])
   @@index([characterId])
@@ -3238,7 +3266,7 @@ model LanguageVocabularyReview {
   cardId    String
 
   // Review result
-  quality        Int      // SM-2 quality rating (0-5)
+  quality        Int // SM-2 quality rating (0-5)
   wasCorrect     Boolean
   responseTimeMs Int?
 
@@ -3329,10 +3357,10 @@ model LTIOIDCState {
   platformId String
   platform   LTIPlatform @relation(fields: [platformId], references: [id], onDelete: Cascade)
 
-  state         String  @unique
-  nonce         String
-  loginHint     String
-  targetLinkUri String
+  state          String  @unique
+  nonce          String
+  loginHint      String
+  targetLinkUri  String
   ltiMessageHint String?
 
   consumed  Boolean  @default(false)
@@ -3439,7 +3467,7 @@ model OneRosterConnection {
 
 /// Field mapping between Scholarly and OneRoster schemas
 model OneRosterFieldMapping {
-  id           String             @id @default(cuid())
+  id           String              @id @default(cuid())
   connectionId String
   connection   OneRosterConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
 
@@ -3453,7 +3481,7 @@ model OneRosterFieldMapping {
 
 /// OneRoster sync job tracking
 model OneRosterSyncJob {
-  id           String             @id @default(cuid())
+  id           String              @id @default(cuid())
   tenantId     String
   connectionId String
   connection   OneRosterConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
@@ -3487,21 +3515,21 @@ model CASEFramework {
   id       String @id @default(cuid())
   tenantId String
 
-  identifier String
-  uri        String?
-  creator    String
-  title      String
-  publisher  String?
+  identifier  String
+  uri         String?
+  creator     String
+  title       String
+  publisher   String?
   description String?
 
-  subject       String[] @default([])
-  language      String?
-  version       String?
-  adoptionStatus String @default("Draft") // Draft, Review, Adopted, Deprecated
+  subject        String[] @default([])
+  language       String?
+  version        String?
+  adoptionStatus String   @default("Draft") // Draft, Review, Adopted, Deprecated
 
-  sourceUrl     String?
-  lastSyncAt    DateTime?
-  status        String   @default("active") // active, archived, draft
+  sourceUrl  String?
+  lastSyncAt DateTime?
+  status     String    @default("active") // active, archived, draft
 
   document Json // Full CFDocument JSON
 
@@ -3523,16 +3551,16 @@ model CASEItem {
   frameworkId String
   framework   CASEFramework @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
 
-  identifier         String
-  uri                String?
-  fullStatement      String  @db.Text
-  humanCodingScheme  String?
-  cfItemType         String?
-  educationLevel     String[] @default([])
+  identifier           String
+  uri                  String?
+  fullStatement        String   @db.Text
+  humanCodingScheme    String?
+  cfItemType           String?
+  educationLevel       String[] @default([])
   abbreviatedStatement String?
-  conceptKeywords    String[] @default([])
-  listEnumeration    String?
-  language           String?
+  conceptKeywords      String[] @default([])
+  listEnumeration      String?
+  language             String?
 
   lastChangeDateTime DateTime @default(now())
 
@@ -3547,7 +3575,7 @@ model CASEItem {
 
 /// CASE association between items
 model CASEAssociation {
-  id          String        @id @default(cuid())
+  id          String         @id @default(cuid())
   frameworkId String?
   framework   CASEFramework? @relation(fields: [frameworkId], references: [id], onDelete: Cascade)
 
@@ -3598,15 +3626,15 @@ model AchievementDefinition {
   tenantId String
 
   name            String
-  description     String @db.Text
+  description     String  @db.Text
   achievementType String
   image           String?
 
-  criteriaType      String  // narrative, id_based
+  criteriaType      String // narrative, id_based
   criteriaNarrative String? @db.Text
   criteriaId        String?
 
-  alignment Json @default("[]") // AchievementAlignment[]
+  alignment Json     @default("[]") // AchievementAlignment[]
   tags      String[] @default([])
 
   evidenceRequired    Boolean @default(false)
@@ -3629,24 +3657,24 @@ model BadgeAssertion {
   achievementDefinitionId String
   achievementDefinition   AchievementDefinition @relation(fields: [achievementDefinitionId], references: [id])
 
-  recipientId          String
-  recipientEmail       String?
+  recipientId           String
+  recipientEmail        String?
   recipientIdentityHash String?
-  issuerId             String
+  issuerId              String
 
-  credential    Json // Full OpenBadgeCredential JSON-LD
+  credential       Json // Full OpenBadgeCredential JSON-LD
   verificationType String // HostedBadge, SignedBadge
   verificationUrl  String?
   signatureJws     String? @db.Text
 
-  status    String @default("active") // draft, active, revoked, expired
+  status String @default("active") // draft, active, revoked, expired
 
-  issuedAt        DateTime  @default(now())
-  expiresAt       DateTime?
-  revokedAt       DateTime?
+  issuedAt         DateTime  @default(now())
+  expiresAt        DateTime?
+  revokedAt        DateTime?
   revocationReason String?
 
-  nftTokenId        String?
+  nftTokenId         String?
   nftTransactionHash String?
 
   evidence Json @default("[]")
@@ -3690,14 +3718,14 @@ model EdFiConnection {
 
   schoolYear       Int
   namespace        String
-  apiVersion       String    @default("v7.0")
-  pageSize         Int       @default(100)
-  rateLimitPerMin  Int       @default(300)
-  syncDirection    String    @default("inbound") // inbound, outbound, bidirectional
-  enabledResources String[]  @default([])
+  apiVersion       String   @default("v7.0")
+  pageSize         Int      @default(100)
+  rateLimitPerMin  Int      @default(300)
+  syncDirection    String   @default("inbound") // inbound, outbound, bidirectional
+  enabledResources String[] @default([])
 
-  accessToken  String?   @db.Text
-  tokenExpiry  DateTime?
+  accessToken     String?   @db.Text
+  tokenExpiry     DateTime?
   lastSyncVersion Int?
 
   status String @default("active") // active, inactive, error
@@ -3705,9 +3733,9 @@ model EdFiConnection {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  syncJobs      EdFiSyncJob[]
-  fieldMappings EdFiFieldMapping[]
-  conflicts     EdFiSyncConflict[]
+  syncJobs       EdFiSyncJob[]
+  fieldMappings  EdFiFieldMapping[]
+  conflicts      EdFiSyncConflict[]
   changeTrackers EdFiChangeTracker[]
 
   @@index([tenantId])
@@ -3760,7 +3788,7 @@ model EdFiFieldMapping {
   resourceType   String
   scholarlyField String
   edfiField      String
-  direction      String  @default("inbound") // inbound, outbound, bidirectional
+  direction      String @default("inbound") // inbound, outbound, bidirectional
 
   transform       String? // direct, uppercase, lowercase, date_format, lookup, custom
   transformConfig Json?
@@ -3878,9 +3906,9 @@ model BKTCompetencyState {
   pSlip  Float @default(0.1)
   pKnown Float @default(0.5)
 
-  observations       Int      @default(0)
-  lastObservationAt   DateTime?
-  masteryHistory     Json     @default("[]") // MasterySnapshot[]
+  observations      Int       @default(0)
+  lastObservationAt DateTime?
+  masteryHistory    Json      @default("[]") // MasterySnapshot[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3898,13 +3926,13 @@ model AdaptationRule {
 
   name        String
   description String
-  scope       String  // global, domain, competency
+  scope       String // global, domain, competency
   scopeId     String? // domain or competency ID
 
   priority       Int
-  conditions     Json   // AdaptationRuleCondition[]
+  conditions     Json // AdaptationRuleCondition[]
   conditionLogic String @default("AND") // AND, OR
-  action         Json   // AdaptationRuleAction
+  action         Json // AdaptationRuleAction
 
   isActive Boolean @default(true)
 
@@ -3925,8 +3953,8 @@ model AdaptationEvent {
 
   learnerId      String
   ruleId         String?
-  triggerSignals Json   // AdaptationSignal[]
-  action         Json   // AdaptationRuleAction
+  triggerSignals Json // AdaptationSignal[]
+  action         Json // AdaptationRuleAction
   outcome        String?
 
   timestamp DateTime @default(now())
@@ -3969,12 +3997,12 @@ model CuriosityProfileCache {
 
   learnerId String @unique
 
-  overallScore       Float @default(0)
-  signalCount        Int   @default(0)
-  breadthScore       Float @default(0)
-  depthScore         Float @default(0)
-  questionFrequency  Float @default(0)
-  explorationRate    Float @default(0)
+  overallScore      Float @default(0)
+  signalCount       Int   @default(0)
+  breadthScore      Float @default(0)
+  depthScore        Float @default(0)
+  questionFrequency Float @default(0)
+  explorationRate   Float @default(0)
 
   clusters          Json @default("[]") // InterestCluster[]
   emergingInterests Json @default("[]") // EmergingInterest[]
@@ -4024,12 +4052,12 @@ model OptimizationEvent {
   id       String @id @default(cuid())
   tenantId String
 
-  learnerId         String
-  weightsUsed       Json // ObjectiveWeights
+  learnerId          String
+  weightsUsed        Json // ObjectiveWeights
   constraintsApplied Json // OptimizationConstraints
-  paretoFrontSize   Int
-  selectedPathId    String
-  computeTimeMs     Int
+  paretoFrontSize    Int
+  selectedPathId     String
+  computeTimeMs      Int
 
   result Json // Full OptimizationResult
 
@@ -4059,8 +4087,8 @@ model DecentralizedIdentifier {
   deactivatedAt    DateTime? @map("deactivated_at")
 
   keyPairs          KeyPair[]
-  wallet            DigitalWallet?              @relation(fields: [walletId], references: [id])
-  walletId          String?                     @map("wallet_id")
+  wallet            DigitalWallet?               @relation(fields: [walletId], references: [id])
+  walletId          String?                      @map("wallet_id")
   credentials       VerifiableCredentialRecord[] @relation("CredentialSubject")
   issuedCredentials VerifiableCredentialRecord[] @relation("CredentialIssuer")
 
@@ -4090,23 +4118,23 @@ model DIDDocument {
 
 /// Cryptographic key pair associated with a DID
 model KeyPair {
-  id                   String    @id @default(cuid())
-  tenantId             String    @map("tenant_id")
+  id                   String                  @id @default(cuid())
+  tenantId             String                  @map("tenant_id")
   did                  String
   didRecord            DecentralizedIdentifier @relation(fields: [did], references: [did])
-  keyType              KeyType   @map("key_type")
-  publicKey            String    @map("public_key")
-  encryptedPrivateKey  String    @map("encrypted_private_key") @db.Text
-  privateKeyEncryption String    @default("AES-256-GCM") @map("private_key_encryption")
-  kdf                  String    @default("Argon2id")
+  keyType              KeyType                 @map("key_type")
+  publicKey            String                  @map("public_key")
+  encryptedPrivateKey  String                  @map("encrypted_private_key") @db.Text
+  privateKeyEncryption String                  @default("AES-256-GCM") @map("private_key_encryption")
+  kdf                  String                  @default("Argon2id")
   purposes             Json
-  isPrimary            Boolean   @default(false) @map("is_primary")
-  status               KeyStatus @default(KEY_ACTIVE)
-  createdAt            DateTime  @default(now()) @map("created_at")
-  expiresAt            DateTime? @map("expires_at")
-  revokedAt            DateTime? @map("revoked_at")
-  rotatedAt            DateTime? @map("rotated_at")
-  rotatedToKeyId       String?   @map("rotated_to_key_id")
+  isPrimary            Boolean                 @default(false) @map("is_primary")
+  status               KeyStatus               @default(KEY_ACTIVE)
+  createdAt            DateTime                @default(now()) @map("created_at")
+  expiresAt            DateTime?               @map("expires_at")
+  revokedAt            DateTime?               @map("revoked_at")
+  rotatedAt            DateTime?               @map("rotated_at")
+  rotatedToKeyId       String?                 @map("rotated_to_key_id")
 
   @@index([tenantId, did])
   @@index([did, isPrimary])
@@ -4151,19 +4179,19 @@ enum KeyRotationReason {
 
 /// User's digital identity wallet
 model DigitalWallet {
-  id              String       @id @default(cuid())
-  tenantId        String       @map("tenant_id")
-  userId          String       @unique @map("user_id")
-  primaryDid      String       @map("primary_did")
+  id              String                       @id @default(cuid())
+  tenantId        String                       @map("tenant_id")
+  userId          String                       @unique @map("user_id")
+  primaryDid      String                       @map("primary_did")
   dids            DecentralizedIdentifier[]
   credentials     VerifiableCredentialRecord[]
-  recoveryConfig  Json         @map("recovery_config")
-  encryptionKeyId String       @map("encryption_key_id")
-  status          WalletStatus @default(WALLET_ACTIVE)
-  createdAt       DateTime     @default(now()) @map("created_at")
-  lastAccessedAt  DateTime     @default(now()) @map("last_accessed_at")
-  lockedAt        DateTime?    @map("locked_at")
-  deactivatedAt   DateTime?    @map("deactivated_at")
+  recoveryConfig  Json                         @map("recovery_config")
+  encryptionKeyId String                       @map("encryption_key_id")
+  status          WalletStatus                 @default(WALLET_ACTIVE)
+  createdAt       DateTime                     @default(now()) @map("created_at")
+  lastAccessedAt  DateTime                     @default(now()) @map("last_accessed_at")
+  lockedAt        DateTime?                    @map("locked_at")
+  deactivatedAt   DateTime?                    @map("deactivated_at")
   backups         WalletBackup[]
 
   @@index([tenantId, userId])
@@ -4196,29 +4224,29 @@ model WalletBackup {
 
 /// Verifiable Credential storage (W3C VC Data Model v2.0)
 model VerifiableCredentialRecord {
-  id               String    @id @default(cuid())
-  tenantId         String    @map("tenant_id")
-  credentialId     String    @unique @map("credential_id")
+  id               String                  @id @default(cuid())
+  tenantId         String                  @map("tenant_id")
+  credentialId     String                  @unique @map("credential_id")
   types            Json
-  issuerDid        String    @map("issuer_did")
+  issuerDid        String                  @map("issuer_did")
   issuer           DecentralizedIdentifier @relation("CredentialIssuer", fields: [issuerDid], references: [did])
-  subjectDid       String    @map("subject_did")
+  subjectDid       String                  @map("subject_did")
   subject          DecentralizedIdentifier @relation("CredentialSubject", fields: [subjectDid], references: [did])
-  walletId         String?   @map("wallet_id")
-  wallet           DigitalWallet? @relation(fields: [walletId], references: [id])
+  walletId         String?                 @map("wallet_id")
+  wallet           DigitalWallet?          @relation(fields: [walletId], references: [id])
   credential       Json
-  subjectData      Json      @map("subject_data")
-  statusListIndex  Int?      @map("status_list_index")
-  issuanceDate     DateTime  @map("issuance_date")
-  expirationDate   DateTime? @map("expiration_date")
-  isRevoked        Boolean   @default(false) @map("is_revoked")
-  revokedAt        DateTime? @map("revoked_at")
-  revocationReason String?   @map("revocation_reason")
-  revokedBy        String?   @map("revoked_by")
-  schemaId         String?   @map("schema_id")
-  schema           CredentialSchema? @relation(fields: [schemaId], references: [id])
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
+  subjectData      Json                    @map("subject_data")
+  statusListIndex  Int?                    @map("status_list_index")
+  issuanceDate     DateTime                @map("issuance_date")
+  expirationDate   DateTime?               @map("expiration_date")
+  isRevoked        Boolean                 @default(false) @map("is_revoked")
+  revokedAt        DateTime?               @map("revoked_at")
+  revocationReason String?                 @map("revocation_reason")
+  revokedBy        String?                 @map("revoked_by")
+  schemaId         String?                 @map("schema_id")
+  schema           CredentialSchema?       @relation(fields: [schemaId], references: [id])
+  createdAt        DateTime                @default(now()) @map("created_at")
+  updatedAt        DateTime                @updatedAt @map("updated_at")
 
   @@index([tenantId, subjectDid])
   @@index([tenantId, issuerDid])
@@ -4229,15 +4257,15 @@ model VerifiableCredentialRecord {
 
 /// Credential schema definitions
 model CredentialSchema {
-  id                 String    @id @default(cuid())
+  id                 String                       @id @default(cuid())
   name               String
   version            String
-  credentialType     String    @map("credential_type")
+  credentialType     String                       @map("credential_type")
   schema             Json
   author             String
-  isDefault          Boolean   @default(false) @map("is_default")
-  validJurisdictions Json?     @map("valid_jurisdictions")
-  createdAt          DateTime  @default(now()) @map("created_at")
+  isDefault          Boolean                      @default(false) @map("is_default")
+  validJurisdictions Json?                        @map("valid_jurisdictions")
+  createdAt          DateTime                     @default(now()) @map("created_at")
   credentials        VerifiableCredentialRecord[]
 
   @@unique([credentialType, version])
@@ -4247,14 +4275,14 @@ model CredentialSchema {
 
 /// Status list for credential revocation (Status List 2021)
 model CredentialStatusList {
-  id            String            @id @default(cuid())
-  tenantId      String            @map("tenant_id")
-  statusListId  String            @unique @map("status_list_id")
-  purpose       StatusListPurpose
-  encodedList   String            @map("encoded_list") @db.Text
-  currentIndex  Int               @default(0) @map("current_index")
-  createdAt     DateTime          @default(now()) @map("created_at")
-  updatedAt     DateTime          @updatedAt @map("updated_at")
+  id           String            @id @default(cuid())
+  tenantId     String            @map("tenant_id")
+  statusListId String            @unique @map("status_list_id")
+  purpose      StatusListPurpose
+  encodedList  String            @map("encoded_list") @db.Text
+  currentIndex Int               @default(0) @map("current_index")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
 
   @@index([tenantId])
   @@map("credential_status_lists")
@@ -4311,25 +4339,25 @@ model SSIEventLog {
 
 /// Video recording for lesson coaching
 model VideoRecording {
-  id            String   @id @default(cuid())
-  tenantId      String
-  educatorId    String
-  title         String
-  description   String?
-  videoUrl      String
-  duration      Int
-  fileSize      Int
-  format        String
-  visibility    String   @default("private")
-  status        String   @default("processing")
-  transcript    Json?
-  aiAnalysis    Json?
-  metadata      Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String   @id @default(cuid())
+  tenantId    String
+  educatorId  String
+  title       String
+  description String?
+  videoUrl    String
+  duration    Int
+  fileSize    Int
+  format      String
+  visibility  String   @default("private")
+  status      String   @default("processing")
+  transcript  Json?
+  aiAnalysis  Json?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  reviewCycles  VideoReviewCycle[]
-  shares        VideoShare[]
+  reviewCycles VideoReviewCycle[]
+  shares       VideoShare[]
 
   @@index([tenantId, educatorId])
   @@index([tenantId, status])
@@ -4337,13 +4365,13 @@ model VideoRecording {
 
 /// Share record for video recordings
 model VideoShare {
-  id           String         @id @default(cuid())
-  tenantId     String
-  recordingId  String
-  recording    VideoRecording @relation(fields: [recordingId], references: [id])
-  sharedWith   String
-  permissions  Json
-  createdAt    DateTime       @default(now())
+  id          String         @id @default(cuid())
+  tenantId    String
+  recordingId String
+  recording   VideoRecording @relation(fields: [recordingId], references: [id])
+  sharedWith  String
+  permissions Json
+  createdAt   DateTime       @default(now())
 
   @@unique([recordingId, sharedWith])
   @@index([tenantId, sharedWith])
@@ -4351,18 +4379,18 @@ model VideoShare {
 
 /// Review cycle for video coaching
 model VideoReviewCycle {
-  id           String         @id @default(cuid())
-  tenantId     String
-  recordingId  String
-  recording    VideoRecording @relation(fields: [recordingId], references: [id])
-  reviewerId   String
-  reviewType   String
-  status       String         @default("in_progress")
-  comments     Json           @default("[]")
-  feedback     Json?
+  id             String         @id @default(cuid())
+  tenantId       String
+  recordingId    String
+  recording      VideoRecording @relation(fields: [recordingId], references: [id])
+  reviewerId     String
+  reviewType     String
+  status         String         @default("in_progress")
+  comments       Json           @default("[]")
+  feedback       Json?
   selfReflection Json?
-  createdAt    DateTime       @default(now())
-  completedAt  DateTime?
+  createdAt      DateTime       @default(now())
+  completedAt    DateTime?
 
   @@index([tenantId, recordingId])
   @@index([tenantId, reviewerId])
@@ -4382,7 +4410,7 @@ model PeerReviewSession {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  submissions     PeerSubmission[]
+  submissions       PeerSubmission[]
   reviewAssignments ReviewAssignment[]
 
   @@index([tenantId, status])
@@ -4507,23 +4535,23 @@ model ExperiencePlacement {
 
 /// Professional development course
 model PDCourse {
-  id             String   @id @default(cuid())
-  tenantId       String
-  creatorId      String
-  title          String
-  description    String
-  category       String
-  level          String
-  estimatedHours Float
-  pdCredits      Float
-  modules        Json
-  status         String   @default("draft")
-  rating         Float    @default(0)
-  ratingCount    Int      @default(0)
-  completionRate Float    @default(0)
-  enrollmentCount Int     @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(cuid())
+  tenantId        String
+  creatorId       String
+  title           String
+  description     String
+  category        String
+  level           String
+  estimatedHours  Float
+  pdCredits       Float
+  modules         Json
+  status          String   @default("draft")
+  rating          Float    @default(0)
+  ratingCount     Int      @default(0)
+  completionRate  Float    @default(0)
+  enrollmentCount Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   enrollments PDEnrollment[]
 
@@ -4535,7 +4563,7 @@ model PDCourse {
 model PDEnrollment {
   id             String    @id @default(cuid())
   tenantId       String
-  courseId        String
+  courseId       String
   course         PDCourse  @relation(fields: [courseId], references: [id])
   educatorId     String
   status         String    @default("enrolled")
@@ -4552,22 +4580,22 @@ model PDEnrollment {
 
 /// PBL project template
 model PBLProject {
-  id               String   @id @default(cuid())
-  tenantId         String
-  creatorId        String
-  title            String
-  description      String
-  drivingQuestion  String
-  subjectAreas     String[]
-  gradeLevel       String
+  id                String   @id @default(cuid())
+  tenantId          String
+  creatorId         String
+  title             String
+  description       String
+  drivingQuestion   String
+  subjectAreas      String[]
+  gradeLevel        String
   estimatedDuration String
-  goldStandard     Json
-  milestones       Json
-  resources        Json     @default("[]")
-  assessmentPlan   Json?
-  status           String   @default("draft")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  goldStandard      Json
+  milestones        Json
+  resources         Json     @default("[]")
+  assessmentPlan    Json?
+  status            String   @default("draft")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   instances PBLProjectInstance[]
 
@@ -4576,17 +4604,17 @@ model PBLProject {
 
 /// Student/team instance of a PBL project
 model PBLProjectInstance {
-  id              String      @id @default(cuid())
+  id              String     @id @default(cuid())
   tenantId        String
   projectId       String
-  project         PBLProject  @relation(fields: [projectId], references: [id])
+  project         PBLProject @relation(fields: [projectId], references: [id])
   facilitatorId   String
   teamMembers     Json
-  currentPhase    String      @default("launch")
+  currentPhase    String     @default("launch")
   milestoneStatus Json
-  reflections     Json        @default("[]")
-  status          String      @default("active")
-  startedAt       DateTime    @default(now())
+  reflections     Json       @default("[]")
+  status          String     @default("active")
+  startedAt       DateTime   @default(now())
   targetEndDate   DateTime?
   completedAt     DateTime?
   finalAssessment Json?
@@ -4623,23 +4651,23 @@ model PitchSubmission {
 
 /// DAO governance proposal
 model GovernanceProposal {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   tenantId     String
-  proposalId   BigInt   @unique
+  proposalId   BigInt    @unique
   proposer     String
   title        String
-  description  String   @db.Text
+  description  String    @db.Text
   category     String
-  actions      Json     @default("[]")
+  actions      Json      @default("[]")
   state        String
-  forVotes     BigInt   @default(0)
-  againstVotes BigInt   @default(0)
-  abstainVotes BigInt   @default(0)
-  quorum       BigInt   @default(0)
+  forVotes     BigInt    @default(0)
+  againstVotes BigInt    @default(0)
+  abstainVotes BigInt    @default(0)
+  quorum       BigInt    @default(0)
   eta          DateTime?
   metadata     Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   votes GovernanceVote[]
 
@@ -4667,14 +4695,14 @@ model GovernanceVote {
 
 /// Voting power delegation
 model VoteDelegation {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   tenantId        String
   delegator       String
   delegateAddress String
   amount          BigInt
-  isActive        Boolean  @default(true)
+  isActive        Boolean   @default(true)
   txHash          String?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
   revokedAt       DateTime?
 
   @@index([tenantId, delegator])
@@ -4900,23 +4928,23 @@ model BountyClaim {
 
 /// Immersion learning scenario
 model ImmersionScenario {
-  id              String   @id @default(cuid())
-  tenantId        String
-  title           String
-  description     String?
-  targetLanguage  String
-  nativeLanguage  String   @default("en")
-  cefrLevel       String
-  category        String
-  supportedTiers  String[]
-  scenes          Json
-  characters      Json     @default("[]")
-  estimatedMinutes Int     @default(15)
-  completionCount Int      @default(0)
-  averageScore    Float    @default(0)
-  status          String   @default("draft")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default(cuid())
+  tenantId         String
+  title            String
+  description      String?
+  targetLanguage   String
+  nativeLanguage   String   @default("en")
+  cefrLevel        String
+  category         String
+  supportedTiers   String[]
+  scenes           Json
+  characters       Json     @default("[]")
+  estimatedMinutes Int      @default(15)
+  completionCount  Int      @default(0)
+  averageScore     Float    @default(0)
+  status           String   @default("draft")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   sessions ImmersionSession[]
 
@@ -4989,7 +5017,7 @@ model HostingProvider {
   theme      Json    @default("{}")
 
   // Location(s) - stored as JSON array
-  locations   Json @default("[]")
+  locations   Json  @default("[]")
   serviceArea Json? // Geographic service area
 
   // Primary contact
@@ -5047,7 +5075,7 @@ model HostingDomain {
   type   String // subdomain, custom, alias
 
   status            String // pending_verification, verified, failed_verification, suspended
-  sslStatus         String @default("pending") // pending, provisioning, active, expiring_soon, expired, failed
+  sslStatus         String    @default("pending") // pending, provisioning, active, expiring_soon, expired, failed
   sslExpiresAt      DateTime?
   verificationToken String?
   verifiedAt        DateTime?
@@ -5071,12 +5099,12 @@ model HostingOffering {
   type             String // school_program, course, tutoring_package, tutoring_session, workshop, camp, curriculum, assessment, enrichment_program
   name             String
   shortDescription String
-  description      String  @db.Text
+  description      String @db.Text
   slug             String
 
   // Target audience
-  yearLevels   String[] // early_years, foundation, year_1, etc.
-  subjectAreas String[]
+  yearLevels    String[] // early_years, foundation, year_1, etc.
+  subjectAreas  String[]
   prerequisites String?
 
   // Delivery
@@ -5091,9 +5119,9 @@ model HostingOffering {
   capacity Json? // { min, max, spotsAvailable, etc. }
 
   // Content
-  curriculum     Json? // Curriculum alignment
+  curriculum       Json? // Curriculum alignment
   learningOutcomes String[]
-  materials      Json?
+  materials        Json?
 
   // Media
   featuredImage String?
@@ -5101,7 +5129,7 @@ model HostingOffering {
   videoUrl      String?
 
   // Status
-  status    String   @default("draft") // draft, published, archived
+  status      String    @default("draft") // draft, published, archived
   publishedAt DateTime?
 
   createdAt DateTime @default(now())
@@ -5117,7 +5145,7 @@ model HostingOffering {
 
 /// Enquiry from prospective parent/student
 model HostingEnquiry {
-  id         String @id @default(cuid())
+  id         String  @id @default(cuid())
   providerId String
   offeringId String?
 
@@ -5125,7 +5153,7 @@ model HostingEnquiry {
   contactName      String
   contactEmail     String
   contactPhone     String?
-  preferredContact String @default("email")
+  preferredContact String  @default("email")
 
   // Student details (optional)
   studentName      String?
@@ -5137,7 +5165,7 @@ model HostingEnquiry {
   message     String @db.Text
 
   // Source tracking
-  source  String @default("website") // website, agent_api, referral, other
+  source  String  @default("website") // website, agent_api, referral, other
   agentId String? // If via agent API
 
   // Response
@@ -5198,7 +5226,7 @@ model HostingTourBooking {
 
 /// Review/testimonial from parent/student/alumni
 model HostingReview {
-  id         String @id @default(cuid())
+  id         String  @id @default(cuid())
   providerId String
   authorId   String? // If linked to a user
 
@@ -5218,9 +5246,9 @@ model HostingReview {
   wouldRecommend Boolean @default(true)
 
   // Verification
-  isVerified     Boolean   @default(false)
+  isVerified         Boolean   @default(false)
   verificationMethod String?
-  verifiedAt     DateTime?
+  verifiedAt         DateTime?
 
   // Provider response
   providerResponse    String?   @db.Text
@@ -5255,14 +5283,14 @@ model HostingQualityEvent {
   data Json
 
   // Verification
-  isVerified     Boolean   @default(false)
-  verifiedAt     DateTime?
-  verifiedBy     String?
-  verificationMethod String?
+  isVerified            Boolean   @default(false)
+  verifiedAt            DateTime?
+  verifiedBy            String?
+  verificationMethod    String?
   supportingDocumentUrl String?
 
   // Validity
-  validFrom DateTime?
+  validFrom  DateTime?
   validUntil DateTime?
 
   createdAt DateTime @default(now())
@@ -5286,7 +5314,7 @@ model IdentityVerification {
   userId   String
 
   // Provider configuration (supports multiple providers)
-  provider        String // stripe_identity, onfido, persona, jumio, veriff, manual
+  provider          String // stripe_identity, onfido, persona, jumio, veriff, manual
   providerSessionId String? @unique // Provider's session/workflow ID
   providerIntentId  String? // Provider's verification intent ID
   providerAccountId String? // For multi-tenant provider accounts
@@ -5295,11 +5323,11 @@ model IdentityVerification {
   verificationType String // document_only, document_and_selfie, document_and_video, enhanced
 
   // Personal details (captured during verification)
-  firstName       String?
-  lastName        String?
-  dateOfBirth     DateTime?
-  idNumber        String? // Encrypted/hashed
-  idNumberType    String? // drivers_license, passport, national_id
+  firstName    String?
+  lastName     String?
+  dateOfBirth  DateTime?
+  idNumber     String? // Encrypted/hashed
+  idNumberType String? // drivers_license, passport, national_id
 
   // Address details
   addressLine1 String?
@@ -5323,19 +5351,19 @@ model IdentityVerification {
   livenessScore Float? // Liveness detection score 0-1
 
   // Verification outcome
-  status       String @default("pending") // pending, processing, requires_input, verified, failed, expired
-  verifiedAt   DateTime?
-  failureCode  String? // document_expired, selfie_mismatch, etc.
+  status         String    @default("pending") // pending, processing, requires_input, verified, failed, expired
+  verifiedAt     DateTime?
+  failureCode    String? // document_expired, selfie_mismatch, etc.
   failureMessage String?
 
   // Risk assessment
-  riskScore    Float? // 0-100 risk score
-  riskSignals  Json   @default("[]") // Array of risk signals detected
+  riskScore   Float? // 0-100 risk score
+  riskSignals Json   @default("[]") // Array of risk signals detected
 
   // Audit trail
-  ipAddress    String?
-  userAgent    String?
-  deviceInfo   Json? // Device fingerprint data
+  ipAddress  String?
+  userAgent  String?
+  deviceInfo Json? // Device fingerprint data
 
   // Metadata
   metadata Json @default("{}")
@@ -5360,8 +5388,8 @@ model WWCCVerification {
   userId   String
 
   // WWCC details
-  wwccNumber String  // The WWCC/Blue Card number
-  state      String  // NSW, VIC, QLD, WA, SA, TAS, NT, ACT
+  wwccNumber String // The WWCC/Blue Card number
+  state      String // NSW, VIC, QLD, WA, SA, TAS, NT, ACT
   cardType   String? // employee, volunteer, both
 
   // Holder details (for verification)
@@ -5370,14 +5398,14 @@ model WWCCVerification {
   dateOfBirth DateTime
 
   // Verification status
-  status             String @default("pending") // pending, checking, verified, failed, expired, revoked
-  registryStatus     String? // Current status from registry (current, expired, barred, etc.)
+  status              String    @default("pending") // pending, checking, verified, failed, expired, revoked
+  registryStatus      String? // Current status from registry (current, expired, barred, etc.)
   registryLastChecked DateTime?
 
   // Verification details
-  verifiedAt       DateTime?
+  verifiedAt         DateTime?
   verificationMethod String? // api_check, manual_check, employer_portal
-  verifierNotes    String?
+  verifierNotes      String?
 
   // Validity period
   issuedAt  DateTime?
@@ -5392,9 +5420,9 @@ model WWCCVerification {
   cardBackUrl  String?
 
   // Ongoing monitoring
-  lastMonitoredAt      DateTime?
-  monitoringEnabled    Boolean @default(true)
-  alertOnStatusChange  Boolean @default(true)
+  lastMonitoredAt     DateTime?
+  monitoringEnabled   Boolean   @default(true)
+  alertOnStatusChange Boolean   @default(true)
 
   // Failure details
   failureCode    String?
@@ -5425,23 +5453,23 @@ model BusinessVerification {
   entityId   String
 
   // Business identifiers (Australian)
-  abn               String? // Australian Business Number
-  acn               String? // Australian Company Number
-  abnStatus         String? // active, cancelled
-  abnStatusDate     DateTime?
-  gstRegistered     Boolean?
+  abn           String? // Australian Business Number
+  acn           String? // Australian Company Number
+  abnStatus     String? // active, cancelled
+  abnStatusDate DateTime?
+  gstRegistered Boolean?
 
   // Business details (from ABR/ASIC)
   legalName         String?
   tradingName       String?
   businessType      String? // sole_trader, partnership, company, trust, etc.
-  businessAddress   Json?   // Full registered address
+  businessAddress   Json? // Full registered address
   businessStartDate DateTime?
 
   // ASIC details (for companies)
-  asicStatus         String? // registered, deregistered, etc.
+  asicStatus           String? // registered, deregistered, etc.
   asicRegistrationDate DateTime?
-  asicReviewDate     DateTime?
+  asicReviewDate       DateTime?
 
   // Directors/Principals (for companies)
   directors Json @default("[]") // Array of { name, appointedDate, role }
@@ -5453,13 +5481,13 @@ model BusinessVerification {
   registrationExpiresAt DateTime?
 
   // Verification outcome
-  status       String @default("pending") // pending, checking, verified, failed, requires_review
-  verifiedAt   DateTime?
+  status        String    @default("pending") // pending, checking, verified, failed, requires_review
+  verifiedAt    DateTime?
   verifierNotes String?
 
   // Risk assessment
-  riskLevel    String? // low, medium, high
-  riskSignals  Json    @default("[]")
+  riskLevel   String? // low, medium, high
+  riskSignals Json    @default("[]")
 
   // Document storage
   documents Json @default("[]") // Array of { type, url, uploadedAt }
@@ -5488,24 +5516,24 @@ model VerificationDocument {
   ownerId   String
 
   // Document details
-  documentType   String // passport, drivers_license, wwcc_card, abn_certificate, registration_cert, etc.
-  fileName       String
-  mimeType       String
-  fileSize       Int    // bytes
+  documentType String // passport, drivers_license, wwcc_card, abn_certificate, registration_cert, etc.
+  fileName     String
+  mimeType     String
+  fileSize     Int // bytes
 
   // Storage
-  storageProvider String @default("azure") // azure, s3, gcs
+  storageProvider String  @default("azure") // azure, s3, gcs
   storagePath     String // Encrypted path to document
   storageUrl      String? // Temporary signed URL (expires)
 
   // Document metadata
-  extractedData Json    @default("{}") // OCR/extracted data
-  metadata      Json    @default("{}")
+  extractedData Json @default("{}") // OCR/extracted data
+  metadata      Json @default("{}")
 
   // Verification
-  isVerified    Boolean   @default(false)
-  verifiedAt    DateTime?
-  verifiedBy    String?
+  isVerified Boolean   @default(false)
+  verifiedAt DateTime?
+  verifiedBy String?
 
   // Expiry tracking
   documentExpiresAt DateTime?
@@ -5515,10 +5543,10 @@ model VerificationDocument {
   deleteAfter     DateTime? // Auto-delete after this date
 
   // Audit
-  uploadedBy    String?
-  uploadedAt    DateTime @default(now())
+  uploadedBy     String?
+  uploadedAt     DateTime  @default(now())
   lastAccessedAt DateTime?
-  accessCount   Int      @default(0)
+  accessCount    Int       @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -5535,9 +5563,9 @@ model VerificationAuditLog {
   tenantId String
 
   // Event details
-  eventType    String // verification_started, document_uploaded, check_initiated, status_changed, etc.
+  eventType        String // verification_started, document_uploaded, check_initiated, status_changed, etc.
   verificationType String // kyc, wwcc, kyb
-  verificationId String // ID of the verification record
+  verificationId   String // ID of the verification record
 
   // Actor
   actorType String // user, system, admin, api
@@ -5570,11 +5598,11 @@ model VoiceElevenLabsConfig {
   id       String @id @default(cuid())
   tenantId String @unique
 
-  apiKey              String
-  apiKeyScope         String  @default("full")
-  defaultTTSModel     String  @default("eleven_multilingual_v2")
-  defaultSTTModel     String  @default("scribe_v2")
-  preferredLatencyMode String  @default("balanced")
+  apiKey               String
+  apiKeyScope          String @default("full")
+  defaultTTSModel      String @default("eleven_multilingual_v2")
+  defaultSTTModel      String @default("scribe_v2")
+  preferredLatencyMode String @default("balanced")
 
   zeroRetentionMode Boolean @default(true)
   enableLogging     Boolean @default(false)
@@ -5621,8 +5649,8 @@ model VoiceLinguaFlowVoice {
   expressiveness Float @default(0.7)
 
   suitableFor        String[]
-  certifiedAuthentic Boolean @default(false)
-  defaultSettings    Json    @default("{}")
+  certifiedAuthentic Boolean  @default(false)
+  defaultSettings    Json     @default("{}")
 
   usageCount    Int   @default(0)
   averageRating Float @default(0)
@@ -5653,9 +5681,9 @@ model VoiceConversationAgent {
   voiceId           String
   alternateVoices   String[]
 
-  primaryLanguage       String
-  supportedLanguages    String[]
-  allowLanguageSwitching Boolean @default(true)
+  primaryLanguage        String
+  supportedLanguages     String[]
+  allowLanguageSwitching Boolean  @default(true)
 
   systemPrompt String @db.Text
   firstMessage String
@@ -5697,10 +5725,10 @@ model VoiceConversationSession {
   learnerId  String?
   scenarioId String?
 
-  status             String @default("initializing")
+  status             String  @default("initializing")
   websocketSessionId String?
-  assessmentData     Json   @default("{}")
-  languageUsage      Json   @default("[]")
+  assessmentData     Json    @default("{}")
+  languageUsage      Json    @default("[]")
 
   startedAt       DateTime  @default(now())
   endedAt         DateTime?
@@ -5719,16 +5747,16 @@ model VoiceConversationSession {
 
 /// Conversation turn within a session
 model VoiceConversationTurn {
-  id        String @id @default(cuid())
+  id        String                   @id @default(cuid())
   sessionId String
   session   VoiceConversationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sequence  Int
 
-  speaker String
-  text    String   @db.Text
+  speaker  String
+  text     String  @db.Text
   audioUrl String?
-  startMs Int
-  endMs   Int
+  startMs  Int
+  endMs    Int
   language String
 
   assessment Json?
@@ -5755,8 +5783,8 @@ model VoicePronunciationAssessment {
   transcription   Json
   wordAnalysis    Json
   phonemeAnalysis Json?
-  issues          Json @default("[]")
-  suggestions     Json @default("[]")
+  issues          Json  @default("[]")
+  suggestions     Json  @default("[]")
 
   referenceAudioUrl String?
   competencyUpdates Json?
@@ -5794,11 +5822,11 @@ model VoiceLearnerProgress {
 
 /// Tutor session review
 model VoiceSessionReview {
-  id         String @id @default(cuid())
-  tenantId   String
-  sessionId  String
-  session    VoiceConversationSession @relation(fields: [sessionId], references: [id])
-  reviewerId String
+  id           String                   @id @default(cuid())
+  tenantId     String
+  sessionId    String
+  session      VoiceConversationSession @relation(fields: [sessionId], references: [id])
+  reviewerId   String
   reviewerRole String
 
   overallRating       Int
@@ -5832,13 +5860,13 @@ model VoiceSessionReview {
 
 /// Turn annotation from tutor review
 model VoiceTurnAnnotation {
-  id           String @id @default(cuid())
+  id           String             @id @default(cuid())
   reviewId     String
   review       VoiceSessionReview @relation(fields: [reviewId], references: [id])
   turnId       String
   turnSequence Int
   type         String
-  text         String @db.Text
+  text         String             @db.Text
   targetText   String?
   startOffset  Int?
   endOffset    Int?
@@ -5851,15 +5879,15 @@ model VoiceTurnAnnotation {
 
 /// Session flag from tutor review
 model VoiceSessionFlag {
-  id                 String @id @default(cuid())
+  id                 String             @id @default(cuid())
   reviewId           String
   review             VoiceSessionReview @relation(fields: [reviewId], references: [id])
   tenantId           String
   type               String
   severity           String
-  description        String @db.Text
+  description        String             @db.Text
   turnId             String?
-  requiresEscalation Boolean @default(false)
+  requiresEscalation Boolean            @default(false)
 
   resolvedAt DateTime?
   resolvedBy String?
@@ -5907,20 +5935,20 @@ model VoiceCloneConsent {
 
 /// Cloned voice instance
 model VoiceClone {
-  id                       String @id @default(cuid())
+  id                       String            @id @default(cuid())
   tenantId                 String
   consentId                String
   consent                  VoiceCloneConsent @relation(fields: [consentId], references: [id])
   voiceOwnerId             String
   elevenLabsVoiceId        String
   name                     String
-  description              String   @db.Text
+  description              String            @db.Text
   quality                  String
-  verifiedLanguages        Json     @db.JsonB
-  sampleIds                Json     @db.JsonB
-  status                   String   @default("creating")
+  verifiedLanguages        Json              @db.JsonB
+  sampleIds                Json              @db.JsonB
+  status                   String            @default("creating")
   qualityScore             Float?
-  totalCharactersGenerated Int      @default(0)
+  totalCharactersGenerated Int               @default(0)
   lastUsedAt               DateTime?
 
   createdAt DateTime @default(now())
@@ -5936,7 +5964,7 @@ model VoiceClone {
 
 /// Audio sample for voice cloning
 model VoiceCloneSample {
-  id            String  @id @default(cuid())
+  id            String      @id @default(cuid())
   tenantId      String
   cloneId       String?
   clone         VoiceClone? @relation(fields: [cloneId], references: [id])
@@ -5945,7 +5973,7 @@ model VoiceCloneSample {
   audioFormat   String
   durationMs    Int
   fileSizeBytes Int
-  qualityAssess Json?   @db.JsonB
+  qualityAssess Json?       @db.JsonB
 
   createdAt DateTime @default(now())
 
@@ -5956,17 +5984,17 @@ model VoiceCloneSample {
 
 /// Multi-speaker dialogue script
 model VoiceDialogueScript {
-  id              String @id @default(cuid())
+  id              String  @id @default(cuid())
   tenantId        String
   title           String
-  description     String   @db.Text
+  description     String  @db.Text
   language        String
   targetLevel     String
-  curriculumCodes Json?    @db.JsonB
-  teachingNotes   String?  @db.Text
+  curriculumCodes Json?   @db.JsonB
+  teachingNotes   String? @db.Text
   createdBy       String
-  lines           Json     @db.JsonB
-  directions      Json?    @db.JsonB
+  lines           Json    @db.JsonB
+  directions      Json?   @db.JsonB
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -5981,13 +6009,13 @@ model VoiceDialogueScript {
 
 /// Character in a dialogue script
 model VoiceDialogueCharacter {
-  id            String @id @default(cuid())
+  id            String              @id @default(cuid())
   scriptId      String
   script        VoiceDialogueScript @relation(fields: [scriptId], references: [id])
   name          String
   role          String
   voiceId       String
-  voiceSettings Json?  @db.JsonB
+  voiceSettings Json?               @db.JsonB
   personality   String?
   accentRegion  String?
   ageGroup      String?
@@ -5998,7 +6026,7 @@ model VoiceDialogueCharacter {
 
 /// Generated dialogue audio
 model VoiceGeneratedDialogue {
-  id            String @id @default(cuid())
+  id            String              @id @default(cuid())
   scriptId      String
   script        VoiceDialogueScript @relation(fields: [scriptId], references: [id])
   tenantId      String
@@ -6006,7 +6034,7 @@ model VoiceGeneratedDialogue {
   audioFormat   String
   durationMs    Int
   fileSizeBytes Int
-  segments      Json   @db.JsonB
+  segments      Json                @db.JsonB
   totalCredits  Int
 
   generatedAt DateTime
@@ -6022,10 +6050,10 @@ model VoiceUsageDaily {
   tenantId String
   date     DateTime @db.Date
 
-  ttsRequests   Int   @default(0)
-  ttsCharacters Int   @default(0)
-  ttsCredits    Int   @default(0)
-  ttsCacheHits  Int   @default(0)
+  ttsRequests   Int @default(0)
+  ttsCharacters Int @default(0)
+  ttsCredits    Int @default(0)
+  ttsCacheHits  Int @default(0)
 
   sttRequests Int   @default(0)
   sttMinutes  Float @default(0)
@@ -6042,4 +6070,457 @@ model VoiceUsageDaily {
   @@unique([tenantId, date])
   @@index([tenantId, date])
   @@map("voice_usage_daily")
+}
+
+// ============================================================================
+// ARENA MODULE — COMPETITION & TOURNAMENTS
+// ============================================================================
+
+model ArenaCompetition {
+  id       String @id @default(cuid())
+  tenantId String
+
+  creatorId   String
+  format      String
+  title       String
+  description String?   @db.Text
+  config      Json
+  status      String    @default("SCHEDULED")
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  currentRound     Int     @default(0)
+  totalRounds      Int     @default(1)
+  storybookId      String?
+  phonicsPhase     String?
+  wagerPool        Int     @default(0)
+  wagerTokenType   String?
+  participantCount Int     @default(0)
+  metadata         Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants   ArenaParticipant[]
+  teamChallenges ArenaTeamChallenge[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, format])
+}
+
+model ArenaParticipant {
+  id            String           @id @default(cuid())
+  competitionId String
+  competition   ArenaCompetition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User             @relation(fields: [userId], references: [id])
+  tenantId      String
+
+  teamId         String?
+  type           String   @default("STUDENT")
+  handicapFactor Float    @default(1.0)
+  wagerAmount    Int      @default(0)
+  totalScore     Float    @default(0)
+  roundScores    Json     @default("[]")
+  rank           Int?
+  status         String   @default("REGISTERED")
+  joinedAt       DateTime @default(now())
+
+  @@unique([competitionId, userId])
+  @@index([tenantId, userId])
+}
+
+// ============================================================================
+// ARENA MODULE — TEAMS
+// ============================================================================
+
+model ArenaTeam {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name        String
+  type        String
+  description String?
+  avatarUrl   String?
+  createdBy   String
+  creator     User    @relation("ArenaTeamCreator", fields: [createdBy], references: [id])
+
+  maxMembers        Int     @default(10)
+  memberCount       Int     @default(0)
+  treasurySparks    Int     @default(0)
+  treasuryGems      Int     @default(0)
+  totalWins         Int     @default(0)
+  totalCompetitions Int     @default(0)
+  xp                Int     @default(0)
+  level             Int     @default(1)
+  streak            Int     @default(0)
+  isActive          Boolean @default(true)
+  metadata          Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members            ArenaTeamMember[]
+  treasuryVotes      ArenaTreasuryVote[]
+  proposedTrades     ArenaTeamTrade[]     @relation("TradeProposer")
+  receivedTrades     ArenaTeamTrade[]     @relation("TradeRecipient")
+  challengesSent     ArenaTeamChallenge[] @relation("Challenger")
+  challengesReceived ArenaTeamChallenge[] @relation("Challenged")
+
+  @@index([tenantId, type])
+  @@index([tenantId, isActive])
+}
+
+model ArenaTeamMember {
+  id       String    @id @default(cuid())
+  teamId   String
+  team     ArenaTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User      @relation(fields: [userId], references: [id])
+  tenantId String
+
+  role               String   @default("MEMBER")
+  contributedSparks  Int      @default(0)
+  contributedGems    Int      @default(0)
+  competitionsPlayed Int      @default(0)
+  competitionsWon    Int      @default(0)
+  joinedAt           DateTime @default(now())
+  isActive           Boolean  @default(true)
+
+  @@unique([teamId, userId])
+  @@index([tenantId, userId])
+}
+
+model ArenaTreasuryVote {
+  id       String    @id @default(cuid())
+  teamId   String
+  team     ArenaTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  tenantId String
+
+  proposerId       String
+  proposer         User     @relation("TreasuryVoteProposer", fields: [proposerId], references: [id])
+  description      String
+  tokenType        String
+  amount           Int
+  purpose          String
+  status           String   @default("OPEN")
+  votesFor         Int      @default(0)
+  votesAgainst     Int      @default(0)
+  totalVoters      Int      @default(0)
+  requiredApproval Float    @default(0.5)
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+
+  votes ArenaTreasuryVoteCast[]
+
+  @@index([teamId, status])
+}
+
+model ArenaTreasuryVoteCast {
+  id       String            @id @default(cuid())
+  voteId   String
+  vote     ArenaTreasuryVote @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  voterId  String
+  voter    User              @relation("TreasuryVoteCaster", fields: [voterId], references: [id])
+  tenantId String
+
+  choice    String
+  createdAt DateTime @default(now())
+
+  @@unique([voteId, voterId])
+}
+
+model ArenaTeamTrade {
+  id       String @id @default(cuid())
+  tenantId String
+
+  proposerTeamId  String
+  proposerTeam    ArenaTeam @relation("TradeProposer", fields: [proposerTeamId], references: [id])
+  recipientTeamId String
+  recipientTeam   ArenaTeam @relation("TradeRecipient", fields: [recipientTeamId], references: [id])
+
+  offerTokenType   String
+  offerAmount      Int
+  requestTokenType String
+  requestAmount    Int
+  status           String   @default("PROPOSED")
+  message          String?
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+
+  @@index([tenantId, status])
+  @@index([proposerTeamId])
+  @@index([recipientTeamId])
+}
+
+model ArenaTeamChallenge {
+  id       String @id @default(cuid())
+  tenantId String
+
+  challengerTeamId String
+  challengerTeam   ArenaTeam         @relation("Challenger", fields: [challengerTeamId], references: [id])
+  challengedTeamId String
+  challengedTeam   ArenaTeam         @relation("Challenged", fields: [challengedTeamId], references: [id])
+  competitionId    String?
+  competition      ArenaCompetition? @relation(fields: [competitionId], references: [id])
+
+  wagerAmount    Int     @default(0)
+  wagerTokenType String?
+  format         String
+  phonicsPhase   String?
+  status         String  @default("PENDING")
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, status])
+  @@index([challengerTeamId])
+  @@index([challengedTeamId])
+}
+
+// ============================================================================
+// ARENA MODULE — TOKEN ECONOMY
+// ============================================================================
+
+model TokenBalance {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  tenantId String
+
+  sparks Int @default(0)
+  gems   Int @default(0)
+  voice  Int @default(0)
+
+  stakedSparks Int @default(0)
+  stakedGems   Int @default(0)
+  stakedVoice  Int @default(0)
+
+  lifetimeSparksEarned Int @default(0)
+  lifetimeGemsEarned   Int @default(0)
+  lifetimeVoiceEarned  Int @default(0)
+
+  lastEarnedAt DateTime?
+  lastSpentAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+}
+
+model ArenaTokenTransaction {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  tenantId String
+
+  tokenType       String
+  transactionType String
+  amount          Int
+  balanceBefore   Int
+  balanceAfter    Int
+  category        String?
+  referenceId     String?
+  referenceType   String?
+  metadata        Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, userId, tokenType])
+  @@index([tenantId, tokenType, createdAt])
+  @@index([referenceId, referenceType])
+}
+
+model ArenaStakePosition {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  tenantId String
+
+  poolType     String
+  poolId       String?
+  tokenType    String
+  amount       Int
+  lockedUntil  DateTime
+  yieldAccrued Int      @default(0)
+  status       String   @default("ACTIVE")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, userId])
+  @@index([tenantId, poolType])
+}
+
+// ============================================================================
+// ARENA MODULE — DAO GOVERNANCE
+// ============================================================================
+
+model ArenaProposal {
+  id       String @id @default(cuid())
+  tenantId String
+
+  creatorId String
+  creator   User   @relation("ArenaProposalCreator", fields: [creatorId], references: [id])
+
+  type           String
+  title          String
+  description    String @db.Text
+  specification  Json?
+  status         String @default("DRAFT")
+  votingStrategy String @default("SIMPLE_MAJORITY")
+
+  votingStartsAt DateTime?
+  votingEndsAt   DateTime?
+  executionAt    DateTime?
+
+  quorumRequired Float @default(0.1)
+  votesFor       Int   @default(0)
+  votesAgainst   Int   @default(0)
+  votesAbstain   Int   @default(0)
+  totalVoters    Int   @default(0)
+  voiceLocked    Int   @default(0)
+  metadata       Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  votes                ArenaVote[]
+  treasuryTransactions DaoTreasuryTransaction[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, type])
+  @@index([tenantId, creatorId])
+}
+
+model ArenaVote {
+  id         String        @id @default(cuid())
+  proposalId String
+  proposal   ArenaProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  voterId    String
+  voter      User          @relation("ArenaVoter", fields: [voterId], references: [id])
+  tenantId   String
+
+  choice        String
+  weight        Int     @default(1)
+  voiceSpent    Int     @default(0)
+  delegatedFrom String?
+  reason        String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([proposalId, voterId])
+  @@index([tenantId, voterId])
+}
+
+model ArenaDelegation {
+  id          String @id @default(cuid())
+  delegatorId String
+  delegator   User   @relation("ArenaDelegator", fields: [delegatorId], references: [id])
+  delegateId  String
+  delegate    User   @relation("ArenaDelegate", fields: [delegateId], references: [id])
+  tenantId    String
+
+  proposalTypes String[]  @default([])
+  voiceAmount   Int       @default(0)
+  expiresAt     DateTime?
+  isActive      Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, delegatorId])
+  @@index([tenantId, delegateId])
+}
+
+model DaoTreasury {
+  id       String @id @default(cuid())
+  tenantId String @unique
+
+  sparksBalance  Int @default(0)
+  gemsBalance    Int @default(0)
+  voiceBalance   Int @default(0)
+  totalAllocated Int @default(0)
+  totalSpent     Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DaoTreasuryTransaction {
+  id       String @id @default(cuid())
+  tenantId String
+
+  proposalId  String?
+  proposal    ArenaProposal? @relation(fields: [proposalId], references: [id])
+  tokenType   String
+  amount      Int
+  direction   String
+  description String?
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
+
+// ============================================================================
+// ARENA MODULE — CONTENT BOUNTIES
+// ============================================================================
+
+model ContentBounty {
+  id       String @id @default(cuid())
+  tenantId String
+
+  creatorId String
+  creator   User   @relation("BountyCreator", fields: [creatorId], references: [id])
+
+  category     String
+  title        String
+  description  String @db.Text
+  requirements Json
+  reward       Json
+  status       String @default("DRAFT")
+
+  submissionDeadline DateTime
+  judgingDeadline    DateTime?
+  maxSubmissions     Int       @default(50)
+  currentSubmissions Int       @default(0)
+
+  eligibleTiers String[] @default([])
+  tags          String[] @default([])
+  proposalId    String?
+  metadata      Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submissions BountySubmission[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, category])
+}
+
+model BountySubmission {
+  id        String        @id @default(cuid())
+  bountyId  String
+  bounty    ContentBounty @relation(fields: [bountyId], references: [id], onDelete: Cascade)
+  creatorId String
+  creator   User          @relation("BountySubmitter", fields: [creatorId], references: [id])
+  tenantId  String
+
+  storyId        String?
+  status         String  @default("SUBMITTED")
+  automatedScore Float?
+  communityScore Float?
+  expertScore    Float?
+  totalScore     Float?
+  feedback       Json?
+
+  submittedAt DateTime  @default(now())
+  reviewedAt  DateTime?
+
+  @@index([bountyId, creatorId])
+  @@index([tenantId, status])
 }
