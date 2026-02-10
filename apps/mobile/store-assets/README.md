@@ -1,19 +1,24 @@
-# Store Assets
+# Mati - Store Assets
 
 ## Required Before Submission
 
 ### App Icon (`assets/icon.png`)
 - Size: 1024x1024 pixels
 - Format: PNG, no transparency, no rounded corners (iOS adds automatically)
-- Design: Book with sparkles, warm colours, purple (#8839ef) background
+- Design: "Mati / Learn to Read" text over open book with sparkles, purple/green scene
 
 ### Adaptive Icon (`assets/adaptive-icon.png`)
 - Size: 1024x1024 pixels
 - Foreground layer for Android adaptive icons
+- Design: Open book with sparkles over hills, no text (Android masks to shape)
 
 ### Splash Screen (`assets/splash.png`)
 - Size: 1284x2778 pixels (iPhone 14 Pro Max)
-- Purple (#8839ef) background with centered logo
+- Design: "Mati / Learn to Read" text, open book with sparkles, purple sky over green hills
+
+### Web Splash (`assets/web-splash.png`)
+- Size: 1024x585 pixels
+- Design: Purple sky with sparkles over green hills and flowers, no text
 
 ### Screenshots (5 per device class)
 - iPhone 6.7" (1290x2796): `screenshots/iphone-67/01.png` - `05.png`
@@ -27,9 +32,9 @@ Suggested screenshot sequence:
 4. Progress tracking stars/stats
 5. Parent dashboard
 
-### Google Play Feature Graphic
+### Google Play Feature Graphic (`feature-graphic.png`)
 - Size: 1024x500 pixels
-- File: `feature-graphic.png`
+- Design: Kids reading a book together, "Mati / Learn to Read" text with star ratings
 
 ## Fonts
 Place Montserrat font files in `assets/fonts/`:
