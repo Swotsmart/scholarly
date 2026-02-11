@@ -14,7 +14,7 @@ export default function EarlyYearsSettingsPage() {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-purple-50 to-pink-100 max-w-2xl mx-auto space-y-6 p-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Little Explorers Settings</h1>
         <p className="text-muted-foreground">Customize the early years learning experience</p>

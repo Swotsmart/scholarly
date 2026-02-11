@@ -113,7 +113,7 @@ export default function EnrollChildPage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-purple-50 to-pink-100 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Back Button */}
         <Link
