@@ -2,6 +2,9 @@
 
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import ConfettiCelebration from '../ConfettiCelebration';
+import TactileButton from '../TactileButton';
+import { ChevronRight } from 'lucide-react';
 
 // =============================================================================
 // TYPES
@@ -70,10 +73,13 @@ export function CelebrationOverlay({ word, emoji, onNext }: CelebrationOverlayPr
 
   return (
     <motion.div
-      className="flex flex-col items-center gap-4 py-6"
+      className="relative flex flex-col items-center gap-4 py-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
+      {/* Confetti burst behind the celebration */}
+      <ConfettiCelebration isActive intensity="medium" duration={2500} />
+
       {/* Emoji with sparkle particles */}
       <div className="relative">
         {sparkles}
@@ -102,13 +108,14 @@ export function CelebrationOverlay({ word, emoji, onNext }: CelebrationOverlayPr
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.5, duration: 0.4 }}
       >
-        <button
+        <TactileButton
+          variant="success"
+          size="lg"
+          icon={<ChevronRight className="w-5 h-5" />}
           onClick={onNext}
-          className="px-8 py-3 min-h-[44px] rounded-full bg-gradient-to-r from-green-400 to-emerald-500 text-white font-bold text-lg shadow-lg hover:shadow-xl active:scale-95 transition-all"
-          aria-label="Next word"
         >
-          Well Done! Next Word &rarr;
-        </button>
+          Well Done! Next Word
+        </TactileButton>
       </motion.div>
     </motion.div>
   );

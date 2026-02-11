@@ -43,6 +43,11 @@ import {
   BLENDING_WORDS,
   type BlendingMode,
 } from '@/components/early-years/blending';
+import { usePhonicsAudio } from '@/hooks/use-phonics-audio';
+import type { SoundEffect } from '@/lib/sound-effects';
+import { MentorCharacterOverlay, type MentorMood } from '@/components/early-years/MentorCharacterOverlay';
+import ConfettiCelebration from '@/components/early-years/ConfettiCelebration';
+import TactileButton from '@/components/early-years/TactileButton';
 
 // Design System v2.0: Minimum touch target size
 const TOUCH_TARGET_SIZE = 44;
@@ -111,10 +116,12 @@ function SoundIntroActivity({
   grapheme,
   onComplete,
   onSpeak,
+  onPlayEffect,
 }: {
   grapheme: string;
   onComplete: () => void;
   onSpeak: (text: string) => void;
+  onPlayEffect?: (effect: SoundEffect) => void;
 }) {
   const data = GRAPHEME_DATA[grapheme.toLowerCase()];
   const [step, setStep] = useState<'intro' | 'practice' | 'done'>('intro');
@@ -190,24 +197,20 @@ function SoundIntroActivity({
 
           {/* Action buttons */}
           <div className="flex justify-center gap-4">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
+            <TactileButton
+              variant="primary"
+              icon={<Volume2 className="w-5 h-5" />}
               onClick={handleListen}
-              className="flex items-center gap-2 px-6 py-4 bg-blue-500 text-white rounded-2xl font-bold shadow-lg"
-              style={{ minHeight: TOUCH_TARGET_SIZE }}
             >
-              <Volume2 className="w-6 h-6" />
               Listen Again
-            </motion.button>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
+            </TactileButton>
+            <TactileButton
+              variant="fun"
+              icon={<Mic className="w-5 h-5" />}
               onClick={handlePractice}
-              className="flex items-center gap-2 px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-bold shadow-lg"
-              style={{ minHeight: TOUCH_TARGET_SIZE }}
             >
-              <Mic className="w-6 h-6" />
               Say It!
-            </motion.button>
+            </TactileButton>
           </div>
         </>
       )}
@@ -237,14 +240,13 @@ function SoundIntroActivity({
                 />
               ))}
             </div>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
+            <TactileButton
+              variant="success"
+              size="lg"
               onClick={handlePractice}
-              className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-2xl font-bold text-lg shadow-lg"
-              style={{ minHeight: TOUCH_TARGET_SIZE }}
             >
-              Say "{grapheme}" Again!
-            </motion.button>
+              Say &ldquo;{grapheme}&rdquo; Again!
+            </TactileButton>
           </motion.div>
         </>
       )}
@@ -267,14 +269,17 @@ function SoundIntroActivity({
           <p className="text-xl text-gray-600 mb-6">
             You learned the "{grapheme}" sound!
           </p>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={onComplete}
-            className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-bold text-lg shadow-lg"
-            style={{ minHeight: TOUCH_TARGET_SIZE }}
+          <TactileButton
+            variant="fun"
+            size="lg"
+            icon={<Star className="w-5 h-5" />}
+            onClick={() => {
+              onPlayEffect?.('celebrate');
+              onComplete();
+            }}
           >
             Collect Your Badge!
-          </motion.button>
+          </TactileButton>
         </motion.div>
       )}
     </motion.div>
@@ -483,6 +488,7 @@ function ParentProgressView({
 export default function PhonicsEnginePage() {
   const router = useRouter();
   const { childDashboard, activeChild } = useEarlyYearsStore();
+  const { speak, speakPhoneme, playEffect, preloadPhonemes } = usePhonicsAudio();
 
   // State
   const [selectedPhase, setSelectedPhase] = useState<number>(2);
@@ -495,9 +501,18 @@ export default function PhonicsEnginePage() {
   const [blendingMode] = useState<BlendingMode>('successive');
   const [starsEarned, setStarsEarned] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [mentorMood, setMentorMood] = useState<MentorMood>('idle');
+  const [mentorSpeech, setMentorSpeech] = useState('');
+  const [showMentorSpeech, setShowMentorSpeech] = useState(false);
 
   // Get Phase 2 words for blending (beginner CVC words)
   const blendingWords = BLENDING_WORDS.filter((w) => w.phase === 2);
+
+  // Preload Phase 2 phonemes on mount for instant playback
+  useEffect(() => {
+    const phase2Graphemes = PHONICS_PHASES.find((p) => p.phase === 2)?.graphemes || [];
+    preloadPhonemes(phase2Graphemes);
+  }, [preloadPhonemes]);
 
   // Use progress from dashboard if available
   useEffect(() => {
@@ -512,21 +527,45 @@ export default function PhonicsEnginePage() {
   const unlockedPhases = [1, 2]; // Demo: phases 1 and 2 unlocked
   const currentPhaseData = PHONICS_PHASES.find((p) => p.phase === selectedPhase);
 
-  // Text-to-speech
-  const speakMessage = useCallback((message: string) => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(message);
-    utterance.rate = 0.8;
-    utterance.pitch = 1.1;
-    window.speechSynthesis.speak(utterance);
+  // Mentor greeting on mount
+  useEffect(() => {
+    const name = activeChild?.preferredName || activeChild?.firstName || '';
+    const greeting = name
+      ? `Hi ${name}! Welcome to Phonics Forest!`
+      : 'Welcome to Phonics Forest!';
+    setMentorMood('waving');
+    setMentorSpeech(greeting);
+    setShowMentorSpeech(true);
+    speak(greeting);
+    const timer = setTimeout(() => {
+      setMentorMood('idle');
+      setShowMentorSpeech(false);
+    }, 4000);
+    return () => clearTimeout(timer);
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Helper to speak via the audio hook (replaces old speakMessage)
+  const speakMessage = useCallback(
+    (message: string) => {
+      speak(message);
+    },
+    [speak],
+  );
 
   const handleGraphemeSelect = (grapheme: string) => {
     setSelectedGrapheme(grapheme);
     setActivityType('sound-intro');
+    setMentorMood('speaking');
+    setMentorSpeech(`Let's learn the ${grapheme} sound!`);
+    setShowMentorSpeech(true);
     speakMessage(`Let's learn the ${grapheme} sound!`);
+    playEffect('pop');
+    setTimeout(() => {
+      setMentorMood('encouraging');
+      setShowMentorSpeech(false);
+    }, 3000);
   };
 
   const handleSoundComplete = () => {
@@ -539,24 +578,32 @@ export default function PhonicsEnginePage() {
 
       setStarsEarned((prev) => prev + 1);
       setShowCelebration(true);
+      setMentorMood('celebrating');
+      playEffect('levelUp');
 
       setTimeout(() => {
         setShowCelebration(false);
         setSelectedGrapheme(null);
         setActivityType(null);
-      }, 2000);
+        setMentorMood('idle');
+      }, 2500);
     }
   };
 
   const handleStartBlending = () => {
     setActivityType('blending');
     setCurrentWordIndex(0);
-    // Voice coach intro now handled by BlendingActivity component
+    setMentorMood('speaking');
+    playEffect('whoosh');
+    setTimeout(() => setMentorMood('encouraging'), 2000);
   };
 
   const handleBlendingComplete = (success: boolean) => {
     if (success) {
       setStarsEarned((prev) => prev + 1);
+      setMentorMood('celebrating');
+      playEffect('correct');
+      setTimeout(() => setMentorMood('encouraging'), 1500);
     }
 
     if (currentWordIndex < blendingWords.length - 1) {
@@ -564,10 +611,13 @@ export default function PhonicsEnginePage() {
     } else {
       // Finished all words
       setShowCelebration(true);
+      setMentorMood('celebrating');
+      playEffect('levelUp');
       setTimeout(() => {
         setShowCelebration(false);
         setActivityType(null);
-      }, 2000);
+        setMentorMood('idle');
+      }, 2500);
     }
   };
 
@@ -598,7 +648,7 @@ export default function PhonicsEnginePage() {
         )}
       </AnimatePresence>
 
-      {/* Celebration overlay */}
+      {/* Celebration overlay with confetti */}
       <AnimatePresence>
         {showCelebration && (
           <motion.div
@@ -607,6 +657,7 @@ export default function PhonicsEnginePage() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
           >
+            <ConfettiCelebration isActive intensity="large" duration={2500} />
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: [0, 1.2, 1] }}
@@ -746,16 +797,15 @@ export default function PhonicsEnginePage() {
                 transition={{ delay: 0.4 }}
                 className="max-w-md mx-auto text-center"
               >
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                <TactileButton
+                  variant="fun"
+                  size="lg"
+                  icon={<Sparkles className="w-6 h-6" />}
                   onClick={handleStartBlending}
-                  className="w-full py-5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-3"
-                  style={{ minHeight: TOUCH_TARGET_SIZE }}
+                  className="w-full"
                 >
-                  <Sparkles className="w-6 h-6" />
                   Practice Blending!
-                </motion.button>
+                </TactileButton>
               </motion.section>
             )}
           </>
@@ -767,6 +817,7 @@ export default function PhonicsEnginePage() {
             grapheme={selectedGrapheme}
             onComplete={handleSoundComplete}
             onSpeak={speakMessage}
+            onPlayEffect={playEffect}
           />
         )}
 
@@ -778,10 +829,29 @@ export default function PhonicsEnginePage() {
             totalWords={blendingWords.length}
             blendingMode={blendingMode}
             onComplete={handleBlendingComplete}
-            onSpeak={speakMessage}
+            mentor="ollie_owl"
           />
         )}
       </main>
+
+      {/* Mentor Character */}
+      <MentorCharacterOverlay
+        mentor="ollie_owl"
+        mood={mentorMood}
+        speechBubble={mentorSpeech}
+        showSpeechBubble={showMentorSpeech}
+        onTap={() => {
+          setMentorMood('waving');
+          setMentorSpeech('Keep going, you\'re doing great!');
+          setShowMentorSpeech(true);
+          speak('Keep going, you\'re doing great!');
+          playEffect('pop');
+          setTimeout(() => {
+            setMentorMood('idle');
+            setShowMentorSpeech(false);
+          }, 3000);
+        }}
+      />
 
       {/* Decorative elements */}
       <div className="fixed bottom-0 left-0 right-0 pointer-events-none overflow-hidden h-32 z-0">

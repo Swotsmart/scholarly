@@ -39,6 +39,10 @@ interface EarlyYearsState {
   picturePasswordSequence: string[];
   isSettingUpPassword: boolean;
 
+  // Audio preferences
+  voicePersona: 'pip' | 'sarah' | 'alex' | 'willow';
+  audioEnabled: boolean;
+
   // Actions - Family
   loadFamily: () => Promise<void>;
   setFamily: (family: Family) => void;
@@ -53,6 +57,10 @@ interface EarlyYearsState {
   removeFromPicturePassword: (index: number) => void;
   clearPicturePassword: () => void;
   setupPicturePassword: (childId: string) => Promise<boolean>;
+
+  // Actions - Audio
+  setVoicePersona: (persona: 'pip' | 'sarah' | 'alex' | 'willow') => void;
+  setAudioEnabled: (enabled: boolean) => void;
 
   // Actions - Sessions
   setSelectedWorld: (world: LearningWorld) => void;
@@ -81,6 +89,8 @@ const initialState = {
   isLoadingDashboard: false,
   picturePasswordSequence: [],
   isSettingUpPassword: false,
+  voicePersona: 'pip' as const,
+  audioEnabled: true,
 };
 
 export const useEarlyYearsStore = create<EarlyYearsState>()(
@@ -218,6 +228,18 @@ export const useEarlyYearsStore = create<EarlyYearsState>()(
       },
 
       // ===========================================================================
+      // AUDIO ACTIONS
+      // ===========================================================================
+
+      setVoicePersona: (persona) => {
+        set({ voicePersona: persona });
+      },
+
+      setAudioEnabled: (enabled) => {
+        set({ audioEnabled: enabled });
+      },
+
+      // ===========================================================================
       // SESSION ACTIONS
       // ===========================================================================
 
@@ -312,6 +334,8 @@ export const useEarlyYearsStore = create<EarlyYearsState>()(
         activeChild: state.activeChild,
         childToken: state.childToken,
         isChildAuthenticated: state.isChildAuthenticated,
+        voicePersona: state.voicePersona,
+        audioEnabled: state.audioEnabled,
       }),
     }
   )

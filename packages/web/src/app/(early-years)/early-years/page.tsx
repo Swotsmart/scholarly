@@ -32,6 +32,10 @@ import { MentorSelector } from '@/components/early-years/mentor-selector';
 import { ChildDashboard } from '@/components/early-years/child-dashboard';
 import type { Child } from '@/types/early-years';
 import { cn } from '@/lib/utils';
+import { usePhonicsAudio } from '@/hooks/use-phonics-audio';
+import { MentorCharacterOverlay, type MentorMood } from '@/components/early-years/MentorCharacterOverlay';
+import ConfettiCelebration from '@/components/early-years/ConfettiCelebration';
+import TactileButton from '@/components/early-years/TactileButton';
 
 // Design System v2.0: Minimum touch target size for children
 const TOUCH_TARGET_SIZE = 44;
@@ -260,10 +264,13 @@ const QUICK_ACTIONS = [
 export default function EarlyYearsPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<FlowStep>('loading');
-  const [audioEnabled, setAudioEnabled] = useState(true);
   const [showParentPin, setShowParentPin] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [mentorMood, setMentorMood] = useState<MentorMood>('idle');
+
+  const { speak, playEffect, stop } = usePhonicsAudio();
+  const storeAudioEnabled = useEarlyYearsStore((s) => s.audioEnabled);
+  const storeSetAudioEnabled = useEarlyYearsStore((s) => s.setAudioEnabled);
 
   const {
     family,
@@ -284,32 +291,18 @@ export default function EarlyYearsPage() {
     loadChildDashboard,
   } = useEarlyYearsStore();
 
-  // Text-to-speech helper for audio narration
-  const speakMessage = useCallback((message: string) => {
-    if (!audioEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  // Audio enabled state synced with store
+  const audioEnabled = storeAudioEnabled;
+  const setAudioEnabled = storeSetAudioEnabled;
 
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(message);
-    utterance.rate = 0.85; // Slower for children
-    utterance.pitch = 1.1; // Slightly higher pitch
-    utterance.volume = 1;
-
-    // Try to use a child-friendly voice
-    const voices = window.speechSynthesis.getVoices();
-    const femaleVoice = voices.find(v =>
-      v.name.includes('Samantha') ||
-      v.name.includes('Google UK English Female') ||
-      v.name.includes('Female')
-    );
-    if (femaleVoice) {
-      utterance.voice = femaleVoice;
-    }
-
-    speechSynthRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
-  }, [audioEnabled]);
+  // Text-to-speech helper (now uses ElevenLabs with browser fallback)
+  const speakMessage = useCallback(
+    (message: string) => {
+      if (!audioEnabled) return;
+      speak(message);
+    },
+    [audioEnabled, speak],
+  );
 
   // Speak step-specific messages
   useEffect(() => {
@@ -386,8 +379,12 @@ export default function EarlyYearsPage() {
   const handlePasswordSuccess = () => {
     // Show celebration animation
     setShowCelebration(true);
-    setTimeout(() => setShowCelebration(false), 2000);
-    // Will trigger useEffect to move to dashboard
+    playEffect('celebrate');
+    setMentorMood('celebrating');
+    setTimeout(() => {
+      setShowCelebration(false);
+      setMentorMood('idle');
+    }, 2000);
   };
 
   const handleStartSession = () => {
@@ -430,13 +427,14 @@ export default function EarlyYearsPage() {
   };
 
   const handleQuickAction = (action: typeof QUICK_ACTIONS[0]) => {
+    playEffect('whoosh');
     speakMessage(action.audio);
     router.push(action.path);
   };
 
   const toggleAudio = () => {
-    if (audioEnabled && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+    if (audioEnabled) {
+      stop();
     }
     setAudioEnabled(!audioEnabled);
   };
@@ -457,8 +455,8 @@ export default function EarlyYearsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-100 via-purple-50 to-pink-50">
-      {/* Star burst celebration */}
-      <StarBurst show={showCelebration} />
+      {/* Confetti celebration */}
+      <ConfettiCelebration isActive={showCelebration} intensity="medium" duration={2000} />
 
       {/* Parent PIN Modal */}
       <ParentPinModal
@@ -674,43 +672,48 @@ export default function EarlyYearsPage() {
                 </motion.h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {QUICK_ACTIONS.map((action, index) => (
-                    <motion.button
+                    <motion.div
                       key={action.id}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.1 }}
-                      whileHover={{ scale: 1.05, y: -5 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleQuickAction(action)}
-                      className={cn(
-                        "relative rounded-3xl overflow-hidden shadow-lg aspect-square",
-                        "flex flex-col items-center justify-center p-4",
-                        "bg-gradient-to-br text-white",
-                        "min-h-[120px] min-w-[120px]", // Large touch target
-                        action.color
-                      )}
                     >
-                      <motion.span
-                        animate={{ y: [0, -5, 0] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="text-5xl mb-2"
+                      <motion.button
+                        whileHover={{ scale: 1.05, y: -5 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleQuickAction(action)}
+                        className={cn(
+                          "relative rounded-3xl overflow-hidden aspect-square w-full",
+                          "flex flex-col items-center justify-center p-4",
+                          "bg-gradient-to-br text-white",
+                          "min-h-[120px] min-w-[120px]",
+                          "shadow-[0_6px_0_rgba(0,0,0,0.15)] hover:shadow-[0_8px_0_rgba(0,0,0,0.15)] hover:-translate-y-1",
+                          "active:shadow-[0_2px_0_rgba(0,0,0,0.15)] active:translate-y-0.5",
+                          "transition-all",
+                          action.color
+                        )}
                       >
-                        {action.icon}
-                      </motion.span>
-                      <span className="font-bold text-sm text-center text-white/90">
-                        {action.label}
-                      </span>
-                      {/* Sound indicator */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          speakMessage(action.audio);
-                        }}
-                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/30 flex items-center justify-center hover:bg-white/50 transition-colors"
-                      >
-                        <Volume2 className="w-4 h-4 text-white" />
-                      </button>
-                    </motion.button>
+                        <motion.span
+                          animate={{ y: [0, -5, 0] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="text-5xl mb-2"
+                        >
+                          {action.icon}
+                        </motion.span>
+                        <span className="font-bold text-sm text-center text-white/90">
+                          {action.label}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            speakMessage(action.audio);
+                          }}
+                          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/30 flex items-center justify-center hover:bg-white/50 transition-colors"
+                        >
+                          <Volume2 className="w-4 h-4 text-white" />
+                        </button>
+                      </motion.button>
+                    </motion.div>
                   ))}
                 </div>
               </div>
@@ -791,6 +794,21 @@ export default function EarlyYearsPage() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Mentor Character */}
+      {isChildAuthenticated && (
+        <MentorCharacterOverlay
+          mentor="ollie_owl"
+          mood={mentorMood}
+          onTap={() => {
+            setMentorMood('waving');
+            playEffect('pop');
+            const name = activeChild?.preferredName || activeChild?.firstName || '';
+            speakMessage(name ? `Hi ${name}! Tap something to play!` : 'Hi there! Tap something to play!');
+            setTimeout(() => setMentorMood('idle'), 3000);
+          }}
+        />
+      )}
 
       {/* Fun Decorative Elements - Enhanced with more animations */}
       <div className="fixed bottom-0 left-0 right-0 pointer-events-none overflow-hidden h-40 z-0">

@@ -78,6 +78,7 @@ export const GRAPHEME_DATA: Record<string, GraphemeData> = {
   h: { grapheme: 'h', phoneme: '/h/', keywords: ['hat', 'house', 'horse'], emoji: '🎩', audioHint: 'h-h-h hot breath', mouthPosition: 'breathe out' },
   b: { grapheme: 'b', phoneme: '/b/', keywords: ['ball', 'bear', 'bee'], emoji: '🐻', audioHint: 'b-b-b bouncing ball', mouthPosition: 'lips together then release' },
   f: { grapheme: 'f', phoneme: '/f/', keywords: ['fish', 'fox', 'frog'], emoji: '🐟', audioHint: 'ffff like blowing', mouthPosition: 'teeth on lip' },
+  l: { grapheme: 'l', phoneme: '/l/', keywords: ['ladder', 'leg', 'lion'], emoji: '🦁', audioHint: 'lllll tongue up', mouthPosition: 'tongue behind teeth tip up' },
 
   // Phase 3 — Remaining letters
   j: { grapheme: 'j', phoneme: '/dʒ/', keywords: ['jelly', 'jump', 'jet'], emoji: '🍬', audioHint: 'j-j-j like jumping', mouthPosition: 'lips pushed out' },

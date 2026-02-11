@@ -23,6 +23,8 @@ import {
   GRAPHEME_DATA,
   COACH_ENCOURAGEMENTS,
 } from './blending-data';
+import { usePhonicsAudio } from '@/hooks/use-phonics-audio';
+import TactileButton from '../TactileButton';
 
 // =============================================================================
 // CONSTANTS
@@ -41,7 +43,7 @@ interface BlendingActivityProps {
   totalWords: number;
   blendingMode: BlendingMode;
   onComplete: (success: boolean) => void;
-  onSpeak: (text: string) => void;
+  mentor?: string;
 }
 
 export function BlendingActivity({
@@ -50,11 +52,25 @@ export function BlendingActivity({
   totalWords,
   blendingMode,
   onComplete,
-  onSpeak,
+  mentor,
 }: BlendingActivityProps) {
   const [coachMessage, setCoachMessage] = useState('');
   const [showCoach, setShowCoach] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const { speak, speakPhoneme, playEffect } = usePhonicsAudio();
+
+  // Smart speech handler: use speakPhoneme for known graphemes, speak for words/sentences
+  const handleSpeak = useCallback(
+    (text: string) => {
+      if (GRAPHEME_DATA[text.toLowerCase()]) {
+        speakPhoneme(text);
+      } else {
+        speak(text);
+      }
+    },
+    [speak, speakPhoneme],
+  );
 
   const {
     phase,
@@ -65,14 +81,29 @@ export function BlendingActivity({
     blendingLineActive,
     blendingLineDuration,
     allExplored,
-    tapTile,
-    startBlending,
+    tapTile: rawTapTile,
+    startBlending: rawStartBlending,
     reset,
   } = useBlendingSequence({
     phonemes: word.phonemes,
     mode: blendingMode,
-    onSpeak,
+    onSpeak: handleSpeak,
   });
+
+  // Wrap tapTile to add sound effect
+  const tapTile = useCallback(
+    (index: number) => {
+      playEffect('pop');
+      rawTapTile(index);
+    },
+    [rawTapTile, playEffect],
+  );
+
+  // Wrap startBlending to add sound effect
+  const startBlending = useCallback(() => {
+    playEffect('chime');
+    rawStartBlending();
+  }, [rawStartBlending, playEffect]);
 
   // Calculate total tile row width for blending line
   const totalTileWidth = useMemo(() => {
@@ -90,7 +121,7 @@ export function BlendingActivity({
     const intro = `Let's blend the sounds ${sounds}. Tap each sound to hear it!`;
     setCoachMessage(intro);
     setShowCoach(true);
-    onSpeak(intro);
+    handleSpeak(intro);
 
     const timer = setTimeout(() => setShowCoach(false), 4000);
     return () => clearTimeout(timer);
@@ -103,7 +134,7 @@ export function BlendingActivity({
       const msg = `Now press the button to blend ${sounds} together!`;
       setCoachMessage(msg);
       setShowCoach(true);
-      onSpeak(msg);
+      handleSpeak(msg);
 
       const timer = setTimeout(() => setShowCoach(false), 3000);
       return () => clearTimeout(timer);
@@ -116,7 +147,8 @@ export function BlendingActivity({
       const celebration = `${word.word}! That spells ${word.word}! ${COACH_ENCOURAGEMENTS[wordIndex % COACH_ENCOURAGEMENTS.length]}`;
       setCoachMessage(celebration);
       setShowCoach(true);
-      onSpeak(celebration);
+      playEffect('celebrate');
+      handleSpeak(celebration);
     }
   }, [phase]);
 
@@ -138,7 +170,7 @@ export function BlendingActivity({
       </div>
 
       {/* Voice Coach */}
-      <VoiceCoachBubble message={coachMessage} isVisible={showCoach} />
+      <VoiceCoachBubble message={coachMessage} isVisible={showCoach} mentor={mentor} />
 
       {/* Instruction */}
       <AnimatePresence mode="wait">
@@ -199,15 +231,20 @@ export function BlendingActivity({
       {/* Blend Button */}
       <AnimatePresence>
         {allExplored && phase === 'exploring' && (
-          <motion.button
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            onClick={startBlending}
-            className="px-8 py-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-lg shadow-lg hover:shadow-xl active:scale-95 transition-all min-h-[44px]"
           >
-            Blend the Sounds!
-          </motion.button>
+            <TactileButton
+              variant="fun"
+              size="lg"
+              icon={<Sparkles className="w-5 h-5" />}
+              onClick={startBlending}
+            >
+              Blend the Sounds!
+            </TactileButton>
+          </motion.div>
         )}
       </AnimatePresence>
 

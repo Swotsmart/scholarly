@@ -14,6 +14,22 @@ import { z } from 'zod';
 import { earlyYearsCoreService } from '../services/early-years-core.service';
 import { ApiError } from '../middleware/error-handler';
 
+// =============================================================================
+// PHONICS TTS (ElevenLabs)
+// =============================================================================
+
+const PHONICS_VOICES: Record<string, { voiceId: string; stability: number; similarityBoost: number; style: number; useSpeakerBoost: boolean }> = {
+  pip:    { voiceId: 'jBpfAFnyjnqEE8Hn6TQn', stability: 0.6, similarityBoost: 0.7, style: 0.5, useSpeakerBoost: true },
+  sarah:  { voiceId: 'EXAVITQu4vr4xnSDxMaL', stability: 0.7, similarityBoost: 0.8, style: 0.4, useSpeakerBoost: true },
+  alex:   { voiceId: 'TX3LPaxmHKxFdv7VOQHJ', stability: 0.55, similarityBoost: 0.75, style: 0.6, useSpeakerBoost: true },
+  willow: { voiceId: 'pNInz6obpgDQGcFmaJgB', stability: 0.75, similarityBoost: 0.85, style: 0.3, useSpeakerBoost: false },
+};
+
+const phonicsTtsSchema = z.object({
+  text: z.string().min(1).max(500),
+  voicePersona: z.enum(['pip', 'sarah', 'alex', 'willow']).default('pip'),
+});
+
 export const earlyYearsRouter: Router = Router();
 
 // =============================================================================
@@ -367,4 +383,55 @@ earlyYearsRouter.get('/phonics-phases', async (_req, res) => {
   ];
 
   res.json({ phases });
+});
+
+// =============================================================================
+// TEXT-TO-SPEECH (ElevenLabs)
+// =============================================================================
+
+/**
+ * POST /api/v1/early-years/tts
+ * Generate child-friendly speech for phonics activities.
+ * Returns audio/mpeg binary. Defaults to "Playful Pip" voice.
+ * Returns 503 if ELEVENLABS_API_KEY is not configured (frontend falls back to browser TTS).
+ */
+earlyYearsRouter.post('/tts', async (req, res) => {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) {
+    return res.status(503).json({ error: 'TTS service unavailable' });
+  }
+
+  const data = phonicsTtsSchema.parse(req.body);
+  const voice = PHONICS_VOICES[data.voicePersona];
+
+  try {
+    // Dynamic import to avoid issues if elevenlabs package isn't installed
+    const { ElevenLabsClient } = await import('@elevenlabs/elevenlabs-js');
+    const client = new ElevenLabsClient({ apiKey });
+
+    const audioStream = await client.textToSpeech.convert(voice.voiceId, {
+      text: data.text,
+      modelId: 'eleven_turbo_v2_5', // Lowest latency for instant feedback
+      voiceSettings: {
+        stability: voice.stability,
+        similarityBoost: voice.similarityBoost,
+        style: voice.style,
+        useSpeakerBoost: voice.useSpeakerBoost,
+      },
+    });
+
+    // Collect audio chunks
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of audioStream) {
+      chunks.push(chunk);
+    }
+    const audioBuffer = Buffer.concat(chunks);
+
+    res.set('Content-Type', 'audio/mpeg');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(audioBuffer);
+  } catch (error) {
+    console.error('Phonics TTS failed:', error);
+    res.status(503).json({ error: 'TTS generation failed' });
+  }
 });
