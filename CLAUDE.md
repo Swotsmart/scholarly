@@ -260,22 +260,40 @@ The API `tsconfig.json` excludes sprint module directories to prevent compilatio
 - **Subscription**: `chekd-id` (ID: `38bcaa28-0050-4951-8aec-abb63e491c37`)
 - **Tenant**: `swotsmart.com` (ID: `b5b30124-ff98-4f9e-97ad-00448a4b917b`)
 
-### Resources (Production)
+### Shared Resources
 - **Resource Group**: `scholarly-rg` (Australia East)
 - **Container Registry (ACR)**: `scholarlyacr` (login server: `scholarlyacr.azurecr.io`, admin enabled)
+- **Container Apps Environment**: `scholarly-env` (shared by production and staging)
+
+### Resources (Production)
 - **Web Container App**: `scholarly`
   - Image: `scholarlyacr.azurecr.io/scholarly-web:<git-sha>` (NEVER use `latest` — always tag with git SHA)
   - FQDN: `scholarly.bravefield-dce0abaf.australiaeast.azurecontainerapps.io`
-  - Port: 3000
+  - Port: 3000, Scale: 1-3 replicas, 0.5 vCPU / 1Gi
+  - Env: `NODE_ENV=production`, `NEXT_PUBLIC_DEMO_MODE=false`, `NEXT_PUBLIC_API_URL=https://scholarly-api.bravefield-dce0abaf.australiaeast.azurecontainerapps.io/api/v1`
 - **API Container App**: `scholarly-api`
-  - Image: `scholarlyacr.azurecr.io/scholarly-api:v1.0.1`
-  - Port: 3001
+  - Image: `scholarlyacr.azurecr.io/scholarly-api:<git-sha>`
+  - FQDN: `scholarly-api.bravefield-dce0abaf.australiaeast.azurecontainerapps.io`
+  - Port: 3001, Scale: 1-3 replicas, 0.5 vCPU / 1Gi
+  - Env: `NODE_ENV=production`, `DATABASE_URL=<prod-connection-string>`
+
+### Resources (Staging)
+- **Web Container App**: `scholarly-staging`
+  - Image: `scholarlyacr.azurecr.io/scholarly-web:<git-sha>` (same image as prod, same SHA)
+  - FQDN: `scholarly-staging.bravefield-dce0abaf.australiaeast.azurecontainerapps.io`
+  - Port: 3000, Scale: 0-2 replicas (scales to zero when idle), 0.5 vCPU / 1Gi
+  - Env: `NODE_ENV=staging`, `NEXT_PUBLIC_DEMO_MODE=true`, `NEXT_PUBLIC_API_URL=https://scholarly-staging-api.bravefield-dce0abaf.australiaeast.azurecontainerapps.io/api/v1`
+- **API Container App**: `scholarly-staging-api`
+  - Image: `scholarlyacr.azurecr.io/scholarly-api:staging-<git-sha>`
+  - FQDN: `scholarly-staging-api.bravefield-dce0abaf.australiaeast.azurecontainerapps.io`
+  - Port: 3001, Scale: 0-2 replicas (scales to zero when idle), 0.5 vCPU / 1Gi
+  - Env: `NODE_ENV=staging`, `NEXT_PUBLIC_DEMO_MODE=true`
 
 ### CI/CD (`.github/workflows/deploy.yml`)
 - Triggers: push to main, PR to main, manual dispatch
 - CI defaults ACR to `scholarlydevacr` (overridable via `vars.ACR_NAME`)
 - Deploy targets: Container Apps (default) or AKS
-- Environments: dev (default), prod
+- Environments: dev (default), staging, prod
 - Image tagging: SHA, branch, semver, `latest` on default branch
 
 ## Docker
@@ -298,19 +316,41 @@ The API `tsconfig.json` excludes sprint module directories to prevent compilatio
 2. **NEVER use `latest` tag in production** — always tag images with the git SHA (`git rev-parse --short HEAD`)
 3. **Use `az acr build`** to build images remotely in ACR (handles platform architecture automatically, no local Docker needed)
 
-### Production Deployment (Azure CLI)
+### Staging Deployment (Azure CLI)
 ```bash
-# 1. Get the git SHA for the image tag
 TAG=$(git rev-parse --short HEAD)
 
-# 2. Build in ACR (remote build — no local Docker required)
+# Build both images
+az acr build --registry scholarlyacr --image scholarly-web:$TAG --platform linux/amd64 --file Dockerfile .
+az acr build --registry scholarlyacr --image scholarly-api:staging-$TAG --platform linux/amd64 --file Dockerfile.api .
+
+# Deploy to staging
+az containerapp update --name scholarly-staging --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-web:$TAG
+az containerapp update --name scholarly-staging-api --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-api:staging-$TAG
+
+# Verify
+az containerapp list --resource-group scholarly-rg --query "[?contains(name,'staging')].{name:name,image:properties.template.containers[0].image,status:properties.runningStatus}" -o table
+```
+
+### Production Deployment (Azure CLI)
+```bash
+TAG=$(git rev-parse --short HEAD)
+
+# Build in ACR (remote build — no local Docker required)
 az acr build --registry scholarlyacr --image scholarly-web:$TAG --platform linux/amd64 --file Dockerfile .
 
-# 3. Deploy to Container Apps
+# Deploy to production
 az containerapp update --name scholarly --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-web:$TAG
 
-# 4. Verify
+# Verify
 az containerapp show --name scholarly --resource-group scholarly-rg --query "{image:properties.template.containers[0].image, state:properties.provisioningState, status:properties.runningStatus}" -o json
+```
+
+### Promote Staging to Production
+```bash
+# After verifying staging, deploy the same image to production
+TAG=$(az containerapp show --name scholarly-staging --resource-group scholarly-rg --query "properties.template.containers[0].image" -o tsv | grep -oP ':\K.*')
+az containerapp update --name scholarly --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-web:$TAG
 ```
 
 ## Environment Variables
