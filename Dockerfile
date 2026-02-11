@@ -43,6 +43,8 @@ COPY site/*.html ./packages/web/public/
 
 # Build packages in order
 ENV NEXT_TELEMETRY_DISABLED=1
+ARG NEXT_PUBLIC_DEMO_MODE=true
+ENV NEXT_PUBLIC_DEMO_MODE=$NEXT_PUBLIC_DEMO_MODE
 RUN pnpm --filter @scholarly/shared build || true
 RUN pnpm --filter @scholarly/database build || true
 RUN pnpm --filter @scholarly/api build || true
