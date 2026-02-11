@@ -15,7 +15,7 @@
  * SSP (Systematic Synthetic Phonics) implementation following UK curriculum
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
@@ -26,8 +26,6 @@ import {
   Award,
   Lock,
   ChevronRight,
-  Play,
-  Pause,
   Check,
   X,
   Mic,
@@ -39,6 +37,12 @@ import {
 import { cn } from '@/lib/utils';
 import { useEarlyYearsStore } from '@/stores/early-years-store';
 import { PHONICS_PHASES, type PhonicsPhase } from '@/types/early-years';
+import {
+  BlendingActivity,
+  GRAPHEME_DATA,
+  BLENDING_WORDS,
+  type BlendingMode,
+} from '@/components/early-years/blending';
 
 // Design System v2.0: Minimum touch target size
 const TOUCH_TARGET_SIZE = 44;
@@ -46,62 +50,6 @@ const TOUCH_TARGET_SIZE = 44;
 // Phonics activity types
 type PhonicsActivityType = 'sound-intro' | 'sound-match' | 'blending' | 'word-read' | 'sentence';
 
-// Grapheme data with pronunciation hints
-interface GraphemeData {
-  grapheme: string;
-  phoneme: string; // IPA representation
-  keywords: string[];
-  emoji: string;
-  audioHint: string;
-  mouthPosition: string;
-}
-
-// Phase grapheme data
-const GRAPHEME_DATA: Record<string, GraphemeData> = {
-  s: { grapheme: 's', phoneme: '/s/', keywords: ['sun', 'snake', 'sock'], emoji: '🐍', audioHint: 'sssss like a snake', mouthPosition: 'teeth together' },
-  a: { grapheme: 'a', phoneme: '/ae/', keywords: ['apple', 'ant', 'alligator'], emoji: '🍎', audioHint: 'a-a-a like biting an apple', mouthPosition: 'mouth open wide' },
-  t: { grapheme: 't', phoneme: '/t/', keywords: ['tiger', 'tent', 'table'], emoji: '🐯', audioHint: 't-t-t tap your tongue', mouthPosition: 'tongue behind teeth' },
-  p: { grapheme: 'p', phoneme: '/p/', keywords: ['pig', 'pen', 'panda'], emoji: '🐷', audioHint: 'p-p-p pop your lips', mouthPosition: 'lips together then pop' },
-  i: { grapheme: 'i', phoneme: '/i/', keywords: ['igloo', 'insect', 'ink'], emoji: '🏠', audioHint: 'i-i-i it is sticky', mouthPosition: 'small smile' },
-  n: { grapheme: 'n', phoneme: '/n/', keywords: ['nose', 'net', 'nut'], emoji: '👃', audioHint: 'nnnnn nose noise', mouthPosition: 'tongue on roof' },
-  m: { grapheme: 'm', phoneme: '/m/', keywords: ['monkey', 'moon', 'mouse'], emoji: '🐵', audioHint: 'mmmm yummy food', mouthPosition: 'lips together' },
-  d: { grapheme: 'd', phoneme: '/d/', keywords: ['dog', 'duck', 'door'], emoji: '🐕', audioHint: 'd-d-d like a drum', mouthPosition: 'tongue tap' },
-  g: { grapheme: 'g', phoneme: '/g/', keywords: ['gorilla', 'gate', 'goat'], emoji: '🦍', audioHint: 'g-g-g gulping water', mouthPosition: 'back of throat' },
-  o: { grapheme: 'o', phoneme: '/o/', keywords: ['orange', 'octopus', 'on'], emoji: '🍊', audioHint: 'o-o-o orange', mouthPosition: 'round mouth' },
-  c: { grapheme: 'c', phoneme: '/k/', keywords: ['cat', 'cup', 'car'], emoji: '🐱', audioHint: 'c-c-c like a cat', mouthPosition: 'back of mouth' },
-  k: { grapheme: 'k', phoneme: '/k/', keywords: ['kite', 'king', 'key'], emoji: '🪁', audioHint: 'k-k-k flying kite', mouthPosition: 'back of mouth' },
-  ck: { grapheme: 'ck', phoneme: '/k/', keywords: ['duck', 'sock', 'clock'], emoji: '🦆', audioHint: 'ck at the end', mouthPosition: 'quick sound' },
-  e: { grapheme: 'e', phoneme: '/e/', keywords: ['elephant', 'egg', 'elbow'], emoji: '🐘', audioHint: 'e-e-e elephant', mouthPosition: 'mouth slightly open' },
-  u: { grapheme: 'u', phoneme: '/u/', keywords: ['umbrella', 'up', 'under'], emoji: '☂️', audioHint: 'u-u-u under umbrella', mouthPosition: 'lips rounded' },
-  r: { grapheme: 'r', phoneme: '/r/', keywords: ['rabbit', 'rain', 'robot'], emoji: '🐰', audioHint: 'rrrrr like a robot', mouthPosition: 'tongue curled' },
-  h: { grapheme: 'h', phoneme: '/h/', keywords: ['hat', 'house', 'horse'], emoji: '🎩', audioHint: 'h-h-h hot breath', mouthPosition: 'breathe out' },
-  b: { grapheme: 'b', phoneme: '/b/', keywords: ['ball', 'bear', 'bee'], emoji: '🐻', audioHint: 'b-b-b bouncing ball', mouthPosition: 'lips together then release' },
-  f: { grapheme: 'f', phoneme: '/f/', keywords: ['fish', 'fox', 'frog'], emoji: '🐟', audioHint: 'ffff like blowing', mouthPosition: 'teeth on lip' },
-  // Phase 3 digraphs
-  ch: { grapheme: 'ch', phoneme: '/tʃ/', keywords: ['cheese', 'chick', 'chair'], emoji: '🧀', audioHint: 'ch-ch-ch choo choo train', mouthPosition: 'lips pushed out' },
-  sh: { grapheme: 'sh', phoneme: '/ʃ/', keywords: ['sheep', 'ship', 'shell'], emoji: '🐑', audioHint: 'shhhh be quiet', mouthPosition: 'finger on lips' },
-  th: { grapheme: 'th', phoneme: '/θ/', keywords: ['thumb', 'three', 'think'], emoji: '👍', audioHint: 'th tongue out', mouthPosition: 'tongue between teeth' },
-  ng: { grapheme: 'ng', phoneme: '/ŋ/', keywords: ['ring', 'king', 'sing'], emoji: '💍', audioHint: 'ng sing along', mouthPosition: 'back of throat' },
-  ai: { grapheme: 'ai', phoneme: '/eɪ/', keywords: ['rain', 'train', 'snail'], emoji: '🌧️', audioHint: 'ai say your name', mouthPosition: 'mouth changes shape' },
-  ee: { grapheme: 'ee', phoneme: '/iː/', keywords: ['tree', 'bee', 'see'], emoji: '🌳', audioHint: 'ee like a squeaky door', mouthPosition: 'big smile' },
-  igh: { grapheme: 'igh', phoneme: '/aɪ/', keywords: ['light', 'night', 'high'], emoji: '💡', audioHint: 'igh fly high', mouthPosition: 'mouth opens then closes' },
-  oa: { grapheme: 'oa', phoneme: '/əʊ/', keywords: ['boat', 'coat', 'goat'], emoji: '⛵', audioHint: 'oa oh no', mouthPosition: 'lips round then spread' },
-  oo: { grapheme: 'oo', phoneme: '/uː/', keywords: ['moon', 'spoon', 'zoo'], emoji: '🌙', audioHint: 'oo moo like a cow', mouthPosition: 'small round mouth' },
-};
-
-// Demo CVC words for blending practice
-const CVC_WORDS = [
-  { word: 'sat', sounds: ['s', 'a', 't'], emoji: '🪑' },
-  { word: 'pin', sounds: ['p', 'i', 'n'], emoji: '📍' },
-  { word: 'dog', sounds: ['d', 'o', 'g'], emoji: '🐕' },
-  { word: 'cat', sounds: ['c', 'a', 't'], emoji: '🐱' },
-  { word: 'sun', sounds: ['s', 'u', 'n'], emoji: '☀️' },
-  { word: 'map', sounds: ['m', 'a', 'p'], emoji: '🗺️' },
-  { word: 'hat', sounds: ['h', 'a', 't'], emoji: '🎩' },
-  { word: 'pen', sounds: ['p', 'e', 'n'], emoji: '🖊️' },
-  { word: 'bed', sounds: ['b', 'e', 'd'], emoji: '🛏️' },
-  { word: 'red', sounds: ['r', 'e', 'd'], emoji: '🔴' },
-];
 
 // Collectible letter badge component
 function LetterBadge({
@@ -333,191 +281,6 @@ function SoundIntroActivity({
   );
 }
 
-// Voice coach encouragement messages that cycle for variety
-const COACH_ENCOURAGEMENTS = [
-  "Great job! Let's try another word!",
-  "You're doing amazing! Here's the next one!",
-  "Wonderful! Ready for another word?",
-  "Fantastic blending! Keep going!",
-  "Super work! Here comes the next word!",
-  "Brilliant! You're a blending star!",
-  "Excellent! Let's keep practising!",
-  "Well done! You're getting so good at this!",
-];
-
-// Blending practice activity component
-function BlendingActivity({
-  word,
-  wordIndex,
-  onComplete,
-  onSpeak,
-}: {
-  word: typeof CVC_WORDS[0];
-  wordIndex: number;
-  onComplete: (success: boolean) => void;
-  onSpeak: (text: string) => void;
-}) {
-  const [revealedSounds, setRevealedSounds] = useState<number[]>([]);
-  const [isBlending, setIsBlending] = useState(false);
-  const [showWord, setShowWord] = useState(false);
-  const [coachMessage, setCoachMessage] = useState('');
-  const [showCoach, setShowCoach] = useState(false);
-
-  // Voice coach introduces each word when the component mounts or word changes
-  useEffect(() => {
-    setRevealedSounds([]);
-    setIsBlending(false);
-    setShowWord(false);
-    setShowCoach(true);
-
-    const soundsList = word.sounds.join(', ');
-    const introMessage = wordIndex === 0
-      ? `Let's blend some sounds together! Our first word has the sounds ${soundsList}. Tap each sound to hear it!`
-      : `${COACH_ENCOURAGEMENTS[wordIndex % COACH_ENCOURAGEMENTS.length]} This word has the sounds ${soundsList}. Tap each sound!`;
-
-    setCoachMessage(introMessage);
-    onSpeak(introMessage);
-
-    const timer = setTimeout(() => setShowCoach(false), 4000);
-    return () => clearTimeout(timer);
-  }, [word.word]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleRevealSound = (index: number) => {
-    if (!revealedSounds.includes(index)) {
-      const newRevealed = [...revealedSounds, index];
-      setRevealedSounds(newRevealed);
-      onSpeak(word.sounds[index]);
-
-      // When all sounds revealed, encourage blending
-      if (newRevealed.length === word.sounds.length) {
-        setTimeout(() => {
-          const blendPrompt = `Now press the button to blend ${word.sounds.join(' ')} together!`;
-          setCoachMessage(blendPrompt);
-          setShowCoach(true);
-          onSpeak(blendPrompt);
-          setTimeout(() => setShowCoach(false), 3000);
-        }, 800);
-      }
-    }
-  };
-
-  const handleBlend = () => {
-    setIsBlending(true);
-    setShowCoach(false);
-
-    // Speak sounds slowly then blend
-    word.sounds.forEach((sound, i) => {
-      setTimeout(() => onSpeak(sound), i * 600);
-    });
-
-    setTimeout(() => {
-      onSpeak(word.word);
-      setShowWord(true);
-      // Celebrate
-      setTimeout(() => {
-        const celebration = `${word.word}! That spells ${word.word}! Well done!`;
-        setCoachMessage(celebration);
-        setShowCoach(true);
-        onSpeak(celebration);
-      }, 600);
-    }, word.sounds.length * 600 + 500);
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="max-w-lg mx-auto text-center"
-    >
-      {/* Voice coach bubble */}
-      <AnimatePresence>
-        {showCoach && coachMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="mb-4 mx-auto max-w-sm"
-          >
-            <div className="relative bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-3 shadow-lg border-2 border-purple-200">
-              <div className="flex items-start gap-2.5">
-                <span className="text-2xl shrink-0">🧑‍🏫</span>
-                <p className="text-sm text-gray-700 font-medium leading-relaxed">{coachMessage}</p>
-              </div>
-              <div className="absolute -bottom-2 left-8 w-4 h-4 bg-white/90 border-b-2 border-r-2 border-purple-200 rotate-45" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <h3 className="text-xl font-bold text-gray-800 mb-6">
-        Tap each sound, then blend them together!
-      </h3>
-
-      {/* Sound boxes */}
-      <div className="flex justify-center gap-3 mb-8">
-        {word.sounds.map((sound, index) => (
-          <motion.button
-            key={`${word.word}-${index}`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => handleRevealSound(index)}
-            className={cn(
-              "w-20 h-20 rounded-2xl flex items-center justify-center",
-              "font-bold text-3xl transition-all shadow-lg",
-              revealedSounds.includes(index)
-                ? "bg-gradient-to-br from-green-400 to-emerald-500 text-white"
-                : "bg-white border-4 border-purple-300 text-purple-600"
-            )}
-            style={{ minWidth: TOUCH_TARGET_SIZE, minHeight: TOUCH_TARGET_SIZE }}
-          >
-            {revealedSounds.includes(index) ? sound : '?'}
-          </motion.button>
-        ))}
-      </div>
-
-      {/* Blend button */}
-      {revealedSounds.length === word.sounds.length && !showWord && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={handleBlend}
-            disabled={isBlending}
-            className="px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-bold text-lg shadow-lg"
-            style={{ minHeight: TOUCH_TARGET_SIZE }}
-          >
-            {isBlending ? 'Blending...' : 'Blend the Sounds!'}
-          </motion.button>
-        </motion.div>
-      )}
-
-      {/* Word reveal */}
-      {showWord && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring' }}
-          className="mt-6"
-        >
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <span className="text-6xl">{word.emoji}</span>
-            <span className="text-5xl font-bold text-purple-600">{word.word}</span>
-          </div>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => onComplete(true)}
-            className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-bold text-lg shadow-lg"
-            style={{ minHeight: TOUCH_TARGET_SIZE }}
-          >
-            Well Done! Next Word
-          </motion.button>
-        </motion.div>
-      )}
-    </motion.div>
-  );
-}
 
 // Phase selector component
 function PhaseSelector({
@@ -729,8 +492,12 @@ export default function PhonicsEnginePage() {
   const [inProgressGraphemes, setInProgressGraphemes] = useState<string[]>(['i', 'n']);
   const [showParentView, setShowParentView] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [blendingMode] = useState<BlendingMode>('successive');
   const [starsEarned, setStarsEarned] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
+
+  // Get Phase 2 words for blending (beginner CVC words)
+  const blendingWords = BLENDING_WORDS.filter((w) => w.phase === 2);
 
   // Use progress from dashboard if available
   useEffect(() => {
@@ -792,7 +559,7 @@ export default function PhonicsEnginePage() {
       setStarsEarned((prev) => prev + 1);
     }
 
-    if (currentWordIndex < CVC_WORDS.length - 1) {
+    if (currentWordIndex < blendingWords.length - 1) {
       setCurrentWordIndex((prev) => prev + 1);
     } else {
       // Finished all words
@@ -1004,20 +771,15 @@ export default function PhonicsEnginePage() {
         )}
 
         {/* Blending activity */}
-        {activityType === 'blending' && (
-          <div className="max-w-lg mx-auto">
-            <div className="text-center mb-4">
-              <span className="text-sm text-gray-700 bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">
-                Word {currentWordIndex + 1} of {CVC_WORDS.length}
-              </span>
-            </div>
-            <BlendingActivity
-              word={CVC_WORDS[currentWordIndex]}
-              wordIndex={currentWordIndex}
-              onComplete={handleBlendingComplete}
-              onSpeak={speakMessage}
-            />
-          </div>
+        {activityType === 'blending' && blendingWords[currentWordIndex] && (
+          <BlendingActivity
+            word={blendingWords[currentWordIndex]}
+            wordIndex={currentWordIndex}
+            totalWords={blendingWords.length}
+            blendingMode={blendingMode}
+            onComplete={handleBlendingComplete}
+            onSpeak={speakMessage}
+          />
         )}
       </main>
 
