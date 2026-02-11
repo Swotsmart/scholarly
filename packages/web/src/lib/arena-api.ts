@@ -1073,6 +1073,7 @@ class ArenaApiClient {
         phonicsPhase: data.phase?.toString(),
         wagerPool: 0,
         participantCount: 0,
+        curriculumAlignments: data.curriculumAlignments || [],
         createdAt: now,
         updatedAt: now,
       };

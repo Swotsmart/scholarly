@@ -333,29 +333,77 @@ function SoundIntroActivity({
   );
 }
 
+// Voice coach encouragement messages that cycle for variety
+const COACH_ENCOURAGEMENTS = [
+  "Great job! Let's try another word!",
+  "You're doing amazing! Here's the next one!",
+  "Wonderful! Ready for another word?",
+  "Fantastic blending! Keep going!",
+  "Super work! Here comes the next word!",
+  "Brilliant! You're a blending star!",
+  "Excellent! Let's keep practising!",
+  "Well done! You're getting so good at this!",
+];
+
 // Blending practice activity component
 function BlendingActivity({
   word,
+  wordIndex,
   onComplete,
   onSpeak,
 }: {
   word: typeof CVC_WORDS[0];
+  wordIndex: number;
   onComplete: (success: boolean) => void;
   onSpeak: (text: string) => void;
 }) {
   const [revealedSounds, setRevealedSounds] = useState<number[]>([]);
   const [isBlending, setIsBlending] = useState(false);
   const [showWord, setShowWord] = useState(false);
+  const [coachMessage, setCoachMessage] = useState('');
+  const [showCoach, setShowCoach] = useState(false);
+
+  // Voice coach introduces each word when the component mounts or word changes
+  useEffect(() => {
+    setRevealedSounds([]);
+    setIsBlending(false);
+    setShowWord(false);
+    setShowCoach(true);
+
+    const soundsList = word.sounds.join(', ');
+    const introMessage = wordIndex === 0
+      ? `Let's blend some sounds together! Our first word has the sounds ${soundsList}. Tap each sound to hear it!`
+      : `${COACH_ENCOURAGEMENTS[wordIndex % COACH_ENCOURAGEMENTS.length]} This word has the sounds ${soundsList}. Tap each sound!`;
+
+    setCoachMessage(introMessage);
+    onSpeak(introMessage);
+
+    const timer = setTimeout(() => setShowCoach(false), 4000);
+    return () => clearTimeout(timer);
+  }, [word.word]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRevealSound = (index: number) => {
     if (!revealedSounds.includes(index)) {
-      setRevealedSounds([...revealedSounds, index]);
+      const newRevealed = [...revealedSounds, index];
+      setRevealedSounds(newRevealed);
       onSpeak(word.sounds[index]);
+
+      // When all sounds revealed, encourage blending
+      if (newRevealed.length === word.sounds.length) {
+        setTimeout(() => {
+          const blendPrompt = `Now press the button to blend ${word.sounds.join(' ')} together!`;
+          setCoachMessage(blendPrompt);
+          setShowCoach(true);
+          onSpeak(blendPrompt);
+          setTimeout(() => setShowCoach(false), 3000);
+        }, 800);
+      }
     }
   };
 
   const handleBlend = () => {
     setIsBlending(true);
+    setShowCoach(false);
 
     // Speak sounds slowly then blend
     word.sounds.forEach((sound, i) => {
@@ -365,6 +413,13 @@ function BlendingActivity({
     setTimeout(() => {
       onSpeak(word.word);
       setShowWord(true);
+      // Celebrate
+      setTimeout(() => {
+        const celebration = `${word.word}! That spells ${word.word}! Well done!`;
+        setCoachMessage(celebration);
+        setShowCoach(true);
+        onSpeak(celebration);
+      }, 600);
     }, word.sounds.length * 600 + 500);
   };
 
@@ -374,6 +429,26 @@ function BlendingActivity({
       animate={{ opacity: 1 }}
       className="max-w-lg mx-auto text-center"
     >
+      {/* Voice coach bubble */}
+      <AnimatePresence>
+        {showCoach && coachMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            className="mb-4 mx-auto max-w-sm"
+          >
+            <div className="relative bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-3 shadow-lg border-2 border-purple-200">
+              <div className="flex items-start gap-2.5">
+                <span className="text-2xl shrink-0">🧑‍🏫</span>
+                <p className="text-sm text-gray-700 font-medium leading-relaxed">{coachMessage}</p>
+              </div>
+              <div className="absolute -bottom-2 left-8 w-4 h-4 bg-white/90 border-b-2 border-r-2 border-purple-200 rotate-45" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <h3 className="text-xl font-bold text-gray-800 mb-6">
         Tap each sound, then blend them together!
       </h3>
@@ -382,7 +457,7 @@ function BlendingActivity({
       <div className="flex justify-center gap-3 mb-8">
         {word.sounds.map((sound, index) => (
           <motion.button
-            key={index}
+            key={`${word.word}-${index}`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleRevealSound(index)}
@@ -709,7 +784,7 @@ export default function PhonicsEnginePage() {
   const handleStartBlending = () => {
     setActivityType('blending');
     setCurrentWordIndex(0);
-    speakMessage("Let's blend some sounds together!");
+    // Voice coach intro now handled by BlendingActivity component
   };
 
   const handleBlendingComplete = (success: boolean) => {
@@ -730,7 +805,19 @@ export default function PhonicsEnginePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-green-50 to-teal-50">
+    <div
+      className="min-h-screen relative"
+      style={{
+        backgroundImage: 'url(/images/mati-phonics-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'bottom center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        backgroundColor: '#d8c9e8',
+      }}
+    >
+      {/* Semi-transparent overlay so UI elements remain visible */}
+      <div className="absolute inset-0 bg-gradient-to-b from-purple-100/40 via-transparent to-green-100/30 pointer-events-none" />
       {/* Parent progress modal */}
       <AnimatePresence>
         {showParentView && (
@@ -827,7 +914,7 @@ export default function PhonicsEnginePage() {
       </header>
 
       {/* Main content */}
-      <main className="pt-20 pb-8 px-4 min-h-screen">
+      <main className="relative z-10 pt-20 pb-8 px-4 min-h-screen">
         {/* No activity selected - Show phase and grapheme selection */}
         {!activityType && (
           <>
@@ -920,12 +1007,13 @@ export default function PhonicsEnginePage() {
         {activityType === 'blending' && (
           <div className="max-w-lg mx-auto">
             <div className="text-center mb-4">
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-700 bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">
                 Word {currentWordIndex + 1} of {CVC_WORDS.length}
               </span>
             </div>
             <BlendingActivity
               word={CVC_WORDS[currentWordIndex]}
+              wordIndex={currentWordIndex}
               onComplete={handleBlendingComplete}
               onSpeak={speakMessage}
             />

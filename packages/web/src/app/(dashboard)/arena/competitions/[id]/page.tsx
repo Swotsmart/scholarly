@@ -19,6 +19,8 @@ import {
   AlertCircle,
   BarChart3,
   Timer,
+  GraduationCap,
+  BookOpen,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -508,6 +510,31 @@ export default function CompetitionDetailPage() {
                   Description
                 </p>
                 <p className="text-sm">{competition.description}</p>
+              </div>
+            )}
+
+            {competition.curriculumAlignments && competition.curriculumAlignments.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  Curriculum Alignment
+                </p>
+                <div className="space-y-2">
+                  {competition.curriculumAlignments.map((std) => (
+                    <div key={std.id} className="flex items-start gap-2 rounded-md border bg-primary/5 p-2.5 text-sm">
+                      <BookOpen className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                      <div>
+                        <div className="font-medium text-sm">{std.code} — {std.title}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {std.learningArea} &middot; {std.subject} &middot; Year {std.yearLevels.join(', ')}
+                        </div>
+                        {std.description && (
+                          <p className="text-xs text-muted-foreground mt-1">{std.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

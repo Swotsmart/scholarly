@@ -23,6 +23,17 @@ const TOURNAMENT_FORMATS = [
 // Zod Schemas
 // ============================================================================
 
+const curriculumAlignmentSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  framework: z.string(),
+  learningArea: z.string(),
+  subject: z.string(),
+  yearLevels: z.array(z.string()),
+  title: z.string(),
+  description: z.string().optional(),
+});
+
 const createCompetitionSchema = z.object({
   format: z.enum([
     'READING_SPRINT', 'ACCURACY_CHALLENGE', 'COMPREHENSION_QUIZ',
@@ -37,6 +48,7 @@ const createCompetitionSchema = z.object({
   totalRounds: z.number().int().min(1).max(20).default(1),
   phase: z.number().int().min(1).max(6).optional(),
   scheduledAt: z.string().datetime().optional(),
+  curriculumAlignments: z.array(curriculumAlignmentSchema).max(10).optional(),
 });
 
 const createTournamentSchema = z.object({
@@ -231,11 +243,20 @@ arenaRouter.post('/competitions', async (req: Request, res: Response) => {
           maxParticipants: params.maxParticipants,
           durationMinutes: params.durationMinutes,
         },
+        metadata: params.curriculumAlignments?.length
+          ? { curriculumAlignments: params.curriculumAlignments }
+          : undefined,
         status: 'REGISTRATION_OPEN',
       },
     });
 
-    res.status(201).json({ success: true, data: competition });
+    // Flatten curriculum alignments from metadata into top-level response field
+    const responseData = {
+      ...competition,
+      curriculumAlignments: (competition.metadata as any)?.curriculumAlignments || [],
+    };
+
+    res.status(201).json({ success: true, data: responseData });
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ success: false, error: error.errors });

@@ -120,7 +120,10 @@ describe('Arena Routes - Competitions', () => {
       await handler(req, res);
 
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, data: comp }));
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        success: true,
+        data: expect.objectContaining({ id: comp.id, title: comp.title, format: comp.format }),
+      }));
     });
 
     it('should return 400 for invalid body', async () => {

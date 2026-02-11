@@ -38,6 +38,9 @@ coverage/
 # Prisma
 packages/database/dist/
 
+# Secrets / API keys
+docs/api-keys/
+
 # Misc
 *.tsbuildinfo
 .turbo/

@@ -13,6 +13,9 @@ import {
   BarChart3,
   Loader2,
   Plus,
+  BookOpen,
+  X,
+  GraduationCap,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,7 +43,7 @@ import { StatsCard } from '@/components/shared/stats-card';
 import { CompetitionCard, ArenaInsightPanel } from '@/components/arena';
 import { useArenaIntelligence } from '@/hooks/use-arena-intelligence';
 import { arenaApi } from '@/lib/arena-api';
-import type { ArenaCompetition, UserCompetitionStats } from '@/types/arena';
+import type { ArenaCompetition, UserCompetitionStats, CurriculumStandardRef } from '@/types/arena';
 
 // =============================================================================
 // CONSTANTS
@@ -113,6 +116,133 @@ function CompetitionGridSkeleton() {
 // CREATE COMPETITION DIALOG
 // =============================================================================
 
+// Demo curriculum standards for the picker (when DEMO_MODE is active)
+const DEMO_CURRICULUM_STANDARDS: CurriculumStandardRef[] = [
+  { id: 'cs_1', code: 'ACELA1429', framework: 'ACARA', learningArea: 'English', subject: 'Literacy', yearLevels: ['F', '1'], title: 'Recognise and name all upper and lower case letters', description: 'Recognise all upper and lower case letters and the most common sound that each letter represents' },
+  { id: 'cs_2', code: 'ACELA1457', framework: 'ACARA', learningArea: 'English', subject: 'Literacy', yearLevels: ['1', '2'], title: 'Understand how to use digraphs, long vowels, blends and silent letters', description: 'Understand that a letter can represent more than one sound and that a syllable must contain a vowel sound' },
+  { id: 'cs_3', code: 'ACELT1575', framework: 'ACARA', learningArea: 'English', subject: 'Literature', yearLevels: ['F', '1'], title: 'Retell familiar literary texts through performance and play', description: 'Retell familiar literary texts through performance, use of illustrations and images' },
+  { id: 'cs_4', code: 'ACELY1646', framework: 'ACARA', learningArea: 'English', subject: 'Literacy', yearLevels: ['1', '2'], title: 'Read decodable and predictable texts using developing phrasing, fluency', description: 'Read decodable and predictable texts, practising phrasing and fluency, and monitoring meaning' },
+  { id: 'cs_5', code: 'ACELA1462', framework: 'ACARA', learningArea: 'English', subject: 'Literacy', yearLevels: ['2', '3'], title: 'Understand how to apply knowledge of letter–sound relationships', description: 'Understand how to apply knowledge of letter–sound relationships, syllables, and blending and segmenting' },
+  { id: 'cs_6', code: 'ACELY1650', framework: 'ACARA', learningArea: 'English', subject: 'Literacy', yearLevels: ['2', '3'], title: 'Read less predictable texts with phrasing and fluency', description: 'Read less predictable texts with phrasing and fluency by combining contextual, semantic, grammatical and phonic knowledge' },
+  { id: 'cs_7', code: 'ACELA1472', framework: 'ACARA', learningArea: 'English', subject: 'Literacy', yearLevels: ['3', '4'], title: 'Understand how to use phonic knowledge to read and write words', description: 'Understand how to use knowledge of letter patterns including double letters, common prefixes and suffixes' },
+  { id: 'cs_8', code: 'ACELT1596', framework: 'ACARA', learningArea: 'English', subject: 'Literature', yearLevels: ['3', '4'], title: 'Discuss how language is used to describe settings in texts', description: 'Discuss how language is used to describe the settings in texts, and explore how the settings shape the events' },
+  { id: 'cs_9', code: 'ACELY1656', framework: 'ACARA', learningArea: 'English', subject: 'Literacy', yearLevels: ['3', '4'], title: 'Use comprehension strategies to build literal and inferred meaning', description: 'Use comprehension strategies to build literal and inferred meaning and begin to evaluate texts' },
+  { id: 'cs_10', code: 'ACELA1826', framework: 'ACARA', learningArea: 'English', subject: 'Literacy', yearLevels: ['5', '6'], title: 'Understand how to use banks of known words and word parts', description: 'Understand how to use banks of known words, word origins, base words, suffixes, prefixes and spelling patterns' },
+  { id: 'cs_11', code: 'ACMNA013', framework: 'ACARA', learningArea: 'Mathematics', subject: 'Number and Algebra', yearLevels: ['F', '1'], title: 'Establish understanding of number sequences to and from 20', description: 'Establish understanding of the language and processes of counting by naming numbers in sequences' },
+  { id: 'cs_12', code: 'ACSSU002', framework: 'ACARA', learningArea: 'Science', subject: 'Biological Sciences', yearLevels: ['F', '1'], title: 'Living things have basic needs including food and water', description: 'Living things have a variety of external features and live in different places where their needs are met' },
+];
+
+function CurriculumPicker({ selected, onSelect, onRemove }: {
+  selected: CurriculumStandardRef[];
+  onSelect: (standard: CurriculumStandardRef) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showResults, setShowResults] = useState(false);
+
+  const filteredStandards = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    return DEMO_CURRICULUM_STANDARDS.filter(
+      (s) =>
+        !selected.some((sel) => sel.id === s.id) &&
+        (s.title.toLowerCase().includes(q) ||
+          s.code.toLowerCase().includes(q) ||
+          s.learningArea.toLowerCase().includes(q) ||
+          s.subject.toLowerCase().includes(q) ||
+          s.yearLevels.some((y) => y === q))
+    ).slice(0, 5);
+  }, [searchQuery, selected]);
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium flex items-center gap-1.5">
+        <GraduationCap className="h-4 w-4 text-primary" />
+        Curriculum Alignment
+        <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+      </label>
+      <p className="text-xs text-muted-foreground">
+        Link this competition to specific learning outcomes from the curriculum.
+      </p>
+
+      {/* Selected standards */}
+      {selected.length > 0 && (
+        <div className="space-y-1.5">
+          {selected.map((std) => (
+            <div
+              key={std.id}
+              className="flex items-start gap-2 rounded-md border bg-primary/5 p-2 text-xs"
+            >
+              <BookOpen className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
+              <div className="flex-1 min-w-0">
+                <div className="font-medium">{std.code} — {std.title}</div>
+                <div className="text-muted-foreground">
+                  {std.learningArea} &middot; {std.subject} &middot; Year {std.yearLevels.join(', ')}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onRemove(std.id)}
+                className="shrink-0 rounded-sm p-0.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Search input */}
+      {selected.length < 5 && (
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search by code, topic, or year level..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowResults(true);
+            }}
+            onFocus={() => setShowResults(true)}
+            onBlur={() => setTimeout(() => setShowResults(false), 200)}
+            className="pl-8 h-9 text-sm"
+          />
+
+          {/* Search results dropdown */}
+          {showResults && filteredStandards.length > 0 && (
+            <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md">
+              {filteredStandards.map((std) => (
+                <button
+                  key={std.id}
+                  type="button"
+                  className="w-full text-left px-3 py-2 hover:bg-accent text-xs border-b last:border-b-0"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onSelect(std);
+                    setSearchQuery('');
+                    setShowResults(false);
+                  }}
+                >
+                  <div className="font-medium">{std.code} — {std.title}</div>
+                  <div className="text-muted-foreground">
+                    {std.learningArea} &middot; {std.subject} &middot; Year {std.yearLevels.join(', ')}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {showResults && searchQuery.trim() && filteredStandards.length === 0 && (
+            <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md p-3 text-xs text-muted-foreground text-center">
+              No matching standards found
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CreateCompetitionDialog({ onCreated }: { onCreated: (comp: ArenaCompetition) => void }) {
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -121,6 +251,7 @@ function CreateCompetitionDialog({ onCreated }: { onCreated: (comp: ArenaCompeti
   const [description, setDescription] = useState('');
   const [maxParticipants, setMaxParticipants] = useState(20);
   const [durationMinutes, setDurationMinutes] = useState(30);
+  const [curriculumAlignments, setCurriculumAlignments] = useState<CurriculumStandardRef[]>([]);
 
   async function handleCreate() {
     if (!title.trim()) return;
@@ -131,6 +262,7 @@ function CreateCompetitionDialog({ onCreated }: { onCreated: (comp: ArenaCompeti
         format,
         description: description.trim() || undefined,
         config: { scoringModel: 'GROWTH_BASED', maxParticipants, durationMinutes },
+        curriculumAlignments: curriculumAlignments.length > 0 ? curriculumAlignments : undefined,
       });
       if (res.success && res.data) {
         onCreated(res.data);
@@ -139,6 +271,7 @@ function CreateCompetitionDialog({ onCreated }: { onCreated: (comp: ArenaCompeti
         setFormat('READING_SPRINT');
         setMaxParticipants(20);
         setDurationMinutes(30);
+        setCurriculumAlignments([]);
         setOpen(false);
       }
     } catch {
@@ -156,11 +289,11 @@ function CreateCompetitionDialog({ onCreated }: { onCreated: (comp: ArenaCompeti
           Create Competition
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create a Competition</DialogTitle>
           <DialogDescription>
-            Set up a new competition for your classmates to join.
+            Set up a new competition for your classmates to join. Align it to curriculum outcomes for targeted learning.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -196,6 +329,14 @@ function CreateCompetitionDialog({ onCreated }: { onCreated: (comp: ArenaCompeti
               rows={3}
             />
           </div>
+
+          {/* Curriculum Alignment Picker */}
+          <CurriculumPicker
+            selected={curriculumAlignments}
+            onSelect={(std) => setCurriculumAlignments((prev) => [...prev, std])}
+            onRemove={(id) => setCurriculumAlignments((prev) => prev.filter((s) => s.id !== id))}
+          />
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Max Participants</label>

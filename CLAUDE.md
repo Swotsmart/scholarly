@@ -287,7 +287,8 @@ The API `tsconfig.json` excludes sprint module directories to prevent compilatio
   - Image: `scholarlyacr.azurecr.io/scholarly-api:staging-<git-sha>`
   - FQDN: `scholarly-staging-api.bravefield-dce0abaf.australiaeast.azurecontainerapps.io`
   - Port: 3001, Scale: 0-2 replicas (scales to zero when idle), 0.5 vCPU / 1Gi
-  - Env: `NODE_ENV=staging`, `NEXT_PUBLIC_DEMO_MODE=true`
+  - Env: `NODE_ENV=staging`, `DATABASE_URL=<staging-connection-string>`, `JWT_PRIVATE_KEY=<pem>`, `JWT_PUBLIC_KEY=<pem>`
+  - Database: `scholarly_staging` on `scholarly-db.postgres.database.azure.com` (shared server with production)
 
 ### CI/CD (`.github/workflows/deploy.yml`)
 - Triggers: push to main, PR to main, manual dispatch

@@ -57,6 +57,17 @@ export type TournamentFormat =
   | 'ACCURACY_CHALLENGE'
   | 'PHONICS_BEE';
 
+export interface CurriculumStandardRef {
+  id: string;
+  code: string;
+  framework: string;
+  learningArea: string;
+  subject: string;
+  yearLevels: string[];
+  title: string;
+  description?: string;
+}
+
 export interface ArenaCompetition {
   id: string;
   tenantId: string;
@@ -85,6 +96,7 @@ export interface ArenaCompetition {
   wagerPool: number;
   wagerTokenType?: TokenType;
   participantCount: number;
+  curriculumAlignments?: CurriculumStandardRef[];
   metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;

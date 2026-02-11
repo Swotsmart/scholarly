@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, Users, Clock, Swords, Zap } from 'lucide-react';
+import { Trophy, Users, Clock, Swords, Zap, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ArenaCompetition } from '@/types/arena';
 import Link from 'next/link';
@@ -71,6 +71,21 @@ export function CompetitionCard({ competition, showJoinButton = true }: Competit
         </div>
         {competition.description && (
           <p className="text-sm text-muted-foreground line-clamp-2">{competition.description}</p>
+        )}
+        {competition.curriculumAlignments && competition.curriculumAlignments.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {competition.curriculumAlignments.slice(0, 2).map((std) => (
+              <Badge key={std.id} variant="outline" className="text-xs gap-1 bg-primary/5">
+                <GraduationCap className="h-3 w-3" />
+                {std.code}
+              </Badge>
+            ))}
+            {competition.curriculumAlignments.length > 2 && (
+              <Badge variant="outline" className="text-xs">
+                +{competition.curriculumAlignments.length - 2} more
+              </Badge>
+            )}
+          </div>
         )}
         <div className="flex items-center justify-between pt-1">
           {competition.phonicsPhase && (
