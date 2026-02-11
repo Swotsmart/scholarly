@@ -42,7 +42,10 @@ interface UsePhonicsAudioReturn {
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const TTS_ENDPOINT = `${API_BASE}/api/v1/early-years/tts`;
+// NEXT_PUBLIC_API_URL may already include /api/v1 (production) or not (local dev)
+const TTS_ENDPOINT = API_BASE.endsWith('/api/v1')
+  ? `${API_BASE}/early-years/tts`
+  : `${API_BASE}/api/v1/early-years/tts`;
 const FETCH_TIMEOUT_MS = 3_000;
 const RETRY_INTERVAL_MS = 30_000;
 const PRELOAD_BATCH_SIZE = 5;
@@ -246,15 +249,27 @@ export function usePhonicsAudio(
         return;
       }
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.8;
-      utterance.pitch = 1.1;
+      // Cancel any queued speech first
+      window.speechSynthesis.cancel();
 
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.85;
+      utterance.pitch = 1.15;
+      utterance.volume = 1;
+
+      // Prioritised voice selection for warmest/most natural voices
       const voices = window.speechSynthesis.getVoices();
       const preferred = voices.find(
         (v) =>
-          v.name.includes('Samantha') ||
-          v.name.includes('Google UK English Female'),
+          // macOS/iOS premium voices (most natural)
+          v.name === 'Samantha' ||
+          v.name === 'Karen' || // Australian English
+          v.name === 'Moira' || // Irish English — warm
+          v.name === 'Tessa' || // South African English
+          v.name.includes('Google UK English Female') ||
+          v.name.includes('Microsoft Zira') ||
+          // Fallback: any English female voice
+          (v.lang.startsWith('en') && v.name.toLowerCase().includes('female')),
       );
       if (preferred) utterance.voice = preferred;
 
