@@ -32,6 +32,48 @@ const phonicsTtsSchema = z.object({
 
 export const earlyYearsRouter: Router = Router();
 
+/** Public TTS router — mounted without auth for frontend phonics audio */
+export const earlyYearsTtsRouter: Router = Router();
+
+earlyYearsTtsRouter.post('/tts', async (req, res) => {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) {
+    return res.status(503).json({ error: 'TTS service unavailable' });
+  }
+
+  const data = phonicsTtsSchema.parse(req.body);
+  const voice = PHONICS_VOICES[data.voicePersona];
+
+  try {
+    const { ElevenLabsClient } = await import('@elevenlabs/elevenlabs-js');
+    const client = new ElevenLabsClient({ apiKey });
+
+    const audioStream = await client.textToSpeech.convert(voice.voiceId, {
+      text: data.text,
+      modelId: 'eleven_turbo_v2_5',
+      voiceSettings: {
+        stability: voice.stability,
+        similarityBoost: voice.similarityBoost,
+        style: voice.style,
+        useSpeakerBoost: voice.useSpeakerBoost,
+      },
+    });
+
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of audioStream) {
+      chunks.push(chunk);
+    }
+    const audioBuffer = Buffer.concat(chunks);
+
+    res.set('Content-Type', 'audio/mpeg');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(audioBuffer);
+  } catch (error) {
+    console.error('Phonics TTS failed:', error);
+    res.status(503).json({ error: 'TTS generation failed' });
+  }
+});
+
 // =============================================================================
 // VALIDATION SCHEMAS
 // =============================================================================

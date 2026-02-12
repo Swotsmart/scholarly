@@ -33,7 +33,7 @@ import { dataLakeRouter } from './routes/data-lake';
 import { mlPipelineRouter } from './routes/ml-pipeline';
 import { designPitchRouter } from './routes/design-pitch-ai';
 import { showcasePortfolioRouter } from './routes/showcase-portfolio';
-import { earlyYearsRouter } from './routes/early-years';
+import { earlyYearsRouter, earlyYearsTtsRouter } from './routes/early-years';
 import { linguaFlowRouter } from './routes/linguaflow';
 import { interoperabilityRouter } from './routes/interoperability';
 import { goldenPathRouter } from './routes/golden-path';
@@ -95,6 +95,7 @@ const api = express.Router();
 
 // Public routes
 api.use('/auth', authRouter);
+api.use('/early-years', earlyYearsTtsRouter); // Public TTS for phonics audio
 
 // Protected routes
 api.use('/users', authMiddleware, usersRouter);
