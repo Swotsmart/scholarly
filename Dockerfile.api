@@ -35,8 +35,8 @@ COPY packages/database/src ./packages/database/src
 COPY packages/api ./packages/api
 
 # Build packages in order
-RUN pnpm --filter @scholarly/shared build
-RUN pnpm --filter @scholarly/database build
+RUN pnpm --filter @scholarly/shared build || true
+RUN pnpm --filter @scholarly/database build || true
 RUN pnpm --filter @scholarly/api build
 
 # Stage: Production

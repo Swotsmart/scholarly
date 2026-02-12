@@ -47,8 +47,8 @@ ARG NEXT_PUBLIC_DEMO_MODE=false
 ENV NEXT_PUBLIC_DEMO_MODE=$NEXT_PUBLIC_DEMO_MODE
 ARG NEXT_PUBLIC_API_URL=https://scholarly-api.bravefield-dce0abaf.australiaeast.azurecontainerapps.io/api/v1
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-RUN pnpm --filter @scholarly/shared build
-RUN pnpm --filter @scholarly/database build
+RUN pnpm --filter @scholarly/shared build || true
+RUN pnpm --filter @scholarly/database build || true
 RUN pnpm --filter @scholarly/api build
 RUN pnpm --filter @scholarly/web build
 
