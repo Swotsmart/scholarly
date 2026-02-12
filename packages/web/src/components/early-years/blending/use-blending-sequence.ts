@@ -49,10 +49,10 @@ interface UseBlendingSequenceReturn {
 
 const TILE_GAP = 24; // px initial gap between tiles
 const TILE_GAP_MERGED = 2; // px final gap
-const HIGHLIGHT_HOLD = 800; // ms to hold highlight on each sound
-const SLIDE_SETTLE = 700; // ms for spring to settle
-const POST_BLEND_PAUSE = 600; // ms after final merge before reveal
-const CONNECTED_DURATION = 2500; // ms for connected phonation sweep
+const HIGHLIGHT_HOLD = 1600; // ms to hold highlight on each sound (slow for beginners)
+const SLIDE_SETTLE = 1400; // ms for spring to settle (let kids see the merge)
+const POST_BLEND_PAUSE = 1200; // ms after final merge before reveal
+const CONNECTED_DURATION = 4500; // ms for connected phonation sweep
 
 // =============================================================================
 // HOOK
