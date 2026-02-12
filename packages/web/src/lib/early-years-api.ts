@@ -21,7 +21,7 @@ import type {
 } from '@/types/early-years';
 
 // Demo mode - set to false when connecting to real API
-const DEMO_MODE = true;
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== 'false';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
 // =============================================================================

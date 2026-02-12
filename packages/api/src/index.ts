@@ -11,6 +11,7 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import { prisma } from '@scholarly/database';
 
 // Routes
@@ -73,12 +74,30 @@ const PORT = process.env.PORT || 3002;
 
 // Global middleware
 app.use(helmet());
+
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map(o => o.trim());
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
-app.use(express.json());
-app.use(morgan('dev'));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ limit: '1mb', extended: true }));
+app.use((_req, res, next) => {
+  res.setTimeout(30000, () => {
+    res.status(408).json({ error: 'Request timeout' });
+  });
+  next();
+});
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // Health check
 app.get('/health', async (_req, res) => {
@@ -90,11 +109,20 @@ app.get('/health', async (_req, res) => {
   }
 });
 
+// Auth rate limiter: 10 requests per 15 minutes per IP
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts, please try again later' },
+});
+
 // API version prefix
 const api = express.Router();
 
 // Public routes
-api.use('/auth', authRouter);
+api.use('/auth', authRateLimiter, authRouter);
 api.use('/early-years', earlyYearsTtsRouter); // Public TTS for phonics audio
 
 // Protected routes
@@ -154,6 +182,8 @@ app.use((_req, res) => {
 });
 
 // Start server
+let server: ReturnType<typeof app.listen>;
+
 async function start() {
   try {
     console.log('Connecting to database...');
@@ -167,7 +197,7 @@ async function start() {
     // Initialize hosting services
     initializeHostingServices();
 
-    app.listen(PORT, () => {
+    server = app.listen(PORT, () => {
       console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
@@ -187,17 +217,17 @@ async function start() {
 }
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, shutting down gracefully...');
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
-process.on('SIGINT', async () => {
-  console.log('SIGINT received, shutting down gracefully...');
-  await prisma.$disconnect();
-  process.exit(0);
-});
+async function shutdown(signal: string) {
+  console.log(`${signal} received, shutting down...`);
+  server.close(async () => {
+    await prisma.$disconnect().catch(() => {});
+    process.exit(0);
+  });
+  // Force exit after 10s if graceful shutdown hangs
+  setTimeout(() => process.exit(1), 10000);
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 start();
 

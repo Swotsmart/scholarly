@@ -1363,7 +1363,7 @@ export class MigrationRunner {
         affectedRows,
       };
     } catch (error) {
-      await this.db.execute('ROLLBACK').catch(() => {});
+      await this.db.execute('ROLLBACK').catch((err) => { console.error('Rollback failed:', err?.message || err); });
       const elapsed = Date.now() - startTime;
       await this.history.recordFailure(recordId, String(error), elapsed);
 

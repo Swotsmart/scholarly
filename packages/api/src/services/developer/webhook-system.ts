@@ -212,7 +212,7 @@ export class WebhookSystem {
         payloadId, webhookId: sub.id, eventType, status: 'pending', attempts: [], createdAt: new Date().toISOString(),
       };
       this.deliveries.set(payloadId, record);
-      this.deliverPayload(sub, payload, record).catch(() => {});
+      this.deliverPayload(sub, payload, record).catch((err) => { console.error('Webhook delivery failed:', err?.message || err); });
       ids.push(sub.id);
     }
     return { success: true, data: { dispatched: ids.length, subscriptions: ids } };

@@ -268,8 +268,8 @@ export class IntegrationsService extends ScholarlyBaseService {
 
       // Revoke tokens if possible
       if (connection.credentials?.accessToken) {
-        await this.revokeToken(provider, connection.credentials.accessToken).catch(() => {
-          // Ignore revocation errors
+        await this.revokeToken(provider, connection.credentials.accessToken).catch((err) => {
+          console.error('Token revocation failed:', err?.message || err);
         });
       }
 

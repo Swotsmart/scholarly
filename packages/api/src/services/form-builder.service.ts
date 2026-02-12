@@ -1178,9 +1178,205 @@ export class FormBuilderService extends ScholarlyBaseService {
   }
 
   private evaluateExpression(expression: string, context: Record<string, any>): boolean {
-    // Simple expression evaluator - in production, use a proper sandbox
-    const func = new Function(...Object.keys(context), `return ${expression}`);
-    return func(...Object.values(context));
+    // Safe expression evaluator — no dynamic code execution.
+    // Supports: property access, comparison operators, logical operators,
+    // string/number/boolean literals. Rejects anything else.
+    return this.safeEvaluate(expression, context);
+  }
+
+  private safeEvaluate(expression: string, context: Record<string, any>): boolean {
+    // Reject dangerous patterns: function calls, assignments, semicolons,
+    // template literals, bracket notation, comments, keywords, etc.
+    const dangerousPatterns = /[;{}[\]`\\]|=>|\.\.|\bfunction\b|\bclass\b|\beval\b|\bnew\b|\bimport\b|\brequire\b|\breturn\b|\bthrow\b|\bdelete\b|\btypeof\b|\binstanceof\b|\bvoid\b|\bin\b|\bof\b|\byield\b|\bawait\b|\basync\b|\bwhile\b|\bfor\b|\bdo\b|\bif\b|\belse\b|\bswitch\b|\btry\b|\bcatch\b|\bfinally\b|\bwith\b|\bvar\b|\blet\b|\bconst\b|\bthis\b|\bsuper\b|\bconstructor\b|\bprototype\b|\b__proto__\b/;
+    if (dangerousPatterns.test(expression)) {
+      return false;
+    }
+
+    // Only allow: identifiers, dots, comparison/logical operators,
+    // numbers, quoted strings, booleans, null, undefined, whitespace, parens
+    const safePattern = /^[\s()*/%+\-0-9.a-zA-Z_'"!<>=&|,]+$/;
+    if (!safePattern.test(expression)) {
+      return false;
+    }
+
+    // Reject anything that looks like a function call: identifier followed by (
+    if (/[a-zA-Z_$]\s*\(/.test(expression)) {
+      return false;
+    }
+
+    // Reject assignment operators (but allow == === != !==)
+    if (/(?<![=!<>])=(?!=)/.test(expression)) {
+      return false;
+    }
+
+    try {
+      const result = this.evalExpression(expression.trim(), context);
+      return Boolean(result);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Minimal recursive-descent expression parser.
+   * Grammar (simplified):
+   *   expr     → or
+   *   or       → and ( '||' and )*
+   *   and      → not ( '&&' not )*
+   *   not      → '!' not | compare
+   *   compare  → add ( ( '===' | '==' | '!==' | '!=' | '<=' | '>=' | '<' | '>' ) add )?
+   *   add      → atom ( ('+' | '-') atom )*
+   *   atom     → number | string | boolean | null | undefined | property | '(' expr ')'
+   *   property → identifier ( '.' identifier )*
+   */
+  private evalExpression(expr: string, ctx: Record<string, any>): any {
+    let pos = 0;
+
+    const skipWhitespace = () => {
+      while (pos < expr.length && /\s/.test(expr[pos])) pos++;
+    };
+
+    const peek = (s: string): boolean => {
+      skipWhitespace();
+      return expr.startsWith(s, pos);
+    };
+
+    const consume = (s: string): boolean => {
+      skipWhitespace();
+      if (expr.startsWith(s, pos)) {
+        pos += s.length;
+        return true;
+      }
+      return false;
+    };
+
+    const parseOr = (): any => {
+      let left = parseAnd();
+      while (consume('||')) {
+        const right = parseAnd();
+        left = left || right;
+      }
+      return left;
+    };
+
+    const parseAnd = (): any => {
+      let left = parseNot();
+      while (consume('&&')) {
+        const right = parseNot();
+        left = left && right;
+      }
+      return left;
+    };
+
+    const parseNot = (): any => {
+      if (consume('!')) {
+        // Make sure it's not != or !==
+        if (peek('=')) {
+          // Backtrack — this was part of a comparison, not a unary !
+          pos--;
+          return parseCompare();
+        }
+        return !parseNot();
+      }
+      return parseCompare();
+    };
+
+    const parseCompare = (): any => {
+      let left = parseAdd();
+      skipWhitespace();
+      for (const op of ['===', '!==', '==', '!=', '<=', '>=', '<', '>']) {
+        if (consume(op)) {
+          const right = parseAdd();
+          switch (op) {
+            case '===': return left === right;
+            case '!==': return left !== right;
+            case '==': return left == right;
+            case '!=': return left != right;
+            case '<=': return left <= right;
+            case '>=': return left >= right;
+            case '<': return left < right;
+            case '>': return left > right;
+          }
+        }
+      }
+      return left;
+    };
+
+    const parseAdd = (): any => {
+      let left = parseAtom();
+      skipWhitespace();
+      while (pos < expr.length && (expr[pos] === '+' || expr[pos] === '-') && expr[pos + 1] !== '=') {
+        const op = expr[pos];
+        pos++;
+        const right = parseAtom();
+        if (op === '+') left = left + right;
+        else left = left - right;
+      }
+      return left;
+    };
+
+    const parseAtom = (): any => {
+      skipWhitespace();
+
+      // Parenthesized expression
+      if (consume('(')) {
+        const val = parseOr();
+        consume(')');
+        return val;
+      }
+
+      // String literal (single or double quoted)
+      if (pos < expr.length && (expr[pos] === '"' || expr[pos] === "'")) {
+        const quote = expr[pos];
+        pos++;
+        let str = '';
+        while (pos < expr.length && expr[pos] !== quote) {
+          str += expr[pos];
+          pos++;
+        }
+        pos++; // skip closing quote
+        return str;
+      }
+
+      // Number literal
+      if (/[0-9]/.test(expr[pos]) || (expr[pos] === '-' && pos + 1 < expr.length && /[0-9]/.test(expr[pos + 1]))) {
+        const start = pos;
+        if (expr[pos] === '-') pos++;
+        while (pos < expr.length && /[0-9.]/.test(expr[pos])) pos++;
+        return Number(expr.slice(start, pos));
+      }
+
+      // Identifier / keyword / property access
+      if (/[a-zA-Z_]/.test(expr[pos])) {
+        const start = pos;
+        while (pos < expr.length && /[a-zA-Z0-9_]/.test(expr[pos])) pos++;
+        let name = expr.slice(start, pos);
+
+        // Boolean / null / undefined literals
+        if (name === 'true') return true;
+        if (name === 'false') return false;
+        if (name === 'null') return null;
+        if (name === 'undefined') return undefined;
+
+        // Resolve from context, with dot-access
+        let value: any = ctx[name];
+        while (consume('.')) {
+          const propStart = pos;
+          while (pos < expr.length && /[a-zA-Z0-9_]/.test(expr[pos])) pos++;
+          const prop = expr.slice(propStart, pos);
+          if (prop === '' || prop === '__proto__' || prop === 'constructor' || prop === 'prototype') {
+            throw new Error('Unsafe property access');
+          }
+          value = value != null ? value[prop] : undefined;
+        }
+        return value;
+      }
+
+      throw new Error(`Unexpected token at position ${pos}`);
+    };
+
+    const result = parseOr();
+    return result;
   }
 
   private isSectionHidden(section: FormSection, values: Record<string, any>): boolean {

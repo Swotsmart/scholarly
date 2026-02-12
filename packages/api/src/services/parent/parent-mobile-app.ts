@@ -33,7 +33,7 @@
 // - Sprint 11: Gamification (achievement celebrations)
 // =============================================================================
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { Result, ok, fail, ScholarlyBaseService } from '../shared/base';
 
 // =============================================================================
@@ -561,29 +561,49 @@ class ParentAppService extends ScholarlyBaseService {
     if (!linkResult.success) return linkResult as Result<ActivityFeedItem[]>;
 
     try {
-      const beforeClause = before ? `AND e."timestamp" < '${before.toISOString()}'` : '';
-      const events = await this.prisma.$queryRawUnsafe<RawActivityEvent[]>(
-        `SELECT e."id", e."type", e."title", e."description", e."metadata",
-                e."timestamp", e."thumbnailUrl", e."isHighlight"
-         FROM "ActivityEvent" e
-         WHERE e."learnerId" = $1 AND e."tenantId" = $2
-         ${beforeClause}
-         ORDER BY e."timestamp" DESC
-         LIMIT ${limit}`,
-        learnerId, tenantId
-      );
+      const clampedLimit = Math.min(Math.max(1, limit), 100);
+      const events = before
+        ? await this.prisma.$queryRaw<RawActivityEvent[]>(
+            Prisma.sql`SELECT e."id", e."type", e."title", e."description", e."metadata",
+                    e."timestamp", e."thumbnailUrl", e."isHighlight"
+             FROM "ActivityEvent" e
+             WHERE e."learnerId" = ${learnerId} AND e."tenantId" = ${tenantId}
+             AND e."timestamp" < ${before}
+             ORDER BY e."timestamp" DESC
+             LIMIT ${clampedLimit}`
+          )
+        : await this.prisma.$queryRaw<RawActivityEvent[]>(
+            Prisma.sql`SELECT e."id", e."type", e."title", e."description", e."metadata",
+                    e."timestamp", e."thumbnailUrl", e."isHighlight"
+             FROM "ActivityEvent" e
+             WHERE e."learnerId" = ${learnerId} AND e."tenantId" = ${tenantId}
+             ORDER BY e."timestamp" DESC
+             LIMIT ${clampedLimit}`
+          );
 
-      const feedItems: ActivityFeedItem[] = events.map(e => ({
-        id: e.id,
-        learnerId,
-        type: e.type as ActivityType,
-        title: e.title,
-        description: e.description,
-        timestamp: e.timestamp,
-        metadata: typeof e.metadata === 'string' ? JSON.parse(e.metadata) : e.metadata || {},
-        thumbnailUrl: e.thumbnailUrl,
-        isHighlight: e.isHighlight,
-      }));
+      const feedItems: ActivityFeedItem[] = events.map(e => {
+        let metadata: Record<string, unknown> = {};
+        if (typeof e.metadata === 'string') {
+          try {
+            metadata = JSON.parse(e.metadata);
+          } catch {
+            metadata = {};
+          }
+        } else {
+          metadata = e.metadata || {};
+        }
+        return {
+          id: e.id,
+          learnerId,
+          type: e.type as ActivityType,
+          title: e.title,
+          description: e.description,
+          timestamp: e.timestamp,
+          metadata,
+          thumbnailUrl: e.thumbnailUrl,
+          isHighlight: e.isHighlight,
+        };
+      });
 
       return ok(feedItems);
     } catch (error) {

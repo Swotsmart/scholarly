@@ -50,7 +50,7 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ) {
-  console.error('Error:', err);
+  console.error('Request error:', { name: err?.name, message: err?.message, status: (err as any)?.statusCode || 500 });
 
   // Zod validation errors
   if (err instanceof ZodError) {

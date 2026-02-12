@@ -69,7 +69,7 @@ earlyYearsTtsRouter.post('/tts', async (req, res) => {
     res.set('Cache-Control', 'public, max-age=86400');
     res.send(audioBuffer);
   } catch (error) {
-    console.error('Phonics TTS failed:', error);
+    console.error('Phonics TTS failed:', error instanceof Error ? error.message : 'Unknown error');
     res.status(503).json({ error: 'TTS generation failed' });
   }
 });
@@ -473,7 +473,7 @@ earlyYearsRouter.post('/tts', async (req, res) => {
     res.set('Cache-Control', 'public, max-age=86400');
     res.send(audioBuffer);
   } catch (error) {
-    console.error('Phonics TTS failed:', error);
+    console.error('Phonics TTS failed:', error instanceof Error ? error.message : 'Unknown error');
     res.status(503).json({ error: 'TTS generation failed' });
   }
 });
