@@ -19,10 +19,10 @@ import { ApiError } from '../middleware/error-handler';
 // =============================================================================
 
 const PHONICS_VOICES: Record<string, { voiceId: string; stability: number; similarityBoost: number; style: number; useSpeakerBoost: boolean }> = {
-  pip:    { voiceId: 'jBpfAFnyjnqEE8Hn6TQn', stability: 0.6, similarityBoost: 0.7, style: 0.5, useSpeakerBoost: true },
-  sarah:  { voiceId: 'EXAVITQu4vr4xnSDxMaL', stability: 0.7, similarityBoost: 0.8, style: 0.4, useSpeakerBoost: true },
-  alex:   { voiceId: 'TX3LPaxmHKxFdv7VOQHJ', stability: 0.55, similarityBoost: 0.75, style: 0.6, useSpeakerBoost: true },
-  willow: { voiceId: 'pNInz6obpgDQGcFmaJgB', stability: 0.75, similarityBoost: 0.85, style: 0.3, useSpeakerBoost: false },
+  pip:    { voiceId: 'cgSgspJ2msm6clMCkdW9', stability: 0.6, similarityBoost: 0.7, style: 0.5, useSpeakerBoost: true },   // Jessica - Playful, Bright, Warm
+  sarah:  { voiceId: 'EXAVITQu4vr4xnSDxMaL', stability: 0.7, similarityBoost: 0.8, style: 0.4, useSpeakerBoost: true },   // Sarah - Mature, Reassuring, Confident
+  alex:   { voiceId: 'TX3LPaxmHKxFdv7VOQHJ', stability: 0.55, similarityBoost: 0.75, style: 0.6, useSpeakerBoost: true },  // Liam - Energetic, Social Media Creator
+  willow: { voiceId: 'Xb7hH8MSUJpSbSDYk0k2', stability: 0.75, similarityBoost: 0.85, style: 0.3, useSpeakerBoost: false }, // Alice - Clear, Engaging Educator
 };
 
 const phonicsTtsSchema = z.object({
