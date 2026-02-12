@@ -239,53 +239,13 @@ export function usePhonicsAudio(
   );
 
   // -----------------------------------------------------------------------
-  // Browser SpeechSynthesis fallback
+  // Kill any stray browser SpeechSynthesis (e.g. from other components)
   // -----------------------------------------------------------------------
 
-  const speakBrowserTTS = useCallback((text: string): Promise<void> => {
-    return new Promise<void>((resolve) => {
-      if (typeof window === 'undefined' || !window.speechSynthesis) {
-        resolve();
-        return;
-      }
-
-      // Cancel any queued speech first
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.85;
-      utterance.pitch = 1.15;
-      utterance.volume = 1;
-
-      // Prioritised voice selection for warmest/most natural voices
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find(
-        (v) =>
-          // macOS/iOS premium voices (most natural)
-          v.name === 'Samantha' ||
-          v.name === 'Karen' || // Australian English
-          v.name === 'Moira' || // Irish English — warm
-          v.name === 'Tessa' || // South African English
-          v.name.includes('Google UK English Female') ||
-          v.name.includes('Microsoft Zira') ||
-          // Fallback: any English female voice
-          (v.lang.startsWith('en') && v.name.toLowerCase().includes('female')),
-      );
-      if (preferred) utterance.voice = preferred;
-
-      if (mountedRef.current) setIsPlaying(true);
-
-      utterance.onend = () => {
-        if (mountedRef.current) setIsPlaying(false);
-        resolve();
-      };
-      utterance.onerror = () => {
-        if (mountedRef.current) setIsPlaying(false);
-        resolve();
-      };
-
-      window.speechSynthesis.speak(utterance);
-    });
+  const cancelBrowserTTS = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.speechSynthesis?.cancel();
+    }
   }, []);
 
   // -----------------------------------------------------------------------
@@ -299,6 +259,9 @@ export function usePhonicsAudio(
     ): Promise<void> => {
       if (!enabled) return;
 
+      // Always kill browser SpeechSynthesis — we only use ElevenLabs
+      cancelBrowserTTS();
+
       const priority = opts?.priority ?? 'normal';
 
       // For high-priority, stop whatever is currently playing
@@ -307,18 +270,23 @@ export function usePhonicsAudio(
           audioRef.current.pause();
           audioRef.current = null;
         }
-        window.speechSynthesis?.cancel();
+      }
+
+      // Stop any currently playing normal-priority audio too
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
       }
 
       const blob = isTTSAvailable ? await fetchAudioBlob(text) : null;
 
       if (blob) {
+        cancelBrowserTTS(); // Kill again in case something triggered it during fetch
         await playBlob(blob);
-      } else {
-        await speakBrowserTTS(text);
       }
+      // No browser fallback — silence is better than robotic voice
     },
-    [enabled, isTTSAvailable, fetchAudioBlob, playBlob, speakBrowserTTS],
+    [enabled, isTTSAvailable, fetchAudioBlob, playBlob, cancelBrowserTTS],
   );
 
   // -----------------------------------------------------------------------
@@ -351,9 +319,9 @@ export function usePhonicsAudio(
       audioRef.current.pause();
       audioRef.current = null;
     }
-    window.speechSynthesis?.cancel();
+    cancelBrowserTTS();
     if (mountedRef.current) setIsPlaying(false);
-  }, []);
+  }, [cancelBrowserTTS]);
 
   // -----------------------------------------------------------------------
   // Public: preloadPhonemes

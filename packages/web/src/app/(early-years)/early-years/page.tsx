@@ -454,7 +454,19 @@ export default function EarlyYearsPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-purple-50 to-pink-50">
+    <div
+      className="min-h-screen relative"
+      style={{
+        backgroundImage: 'url(/images/mati-phonics-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'bottom center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        backgroundColor: '#d8c9e8',
+      }}
+    >
+      {/* Semi-transparent overlay for readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-purple-100/40 via-transparent to-green-100/30 pointer-events-none" />
       {/* Confetti celebration */}
       <ConfettiCelebration isActive={showCelebration} intensity="medium" duration={2000} />
 

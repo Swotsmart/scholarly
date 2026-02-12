@@ -62,13 +62,9 @@ export function MentorSelector({
     visible: { scale: 1, opacity: 1 },
   };
 
-  const speakCatchphrase = (mentor: MentorInfo) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(mentor.catchphrase);
-      utterance.rate = 0.9;
-      utterance.pitch = mentor.id === 'penny_penguin' ? 1.3 : 1;
-      window.speechSynthesis.speak(utterance);
-    }
+  const speakCatchphrase = (_mentor: MentorInfo) => {
+    // Disabled — browser SpeechSynthesis replaced by ElevenLabs TTS
+    // Mentor catchphrases will be handled by usePhonicsAudio when integrated
   };
 
   return (
