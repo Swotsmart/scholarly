@@ -6524,3 +6524,211 @@ model BountySubmission {
   @@index([bountyId, creatorId])
   @@index([tenantId, status])
 }
+
+// ============================================================================
+// COLLABORATION MODELS
+// ============================================================================
+
+model CollaborativeSession {
+  id        String @id @default(cuid())
+  tenantId  String
+  creatorId String
+
+  title        String
+  description  String?  @db.Text
+  status       String   @default("active") // active, completed, archived
+  sessionType  String   @default("story") // story, lesson-plan, resource
+  participants Json     @default("[]") // Array of { userId, role, joinedAt }
+  metadata     Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contributions SessionContribution[]
+
+  @@index([tenantId, status])
+  @@index([creatorId])
+}
+
+model SessionContribution {
+  id        String               @id @default(cuid())
+  sessionId String
+  session   CollaborativeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId    String
+
+  text     String @db.Text
+  sequence Int
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([sessionId, sequence])
+  @@index([userId])
+}
+
+model LessonPlanComment {
+  id           String @id @default(cuid())
+  lessonPlanId String
+  userId       String
+
+  type     String  @default("comment") // comment, suggestion, approval
+  text     String  @db.Text
+  parentId String? // For threaded replies
+  resolved Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([lessonPlanId])
+  @@index([userId])
+  @@index([parentId])
+}
+
+model SharedResource {
+  id        String @id @default(cuid())
+  tenantId  String
+  creatorId String
+
+  name        String
+  type        String // document, template, worksheet, media, link
+  url         String?
+  description String?  @db.Text
+  status      String   @default("active") // active, archived, flagged
+  tags        String[] @default([])
+  downloads   Int      @default(0)
+  metadata    Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([tenantId, type])
+  @@index([creatorId])
+}
+
+// ============================================================================
+// STORYBOOK GENERATION MODELS
+// ============================================================================
+
+model StoryGenerationJob {
+  id       String @id @default(cuid())
+  tenantId String
+  userId   String
+
+  jobType        String  @default("story") // story, illustration, narration, seed-generation
+  status         String  @default("pending") // pending, processing, completed, failed
+  progress       Int     @default(0) // 0-100
+  config         Json // Generation parameters
+  resultContentId String? // FK to Content when complete
+  error          String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, userId])
+  @@index([status])
+}
+
+// ============================================================================
+// WEBHOOK MODELS
+// ============================================================================
+
+model WebhookSubscription {
+  id          String @id @default(cuid())
+  tenantId    String
+  developerId String // FK to DeveloperAccount.id or User.id
+
+  url     String
+  secret  String
+  events  Json   @default("[]") // Array of event type strings
+  status  String @default("active") // active, disabled, suspended
+  headers Json?  // Custom headers to send
+
+  lastDeliveredAt DateTime?
+  failureCount    Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliveries WebhookDelivery[]
+
+  @@index([tenantId, developerId])
+  @@index([status])
+}
+
+model WebhookDelivery {
+  id             String              @id @default(cuid())
+  subscriptionId String
+  subscription   WebhookSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  eventType  String
+  payload    Json
+  statusCode Int?
+  response   String? @db.Text
+  attempt    Int     @default(1)
+  success    Boolean @default(false)
+
+  deliveredAt DateTime  @default(now())
+  nextRetry   DateTime?
+
+  @@index([subscriptionId, deliveredAt])
+  @@index([eventType])
+}
+
+// ============================================================================
+// A/B EXPERIMENT MODELS
+// ============================================================================
+
+model ABExperiment {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name         String
+  description  String? @db.Text
+  variants     Json // Array of { name, weight, config }
+  targetMetric String
+  status       String  @default("draft") // draft, running, paused, completed, archived
+  sampleSize   Int?
+
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  assignments ABExperimentAssignment[]
+
+  @@index([tenantId, status])
+}
+
+model ABExperimentAssignment {
+  id           String       @id @default(cuid())
+  experimentId String
+  experiment   ABExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  userId       String
+
+  variant    String
+  assignedAt DateTime @default(now())
+  metadata   Json?
+
+  @@unique([experimentId, userId])
+  @@index([userId])
+}
+
+// ============================================================================
+// DATA ERASURE MODELS
+// ============================================================================
+
+model DataErasureRequest {
+  id       String @id @default(cuid())
+  tenantId String
+  userId   String
+
+  reason      String?  @db.Text
+  status      String   @default("pending") // pending, processing, completed, rejected
+  dataTypes   String[] @default([]) // Which data categories to erase
+  processedBy String?
+  notes       String?  @db.Text
+
+  requestedAt DateTime  @default(now())
+  completedAt DateTime?
+}

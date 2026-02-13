@@ -296,10 +296,35 @@ dashboardRouter.get('/activity', async (req, res) => {
 
 // Get notifications
 dashboardRouter.get('/notifications', async (req, res) => {
-  // In a real app, this would come from a notifications table
+  const { user } = req;
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+  const status = req.query.status as string | undefined; // 'unread', 'read', or undefined for all
+
+  const where: Record<string, unknown> = { userId: user?.id };
+  if (status === 'unread') {
+    where.inAppStatus = 'unread';
+  } else if (status === 'read') {
+    where.inAppStatus = 'read';
+  }
+
+  const [notifications, total, unreadCount] = await Promise.all([
+    prisma.notification.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.notification.count({ where }),
+    prisma.notification.count({
+      where: { userId: user?.id, inAppStatus: 'unread' },
+    }),
+  ]);
+
   res.json({
-    notifications: [],
-    unreadCount: 0,
+    notifications,
+    unreadCount,
+    pagination: { page, limit, total },
   });
 });
 
