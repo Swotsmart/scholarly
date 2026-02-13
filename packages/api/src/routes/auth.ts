@@ -6,6 +6,7 @@
 
 import { Router } from 'express';
 import { z } from 'zod';
+import { ethers } from 'ethers';
 import { prisma } from '@scholarly/database';
 import { authService } from '../services/auth.service';
 import { ScholarlyApiError } from '../errors/scholarly-error';
@@ -356,8 +357,31 @@ authRouter.post('/connect-wallet', authMiddleware, async (req, res) => {
   const requestId = (req as any).id || 'unknown';
   const { walletAddress, signature, message } = req.body;
 
-  // TODO: Verify signature to prove wallet ownership
-  // For now, just store the address
+  // Validate required fields
+  if (!walletAddress || !signature || !message) {
+    return res.status(400).json({
+      success: false,
+      error: { message: 'walletAddress, signature, and message are required' },
+    });
+  }
+
+  // Verify signature to prove wallet ownership
+  try {
+    const recoveredAddress = ethers.verifyMessage(message, signature);
+
+    if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Wallet signature verification failed' },
+      });
+    }
+  } catch (err) {
+    log.warn('Wallet signature verification error', { walletAddress, error: (err as Error).message });
+    return res.status(400).json({
+      success: false,
+      error: { message: 'Wallet signature verification failed' },
+    });
+  }
 
   // Check if wallet is already connected to another user
   const existingWallet = await prisma.user.findUnique({

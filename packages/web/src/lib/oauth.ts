@@ -4,7 +4,7 @@
  */
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== 'false';
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 export type OAuthProvider = 'google' | 'microsoft' | 'apple';
 

@@ -69,8 +69,11 @@ const checkEntitlementSchema = z.object({
 // ============================================================================
 
 function getUserInfo(req: any): { tenantId: string; userId: string } {
-  const tenantId = req.tenantId || req.user?.tenantId || 'demo-tenant';
-  const userId = req.user?.id || 'demo-user';
+  const tenantId = req.tenantId || req.user?.tenantId;
+  const userId = req.user?.id;
+  if (!tenantId || !userId) {
+    throw ApiError.unauthorized('Authentication required');
+  }
   return { tenantId, userId };
 }
 

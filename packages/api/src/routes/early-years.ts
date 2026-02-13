@@ -11,8 +11,18 @@
 
 import { Router } from 'express';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import { earlyYearsCoreService } from '../services/early-years-core.service';
 import { ApiError } from '../middleware/error-handler';
+import { logger } from '../lib/logger';
+
+const ttsRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // 30 requests per minute (generous for child phonics use)
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many TTS requests, please try again later' },
+});
 
 // =============================================================================
 // PHONICS TTS (ElevenLabs)
@@ -35,7 +45,7 @@ export const earlyYearsRouter: Router = Router();
 /** Public TTS router — mounted without auth for frontend phonics audio */
 export const earlyYearsTtsRouter: Router = Router();
 
-earlyYearsTtsRouter.post('/tts', async (req, res) => {
+earlyYearsTtsRouter.post('/tts', ttsRateLimiter, async (req, res) => {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
     return res.status(503).json({ error: 'TTS service unavailable' });
@@ -69,7 +79,7 @@ earlyYearsTtsRouter.post('/tts', async (req, res) => {
     res.set('Cache-Control', 'public, max-age=86400');
     res.send(audioBuffer);
   } catch (error) {
-    console.error('Phonics TTS failed:', error instanceof Error ? error.message : 'Unknown error');
+    logger.error({ err: error instanceof Error ? error : undefined, event: 'phonics.tts.failed' }, 'Phonics TTS failed');
     res.status(503).json({ error: 'TTS generation failed' });
   }
 });
@@ -473,7 +483,7 @@ earlyYearsRouter.post('/tts', async (req, res) => {
     res.set('Cache-Control', 'public, max-age=86400');
     res.send(audioBuffer);
   } catch (error) {
-    console.error('Phonics TTS failed:', error instanceof Error ? error.message : 'Unknown error');
+    logger.error({ err: error instanceof Error ? error : undefined, event: 'phonics.tts.failed' }, 'Phonics TTS failed');
     res.status(503).json({ error: 'TTS generation failed' });
   }
 });

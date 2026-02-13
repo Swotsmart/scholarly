@@ -467,6 +467,18 @@ verificationRouter.post(
 verificationRouter.get('/wwcc/check/:userId', authenticateUser, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
+    const user = (req as any).user;
+
+    // Authorization: only allow users to check their own WWCC status,
+    // unless they have platform_admin or tenant_admin role
+    if (
+      userId !== user.id &&
+      !user.roles.includes('platform_admin') &&
+      !user.roles.includes('tenant_admin')
+    ) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     const state = req.query.state as string | undefined;
 
     const { getWWCCService } = await import('../services/wwcc-verification.service.js');

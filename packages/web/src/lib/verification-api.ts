@@ -178,7 +178,7 @@ export interface StateInfo {
 // DEMO DATA
 // ==========================================================================
 
-const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== 'false';
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 const DEMO_KYC_VERIFICATION: IdentityVerification = {
   id: 'kyc_demo_1',

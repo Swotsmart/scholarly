@@ -40,10 +40,20 @@ export async function authMiddleware(
 ): Promise<void> {
   const requestId = (req as any).id || 'unknown';
 
-  // Development mode: allow demo access
-  if (process.env.NODE_ENV === 'development' && process.env.ALLOW_DEMO_AUTH === 'true') {
+  // Development mode: allow demo access (NEVER in production)
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    process.env.NODE_ENV === 'development' &&
+    process.env.ALLOW_DEMO_AUTH === 'true'
+  ) {
     const demoResult = await handleDemoAuth(req);
     if (demoResult) {
+      log.warn('Demo auth bypass used', {
+        userId: req.user?.id,
+        ip: req.ip,
+        path: req.originalUrl,
+        method: req.method,
+      });
       return next();
     }
   }

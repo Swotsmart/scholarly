@@ -18,7 +18,7 @@ import type {
   SkillType,
 } from '@/types/linguaflow';
 
-const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== 'false';
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
 // =============================================================================

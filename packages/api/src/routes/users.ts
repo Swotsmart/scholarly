@@ -12,7 +12,11 @@ export const usersRouter: Router = Router();
 // Get all users in tenant
 usersRouter.get('/', async (req, res) => {
   const { tenantId } = req;
-  const { role, search, page = '1', pageSize = '20' } = req.query;
+  const { role, search, page: rawPage = '1', pageSize: rawPageSize = '20' } = req.query;
+
+  // Validate and clamp pagination parameters
+  const page = Math.max(1, parseInt(rawPage as string) || 1);
+  const pageSize = Math.min(100, Math.max(1, parseInt(rawPageSize as string) || 20));
 
   const where: Record<string, unknown> = { tenantId };
 
@@ -27,8 +31,8 @@ usersRouter.get('/', async (req, res) => {
     ];
   }
 
-  const skip = (parseInt(page as string) - 1) * parseInt(pageSize as string);
-  const take = parseInt(pageSize as string);
+  const skip = (page - 1) * pageSize;
+  const take = pageSize;
 
   const [users, total] = await Promise.all([
     prisma.user.findMany({
@@ -56,10 +60,10 @@ usersRouter.get('/', async (req, res) => {
   res.json({
     users,
     pagination: {
-      page: parseInt(page as string),
-      pageSize: parseInt(pageSize as string),
+      page,
+      pageSize,
       total,
-      totalPages: Math.ceil(total / parseInt(pageSize as string)),
+      totalPages: Math.ceil(total / pageSize),
     },
   });
 });

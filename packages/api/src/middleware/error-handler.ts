@@ -5,6 +5,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { Prisma, PrismaClient } from '@prisma/client';
+import { logger } from '../lib/logger';
 
 // Create a test client to get runtime types
 const prisma = new PrismaClient();
@@ -50,7 +51,7 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ) {
-  console.error('Request error:', { name: err?.name, message: err?.message, status: (err as any)?.statusCode || 500 });
+  logger.error({ err, name: err?.name, status: (err as any)?.statusCode || 500 }, 'Request error');
 
   // Zod validation errors
   if (err instanceof ZodError) {

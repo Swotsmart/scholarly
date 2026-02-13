@@ -9,6 +9,7 @@
 // Sprint: 8 | Backlog: DE-006 | Lines: ~530
 // =============================================================================
 
+import { randomUUID, randomBytes } from 'crypto';
 import { Result } from '../shared/result';
 
 // === Types ===
@@ -95,7 +96,8 @@ export class RetryStrategy {
 
   static getRetryDelay(attempt: number): number | null {
     if (attempt >= this.DELAYS_MS.length) return null;
-    return this.DELAYS_MS[attempt] + this.DELAYS_MS[attempt] * 0.1 * Math.random();
+    const jitter = randomBytes(4).readUInt32BE(0) / 0xffffffff;
+    return this.DELAYS_MS[attempt] + this.DELAYS_MS[attempt] * 0.1 * jitter;
   }
 
   static getNextRetryTime(attempt: number): string | null {
@@ -139,8 +141,8 @@ export class WebhookSystem {
       }
     }
 
-    const id = `wh_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-    const secret = `whsec_${Array.from({ length: 32 }, () => Math.random().toString(36).charAt(2)).join('')}`;
+    const id = `wh_${randomUUID()}`;
+    const secret = `whsec_${randomBytes(32).toString('hex')}`;
     const now = new Date().toISOString();
 
     const subscription: WebhookSubscription = {
@@ -188,7 +190,7 @@ export class WebhookSystem {
   rotateSecret(id: string): Result<{ newSecret: string }> {
     const sub = this.subscriptions.get(id);
     if (!sub) return { success: false, error: 'Not found' };
-    const newSecret = `whsec_${Array.from({ length: 32 }, () => Math.random().toString(36).charAt(2)).join('')}`;
+    const newSecret = `whsec_${randomBytes(32).toString('hex')}`;
     sub.secret = newSecret; sub.updatedAt = new Date().toISOString();
     return { success: true, data: { newSecret } };
   }
@@ -203,7 +205,7 @@ export class WebhookSystem {
 
     const ids: string[] = [];
     for (const sub of matching) {
-      const payloadId = `evt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const payloadId = `evt_${randomUUID()}`;
       const payload: WebhookPayload = {
         id: payloadId, type: eventType, timestamp: new Date().toISOString(), tenantId, data,
         metadata: { apiVersion: '1.0.0', webhookSubscriptionId: sub.id, deliveryAttempt: 1 },
@@ -233,7 +235,7 @@ export class WebhookSystem {
     };
 
     const attempt: DeliveryAttempt = {
-      id: `att_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      id: `att_${randomUUID()}`,
       webhookId: sub.id, payloadId: payload.id, attempt: attemptNum,
       url: sub.url, requestHeaders: headers, timestamp: new Date().toISOString(), success: false,
     };
@@ -271,7 +273,7 @@ export class WebhookSystem {
 
     if (RetryStrategy.isExhausted(count)) {
       record.status = 'dead_letter'; record.completedAt = new Date().toISOString();
-      const dlId = `dl_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const dlId = `dl_${randomUUID()}`;
       this.deadLetters.set(dlId, {
         id: dlId, deliveryRecord: record, payload,
         reason: `Exhausted ${RetryStrategy.MAX_ATTEMPTS} attempts. Last: ${reason}`,

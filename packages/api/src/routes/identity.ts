@@ -7,6 +7,7 @@
  */
 
 import { Router } from 'express';
+import { randomUUID, randomBytes } from 'crypto';
 import { z } from 'zod';
 import { ApiError } from '../middleware/error-handler';
 
@@ -168,8 +169,11 @@ const checkTrustRequirementsSchema = z.object({
 // ============================================================================
 
 function getUserInfo(req: any): { tenantId: string; userId: string } {
-  const tenantId = req.tenantId || req.user?.tenantId || 'demo-tenant';
-  const userId = req.user?.id || 'demo-user';
+  const tenantId = req.tenantId || req.user?.tenantId;
+  const userId = req.user?.id;
+  if (!tenantId || !userId) {
+    throw ApiError.unauthorized('Authentication required');
+  }
   return { tenantId, userId };
 }
 
@@ -187,7 +191,7 @@ identityRouter.post('/identity', async (req, res) => {
     const data = createIdentitySchema.parse(req.body);
 
     const identity = {
-      id: `ident_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `ident_${randomUUID()}`,
       tenantId,
       userId,
       email: data.email,
@@ -226,90 +230,11 @@ identityRouter.post('/identity', async (req, res) => {
  */
 identityRouter.get('/identity/me', async (req, res) => {
   try {
-    const { tenantId, userId } = getUserInfo(req);
+    getUserInfo(req);
 
-    const identity = {
-      id: 'ident_demo_001',
-      tenantId,
-      userId,
-      email: 'sarah.chen@example.com',
-      displayName: 'Sarah Chen',
-      legalFirstName: 'Sarah',
-      legalLastName: 'Chen',
-      dateOfBirth: '1985-03-14',
-      nationality: 'AU',
-      jurisdiction: 'NSW',
-      identityType: 'individual',
-      status: 'active',
-      kycLevel: 'enhanced',
-      trustScore: 87,
-      contacts: [
-        {
-          id: 'contact_001',
-          type: 'email',
-          value: 'sarah.chen@example.com',
-          isPrimary: true,
-          verified: true,
-          verifiedAt: '2025-06-01T10:00:00.000Z',
-        },
-        {
-          id: 'contact_002',
-          type: 'phone',
-          value: '+61412345678',
-          isPrimary: false,
-          verified: true,
-          verifiedAt: '2025-06-01T10:05:00.000Z',
-        },
-      ],
-      credentials: [
-        {
-          id: 'cred_wwcc_001',
-          type: 'wwcc',
-          issuer: 'NSW Office of the Children\'s Guardian',
-          credentialNumber: 'WWC1234567E',
-          issuedDate: '2024-02-15',
-          expiryDate: '2029-02-15',
-          jurisdiction: 'NSW',
-          status: 'verified',
-          verifiedAt: '2025-06-02T08:00:00.000Z',
-        },
-        {
-          id: 'cred_nesa_001',
-          type: 'nesa_accreditation',
-          issuer: 'NSW Education Standards Authority',
-          credentialNumber: 'NESA-2024-78901',
-          issuedDate: '2024-01-10',
-          expiryDate: '2029-01-10',
-          jurisdiction: 'NSW',
-          status: 'verified',
-          verifiedAt: '2025-06-02T08:15:00.000Z',
-        },
-        {
-          id: 'cred_firstaid_001',
-          type: 'first_aid',
-          issuer: 'St John Ambulance Australia',
-          credentialNumber: 'FA-2024-456789',
-          issuedDate: '2024-06-20',
-          expiryDate: '2027-06-20',
-          jurisdiction: 'NSW',
-          status: 'verified',
-          verifiedAt: '2025-06-03T09:00:00.000Z',
-        },
-      ],
-      address: {
-        line1: '42 Education Street',
-        suburb: 'Surry Hills',
-        state: 'NSW',
-        postcode: '2010',
-        country: 'AU',
-      },
-      createdAt: '2025-05-15T10:00:00.000Z',
-      updatedAt: '2025-11-20T14:30:00.000Z',
-    };
-
-    res.json({
-      success: true,
-      data: { identity },
+    return res.status(501).json({
+      error: 'Not implemented',
+      message: 'This endpoint is not yet connected to a data source',
     });
   } catch (error) {
     if (error instanceof ApiError) throw error;
@@ -450,7 +375,7 @@ identityRouter.post('/identity/:identityId/contacts', async (req, res) => {
     const data = addContactSchema.parse(req.body);
 
     const contact = {
-      id: `contact_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `contact_${randomUUID()}`,
       identityId,
       tenantId,
       type: data.type,
@@ -570,71 +495,11 @@ identityRouter.delete('/identity/:identityId/contacts/:contactId', async (req, r
  */
 identityRouter.get('/kyc/status', async (req, res) => {
   try {
-    const { tenantId, userId } = getUserInfo(req);
+    getUserInfo(req);
 
-    const kycStatus = {
-      userId,
-      tenantId,
-      identityId: 'ident_demo_001',
-      level: 'enhanced',
-      status: 'verified',
-      completedChecks: [
-        {
-          type: 'document_verification',
-          provider: 'greenid',
-          status: 'passed',
-          completedAt: '2025-06-01T10:30:00.000Z',
-          documentType: 'drivers_licence',
-          jurisdiction: 'NSW',
-        },
-        {
-          type: 'address_verification',
-          provider: 'greenid',
-          status: 'passed',
-          completedAt: '2025-06-01T10:32:00.000Z',
-        },
-        {
-          type: 'identity_match',
-          provider: 'greenid',
-          status: 'passed',
-          completedAt: '2025-06-01T10:35:00.000Z',
-          matchScore: 98,
-        },
-        {
-          type: 'wwcc_check',
-          provider: 'manual',
-          status: 'passed',
-          completedAt: '2025-06-02T08:00:00.000Z',
-          credentialNumber: 'WWC1234567E',
-          jurisdiction: 'NSW',
-        },
-      ],
-      pendingChecks: [],
-      failedChecks: [],
-      nextReviewDate: '2026-06-01T00:00:00.000Z',
-      lastVerifiedAt: '2025-06-02T08:00:00.000Z',
-      verificationHistory: [
-        {
-          level: 'basic',
-          achievedAt: '2025-06-01T10:30:00.000Z',
-          method: 'document_verification',
-        },
-        {
-          level: 'standard',
-          achievedAt: '2025-06-01T10:35:00.000Z',
-          method: 'identity_match',
-        },
-        {
-          level: 'enhanced',
-          achievedAt: '2025-06-02T08:00:00.000Z',
-          method: 'wwcc_check',
-        },
-      ],
-    };
-
-    res.json({
-      success: true,
-      data: { kycStatus },
+    return res.status(501).json({
+      error: 'Not implemented',
+      message: 'This endpoint is not yet connected to a data source',
     });
   } catch (error) {
     if (error instanceof ApiError) throw error;
@@ -726,7 +591,7 @@ identityRouter.post('/kyc/verify', async (req, res) => {
     const data = startVerificationSchema.parse(req.body);
 
     const session = {
-      id: `kyc_session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `kyc_session_${randomUUID()}`,
       tenantId,
       userId,
       identityId: 'ident_demo_001',
@@ -935,7 +800,7 @@ identityRouter.post('/credentials', async (req, res) => {
     const data = addCredentialSchema.parse(req.body);
 
     const credential = {
-      id: `cred_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `cred_${randomUUID()}`,
       identityId: 'ident_demo_001',
       tenantId,
       userId,
@@ -975,7 +840,7 @@ identityRouter.post('/credentials/:credentialId/verify', async (req, res) => {
     const { credentialId } = req.params;
 
     const verificationRequest = {
-      id: `vreq_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `vreq_${randomUUID()}`,
       credentialId,
       tenantId,
       userId,
@@ -1008,7 +873,7 @@ identityRouter.post('/business', async (req, res) => {
     const data = createBusinessSchema.parse(req.body);
 
     const business = {
-      id: `biz_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `biz_${randomUUID()}`,
       tenantId,
       createdByUserId: userId,
       legalName: data.legalName,
@@ -1051,114 +916,11 @@ identityRouter.post('/business', async (req, res) => {
  */
 identityRouter.get('/business/:businessId', async (req, res) => {
   try {
-    const { tenantId } = getUserInfo(req);
-    const { businessId } = req.params;
+    getUserInfo(req);
 
-    const business = {
-      id: businessId,
-      tenantId,
-      legalName: 'Scholarly Learning Pty Ltd',
-      tradingName: 'Scholarly',
-      businessType: 'company',
-      abn: '12345678901',
-      acn: '123456789',
-      registeredAddress: {
-        line1: '100 Education Lane',
-        suburb: 'Sydney',
-        state: 'NSW',
-        postcode: '2000',
-        country: 'AU',
-      },
-      contactEmail: 'admin@scholarly.app',
-      contactPhone: '+61299998888',
-      website: 'https://scholarly.app',
-      industry: 'Education Technology',
-      sector: 'edtech',
-      status: 'verified',
-      kybLevel: 'full',
-      registrations: [
-        {
-          id: 'reg_abn_001',
-          type: 'abn',
-          registrationNumber: '12345678901',
-          issuingAuthority: 'Australian Business Register',
-          issuedDate: '2023-01-15',
-          status: 'active',
-        },
-        {
-          id: 'reg_acn_001',
-          type: 'acn',
-          registrationNumber: '123456789',
-          issuingAuthority: 'ASIC',
-          issuedDate: '2023-01-10',
-          status: 'active',
-        },
-        {
-          id: 'reg_gst_001',
-          type: 'gst',
-          registrationNumber: '12345678901',
-          issuingAuthority: 'ATO',
-          issuedDate: '2023-02-01',
-          status: 'active',
-        },
-      ],
-      directors: [
-        { name: 'James Mitchell', role: 'director', appointedDate: '2023-01-10' },
-        { name: 'Rebecca Wong', role: 'director', appointedDate: '2023-01-10' },
-        { name: 'David Nguyen', role: 'secretary', appointedDate: '2023-03-15' },
-      ],
-      representatives: [
-        {
-          id: 'rep_001',
-          name: 'Sarah Chen',
-          email: 'sarah@scholarly.app',
-          role: 'Head of Education',
-          permissions: ['manage_educators', 'manage_curriculum', 'view_compliance'],
-          status: 'active',
-        },
-      ],
-      insurancePolicies: [
-        {
-          id: 'ins_pl_001',
-          type: 'public_liability',
-          provider: 'QBE Insurance',
-          policyNumber: 'PL-2025-001234',
-          coverAmount: 20000000,
-          currency: 'AUD',
-          startDate: '2025-01-01',
-          endDate: '2026-01-01',
-          status: 'active',
-        },
-        {
-          id: 'ins_pi_001',
-          type: 'professional_indemnity',
-          provider: 'QBE Insurance',
-          policyNumber: 'PI-2025-005678',
-          coverAmount: 10000000,
-          currency: 'AUD',
-          startDate: '2025-01-01',
-          endDate: '2026-01-01',
-          status: 'active',
-        },
-        {
-          id: 'ins_cyber_001',
-          type: 'cyber_liability',
-          provider: 'Chubb Insurance',
-          policyNumber: 'CY-2025-009012',
-          coverAmount: 5000000,
-          currency: 'AUD',
-          startDate: '2025-01-01',
-          endDate: '2026-01-01',
-          status: 'active',
-        },
-      ],
-      createdAt: '2023-01-15T00:00:00.000Z',
-      updatedAt: '2025-11-01T10:00:00.000Z',
-    };
-
-    res.json({
-      success: true,
-      data: { business },
+    return res.status(501).json({
+      error: 'Not implemented',
+      message: 'This endpoint is not yet connected to a data source',
     });
   } catch (error) {
     if (error instanceof ApiError) throw error;
@@ -1207,7 +969,7 @@ identityRouter.post('/business/:businessId/registrations', async (req, res) => {
     const data = addRegistrationSchema.parse(req.body);
 
     const registration = {
-      id: `reg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `reg_${randomUUID()}`,
       businessId,
       tenantId,
       type: data.type,
@@ -1244,7 +1006,7 @@ identityRouter.post('/business/:businessId/directors', async (req, res) => {
     const data = addDirectorSchema.parse(req.body);
 
     const director = {
-      id: `dir_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `dir_${randomUUID()}`,
       businessId,
       tenantId,
       name: data.name,
@@ -1304,7 +1066,7 @@ identityRouter.post('/business/:businessId/representatives', async (req, res) =>
     const data = addRepresentativeSchema.parse(req.body);
 
     const representative = {
-      id: `rep_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `rep_${randomUUID()}`,
       businessId,
       tenantId,
       name: data.name,
@@ -1366,7 +1128,7 @@ identityRouter.post('/business/:businessId/insurance', async (req, res) => {
     const data = addInsuranceSchema.parse(req.body);
 
     const insurance = {
-      id: `ins_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `ins_${randomUUID()}`,
       businessId,
       tenantId,
       type: data.type,

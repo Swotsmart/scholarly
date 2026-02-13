@@ -133,6 +133,73 @@ const prismaClientSingleton = () => {
           const context = Prisma.getExtensionContext(this);
           // Bypass soft delete by using raw delete
           const modelName = (context as any).name;
+
+          // Validate model name against whitelist to prevent SQL injection
+          const VALID_MODELS: readonly string[] = [
+            'AuditLog', 'Subject', 'Address', 'Tenant', 'User', 'LearnerProfile',
+            'LearnerSubject', 'ParentProfile', 'TutorProfile', 'TutorAvailabilitySlot',
+            'TutorPricingTier', 'TutorSubject', 'TutorQualification', 'SafeguardingCheck',
+            'CreatorProfile', 'Booking', 'TutoringSession', 'SessionParticipant',
+            'CurriculumStandard', 'LessonPlan', 'LessonPlanStandard', 'Content',
+            'ContentAlignment', 'ContentReview', 'ContentPurchase', 'LearningAssetRequest',
+            'LearningAssetVote', 'HomeschoolFamily', 'HomeschoolChild', 'HomeschoolCoop',
+            'CoopMember', 'Excursion', 'ExcursionRegistration', 'MicroSchool',
+            'MicroSchoolStaff', 'MicroSchoolStudent', 'EnrollmentApplication',
+            'ReliefTeacher', 'ReliefPool', 'ReliefPoolMember', 'TeacherAbsence',
+            'ReliefAssignment', 'ReliefBooking', 'AbsenceNotification', 'AbsencePrediction',
+            'RefreshToken', 'CredentialNFT', 'EscrowTransaction', 'OnChainReputation',
+            'TokenTransaction', 'AIBuddyConversation', 'AIBuddySettings', 'Portfolio',
+            'Artifact', 'LearningGoal', 'Achievement', 'LearningJourney', 'EduScrumTeam',
+            'EduScrumSprint', 'EduScrumRetrospective', 'ComplianceCheck', 'ComplianceReport',
+            'ACARACurriculumCode', 'Notification', 'NotificationPreference', 'AnalyticsEvent',
+            'ReportDefinition', 'ReportExecution', 'FeatureFlag', 'TenantConfiguration',
+            'DataMigration', 'DesignChallenge', 'DesignJourney', 'DesignArtifact',
+            'DesignPeerReview', 'DesignPitchDeck', 'ShowcasePortfolio', 'ShowcaseItem',
+            'ShowcaseGuestbook', 'ShowcaseViewLog', 'EarlyYearsFamily', 'EarlyYearsChild',
+            'EarlyYearsPicturePassword', 'EarlyYearsPhonicsProgress',
+            'EarlyYearsNumeracyProgress', 'EarlyYearsSession', 'EarlyYearsActivity',
+            'LanguageLearnerProfile', 'LanguageVocabularyProgress', 'LanguageVocabularyItem',
+            'LanguageHeritagePathway', 'LanguageConversation', 'LanguageAchievement',
+            'LanguageLearnerAchievement', 'LanguageOfflinePackage', 'LearningEvent',
+            'MLPrediction', 'EarlyYearsConversation', 'EarlyYearsPicturePasswordAttempt',
+            'LanguageVocabularyReview', 'LTIPlatform', 'LTITool', 'LTIOIDCState',
+            'AGSLineItem', 'AGSScore', 'AGSResult', 'OneRosterConnection',
+            'OneRosterFieldMapping', 'OneRosterSyncJob', 'CASEFramework', 'CASEItem',
+            'CASEAssociation', 'CASEItemMapping', 'AchievementDefinition', 'BadgeAssertion',
+            'BadgeRevocation', 'EdFiConnection', 'EdFiSyncJob', 'EdFiFieldMapping',
+            'EdFiSyncConflict', 'EdFiChangeTracker', 'AdaptationProfile',
+            'BKTCompetencyState', 'AdaptationRule', 'AdaptationEvent', 'CuriositySignal',
+            'CuriosityProfileCache', 'ObjectiveWeightsConfig', 'OptimizationEvent',
+            'DecentralizedIdentifier', 'DIDDocument', 'KeyPair', 'KeyRotationLog',
+            'DigitalWallet', 'WalletBackup', 'VerifiableCredentialRecord', 'CredentialSchema',
+            'CredentialStatusList', 'VerifiablePresentationRecord', 'SSIEventLog',
+            'VideoRecording', 'VideoShare', 'VideoReviewCycle', 'PeerReviewSession',
+            'PeerSubmission', 'ReviewAssignment', 'IndustryPartner', 'IndustryOpportunity',
+            'ExperienceApplication', 'ExperiencePlacement', 'PDCourse', 'PDEnrollment',
+            'PBLProject', 'PBLProjectInstance', 'PitchSubmission', 'GovernanceProposal',
+            'GovernanceVote', 'VoteDelegation', 'DelegateProfile', 'StakingPool',
+            'StakingPosition', 'PublisherNFT', 'DeveloperAccount', 'MarketplaceApp',
+            'AppInstallation', 'AppReview', 'CommunityRequest', 'FundingPledge',
+            'BountyClaim', 'ImmersionScenario', 'ImmersionSession',
+            'LanguageExchangeSession', 'HostingProvider', 'HostingDomain', 'HostingOffering',
+            'HostingEnquiry', 'HostingTourBooking', 'HostingReview', 'HostingQualityEvent',
+            'IdentityVerification', 'WWCCVerification', 'BusinessVerification',
+            'VerificationDocument', 'VerificationAuditLog', 'VoiceElevenLabsConfig',
+            'VoiceLinguaFlowVoice', 'VoiceConversationAgent', 'VoiceConversationSession',
+            'VoiceConversationTurn', 'VoicePronunciationAssessment', 'VoiceLearnerProgress',
+            'VoiceSessionReview', 'VoiceTurnAnnotation', 'VoiceSessionFlag',
+            'VoiceCloneConsent', 'VoiceClone', 'VoiceCloneSample', 'VoiceDialogueScript',
+            'VoiceDialogueCharacter', 'VoiceGeneratedDialogue', 'VoiceUsageDaily',
+            'ArenaCompetition', 'ArenaParticipant', 'ArenaTeam', 'ArenaTeamMember',
+            'ArenaTreasuryVote', 'ArenaTreasuryVoteCast', 'ArenaTeamTrade',
+            'ArenaTeamChallenge', 'TokenBalance', 'ArenaTokenTransaction',
+            'ArenaStakePosition', 'ArenaProposal', 'ArenaVote', 'ArenaDelegation',
+            'DaoTreasury', 'DaoTreasuryTransaction', 'ContentBounty', 'BountySubmission',
+          ];
+          if (!VALID_MODELS.includes(modelName)) {
+            throw new Error(`Invalid model name: ${modelName}`);
+          }
+
           const client = (context as any).$parent;
           return client.$queryRawUnsafe(
             `DELETE FROM "${modelName}" WHERE id = $1`,

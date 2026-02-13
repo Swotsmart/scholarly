@@ -14,6 +14,20 @@ import { authMiddleware } from '../middleware/auth';
 export const arenaRouter: Router = Router();
 arenaRouter.use(authMiddleware);
 
+/** Parse and clamp a pagination limit from query params. Max 100, default 20. */
+function clampLimit(raw: string | undefined, defaultVal = 20, max = 100): number {
+  const parsed = parseInt(raw || '', 10);
+  if (isNaN(parsed) || parsed < 1) return defaultVal;
+  return Math.min(parsed, max);
+}
+
+/** Parse and clamp a page number from query params. Min 1, default 1. */
+function clampPage(raw: string | undefined): number {
+  const parsed = parseInt(raw || '', 10);
+  if (isNaN(parsed) || parsed < 1) return 1;
+  return parsed;
+}
+
 const TOURNAMENT_FORMATS = [
   'SINGLE_ELIMINATION', 'DOUBLE_ELIMINATION', 'ROUND_ROBIN',
   'SWISS', 'LEAGUE', 'SPEED_ROUND', 'ACCURACY_CHALLENGE', 'PHONICS_BEE',
@@ -269,8 +283,10 @@ arenaRouter.post('/competitions', async (req: Request, res: Response) => {
 arenaRouter.get('/competitions', async (req: Request, res: Response) => {
   try {
     const user = req.user!;
-    const { status, format, page = '1', limit = '20' } = req.query;
-    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+    const { status, format, page: rawPage, limit: rawLimit } = req.query;
+    const page = clampPage(rawPage as string);
+    const limit = clampLimit(rawLimit as string);
+    const skip = (page - 1) * limit;
 
     const where = {
       tenantId: user.tenantId,
@@ -283,7 +299,7 @@ arenaRouter.get('/competitions', async (req: Request, res: Response) => {
         where,
         orderBy: { createdAt: 'desc' },
         skip,
-        take: parseInt(limit as string),
+        take: limit,
       }),
       prisma.arenaCompetition.count({ where }),
     ]);
@@ -292,7 +308,7 @@ arenaRouter.get('/competitions', async (req: Request, res: Response) => {
       success: true,
       data: {
         competitions,
-        pagination: { page: parseInt(page as string), limit: parseInt(limit as string), total },
+        pagination: { page, limit, total },
       },
     });
   } catch {
@@ -307,6 +323,7 @@ arenaRouter.get('/competitions/user-stats', async (req: Request, res: Response) 
     const participants = await prisma.arenaParticipant.findMany({
       where: { userId: user.id, tenantId: user.tenantId },
       include: { competition: { select: { format: true, status: true } } },
+      take: 1000,
     });
 
     const completed = participants.filter(p => p.competition.status === 'COMPLETED');
@@ -405,6 +422,7 @@ arenaRouter.get('/competitions/:competitionId/leaderboard', async (req: Request,
       where: { competitionId: req.params.competitionId },
       orderBy: { totalScore: 'desc' },
       include: { user: { select: { id: true, displayName: true, avatarUrl: true } } },
+      take: 100,
     });
 
     res.json({
@@ -523,6 +541,7 @@ arenaRouter.post('/competitions/:competitionId/advance', async (req: Request, re
       const participants = await prisma.arenaParticipant.findMany({
         where: { competitionId },
         orderBy: { totalScore: 'desc' },
+        take: 1000,
       });
 
       await prisma.$transaction([
@@ -567,6 +586,7 @@ arenaRouter.post('/competitions/:competitionId/complete', async (req: Request, r
     const participants = await prisma.arenaParticipant.findMany({
       where: { competitionId },
       orderBy: { totalScore: 'desc' },
+      take: 1000,
     });
 
     const txOps: any[] = [
@@ -644,8 +664,10 @@ arenaRouter.post('/tournaments', async (req: Request, res: Response) => {
 arenaRouter.get('/tournaments', async (req: Request, res: Response) => {
   try {
     const user = req.user!;
-    const { page = '1', limit = '20' } = req.query;
-    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+    const { page: rawPage, limit: rawLimit } = req.query;
+    const page = clampPage(rawPage as string);
+    const limit = clampLimit(rawLimit as string);
+    const skip = (page - 1) * limit;
 
     const [tournaments, total] = await Promise.all([
       prisma.arenaCompetition.findMany({
@@ -655,7 +677,7 @@ arenaRouter.get('/tournaments', async (req: Request, res: Response) => {
         },
         orderBy: { createdAt: 'desc' },
         skip,
-        take: parseInt(limit as string),
+        take: limit,
       }),
       prisma.arenaCompetition.count({
         where: {
@@ -736,8 +758,10 @@ arenaRouter.post('/teams', async (req: Request, res: Response) => {
 arenaRouter.get('/teams', async (req: Request, res: Response) => {
   try {
     const user = req.user!;
-    const { type, page = '1', limit = '20' } = req.query;
-    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+    const { type, page: rawPage, limit: rawLimit } = req.query;
+    const page = clampPage(rawPage as string);
+    const limit = clampLimit(rawLimit as string);
+    const skip = (page - 1) * limit;
 
     const where = {
       tenantId: user.tenantId,
@@ -750,7 +774,7 @@ arenaRouter.get('/teams', async (req: Request, res: Response) => {
         where,
         orderBy: { xp: 'desc' },
         skip,
-        take: parseInt(limit as string),
+        take: limit,
         include: { members: { where: { isActive: true }, select: { userId: true, role: true } } },
       }),
       prisma.arenaTeam.count({ where }),
@@ -769,6 +793,7 @@ arenaRouter.get('/teams/my', async (req: Request, res: Response) => {
     const memberships = await prisma.arenaTeamMember.findMany({
       where: { userId: user.id, tenantId: user.tenantId, isActive: true },
       include: { team: true },
+      take: 100,
     });
 
     res.json({ success: true, data: memberships.map(m => ({ ...m.team, myRole: m.role })) });
@@ -780,7 +805,8 @@ arenaRouter.get('/teams/my', async (req: Request, res: Response) => {
 arenaRouter.get('/teams/leaderboard', async (req: Request, res: Response) => {
   try {
     const user = req.user!;
-    const { type, limit = '50' } = req.query;
+    const { type, limit: rawLimit } = req.query;
+    const limit = clampLimit(rawLimit as string, 50, 100);
 
     const teams = await prisma.arenaTeam.findMany({
       where: {
@@ -789,7 +815,7 @@ arenaRouter.get('/teams/leaderboard', async (req: Request, res: Response) => {
         ...(type && { type: type as string }),
       },
       orderBy: { xp: 'desc' },
-      take: parseInt(limit as string),
+      take: limit,
     });
 
     res.json({
@@ -825,6 +851,7 @@ arenaRouter.get('/teams/:teamId/members', async (req: Request, res: Response) =>
       where: { teamId: req.params.teamId, isActive: true },
       orderBy: { joinedAt: 'asc' },
       include: { user: { select: { id: true, displayName: true, avatarUrl: true } } },
+      take: 100,
     });
 
     res.json({ success: true, data: members });
@@ -1257,14 +1284,15 @@ arenaRouter.post('/teams/:teamId/challenge', async (req: Request, res: Response)
 arenaRouter.get('/community/leaderboards', async (req: Request, res: Response) => {
   try {
     const user = req.user!;
-    const { type = 'sparks', limit = '20' } = req.query;
+    const { type = 'sparks', limit: rawLimit } = req.query;
+    const limit = clampLimit(rawLimit as string, 20, 100);
 
     const orderField = type === 'gems' ? 'gems' : type === 'voice' ? 'voice' : 'sparks';
 
     const entries = await prisma.tokenBalance.findMany({
       where: { tenantId: user.tenantId },
       orderBy: { [orderField]: 'desc' },
-      take: parseInt(limit as string),
+      take: limit,
       include: { user: { select: { id: true, displayName: true, avatarUrl: true } } },
     });
 
@@ -1311,21 +1339,22 @@ arenaRouter.get('/community/trending', async (req: Request, res: Response) => {
 arenaRouter.get('/community/feed', async (req: Request, res: Response) => {
   try {
     const user = req.user!;
-    const { page = '1', limit = '20' } = req.query;
-    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
-    const take = parseInt(limit as string);
+    const { page: rawPage, limit: rawLimit } = req.query;
+    const page = clampPage(rawPage as string);
+    const limit = clampLimit(rawLimit as string);
+    const skip = (page - 1) * limit;
 
     const [recentCompetitions, recentBounties] = await Promise.all([
       prisma.arenaCompetition.findMany({
         where: { tenantId: user.tenantId, status: 'COMPLETED' },
         orderBy: { completedAt: 'desc' },
-        take: Math.ceil(take / 2),
+        take: Math.ceil(limit / 2),
         skip,
       }),
       prisma.contentBounty.findMany({
         where: { tenantId: user.tenantId },
         orderBy: { createdAt: 'desc' },
-        take: Math.ceil(take / 2),
+        take: Math.ceil(limit / 2),
         skip,
       }),
     ]);
@@ -1335,7 +1364,7 @@ arenaRouter.get('/community/feed', async (req: Request, res: Response) => {
       ...recentBounties.map(b => ({ type: 'bounty' as const, data: b, timestamp: b.createdAt })),
     ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-    res.json({ success: true, data: { feed, hasMore: feed.length === take } });
+    res.json({ success: true, data: { feed, hasMore: feed.length === limit } });
   } catch {
     res.status(500).json({ success: false, error: 'Failed to get community feed' });
   }
@@ -1424,9 +1453,11 @@ arenaRouter.get('/community/creators/:creatorId/analytics', async (req: Request,
     const [submissions, bounties] = await Promise.all([
       prisma.bountySubmission.findMany({
         where: { creatorId: profile.userId, tenantId: profile.tenantId || undefined },
+        take: 1000,
       }),
       prisma.contentBounty.findMany({
         where: { creatorId: profile.userId, tenantId: profile.tenantId || undefined },
+        take: 1000,
       }),
     ]);
 
@@ -1625,8 +1656,10 @@ arenaRouter.get('/tokens/balance', async (req: Request, res: Response) => {
 arenaRouter.get('/tokens/history', async (req: Request, res: Response) => {
   try {
     const user = req.user!;
-    const { tokenType, page = '1', limit = '50' } = req.query;
-    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+    const { tokenType, page: rawPage, limit: rawLimit } = req.query;
+    const page = clampPage(rawPage as string);
+    const limit = clampLimit(rawLimit as string, 50, 100);
+    const skip = (page - 1) * limit;
 
     const where = {
       userId: user.id,
@@ -1639,7 +1672,7 @@ arenaRouter.get('/tokens/history', async (req: Request, res: Response) => {
         where,
         orderBy: { createdAt: 'desc' },
         skip,
-        take: parseInt(limit as string),
+        take: limit,
       }),
       prisma.arenaTokenTransaction.count({ where }),
     ]);
@@ -2011,8 +2044,10 @@ arenaRouter.post('/governance/proposals', async (req: Request, res: Response) =>
 arenaRouter.get('/governance/proposals', async (req: Request, res: Response) => {
   try {
     const user = req.user!;
-    const { status, type, page = '1', limit = '20' } = req.query;
-    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+    const { status, type, page: rawPage, limit: rawLimit } = req.query;
+    const page = clampPage(rawPage as string);
+    const limit = clampLimit(rawLimit as string);
+    const skip = (page - 1) * limit;
 
     const where = {
       tenantId: user.tenantId,
@@ -2025,7 +2060,7 @@ arenaRouter.get('/governance/proposals', async (req: Request, res: Response) => 
         where,
         orderBy: { createdAt: 'desc' },
         skip,
-        take: parseInt(limit as string),
+        take: limit,
         include: { creator: { select: { id: true, displayName: true, avatarUrl: true } } },
       }),
       prisma.arenaProposal.count({ where }),
@@ -2220,14 +2255,16 @@ arenaRouter.post('/governance/proposals/:proposalId/execute', async (req: Reques
 
 arenaRouter.get('/governance/proposals/:proposalId/votes', async (req: Request, res: Response) => {
   try {
-    const { page = '1', limit = '50' } = req.query;
-    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+    const { page: rawPage, limit: rawLimit } = req.query;
+    const page = clampPage(rawPage as string);
+    const limit = clampLimit(rawLimit as string, 50, 100);
+    const skip = (page - 1) * limit;
 
     const votes = await prisma.arenaVote.findMany({
       where: { proposalId: req.params.proposalId },
       orderBy: { createdAt: 'desc' },
       skip,
-      take: parseInt(limit as string),
+      take: limit,
       include: { voter: { select: { id: true, displayName: true, avatarUrl: true } } },
     });
 
@@ -2317,6 +2354,7 @@ arenaRouter.get('/governance/delegations', async (req: Request, res: Response) =
         delegator: { select: { id: true, displayName: true } },
         delegate: { select: { id: true, displayName: true } },
       },
+      take: 100,
     });
 
     res.json({ success: true, data: delegations });
@@ -2344,15 +2382,17 @@ arenaRouter.get('/governance/treasury', async (req: Request, res: Response) => {
 arenaRouter.get('/governance/treasury/transactions', async (req: Request, res: Response) => {
   try {
     const user = req.user!;
-    const { page = '1', limit = '20' } = req.query;
-    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+    const { page: rawPage, limit: rawLimit } = req.query;
+    const page = clampPage(rawPage as string);
+    const limit = clampLimit(rawLimit as string);
+    const skip = (page - 1) * limit;
 
     const [transactions, total] = await Promise.all([
       prisma.daoTreasuryTransaction.findMany({
         where: { tenantId: user.tenantId },
         orderBy: { createdAt: 'desc' },
         skip,
-        take: parseInt(limit as string),
+        take: limit,
       }),
       prisma.daoTreasuryTransaction.count({ where: { tenantId: user.tenantId } }),
     ]);
@@ -2413,8 +2453,10 @@ arenaRouter.get('/governance/stats', async (req: Request, res: Response) => {
 arenaRouter.get('/bounties', async (req: Request, res: Response) => {
   try {
     const user = req.user!;
-    const { status, category, page = '1', limit = '20' } = req.query;
-    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+    const { status, category, page: rawPage, limit: rawLimit } = req.query;
+    const page = clampPage(rawPage as string);
+    const limit = clampLimit(rawLimit as string);
+    const skip = (page - 1) * limit;
 
     const where = {
       tenantId: user.tenantId,
@@ -2427,7 +2469,7 @@ arenaRouter.get('/bounties', async (req: Request, res: Response) => {
         where,
         orderBy: { createdAt: 'desc' },
         skip,
-        take: parseInt(limit as string),
+        take: limit,
       }),
       prisma.contentBounty.count({ where }),
     ]);
@@ -2491,15 +2533,17 @@ arenaRouter.get('/bounties/:bountyId', async (req: Request, res: Response) => {
 
 arenaRouter.get('/bounties/:bountyId/submissions', async (req: Request, res: Response) => {
   try {
-    const { page = '1', limit = '20' } = req.query;
-    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+    const { page: rawPage, limit: rawLimit } = req.query;
+    const page = clampPage(rawPage as string);
+    const limit = clampLimit(rawLimit as string);
+    const skip = (page - 1) * limit;
 
     const [submissions, total] = await Promise.all([
       prisma.bountySubmission.findMany({
         where: { bountyId: req.params.bountyId },
         orderBy: { totalScore: 'desc' },
         skip,
-        take: parseInt(limit as string),
+        take: limit,
         include: { creator: { select: { id: true, displayName: true, avatarUrl: true } } },
       }),
       prisma.bountySubmission.count({ where: { bountyId: req.params.bountyId } }),

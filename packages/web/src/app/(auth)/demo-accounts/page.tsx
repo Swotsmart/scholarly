@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,8 @@ import {
   Server,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
+
+const DEMO_MODE_ENABLED = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 // Helper function to get role-based dashboard path
 function getDashboardPath(role?: string): string {
@@ -105,6 +107,17 @@ export default function DemoCredentialsPage() {
   const { login } = useAuthStore();
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState<string | null>(null);
+
+  // Gate: only accessible when DEMO_MODE is explicitly enabled
+  useEffect(() => {
+    if (!DEMO_MODE_ENABLED) {
+      router.replace('/login');
+    }
+  }, [router]);
+
+  if (!DEMO_MODE_ENABLED) {
+    return null;
+  }
 
   const copyToClipboard = async (text: string, email: string) => {
     await navigator.clipboard.writeText(text);

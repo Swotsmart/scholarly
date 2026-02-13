@@ -15,6 +15,7 @@ import {
   EducationalFileType,
 } from '../services/google-drive-integration.service';
 import { isFailure } from '../services/base.service';
+import { logger } from '../lib/logger';
 
 const router: Router = Router();
 
@@ -544,7 +545,7 @@ router.post('/webhooks', async (req: Request, res: Response) => {
 
     if (isFailure(result)) {
       // Log the error but still return 200 to prevent Google from retrying
-      console.error('Webhook processing failed:', result.error);
+      logger.error({ err: result.error, event: 'google-drive.webhook.processing_failed' }, 'Webhook processing failed');
       res.status(200).send();
     } else {
       // Google expects a 200 response with empty body
@@ -552,7 +553,7 @@ router.post('/webhooks', async (req: Request, res: Response) => {
     }
   } catch (error) {
     // Log but return 200 to prevent retries
-    console.error('Webhook error:', error);
+    logger.error({ err: error instanceof Error ? error : undefined, event: 'google-drive.webhook.error' }, 'Webhook error');
     res.status(200).send();
   }
 });
