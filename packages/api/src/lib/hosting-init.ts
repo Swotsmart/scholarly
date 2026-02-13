@@ -11,6 +11,7 @@ import {
   initializeHostingQualityService,
   initializeHostingStructuredDataService,
 } from '../services';
+import { logger } from './logger';
 
 import {
   createPrismaProviderRepository,
@@ -60,5 +61,5 @@ export function initializeHostingServices(): void {
   initializeHostingStructuredDataService();
 
   initialized = true;
-  console.log('Hosting services initialized with Prisma repositories');
+  logger.info('Hosting services initialized with Prisma repositories');
 }

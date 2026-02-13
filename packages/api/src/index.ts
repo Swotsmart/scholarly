@@ -13,6 +13,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { prisma } from '@scholarly/database';
+import { logger } from './lib/logger';
 
 // Routes
 import { authRouter } from './routes/auth';
@@ -186,39 +187,29 @@ let server: ReturnType<typeof app.listen>;
 
 async function start() {
   try {
-    console.log('Connecting to database...');
+    logger.info('Connecting to database...');
     await prisma.$connect();
-    console.log('Database connected');
+    logger.info('Database connected');
 
     // Initialize JWT keys
     await initializeKeys();
-    console.log('JWT keys initialized');
+    logger.info('JWT keys initialized');
 
     // Initialize hosting services
     initializeHostingServices();
 
     server = app.listen(PORT, () => {
-      console.log(`
-╔═══════════════════════════════════════════════════════════╗
-║                                                           ║
-║   🎓 Scholarly API Server                                 ║
-║   The Unified Learning Nexus                              ║
-║                                                           ║
-║   Server running on http://localhost:${PORT}                ║
-║   API Docs: http://localhost:${PORT}/api/v1                 ║
-║                                                           ║
-╚═══════════════════════════════════════════════════════════╝
-      `);
+      logger.info({ port: PORT }, `Scholarly API Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error({ err: error instanceof Error ? error : undefined }, 'Failed to start server');
     process.exit(1);
   }
 }
 
 // Graceful shutdown
 async function shutdown(signal: string) {
-  console.log(`${signal} received, shutting down...`);
+  logger.info({ signal }, 'Shutdown signal received, shutting down...');
   server.close(async () => {
     await prisma.$disconnect().catch(() => {});
     process.exit(0);

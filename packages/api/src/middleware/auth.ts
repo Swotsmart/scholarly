@@ -40,23 +40,7 @@ export async function authMiddleware(
 ): Promise<void> {
   const requestId = (req as any).id || 'unknown';
 
-  // Development mode: allow demo access (NEVER in production)
-  if (
-    process.env.NODE_ENV !== 'production' &&
-    process.env.NODE_ENV === 'development' &&
-    process.env.ALLOW_DEMO_AUTH === 'true'
-  ) {
-    const demoResult = await handleDemoAuth(req);
-    if (demoResult) {
-      log.warn('Demo auth bypass used', {
-        userId: req.user?.id,
-        ip: req.ip,
-        path: req.originalUrl,
-        method: req.method,
-      });
-      return next();
-    }
-  }
+  // Demo auth bypass removed for production safety
 
   // Extract token from Authorization header
   const authHeader = req.headers.authorization;
@@ -281,77 +265,6 @@ export function requireWallet(req: Request, res: Response, next: NextFunction): 
   next();
 }
 
-/**
- * Handle demo authentication for development
- */
-async function handleDemoAuth(req: Request): Promise<boolean> {
-  const demoUserId = req.headers['x-demo-user-id'] as string;
-  const demoTenantId = req.headers['x-demo-tenant-id'] as string;
-
-  if (demoUserId && demoTenantId) {
-    const user = await prisma.user.findUnique({
-      where: { id: demoUserId },
-      select: {
-        id: true,
-        tenantId: true,
-        email: true,
-        roles: true,
-        jurisdiction: true,
-        walletAddress: true,
-      },
-    });
-
-    if (user && user.tenantId === demoTenantId) {
-      req.user = {
-        id: user.id,
-        tenantId: user.tenantId,
-        email: user.email,
-        roles: user.roles,
-        jurisdiction: user.jurisdiction,
-        walletAddress: user.walletAddress || undefined,
-      };
-      req.tenantId = user.tenantId;
-      return true;
-    }
-  }
-
-  // Try default demo tenant
-  const tenant = await prisma.tenant.findUnique({
-    where: { slug: 'scholarly-demo' },
-  });
-
-  if (tenant) {
-    const adminUser = await prisma.user.findFirst({
-      where: {
-        tenantId: tenant.id,
-        email: 'admin@scholarly.app',
-      },
-      select: {
-        id: true,
-        tenantId: true,
-        email: true,
-        roles: true,
-        jurisdiction: true,
-        walletAddress: true,
-      },
-    });
-
-    if (adminUser) {
-      req.user = {
-        id: adminUser.id,
-        tenantId: adminUser.tenantId,
-        email: adminUser.email,
-        roles: adminUser.roles,
-        jurisdiction: adminUser.jurisdiction,
-        walletAddress: adminUser.walletAddress || undefined,
-      };
-      req.tenantId = adminUser.tenantId;
-      return true;
-    }
-  }
-
-  return false;
-}
 
 // Alias for backward compatibility
 export const authenticateUser = authMiddleware;
