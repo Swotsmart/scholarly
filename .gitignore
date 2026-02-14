@@ -2,6 +2,9 @@
 node_modules/
 .pnpm-store/
 
+# Temporary files and folders
+/docs/temp-files-for-info-only/
+
 # Build outputs
 dist/
 build/
