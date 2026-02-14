@@ -166,10 +166,16 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
+        // Handle both string errors and structured error objects from the API
+        const rawError = data.error;
+        const errorMessage = typeof rawError === 'string'
+          ? rawError
+          : rawError?.message || 'Request failed';
+
         return {
           success: false,
-          error: data.error || 'Request failed',
-          details: data.details,
+          error: errorMessage,
+          details: data.details || rawError?.details,
         };
       }
 

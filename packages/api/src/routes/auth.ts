@@ -32,7 +32,7 @@ const registerSchema = z.object({
   displayName: z.string().min(2).max(100),
   firstName: z.string().min(1).max(50),
   lastName: z.string().min(1).max(50),
-  tenantSlug: z.string().optional().default('scholarly-demo'),
+  tenantSlug: z.string().optional().default('scholarly'),
   role: z.enum(['learner', 'parent', 'tutor']).default('learner'),
 });
 
