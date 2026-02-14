@@ -13,7 +13,8 @@ import { toast } from '@/hooks/use-toast';
 import { initiateOAuth, type OAuthProvider } from '@/lib/oauth';
 
 // Helper function to get role-based dashboard path
-function getDashboardPath(role?: string): string {
+function getDashboardPath(user?: { role?: string; roles?: string[] } | null): string {
+  const role = user?.role || user?.roles?.[0];
   switch (role) {
     case 'teacher':
     case 'educator':
@@ -51,7 +52,7 @@ export default function LoginPage() {
       if (result.success) {
         // Get the user from the store after login to determine the correct dashboard
         const user = useAuthStore.getState().user;
-        const dashboardPath = getDashboardPath(user?.role);
+        const dashboardPath = getDashboardPath(user);
 
         toast({
           title: 'Welcome back!',

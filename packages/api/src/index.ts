@@ -113,13 +113,15 @@ app.get('/health', async (_req, res) => {
   }
 });
 
-// Auth rate limiter: 10 requests per 15 minutes per IP
+// Auth rate limiter: only applies to login/register, NOT to /me or /refresh
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many authentication attempts, please try again later' },
+  // Only count POST requests to login/register
+  skip: (req) => !['login', 'register'].some(path => req.path.endsWith(`/${path}`)),
 });
 
 // API version prefix

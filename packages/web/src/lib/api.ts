@@ -506,7 +506,9 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
+  role?: string;
+  roles?: string[];
+  displayName?: string;
   avatarUrl?: string;
   permissions?: string[];
   groups?: string[];

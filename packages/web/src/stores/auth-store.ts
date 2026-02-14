@@ -116,7 +116,14 @@ export const useAuthStore = create<AuthState>()(
       },
 
       checkAuth: async () => {
-        const { accessToken } = get();
+        const { accessToken, isAuthenticated, user } = get();
+
+        // Already authenticated with user data — no need to re-check
+        if (isAuthenticated && user && accessToken) {
+          api.setAccessToken(accessToken);
+          set({ isLoading: false });
+          return;
+        }
 
         if (!accessToken) {
           set({ isLoading: false, isAuthenticated: false });
