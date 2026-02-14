@@ -73,6 +73,9 @@ import { initializeKeys } from './config/keys';
 const app: Application = express();
 const PORT = process.env.PORT || 3002;
 
+// Trust proxy when behind a reverse proxy (Azure Container Apps, nginx, etc.)
+app.set('trust proxy', 1);
+
 // Global middleware
 app.use(helmet());
 
