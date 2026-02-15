@@ -45,6 +45,8 @@ import {
   MoreHorizontal,
   Image as ImageIcon,
   Play,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -390,6 +392,24 @@ export default function ParentDashboardPage() {
           </Button>
         </div>
       </div>
+
+      {/* Little Explorers Launch Pad */}
+      <Link href="/early-years">
+        <Card className="overflow-hidden border-0 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 text-white shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5 cursor-pointer">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+              <Sparkles className="h-7 w-7 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold">Little Explorers</h3>
+              <p className="text-sm text-white/80">Launch the Early Years learning hub for ages 3-7</p>
+            </div>
+            <Button variant="secondary" size="sm" className="shrink-0 bg-white/20 text-white border-0 hover:bg-white/30">
+              Open <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* Children Selector Tabs */}
       <Card>

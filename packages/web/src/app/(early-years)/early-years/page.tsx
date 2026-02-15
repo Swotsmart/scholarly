@@ -267,6 +267,9 @@ export default function EarlyYearsPage() {
   const [showParentPin, setShowParentPin] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [mentorMood, setMentorMood] = useState<MentorMood>('idle');
+  // Track mount state so Framer Motion doesn't SSR with opacity:0
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => setHasMounted(true), []);
 
   const { speak, playEffect, stop } = usePhonicsAudio();
   const storeAudioEnabled = useEarlyYearsStore((s) => s.audioEnabled);
@@ -558,7 +561,7 @@ export default function EarlyYearsPage() {
             <motion.div
               key="loading"
               variants={pageVariants}
-              initial="initial"
+              initial={hasMounted ? 'initial' : false}
               animate="animate"
               exit="exit"
               className="flex flex-col items-center justify-center min-h-[80vh]"
@@ -611,7 +614,7 @@ export default function EarlyYearsPage() {
             <motion.div
               key="select-child"
               variants={pageVariants}
-              initial="initial"
+              initial={hasMounted ? 'initial' : false}
               animate="animate"
               exit="exit"
               className="py-8"
@@ -629,7 +632,7 @@ export default function EarlyYearsPage() {
             <motion.div
               key="setup-password"
               variants={pageVariants}
-              initial="initial"
+              initial={hasMounted ? 'initial' : false}
               animate="animate"
               exit="exit"
               className="py-8"
@@ -649,7 +652,7 @@ export default function EarlyYearsPage() {
             <motion.div
               key="picture-password"
               variants={pageVariants}
-              initial="initial"
+              initial={hasMounted ? 'initial' : false}
               animate="animate"
               exit="exit"
               className="py-8"
@@ -669,7 +672,7 @@ export default function EarlyYearsPage() {
             <motion.div
               key="dashboard"
               variants={pageVariants}
-              initial="initial"
+              initial={hasMounted ? 'initial' : false}
               animate="animate"
               exit="exit"
             >
@@ -744,7 +747,7 @@ export default function EarlyYearsPage() {
             <motion.div
               key="dashboard-loading"
               variants={pageVariants}
-              initial="initial"
+              initial={hasMounted ? 'initial' : false}
               animate="animate"
               exit="exit"
               className="flex flex-col items-center justify-center min-h-[80vh]"
@@ -772,7 +775,7 @@ export default function EarlyYearsPage() {
             <motion.div
               key="select-world"
               variants={pageVariants}
-              initial="initial"
+              initial={hasMounted ? 'initial' : false}
               animate="animate"
               exit="exit"
               className="py-8"
@@ -791,7 +794,7 @@ export default function EarlyYearsPage() {
             <motion.div
               key="select-mentor"
               variants={pageVariants}
-              initial="initial"
+              initial={hasMounted ? 'initial' : false}
               animate="animate"
               exit="exit"
               className="py-8"
