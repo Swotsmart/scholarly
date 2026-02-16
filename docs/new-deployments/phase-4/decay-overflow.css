@@ -1,0 +1,564 @@
+/* =============================================================================
+ * SELF-COMPOSING INTERFACE — DECAY & OVERFLOW STYLES
+ * =============================================================================
+ * CSS module for Phase 4 visual treatments. Covers:
+ *
+ *   1. Decay item wrapper — 60% opacity, dotted underline, urgency colours
+ *   2. Pin button — hover reveal, filled/outline states
+ *   3. Decay timer — days-remaining badge on hover
+ *   4. Tooltip — positioned below the item, accessible
+ *   5. Overflow drawer — slide-out panel, backdrop, item list
+ *   6. More button — trigger at bottom of sidebar
+ *   7. prefers-reduced-motion — global override for instant transitions
+ *
+ * Specification references:
+ *   Section 14.1 — 60% opacity, dotted underline for DECAYING
+ *   Section 14.3 — Overflow drawer layout and behaviour
+ *   Section 19   — WCAG 2.3.3 reduced motion
+ *
+ * Colour palette uses CSS custom properties scoped to the .scholarly-nav
+ * parent, allowing theme overrides without touching this file.
+ * =========================================================================== */
+
+/* =============================================================================
+ * 1. DECAY ITEM WRAPPER
+ * =========================================================================== */
+
+.decay-item-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  transition: opacity 300ms ease-out;
+}
+
+/* Decaying state: 60% opacity per spec Section 14.1 */
+.decay-item-wrapper--decaying {
+  opacity: 0.6;
+}
+
+.decay-item-wrapper--decaying:hover,
+.decay-item-wrapper--decaying:focus-within {
+  opacity: 0.85; /* Partially restore on hover for readability */
+}
+
+/* Pinned state: full opacity, no decay treatment */
+.decay-item-wrapper--pinned {
+  opacity: 1.0;
+}
+
+/* Dotted underline on the label text within decaying items */
+.decay-item-wrapper--decaying .decay-item-wrapper__content {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--decay-underline-color, #A0AEC0);
+  text-underline-offset: 3px;
+}
+
+.decay-item-wrapper--pinned .decay-item-wrapper__content {
+  text-decoration: none;
+}
+
+/* Content takes available space */
+.decay-item-wrapper__content {
+  flex: 1;
+  min-width: 0; /* Prevent overflow */
+}
+
+/* =============================================================================
+ * 1a. URGENCY COLOURS
+ * =========================================================================== */
+
+/* Low urgency (15+ days remaining): default muted colour */
+.decay-item-wrapper[data-decay-urgency="low"] {
+  --decay-underline-color: #A0AEC0;
+  --decay-timer-color: #718096;
+}
+
+/* Medium urgency (7–15 days): amber warning */
+.decay-item-wrapper[data-decay-urgency="medium"] {
+  --decay-underline-color: #D69E2E;
+  --decay-timer-color: #B7791F;
+}
+
+/* High urgency (< 7 days): red alert */
+.decay-item-wrapper[data-decay-urgency="high"] {
+  --decay-underline-color: #E53E3E;
+  --decay-timer-color: #C53030;
+}
+
+/* =============================================================================
+ * 2. PIN BUTTON
+ * =========================================================================== */
+
+.decay-item-wrapper__pin-button {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--decay-timer-color, #718096);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+/* Show on hover or keyboard focus within the wrapper */
+.decay-item-wrapper__pin-button--visible,
+.decay-item-wrapper:hover .decay-item-wrapper__pin-button,
+.decay-item-wrapper:focus-within .decay-item-wrapper__pin-button {
+  opacity: 1;
+}
+
+.decay-item-wrapper__pin-button:hover {
+  background: var(--pin-hover-bg, rgba(45, 108, 176, 0.1));
+  color: var(--pin-hover-color, #2B6CB0);
+}
+
+.decay-item-wrapper__pin-button:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--focus-ring-color, #4299E1);
+  outline-offset: 2px;
+}
+
+/* Pinned state: always visible with brand colour */
+.decay-item-wrapper--pinned .decay-item-wrapper__pin-button {
+  opacity: 0.7;
+  color: var(--pin-active-color, #2B6CB0);
+}
+
+.decay-item-wrapper--pinned .decay-item-wrapper__pin-button:hover {
+  opacity: 1;
+  color: var(--pin-hover-color, #C53030); /* Red on hover to signal "unpin" */
+}
+
+/* =============================================================================
+ * 3. DECAY TIMER (days remaining badge)
+ * =========================================================================== */
+
+.decay-item-wrapper__timer {
+  position: absolute;
+  right: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 150ms ease;
+  pointer-events: none;
+}
+
+.decay-item-wrapper__timer--visible,
+.decay-item-wrapper:hover .decay-item-wrapper__timer,
+.decay-item-wrapper:focus-within .decay-item-wrapper__timer {
+  opacity: 1;
+}
+
+.decay-item-wrapper__days-remaining {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace);
+  color: var(--decay-timer-color, #718096);
+  background: var(--decay-timer-bg, rgba(113, 128, 150, 0.1));
+  border-radius: 4px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/* =============================================================================
+ * 4. TOOLTIP
+ * =========================================================================== */
+
+.decay-item-wrapper__tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  z-index: 50;
+  padding: 6px 10px;
+  max-width: 240px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #FFFFFF;
+  background: #1A202C;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  animation: tooltip-fade-in 150ms ease;
+}
+
+.decay-item-wrapper__tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1A202C;
+}
+
+@keyframes tooltip-fade-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* =============================================================================
+ * 5. OVERFLOW DRAWER
+ * =========================================================================== */
+
+/* Backdrop */
+.overflow-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.overflow-backdrop--animated {
+  animation: backdrop-fade-in 200ms ease forwards;
+}
+
+.overflow-backdrop--instant {
+  opacity: 0.3;
+}
+
+@keyframes backdrop-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Drawer panel */
+.overflow-drawer {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width, 260px);
+  bottom: 0;
+  z-index: 50;
+  width: 320px;
+  max-width: calc(100vw - var(--sidebar-width, 260px));
+  display: flex;
+  flex-direction: column;
+  background: var(--drawer-bg, #FFFFFF);
+  border-right: 1px solid var(--border-color, #E2E8F0);
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.overflow-drawer--animated {
+  animation: drawer-slide-in 200ms ease forwards;
+}
+
+.overflow-drawer--instant {
+  /* No animation — instant appearance */
+}
+
+@keyframes drawer-slide-in {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+/* Header */
+.overflow-drawer__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--border-color, #E2E8F0);
+  flex-shrink: 0;
+}
+
+.overflow-drawer__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #1A202C);
+  margin: 0;
+}
+
+.overflow-drawer__count {
+  font-size: 12px;
+  color: var(--text-muted, #718096);
+  margin-left: auto;
+  padding-right: 8px;
+}
+
+.overflow-drawer__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted, #718096);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.overflow-drawer__close:hover {
+  background: var(--hover-bg, #EDF2F7);
+  color: var(--text-primary, #1A202C);
+}
+
+.overflow-drawer__close:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #4299E1);
+  outline-offset: 2px;
+}
+
+/* Item list */
+.overflow-drawer__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  margin: 0;
+  list-style: none;
+}
+
+.overflow-drawer__item {
+  margin: 0;
+  padding: 0;
+}
+
+.overflow-drawer__item-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 100ms ease;
+}
+
+.overflow-drawer__item-button:hover {
+  background: var(--hover-bg, #EDF2F7);
+}
+
+.overflow-drawer__item-button:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #4299E1);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+.overflow-drawer__item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--icon-bg, #EDF2F7);
+  color: var(--text-muted, #718096);
+}
+
+.overflow-drawer__item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.overflow-drawer__item-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #1A202C);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overflow-drawer__item-time {
+  font-size: 12px;
+  color: var(--text-muted, #718096);
+}
+
+/* Restore button within items */
+.overflow-drawer__restore-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color, #E2E8F0);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted, #718096);
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 100ms ease, color 100ms ease, border-color 100ms ease;
+  opacity: 0;
+}
+
+.overflow-drawer__item-button:hover .overflow-drawer__restore-button,
+.overflow-drawer__item-button:focus-within .overflow-drawer__restore-button {
+  opacity: 1;
+}
+
+.overflow-drawer__restore-button:hover {
+  background: var(--restore-hover-bg, #EBF8FF);
+  border-color: var(--accent-color, #4299E1);
+  color: var(--accent-color, #2B6CB0);
+}
+
+.overflow-drawer__restore-button:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #4299E1);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.overflow-drawer__restore-label {
+  font-weight: 500;
+}
+
+/* Empty state */
+.overflow-drawer__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+}
+
+.overflow-drawer__empty-text {
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted, #718096);
+  max-width: 240px;
+}
+
+/* Footer */
+.overflow-drawer__footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color, #E2E8F0);
+  flex-shrink: 0;
+}
+
+.overflow-drawer__hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted, #A0AEC0);
+  margin: 0;
+}
+
+.overflow-drawer__hint kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  font-size: 11px;
+  font-family: var(--font-mono, 'SF Mono', monospace);
+  background: var(--kbd-bg, #EDF2F7);
+  border: 1px solid var(--border-color, #CBD5E0);
+  border-radius: 4px;
+}
+
+/* =============================================================================
+ * 6. MORE BUTTON (overflow drawer trigger)
+ * =========================================================================== */
+
+.overflow-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  border-top: 1px solid var(--border-color, #E2E8F0);
+  background: transparent;
+  color: var(--text-muted, #718096);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 100ms ease, color 100ms ease;
+}
+
+.overflow-trigger:hover {
+  background: var(--hover-bg, #EDF2F7);
+  color: var(--text-primary, #1A202C);
+}
+
+.overflow-trigger:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #4299E1);
+  outline-offset: -2px;
+}
+
+.overflow-trigger__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overflow-trigger__count {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-color, #2B6CB0);
+  background: var(--badge-bg, #EBF8FF);
+  border-radius: 10px;
+}
+
+/* =============================================================================
+ * 7. prefers-reduced-motion OVERRIDES
+ * =========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Disable ALL animations and transitions globally for the self-composing UI */
+
+  .decay-item-wrapper,
+  .decay-item-wrapper__pin-button,
+  .decay-item-wrapper__timer,
+  .overflow-backdrop,
+  .overflow-drawer,
+  .overflow-drawer__close,
+  .overflow-drawer__item-button,
+  .overflow-drawer__restore-button,
+  .overflow-trigger {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* Tooltip: no fade, instant appearance */
+  .decay-item-wrapper__tooltip {
+    animation: none !important;
+  }
+
+  /* Overflow drawer: instant open, no slide */
+  .overflow-drawer--animated {
+    transform: none;
+    opacity: 1;
+  }
+
+  /* Backdrop: instant appearance */
+  .overflow-backdrop--animated {
+    opacity: 1;
+  }
+
+  /* Decay opacity: still applied (opacity is not motion) */
+  .decay-item-wrapper--decaying {
+    opacity: 0.6;
+  }
+
+  .decay-item-wrapper--decaying:hover,
+  .decay-item-wrapper--decaying:focus-within {
+    opacity: 0.85;
+  }
+}
