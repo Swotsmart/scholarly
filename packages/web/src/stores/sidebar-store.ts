@@ -1,41 +1,16 @@
 'use client';
 
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+// =============================================================================
+// SIDEBAR STORE — BACKWARD COMPATIBILITY SHIM
+// =============================================================================
+// This file preserves the original useSidebarStore export so that any
+// components that haven't been migrated yet continue to work.
+//
+// The actual state now lives in composing-menu-store.ts.
+// This shim maps the old API (collapsed, favorites, showAdvanced) to the
+// new composing menu system.
+//
+// Original 41-line store preserved at sidebar-store.ts.original
+// =============================================================================
 
-interface SidebarState {
-  // Sidebar collapse state
-  collapsed: boolean;
-  toggleCollapsed: () => void;
-
-  // Favorites — persisted navigation shortcuts
-  favorites: string[];
-  toggleFavorite: (href: string) => void;
-
-  // Advanced sections visibility
-  showAdvanced: boolean;
-  toggleAdvanced: () => void;
-}
-
-export const useSidebarStore = create<SidebarState>()(
-  persist(
-    (set, get) => ({
-      collapsed: false,
-      toggleCollapsed: () => set(state => ({ collapsed: !state.collapsed })),
-
-      favorites: [],
-      toggleFavorite: (href: string) =>
-        set(state => ({
-          favorites: state.favorites.includes(href)
-            ? state.favorites.filter(f => f !== href)
-            : [...state.favorites, href],
-        })),
-
-      showAdvanced: false,
-      toggleAdvanced: () => set(state => ({ showAdvanced: !state.showAdvanced })),
-    }),
-    {
-      name: 'scholarly-sidebar',
-    }
-  )
-);
+export { useSidebarStore } from './composing-menu-store';
