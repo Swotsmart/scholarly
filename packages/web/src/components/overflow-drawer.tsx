@@ -3,14 +3,14 @@
 // =============================================================================
 // OVERFLOW DRAWER
 // =============================================================================
-// The slide-out panel that houses menu items which have decayed past the
-// 60-day threshold. Think of it as the filing cabinet beside your desk —
-// not on the desk surface (the active menu), but within arm's reach.
+// Slide-out panel for menu items that have decayed past the 60-day threshold.
+// Built on the Shadcn Sheet (Radix Dialog) component for accessible modal
+// behavior: focus trapping, Escape to close, click-outside to close.
 //
 // Specification references:
-//   Section 14.3 — The Overflow Drawer
-//   Section 19   — Accessibility (WCAG 2.4.3: focus management)
-//   Phase 4      — Decay & Overflow Polish
+//   Section 14.3 -- The Overflow Drawer
+//   Section 19   -- Accessibility (WCAG 2.4.3: focus management)
+//   Phase 4      -- Decay & Overflow Polish
 //
 // Key behaviours:
 //   - Accessible via "More" button at bottom of sidebar menu
@@ -18,20 +18,22 @@
 //   - "Last used X days ago" relative time labels
 //   - One-tap restore to ACTIVE state
 //   - Maximum 15 items displayed (180-day prune handled by store)
-//   - Receives focus on open (WCAG 2.4.3)
+//   - Sheet handles focus on open/close (WCAG 2.4.3)
 //   - Keyboard navigable: Arrow keys traverse items, Enter restores
-//   - prefers-reduced-motion: instant open/close, no slide animation
-//   - Close on Escape, close on click outside
+//   - motion-safe Tailwind classes for animation control
 // =============================================================================
 
-import React, {
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-  type KeyboardEvent,
-} from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useMemo, useRef, type KeyboardEvent } from 'react';
+import { RotateCcw, X, MoreHorizontal, Command } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { getTask } from '@/config/menu-registry';
 import type { ComposingMenuItem } from '@/types/composing-menu-types';
 
@@ -40,24 +42,24 @@ import type { ComposingMenuItem } from '@/types/composing-menu-types';
 // =============================================================================
 
 export interface OverflowDrawerProps {
-  /** Whether the drawer is open. */
+  /** Whether the drawer is open. Controlled by parent. */
   isOpen: boolean;
 
-  /** Callback to close the drawer. */
-  onClose: () => void;
+  /** Callback when open state changes (close on overlay click, Escape, X). */
+  onOpenChange: (open: boolean) => void;
 
   /** Overflow items from the composing menu store. */
   items: ComposingMenuItem[];
 
-  /** Called when the user restores an item. */
+  /** Called when the user restores an item to their active menu. */
   onRestore: (taskRef: string) => void;
-
-  /** Called when the user navigates to an item's route. */
-  onNavigate: (taskRef: string, path: string) => void;
-
-  /** Whether the user prefers reduced motion. */
-  reducedMotion: boolean;
 }
+
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const MAX_ITEMS = 15;
 
 // =============================================================================
 // RELATIVE TIME FORMATTING
@@ -85,269 +87,181 @@ function formatRelativeTime(isoDate: string): string {
 
 export function OverflowDrawer({
   isOpen,
-  onClose,
+  onOpenChange,
   items,
   onRestore,
-  onNavigate,
-  reducedMotion,
 }: OverflowDrawerProps) {
-  const drawerRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
-  const router = useRouter();
 
-  // Sort items by most recently used (spec: Section 14.3)
+  // Sort items by most recently used, cap at MAX_ITEMS
   const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => {
-      const aTime = a.lastUsed ? new Date(a.lastUsed).getTime() : 0;
-      const bTime = b.lastUsed ? new Date(b.lastUsed).getTime() : 0;
-      return bTime - aTime; // Most recent first
-    });
+    return [...items]
+      .sort((a, b) => {
+        const aTime = a.lastUsed ? new Date(a.lastUsed).getTime() : 0;
+        const bTime = b.lastUsed ? new Date(b.lastUsed).getTime() : 0;
+        return bTime - aTime;
+      })
+      .slice(0, MAX_ITEMS);
   }, [items]);
 
-  // ── Focus management (WCAG 2.4.3) ──
-  // When drawer opens, save current focus and move focus to the drawer.
-  // When drawer closes, restore focus to the previously focused element.
-
-  useEffect(() => {
-    if (isOpen) {
-      previousFocusRef.current = document.activeElement as HTMLElement;
-
-      // Slight delay to allow the drawer to render before focusing
-      const timeoutId = setTimeout(() => {
-        if (closeButtonRef.current) {
-          closeButtonRef.current.focus();
-        }
-      }, reducedMotion ? 0 : 150); // Match animation duration
-
-      return () => clearTimeout(timeoutId);
-    } else if (previousFocusRef.current) {
-      previousFocusRef.current.focus();
-      previousFocusRef.current = null;
-    }
-  }, [isOpen, reducedMotion]);
-
-  // ── Close on Escape ──
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') {
+  // Arrow key navigation within item list
+  const handleItemKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
-        onClose();
+        const next = itemRefs.current[index + 1];
+        if (next) next.focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = itemRefs.current[index - 1];
+        if (prev) prev.focus();
       }
-    };
+    },
+    []
+  );
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  // ── Close on click outside ──
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-
-    // Delay adding listener to prevent the opening click from closing
-    const timeoutId = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-    }, 100);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, onClose]);
-
-  // ── Focus trap: Tab cycles within drawer ──
-
-  const handleDrawerKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== 'Tab') return;
-
-    const focusableElements = drawerRef.current?.querySelectorAll<HTMLElement>(
-      'button, [href], [tabindex]:not([tabindex="-1"])'
-    );
-
-    if (!focusableElements || focusableElements.length === 0) return;
-
-    const firstElement = focusableElements[0]!;
-    const lastElement = focusableElements[focusableElements.length - 1]!;
-
-    if (e.shiftKey && document.activeElement === firstElement) {
-      e.preventDefault();
-      lastElement.focus();
-    } else if (!e.shiftKey && document.activeElement === lastElement) {
-      e.preventDefault();
-      firstElement.focus();
-    }
-  }, []);
-
-  // ── Arrow key navigation within item list ──
-
-  const handleItemKeyDown = useCallback((e: KeyboardEvent<HTMLButtonElement>, index: number) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      const next = itemRefs.current[index + 1];
-      if (next) next.focus();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      const prev = itemRefs.current[index - 1];
-      if (prev) prev.focus();
-    }
-  }, []);
-
-  // ── Restore handler ──
-
-  const handleRestore = useCallback((taskRef: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering the navigation click
-    onRestore(taskRef);
-  }, [onRestore]);
-
-  // ── Navigate handler ──
-
-  const handleNavigate = useCallback((taskRef: string) => {
-    const task = getTask(taskRef);
-    if (!task) return;
-
-    onNavigate(taskRef, task.path);
-    onClose();
-  }, [onNavigate, onClose]);
-
-  // ── Don't render if closed ──
-
-  if (!isOpen) return null;
-
-  // ── Animation classes ──
-
-  const drawerAnimationClass = reducedMotion
-    ? 'overflow-drawer--instant'
-    : 'overflow-drawer--animated';
-
-  const backdropAnimationClass = reducedMotion
-    ? 'overflow-backdrop--instant'
-    : 'overflow-backdrop--animated';
+  // Restore handler
+  const handleRestore = useCallback(
+    (taskRef: string) => {
+      onRestore(taskRef);
+    },
+    [onRestore]
+  );
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className={`overflow-backdrop ${backdropAnimationClass}`}
-        aria-hidden="true"
-      />
-
-      {/* Drawer panel */}
-      <div
-        ref={drawerRef}
-        className={`overflow-drawer ${drawerAnimationClass}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Overflow menu items"
-        onKeyDown={handleDrawerKeyDown}
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className={cn(
+          'flex w-80 flex-col p-0 sm:max-w-sm',
+          'motion-safe:data-[state=open]:duration-300',
+          'motion-safe:data-[state=closed]:duration-200',
+          'motion-reduce:duration-0'
+        )}
       >
         {/* Header */}
-        <div className="overflow-drawer__header">
-          <h2 className="overflow-drawer__title" id="overflow-drawer-title">
-            More
-          </h2>
-          <span className="overflow-drawer__count">
-            {sortedItems.length} {sortedItems.length === 1 ? 'item' : 'items'}
-          </span>
-          <button
-            ref={closeButtonRef}
-            className="overflow-drawer__close"
-            onClick={onClose}
-            aria-label="Close overflow drawer"
-            type="button"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
+        <SheetHeader className="flex-shrink-0 border-b border-border px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MoreHorizontal
+                className="h-5 w-5 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <SheetTitle className="text-base font-semibold">More</SheetTitle>
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {sortedItems.length}{' '}
+                {sortedItems.length === 1 ? 'item' : 'items'}
+              </span>
+            </div>
+          </div>
+          <SheetDescription className="sr-only">
+            Menu items that have not been used recently. Restore them to bring
+            them back to your active menu.
+          </SheetDescription>
+        </SheetHeader>
 
         {/* Item list */}
-        {sortedItems.length === 0 ? (
-          <div className="overflow-drawer__empty" role="status">
-            <p className="overflow-drawer__empty-text">
-              No items in overflow. Menu items that haven't been used for 60 days
-              will appear here.
-            </p>
-          </div>
-        ) : (
-          <ul
-            className="overflow-drawer__list"
-            role="list"
-            aria-labelledby="overflow-drawer-title"
-          >
-            {sortedItems.map((item, index) => {
-              const task = getTask(item.ref);
-              const IconComponent = task?.icon;
-              const label = task?.label ?? item.ref;
-              const relativeTime = formatRelativeTime(item.lastUsed);
+        <div className="flex-1 overflow-y-auto">
+          {sortedItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center px-6 py-12 text-center" role="status">
+              <MoreHorizontal
+                className="mb-3 h-10 w-10 text-muted-foreground/40"
+                aria-hidden="true"
+              />
+              <p className="text-sm text-muted-foreground">
+                No items in overflow. Menu items that haven&apos;t been used for
+                60 days will appear here.
+              </p>
+            </div>
+          ) : (
+            <ul
+              className="flex flex-col gap-0.5 p-2"
+              role="list"
+              aria-label="Overflow menu items"
+            >
+              {sortedItems.map((item, index) => {
+                const task = getTask(item.ref);
+                const IconComponent = task?.icon;
+                const label = task?.name ?? item.ref;
+                const relativeTime = item.lastUsed
+                  ? formatRelativeTime(item.lastUsed)
+                  : 'Never used';
 
-              return (
-                <li key={item.ref} className="overflow-drawer__item" role="listitem">
-                  <button
-                    ref={el => { itemRefs.current[index] = el; }}
-                    className="overflow-drawer__item-button"
-                    onClick={() => handleNavigate(item.ref)}
-                    onKeyDown={e => handleItemKeyDown(e, index)}
-                    aria-label={`${label}. ${relativeTime}. Press Enter to navigate, or use the restore button.`}
-                    type="button"
-                  >
-                    {/* Icon */}
-                    <span className="overflow-drawer__item-icon" aria-hidden="true">
-                      {IconComponent && <IconComponent size={18} />}
-                    </span>
-
-                    {/* Label + time */}
-                    <span className="overflow-drawer__item-content">
-                      <span className="overflow-drawer__item-label">{label}</span>
-                      <span className="overflow-drawer__item-time">{relativeTime}</span>
-                    </span>
-
-                    {/* Restore button */}
-                    <button
-                      className="overflow-drawer__restore-button"
-                      onClick={e => handleRestore(item.ref, e)}
-                      aria-label={`Restore ${label} to your menu`}
-                      title="Restore to menu"
-                      type="button"
+                return (
+                  <li key={item.ref} role="listitem">
+                    <div
+                      className={cn(
+                        'group flex items-center gap-3 rounded-md px-3 py-2.5',
+                        'transition-colors',
+                        'motion-safe:transition-all motion-safe:duration-150',
+                        'hover:bg-accent'
+                      )}
                     >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                        <path
-                          d="M2 8a6 6 0 1 1 1.76 4.24"
-                          stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
-                        />
-                        <path
-                          d="M2 12V8h4"
-                          stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-                        />
-                      </svg>
-                      <span className="overflow-drawer__restore-label">Restore</span>
-                    </button>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                      {/* Icon */}
+                      <span
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+                        aria-hidden="true"
+                      >
+                        {IconComponent && <IconComponent className="h-4 w-4" />}
+                      </span>
+
+                      {/* Label + time */}
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate text-sm font-medium text-foreground">
+                          {label}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {relativeTime}
+                        </span>
+                      </div>
+
+                      {/* Restore button */}
+                      <Button
+                        ref={(el) => {
+                          itemRefs.current[index] = el;
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          'flex h-8 flex-shrink-0 items-center gap-1.5 px-2 text-xs',
+                          'text-muted-foreground',
+                          'hover:bg-primary/10 hover:text-primary',
+                          'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+                          'motion-safe:opacity-0 motion-safe:group-hover:opacity-100',
+                          'motion-safe:transition-opacity motion-safe:duration-150',
+                          'focus-visible:opacity-100'
+                        )}
+                        onClick={() => handleRestore(item.ref)}
+                        onKeyDown={(e) => handleItemKeyDown(e, index)}
+                        aria-label={`Restore ${label} to your menu. ${relativeTime}.`}
+                        type="button"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span>Restore</span>
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
 
         {/* Footer hint */}
-        <div className="overflow-drawer__footer">
-          <p className="overflow-drawer__hint">
-            Items here haven't been used recently. Restore them to bring them back
-            to your menu, or find any feature using <kbd>⌘K</kbd>.
+        <div className="flex-shrink-0 border-t border-border px-4 py-3">
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>
+              Items here haven&apos;t been used recently. Restore to bring them
+              back, or press
+            </span>
+            <kbd className="inline-flex items-center gap-0.5 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground">
+              <Command className="h-2.5 w-2.5" aria-hidden="true" />
+              <span>K</span>
+            </kbd>
+            <span>to find anything.</span>
           </p>
         </div>
-      </div>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 }
