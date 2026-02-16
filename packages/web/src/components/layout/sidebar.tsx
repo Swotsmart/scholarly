@@ -1,510 +1,170 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+// =============================================================================
+// SIDEBAR — Self-Composing Interface
+// =============================================================================
+// Refactored to render from the ComposingMenuStore instead of static
+// NavSection arrays. The visual structure is preserved — logo, search,
+// nav items, settings footer — but items now come from the lifecycle system.
+//
+// Visual treatments by state:
+//   ANCHOR  — Full opacity, no decoration. Always at top.
+//   SEED    — Sparkle icon indicator. Pin/dismiss on hover.
+//   ACTIVE  — Full opacity. Remove/pin on hover.
+//   DECAYING — 60% opacity, dotted underline. Pin/remove on hover.
+//   PUSHED  — Lock icon. Cannot remove. Tooltip shows reason.
+//   OVERFLOW — Not rendered here. Shown in OverflowDrawer.
+//
+// Original sidebar preserved at sidebar.tsx.original for reference.
+// =============================================================================
+
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
-import { useSidebarStore } from '@/stores/sidebar-store';
-import { Button } from '@/components/ui/button';
+import { useComposingMenuStore } from '@/stores/composing-menu-store';
+import { useMenuToast } from '@/hooks/use-menu-toast';
+import { getTask, findTaskByPath } from '@/config/menu-registry';
 import { Input } from '@/components/ui/input';
 import {
-  LayoutDashboard, BookOpen, Calendar, Settings, GraduationCap,
-  Sparkles, Target, Presentation, ClipboardCheck, CalendarClock,
-  School, FileText, TrendingUp, Clock, Languages, Bot,
-  MessageSquare, Compass, Brain, Briefcase, Map, Lightbulb,
-  Users, AlertTriangle, ChevronRight, ChevronDown,
-  Search, Star, StarOff, PanelLeftClose, PanelLeft,
-  PlusCircle, PenLine, ClipboardList, Zap,
-  MoreHorizontal, Pin, ChevronUp, Home,
-  BookCheck, Library, PenTool, DoorOpen, Maximize,
-  CreditCard, Eye, Kanban, FolderKanban, Building2,
-  Trophy, FolderOpen, Crosshair, Rocket, Award,
-  Network, Link2, Shapes, Database, Shield, Cpu, GitBranch,
-  Building, Landmark, Store, BarChart3, Mic,
-  Swords, Coins,
+  GraduationCap, Settings, Search, PanelLeftClose, PanelLeft,
+  Pin, PinOff, X, Sparkles, Lock, MoreHorizontal, ChevronRight,
+  RotateCcw,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import type { ComposingMenuItem } from '@/types/composing-menu-types';
+import type { NavChild } from '@/types/composing-menu-types';
 
-// ============================================================================
-// TYPES
-// ============================================================================
+// =============================================================================
+// CONSTANTS
+// =============================================================================
 
-interface NavItem {
-  name: string;
-  href: string;
-  icon: LucideIcon;
-  description?: string;
-  badge?: string | number;
-  children?: NavChild[];
+const MEANINGFUL_USE_MS = 5000; // 5 seconds
+
+// =============================================================================
+// USAGE TRACKING HOOK
+// =============================================================================
+// Tracks time spent on the current route and reports meaningful uses
+// to the composing menu store. This is the input signal that drives
+// the entire promotion system.
+// =============================================================================
+
+function useUsageTracking() {
+  const pathname = usePathname();
+  const { user } = useAuthStore();
+  const recordUse = useComposingMenuStore(s => s.recordUse);
+  const menuToast = useMenuToast();
+  const enteredAt = useRef<number>(0);
+  const lastPath = useRef<string>('');
+
+  useEffect(() => {
+    if (!user?.role || !pathname) return;
+
+    // Record exit from previous route
+    if (lastPath.current && lastPath.current !== pathname) {
+      const elapsed = Date.now() - enteredAt.current;
+      if (elapsed >= MEANINGFUL_USE_MS) {
+        const task = findTaskByPath(lastPath.current);
+        if (task) {
+          const result = recordUse(user.role, task.ref);
+          // Fire toast for promotion events
+          menuToast.handleUseResult(result, user.role, task.ref);
+        }
+      }
+    }
+
+    // Record entry to new route
+    lastPath.current = pathname;
+    enteredAt.current = Date.now();
+  }, [pathname, user?.role, recordUse, menuToast]);
 }
 
-interface NavChild {
-  name: string;
-  href: string;
-  icon: LucideIcon;
-}
-
-interface NavSection {
-  id: string;
-  label: string;
-  tier: 'primary' | 'secondary' | 'advanced';
-  items: NavItem[];
-}
-
-interface QuickAction {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-  color: string;
-}
-
-// ============================================================================
-// NAVIGATION DEFINITIONS — Grouped by task frequency (Progressive Disclosure)
-// ============================================================================
-// Tier 1 (Primary): The 20% of features handling 80% of daily tasks
-// Tier 2 (Secondary): Regularly used but not daily
-// Tier 3 (Advanced): Power-user / admin features — hidden by default
-// ============================================================================
-
-const learnerSections: NavSection[] = [
-  {
-    id: 'core',
-    label: 'My Learning',
-    tier: 'primary',
-    items: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { name: 'Courses', href: '/learning/courses', icon: BookOpen, badge: 2, description: 'Active courses and lessons' },
-      { name: 'AI Buddy', href: '/ai-buddy', icon: Bot, description: 'Your personal learning assistant' },
-      { name: 'Progress', href: '/learning/progress', icon: TrendingUp, description: 'Track your learning journey' },
-    ],
-  },
-  {
-    id: 'creative',
-    label: 'Create & Explore',
-    tier: 'primary',
-    items: [
-      { name: 'Design & Pitch', href: '/design-pitch', icon: Lightbulb, children: [
-        { name: 'Challenges', href: '/design-pitch/challenges', icon: Sparkles },
-        { name: 'Journeys', href: '/design-pitch/journeys', icon: Map },
-        { name: 'Pitch Decks', href: '/design-pitch/pitch-decks', icon: Presentation },
-      ]},
-      { name: 'Portfolio', href: '/portfolio', icon: Briefcase, children: [
-        { name: 'Artifacts', href: '/portfolio/artifacts', icon: FolderOpen },
-        { name: 'Goals', href: '/portfolio/goals', icon: Crosshair },
-        { name: 'Showcase', href: '/portfolio/showcase', icon: Eye },
-      ]},
-    ],
-  },
-  {
-    id: 'arena',
-    label: 'Arena',
-    tier: 'primary',
-    items: [
-      { name: 'Arena', href: '/arena', icon: Swords, description: 'Compete, earn, and collaborate', children: [
-        { name: 'Competitions', href: '/arena/competitions', icon: Trophy },
-        { name: 'Teams', href: '/arena/teams', icon: Users },
-        { name: 'Bounties', href: '/arena/bounties', icon: Target },
-        { name: 'Tokens', href: '/arena/tokens', icon: Coins },
-      ]},
-    ],
-  },
-  {
-    id: 'languages',
-    label: 'Languages',
-    tier: 'secondary',
-    items: [
-      { name: 'LinguaFlow', href: '/linguaflow', icon: Languages, children: [
-        { name: 'Voice Practice', href: '/linguaflow/voice', icon: Mic },
-        { name: 'Vocabulary', href: '/linguaflow/vocabulary', icon: FileText },
-        { name: 'Grammar', href: '/linguaflow/grammar', icon: GraduationCap },
-        { name: 'Conversation', href: '/linguaflow/conversation', icon: MessageSquare },
-        { name: 'Progress', href: '/linguaflow/progress', icon: TrendingUp },
-      ]},
-    ],
-  },
-  {
-    id: 'support',
-    label: 'Support & Tutoring',
-    tier: 'secondary',
-    items: [
-      { name: 'Find Tutors', href: '/tutoring/search', icon: Search },
-      { name: 'My Bookings', href: '/tutoring/bookings', icon: Calendar },
-    ],
-  },
-  {
-    id: 'adaptive',
-    label: 'Adaptive Learning',
-    tier: 'advanced',
-    items: [
-      { name: 'Golden Path', href: '/golden-path', icon: Compass, children: [
-        { name: 'Adaptation', href: '/golden-path/adaptation', icon: Brain },
-        { name: 'Curiosity', href: '/golden-path/curiosity', icon: Sparkles },
-        { name: 'Optimizer', href: '/golden-path/optimizer', icon: Target },
-      ]},
-      { name: 'Advanced Learning', href: '/advanced-learning', icon: Rocket, children: [
-        { name: 'EduScrum', href: '/advanced-learning/eduscrum', icon: Kanban },
-        { name: 'PBL', href: '/advanced-learning/pbl', icon: FolderKanban },
-        { name: 'Work Experience', href: '/advanced-learning/work-experience', icon: Building2 },
-      ]},
-      { name: 'Achievements', href: '/achievements', icon: Trophy },
-    ],
-  },
-];
-
-const teacherSections: NavSection[] = [
-  {
-    id: 'today',
-    label: 'Today',
-    tier: 'primary',
-    items: [
-      { name: 'Dashboard', href: '/teacher/dashboard', icon: LayoutDashboard },
-      { name: 'My Classes', href: '/teacher/classes', icon: School, description: 'Current classes and rosters' },
-      { name: 'Students', href: '/teacher/students', icon: Users, badge: '3 alerts', description: 'Student profiles and wellbeing' },
-    ],
-  },
-  {
-    id: 'teach',
-    label: 'Teaching & Assessment',
-    tier: 'primary',
-    items: [
-      { name: 'Lesson Planner', href: '/teacher/lesson-planner', icon: BookOpen, description: 'Plan and manage lessons' },
-      { name: 'Gradebook', href: '/teacher/gradebook', icon: BookCheck, description: 'Grades and feedback' },
-      { name: 'Assessment', href: '/teacher/assessment', icon: ClipboardCheck, children: [
-        { name: 'Library', href: '/teacher/assessment/library', icon: Library },
-        { name: 'Builder', href: '/teacher/assessment/builder', icon: PenTool },
-      ]},
-      { name: 'Grading', href: '/teacher/grading', icon: FileText, children: [
-        { name: 'Pitches', href: '/teacher/grading/pitches', icon: Presentation },
-        { name: 'Portfolios', href: '/teacher/grading/portfolios', icon: FolderOpen },
-      ]},
-    ],
-  },
-  {
-    id: 'schedule',
-    label: 'Scheduling',
-    tier: 'secondary',
-    items: [
-      { name: 'Timetable', href: '/teacher/scheduling/timetable', icon: Calendar },
-      { name: 'Relief', href: '/teacher/scheduling/relief', icon: Clock },
-      { name: 'Rooms', href: '/teacher/scheduling/rooms', icon: DoorOpen },
-      { name: 'Capacity', href: '/teacher/scheduling/capacity', icon: Maximize },
-    ],
-  },
-  {
-    id: 'curriculum',
-    label: 'Curriculum & Standards',
-    tier: 'secondary',
-    items: [
-      { name: 'Challenges', href: '/teacher/challenges', icon: Sparkles },
-      { name: 'Journeys', href: '/teacher/journeys', icon: Map },
-      { name: 'Standards', href: '/teacher/standards', icon: Shield },
-      { name: 'Reports', href: '/teacher/reports', icon: BarChart3 },
-    ],
-  },
-  {
-    id: 'insights',
-    label: 'AI & Insights',
-    tier: 'advanced',
-    items: [
-      { name: 'ML Pipeline', href: '/teacher/ml', icon: Cpu, children: [
-        { name: 'Models', href: '/teacher/ml/models', icon: GitBranch },
-        { name: 'Predictions', href: '/teacher/ml/predictions', icon: TrendingUp },
-      ]},
-    ],
-  },
-];
-
-const parentSections: NavSection[] = [
-  {
-    id: 'family',
-    label: 'Family Hub',
-    tier: 'primary',
-    items: [
-      { name: 'Dashboard', href: '/parent/dashboard', icon: LayoutDashboard },
-      { name: 'My Children', href: '/parent/children', icon: Users, description: 'View and manage children' },
-      { name: 'Little Explorers', href: '/early-years', icon: Sparkles, description: 'Early childhood (ages 3-6)' },
-    ],
-  },
-  {
-    id: 'progress',
-    label: 'Learning & Progress',
-    tier: 'primary',
-    items: [
-      { name: 'Learning', href: '/parent/progress/learning', icon: BookOpen },
-      { name: 'Grades', href: '/parent/progress/grades', icon: FileText },
-      { name: 'Attendance', href: '/parent/progress/attendance', icon: ClipboardCheck },
-      { name: 'Portfolio', href: '/parent/portfolio', icon: Briefcase },
-    ],
-  },
-  {
-    id: 'communicate',
-    label: 'Communication',
-    tier: 'primary',
-    items: [
-      { name: 'Messages', href: '/parent/messages', icon: MessageSquare, badge: 2, children: [
-        { name: 'Teachers', href: '/parent/messages/teachers', icon: School },
-        { name: 'Tutors', href: '/parent/messages/tutors', icon: GraduationCap },
-      ]},
-      { name: 'Calendar', href: '/parent/calendar', icon: Calendar },
-    ],
-  },
-  {
-    id: 'support',
-    label: 'Tutoring & Payments',
-    tier: 'secondary',
-    items: [
-      { name: 'Find Tutors', href: '/parent/tutoring/search', icon: Search },
-      { name: 'Bookings', href: '/parent/tutoring/bookings', icon: Calendar },
-      { name: 'Payments', href: '/parent/payments', icon: CreditCard, children: [
-        { name: 'History', href: '/parent/payments/history', icon: FileText },
-        { name: 'Subscriptions', href: '/parent/payments/subscriptions', icon: Clock },
-      ]},
-    ],
-  },
-];
-
-const tutorSections: NavSection[] = [
-  {
-    id: 'core',
-    label: 'My Tutoring',
-    tier: 'primary',
-    items: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { name: 'My Students', href: '/tutoring/students', icon: Users },
-      { name: 'Sessions', href: '/tutoring/sessions', icon: Calendar, children: [
-        { name: 'Upcoming', href: '/tutoring/sessions/upcoming', icon: Clock },
-        { name: 'History', href: '/tutoring/sessions/history', icon: FileText },
-      ]},
-      { name: 'Availability', href: '/tutoring/availability', icon: CalendarClock },
-    ],
-  },
-  {
-    id: 'resources',
-    label: 'Resources & Reviews',
-    tier: 'secondary',
-    items: [
-      { name: 'My Materials', href: '/tutoring/resources/materials', icon: FolderOpen },
-      { name: 'Shared Library', href: '/tutoring/resources/shared', icon: Library },
-      { name: 'Reviews', href: '/tutoring/reviews', icon: Award },
-      { name: 'Profile', href: '/tutoring/profile', icon: Briefcase },
-    ],
-  },
-  {
-    id: 'earnings',
-    label: 'Earnings',
-    tier: 'secondary',
-    items: [
-      { name: 'Overview', href: '/tutoring/earnings/overview', icon: BarChart3 },
-      { name: 'Payouts', href: '/tutoring/earnings/payouts', icon: CreditCard },
-    ],
-  },
-];
-
-const adminSections: NavSection[] = [
-  {
-    id: 'overview',
-    label: 'Administration',
-    tier: 'primary',
-    items: [
-      { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-      { name: 'Users', href: '/admin/users', icon: Users },
-      { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
-    ],
-  },
-  {
-    id: 'scheduling',
-    label: 'Scheduling',
-    tier: 'primary',
-    items: [
-      { name: 'Timetable', href: '/admin/scheduling/timetable', icon: Calendar },
-      { name: 'Relief', href: '/admin/scheduling/relief', icon: Clock },
-      { name: 'Rooms', href: '/admin/scheduling/rooms', icon: DoorOpen },
-      { name: 'Constraints', href: '/admin/scheduling/constraints', icon: Settings },
-    ],
-  },
-  {
-    id: 'systems',
-    label: 'Systems & Integration',
-    tier: 'secondary',
-    items: [
-      { name: 'Interoperability', href: '/admin/interoperability', icon: Network, children: [
-        { name: 'LTI', href: '/admin/interoperability/lti', icon: Link2 },
-        { name: 'OneRoster', href: '/admin/interoperability/oneroster', icon: Users },
-        { name: 'CASE', href: '/admin/interoperability/case', icon: Shapes },
-        { name: 'Badges', href: '/admin/interoperability/badges', icon: Award },
-        { name: 'Ed-Fi', href: '/admin/interoperability/edfi', icon: Database },
-      ]},
-      { name: 'Standards', href: '/admin/standards', icon: Shield },
-    ],
-  },
-  {
-    id: 'platform',
-    label: 'Platform',
-    tier: 'advanced',
-    items: [
-      { name: 'Micro-Schools', href: '/admin/micro-schools', icon: Building },
-      { name: 'Governance', href: '/admin/governance', icon: Landmark },
-      { name: 'Payments', href: '/admin/payments', icon: CreditCard },
-      { name: 'Marketplace', href: '/admin/marketplace', icon: Store },
-      { name: 'ML Pipeline', href: '/admin/ml', icon: Cpu },
-    ],
-  },
-];
-
-// ============================================================================
-// QUICK ACTIONS — Contextual to persona (Principle 4: Contextual Intelligence)
-// ============================================================================
-
-function getQuickActionsForRole(role: string | undefined): QuickAction[] {
-  switch (role) {
-    case 'teacher':
-    case 'educator':
-      return [
-        { label: 'Attendance', href: '/teacher/attendance', icon: ClipboardList, color: 'text-blue-500 bg-blue-500/10' },
-        { label: 'New Lesson', href: '/teacher/lessons/new', icon: PlusCircle, color: 'text-green-500 bg-green-500/10' },
-        { label: 'Grade Work', href: '/teacher/grading', icon: PenLine, color: 'text-orange-500 bg-orange-500/10' },
-        { label: 'New Challenge', href: '/teacher/challenges/create', icon: Lightbulb, color: 'text-purple-500 bg-purple-500/10' },
-      ];
-    case 'parent':
-    case 'guardian':
-      return [
-        { label: 'Messages', href: '/parent/messages', icon: MessageSquare, color: 'text-blue-500 bg-blue-500/10' },
-        { label: 'Progress', href: '/parent/progress', icon: TrendingUp, color: 'text-green-500 bg-green-500/10' },
-        { label: 'Book Tutor', href: '/parent/tutoring/search', icon: Search, color: 'text-purple-500 bg-purple-500/10' },
-      ];
-    case 'tutor':
-    case 'tutor_professional':
-      return [
-        { label: 'Next Session', href: '/tutoring/sessions/upcoming', icon: Calendar, color: 'text-blue-500 bg-blue-500/10' },
-        { label: 'Resources', href: '/tutoring/resources/materials', icon: FolderOpen, color: 'text-green-500 bg-green-500/10' },
-        { label: 'Earnings', href: '/tutoring/earnings/overview', icon: CreditCard, color: 'text-orange-500 bg-orange-500/10' },
-      ];
-    default:
-      return [
-        { label: 'Continue', href: '/learning/courses', icon: BookOpen, color: 'text-blue-500 bg-blue-500/10' },
-        { label: 'AI Buddy', href: '/ai-buddy', icon: Bot, color: 'text-purple-500 bg-purple-500/10' },
-        { label: 'Arena', href: '/arena', icon: Swords, color: 'text-orange-500 bg-orange-500/10' },
-        { label: 'Portfolio', href: '/portfolio', icon: Briefcase, color: 'text-green-500 bg-green-500/10' },
-      ];
-  }
-}
-
-// ============================================================================
-// ROLE → SECTIONS MAPPING
-// ============================================================================
-
-function getSectionsForRole(role: string | undefined): NavSection[] {
-  switch (role) {
-    case 'teacher':
-    case 'educator':
-      return teacherSections;
-    case 'tutor':
-    case 'tutor_professional':
-      return tutorSections;
-    case 'parent':
-    case 'guardian':
-      return parentSections;
-    case 'platform_admin':
-    case 'admin':
-      return adminSections;
-    default:
-      return learnerSections;
-  }
-}
-
-// ============================================================================
+// =============================================================================
 // SIDEBAR COMPONENT
-// ============================================================================
+// =============================================================================
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const { collapsed, favorites, showAdvanced, toggleCollapsed, toggleFavorite, toggleAdvanced } = useSidebarStore();
+  const store = useComposingMenuStore();
+  const menuToast = useMenuToast();
+  const role = user?.role || 'learner';
 
-  const sections = useMemo(() => getSectionsForRole(user?.role), [user?.role]);
-  const quickActions = useMemo(() => getQuickActionsForRole(user?.role), [user?.role]);
+  // Initialise anchors for this role on mount
+  useEffect(() => {
+    if (role) store.initRole(role);
+  }, [role]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Filter nav items by search
+  // Run decay cycle on mount (session start) and feed results to toast system
+  useEffect(() => {
+    if (role) {
+      menuToast.resetSessionCount();
+      const overflowed = store.runDecayCycle(role);
+      if (overflowed.length > 0) {
+        menuToast.handleDecayResults(overflowed, role);
+      }
+    }
+  }, [role]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Start usage tracking
+  useUsageTracking();
+
+  // Get items from the store
+  const visibleItems = useMemo(
+    () => store.getVisibleItems(role),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store.roleMenus, role]
+  );
+  const overflowItems = useMemo(
+    () => store.getOverflowItems(role),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store.roleMenus, role]
+  );
+
+  // Search filter
   const [navSearch, setNavSearch] = useState('');
+  const filteredItems = useMemo(() => {
+    if (!navSearch.trim()) return visibleItems;
+    const q = navSearch.toLowerCase();
+    return visibleItems.filter(item => {
+      const task = getTask(item.ref);
+      if (!task) return false;
+      return (
+        task.name.toLowerCase().includes(q) ||
+        task.description?.toLowerCase().includes(q) ||
+        task.children?.some(c => c.name.toLowerCase().includes(q))
+      );
+    });
+  }, [visibleItems, navSearch]);
 
-  const filteredSections = useMemo(() => {
-    if (!navSearch.trim()) return sections;
-    const query = navSearch.toLowerCase();
-    return sections
-      .map(section => ({
-        ...section,
-        items: section.items.filter(item =>
-          item.name.toLowerCase().includes(query) ||
-          item.description?.toLowerCase().includes(query) ||
-          item.children?.some(c => c.name.toLowerCase().includes(query))
-        ),
-      }))
-      .filter(section => section.items.length > 0);
-  }, [sections, navSearch]);
+  // Separate anchors, seeds, and growth items for rendering
+  const anchors = filteredItems.filter(i => i.state === 'anchor');
+  const seeds = filteredItems.filter(i => i.state === 'seed');
+  const growthItems = filteredItems.filter(i =>
+    i.state === 'active' || i.state === 'decaying' || i.state === 'pushed'
+  );
 
-  // Visible sections: always show primary + secondary, only show advanced if toggled
-  const visibleSections = useMemo(() => {
-    return filteredSections.filter(
-      s => s.tier === 'primary' || s.tier === 'secondary' || (s.tier === 'advanced' && showAdvanced)
-    );
-  }, [filteredSections, showAdvanced]);
-
-  const hasAdvanced = sections.some(s => s.tier === 'advanced');
-
-  // Favorite items across all sections
-  const favoriteItems = useMemo(() => {
-    const all: NavItem[] = [];
-    sections.forEach(s => s.items.forEach(item => {
-      if (favorites.includes(item.href)) all.push(item);
-    }));
-    return all;
-  }, [sections, favorites]);
-
-  // ---- Collapsed (icon-only) sidebar ----
-  if (collapsed) {
+  // ── Collapsed (icon-only) sidebar ──
+  if (store.collapsed) {
     return (
       <aside className="hidden w-16 flex-shrink-0 border-r bg-card lg:flex lg:flex-col">
-        {/* Logo */}
         <div className="flex h-16 items-center justify-center border-b">
           <Link href="/dashboard">
             <GraduationCap className="h-7 w-7 text-primary" />
           </Link>
         </div>
 
-        {/* Quick nav icons */}
-        <nav className="flex-1 overflow-y-auto py-2">
+        <nav className="flex-1 overflow-y-auto py-2" aria-label="Main navigation">
           <ul className="space-y-1 px-2">
-            {sections
-              .filter(s => s.tier === 'primary')
-              .flatMap(s => s.items)
-              .map(item => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                const Icon = item.icon;
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      title={item.name}
-                      className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-lg transition-colors mx-auto',
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </Link>
-                  </li>
-                );
-              })}
+            {anchors.map(item => (
+              <CollapsedItem key={item.ref} item={item} pathname={pathname} />
+            ))}
           </ul>
         </nav>
 
-        {/* Expand */}
         <div className="border-t p-2">
           <button
-            onClick={toggleCollapsed}
+            onClick={store.toggleCollapsed}
             className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent mx-auto"
             title="Expand sidebar"
           >
@@ -515,7 +175,7 @@ export function Sidebar() {
     );
   }
 
-  // ---- Expanded sidebar ----
+  // ── Expanded sidebar ──
   return (
     <aside className="hidden w-64 flex-shrink-0 border-r bg-card lg:flex lg:flex-col">
       {/* Logo + Collapse */}
@@ -525,7 +185,7 @@ export function Sidebar() {
           <span className="text-lg font-bold">Scholarly</span>
         </Link>
         <button
-          onClick={toggleCollapsed}
+          onClick={store.toggleCollapsed}
           className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
           title="Collapse sidebar"
         >
@@ -533,7 +193,7 @@ export function Sidebar() {
         </button>
       </div>
 
-      {/* Role + Search */}
+      {/* Role Indicator + Search */}
       <div className="px-3 py-2 space-y-2 border-b">
         {user && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
@@ -544,7 +204,7 @@ export function Sidebar() {
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search navigation..."
+            placeholder="Search or Cmd+K..."
             value={navSearch}
             onChange={e => setNavSearch(e.target.value)}
             className="h-8 pl-8 text-xs"
@@ -552,96 +212,73 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Quick Actions — Principle 4: Contextual Intelligence */}
-      {!navSearch && quickActions.length > 0 && (
-        <div className="px-3 py-2 border-b">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1.5 px-1">
-            Quick Actions
-          </p>
-          <div className="grid grid-cols-2 gap-1.5">
-            {quickActions.map(action => {
-              const Icon = action.icon;
-              return (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  className={cn(
-                    'flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors hover:bg-accent',
-                    action.color
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>{action.label}</span>
-                </Link>
-              );
-            })}
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-2" aria-label="Main navigation">
+        {/* ARIA live region for menu change announcements */}
+        <div
+          className="sr-only"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          id="menu-announcements"
+        />
+        {/* ── Anchors ── */}
+        {anchors.length > 0 && (
+          <div className="py-1 mb-1">
+            <ul className="space-y-0.5" role="list">
+              {anchors.map(item => (
+                <MenuItemRow key={item.ref} item={item} pathname={pathname} role={role} />
+              ))}
+            </ul>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Favorites */}
-      {!navSearch && favoriteItems.length > 0 && (
-        <div className="px-3 py-2 border-b">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1.5 px-1">
-            <Star className="inline h-3 w-3 mr-1 text-yellow-500" />
-            Favorites
-          </p>
-          <ul className="space-y-0.5">
-            {favoriteItems.map(item => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
-                      isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                    )}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {item.name}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+        {/* ── Seeds ── */}
+        {seeds.length > 0 && !navSearch && (
+          <div className="py-1 mb-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1.5 px-2 flex items-center gap-1">
+              <Sparkles className="h-3 w-3 text-amber-500" />
+              Suggested for you
+            </p>
+            <ul className="space-y-0.5" role="list">
+              {seeds.map(item => (
+                <MenuItemRow key={item.ref} item={item} pathname={pathname} role={role} />
+              ))}
+            </ul>
+          </div>
+        )}
 
-      {/* Navigation Sections */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2">
-        {visibleSections.map((section, idx) => (
-          <SidebarSection
-            key={section.id}
-            section={section}
-            pathname={pathname}
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            isLast={idx === visibleSections.length - 1}
-          />
-        ))}
-
-        {/* Show/Hide Advanced Toggle */}
-        {hasAdvanced && !navSearch && (
-          <button
-            onClick={toggleAdvanced}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/50 transition-colors mt-1"
-          >
-            {showAdvanced ? (
-              <>
-                <ChevronUp className="h-3.5 w-3.5" />
-                Hide Advanced
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-3.5 w-3.5" />
-                Show Advanced
-              </>
+        {/* ── Growth Items (active, decaying, pushed) ── */}
+        {growthItems.length > 0 && (
+          <div className="py-1 mb-1">
+            {(anchors.length > 0 || seeds.length > 0) && (
+              <div className="h-px bg-border/50 mb-2" />
             )}
-          </button>
+            <ul className="space-y-0.5" role="list">
+              {growthItems.map(item => (
+                <MenuItemRow key={item.ref} item={item} pathname={pathname} role={role} />
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* ── Overflow / More ── */}
+        {overflowItems.length > 0 && !navSearch && (
+          <div className="mt-1">
+            <button
+              onClick={store.toggleOverflow}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/50 transition-colors"
+              aria-expanded={store.overflowOpen}
+              aria-controls="overflow-drawer"
+            >
+              <MoreHorizontal className="h-3.5 w-3.5" />
+              More ({overflowItems.length})
+            </button>
+
+            {store.overflowOpen && (
+              <OverflowDrawer items={overflowItems} pathname={pathname} role={role} />
+            )}
+          </div>
         )}
       </nav>
 
@@ -664,63 +301,57 @@ export function Sidebar() {
   );
 }
 
-// ============================================================================
-// SIDEBAR SECTION COMPONENT
-// ============================================================================
+// =============================================================================
+// COLLAPSED ITEM — Icon-only rendering for collapsed sidebar
+// =============================================================================
 
-function SidebarSection({
-  section,
-  pathname,
-  favorites,
-  onToggleFavorite,
-  isLast,
-}: {
-  section: NavSection;
-  pathname: string;
-  favorites: string[];
-  onToggleFavorite: (href: string) => void;
-  isLast: boolean;
-}) {
+function CollapsedItem({ item, pathname }: { item: ComposingMenuItem; pathname: string }) {
+  const task = getTask(item.ref);
+  if (!task) return null;
+
+  const isActive = pathname === task.href || pathname.startsWith(task.href + '/');
+  const Icon = task.icon;
+
   return (
-    <div className={cn('py-1', !isLast && 'mb-1')}>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1 px-2">
-        {section.label}
-      </p>
-      <ul className="space-y-0.5">
-        {section.items.map(item => (
-          <SidebarItem
-            key={item.href}
-            item={item}
-            pathname={pathname}
-            isFavorite={favorites.includes(item.href)}
-            onToggleFavorite={() => onToggleFavorite(item.href)}
-          />
-        ))}
-      </ul>
-    </div>
+    <li>
+      <Link
+        href={task.href}
+        title={task.name}
+        className={cn(
+          'flex h-10 w-10 items-center justify-center rounded-lg transition-colors mx-auto',
+          isActive
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+        )}
+      >
+        <Icon className="h-5 w-5" />
+      </Link>
+    </li>
   );
 }
 
-// ============================================================================
-// SIDEBAR ITEM COMPONENT — With expandable children and favorite toggle
-// ============================================================================
+// =============================================================================
+// MENU ITEM ROW — Full rendering with lifecycle visual treatments
+// =============================================================================
 
-function SidebarItem({
+function MenuItemRow({
   item,
   pathname,
-  isFavorite,
-  onToggleFavorite,
+  role,
 }: {
-  item: NavItem;
+  item: ComposingMenuItem;
   pathname: string;
-  isFavorite: boolean;
-  onToggleFavorite: () => void;
+  role: string;
 }) {
-  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-  const hasChildren = item.children && item.children.length > 0;
+  const task = getTask(item.ref);
+  if (!task) return null;
+
+  const store = useComposingMenuStore();
+  const isActive = pathname === task.href || pathname.startsWith(task.href + '/');
+  const hasChildren = task.type === 'compound' && task.children && task.children.length > 0;
   const [isExpanded, setIsExpanded] = useState(isActive && hasChildren);
   const [isHovered, setIsHovered] = useState(false);
-  const Icon = item.icon;
+  const Icon = task.icon;
 
   // Auto-expand when navigating to a child route
   useEffect(() => {
@@ -728,6 +359,25 @@ function SidebarItem({
       setIsExpanded(true);
     }
   }, [isActive, hasChildren]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // State-specific visual classes
+  const stateClasses = cn(
+    'flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors',
+    isActive
+      ? 'bg-primary/10 text-primary'
+      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+    item.state === 'decaying' && 'opacity-60',
+    item.state === 'seed' && !isActive && 'bg-amber-500/5 border border-amber-500/20',
+  );
+
+  const stateLabel =
+    item.state === 'decaying'
+      ? 'Unused for 30+ days. Pin to keep.'
+      : item.state === 'pushed' && item.pushReason
+        ? `Required by your school: ${item.pushReason}`
+        : item.state === 'seed' && item.seedReason
+          ? item.seedReason
+          : task.description || '';
 
   return (
     <li>
@@ -737,26 +387,36 @@ function SidebarItem({
         onMouseLeave={() => setIsHovered(false)}
       >
         <Link
-          href={item.href}
+          href={task.href}
           onClick={hasChildren ? (e) => { e.preventDefault(); setIsExpanded(!isExpanded); } : undefined}
-          className={cn(
-            'flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors',
-            isActive
-              ? 'bg-primary/10 text-primary'
-              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-          )}
+          className={stateClasses}
+          title={stateLabel}
+          aria-label={
+            item.state === 'seed'
+              ? `${task.name} — Suggested: ${item.seedReason || ''}`
+              : item.state === 'pushed'
+                ? `${task.name} — Required: ${item.pushReason || ''}`
+                : task.name
+          }
         >
           <Icon className="h-4 w-4 shrink-0" />
-          <span className="flex-1 truncate">{item.name}</span>
+          <span className={cn(
+            'flex-1 truncate',
+            item.state === 'decaying' && 'underline decoration-dotted decoration-muted-foreground/40 underline-offset-4'
+          )}>
+            {task.name}
+          </span>
 
-          {/* Badge */}
-          {item.badge && (
+          {item.state === 'seed' && <Sparkles className="h-3 w-3 shrink-0 text-amber-500" aria-hidden="true" />}
+          {item.state === 'pushed' && <Lock className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden="true" />}
+          {item.pinned && item.state !== 'anchor' && <Pin className="h-3 w-3 shrink-0 text-blue-500/60" aria-hidden="true" />}
+
+          {task.badge && (
             <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[10px] font-semibold text-primary">
-              {item.badge}
+              {task.badge}
             </span>
           )}
 
-          {/* Expand/collapse chevron for items with children */}
           {hasChildren && (
             <ChevronRight className={cn(
               'h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-transform',
@@ -765,47 +425,152 @@ function SidebarItem({
           )}
         </Link>
 
-        {/* Favorite toggle on hover */}
+        {/* Hover actions */}
         {isHovered && !hasChildren && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
-            className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground/40 hover:text-yellow-500 transition-colors"
-            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            {isFavorite ? (
-              <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-            ) : (
-              <Star className="h-3 w-3" />
+          <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+            {item.state === 'seed' && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); store.promoteSeed(role, item.ref); }}
+                  className="rounded p-0.5 text-muted-foreground/40 hover:text-green-500 transition-colors"
+                  title="Add to menu"
+                  aria-label={`Add ${task.name} to your menu`}
+                >
+                  <Pin className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); store.dismissSeed(role, item.ref); }}
+                  className="rounded p-0.5 text-muted-foreground/40 hover:text-red-400 transition-colors"
+                  title="Dismiss suggestion"
+                  aria-label={`Dismiss ${task.name}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </>
             )}
-          </button>
+
+            {(item.state === 'active' || item.state === 'decaying') && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    item.pinned ? store.unpinItem(role, item.ref) : store.pinItem(role, item.ref);
+                  }}
+                  className={cn(
+                    'rounded p-0.5 transition-colors',
+                    item.pinned ? 'text-blue-500 hover:text-blue-400' : 'text-muted-foreground/40 hover:text-blue-500'
+                  )}
+                  title={item.pinned ? 'Unpin' : 'Pin to keep'}
+                  aria-label={item.pinned ? `Unpin ${task.name}` : `Pin ${task.name}`}
+                >
+                  {item.pinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); store.removeItem(role, item.ref); }}
+                  className="rounded p-0.5 text-muted-foreground/40 hover:text-red-400 transition-colors"
+                  title="Remove from menu"
+                  aria-label={`Remove ${task.name}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </>
+            )}
+          </div>
         )}
       </div>
 
       {/* Children */}
-      {hasChildren && isExpanded && (
+      {hasChildren && isExpanded && task.children && (
         <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-border/50 pl-2">
-          {item.children!.map(child => {
-            const ChildIcon = child.icon;
-            const isChildActive = pathname === child.href;
-            return (
-              <li key={child.href}>
-                <Link
-                  href={child.href}
-                  className={cn(
-                    'flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                    isChildActive
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
-                  )}
-                >
-                  <ChildIcon className="h-3.5 w-3.5 shrink-0" />
-                  {child.name}
-                </Link>
-              </li>
-            );
-          })}
+          {task.children.map(child => (
+            <ChildItem key={child.href} child={child} pathname={pathname} />
+          ))}
         </ul>
       )}
     </li>
+  );
+}
+
+// =============================================================================
+// CHILD ITEM
+// =============================================================================
+
+function ChildItem({ child, pathname }: { child: NavChild; pathname: string }) {
+  const ChildIcon = child.icon;
+  const isChildActive = pathname === child.href || pathname.startsWith(child.href + '/');
+
+  return (
+    <li>
+      <Link
+        href={child.href}
+        className={cn(
+          'flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium transition-colors',
+          isChildActive
+            ? 'bg-accent text-accent-foreground'
+            : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground'
+        )}
+      >
+        <ChildIcon className="h-3.5 w-3.5 shrink-0" />
+        {child.name}
+      </Link>
+    </li>
+  );
+}
+
+// =============================================================================
+// OVERFLOW DRAWER
+// =============================================================================
+
+function OverflowDrawer({
+  items,
+  pathname,
+  role,
+}: {
+  items: ComposingMenuItem[];
+  pathname: string;
+  role: string;
+}) {
+  const store = useComposingMenuStore();
+
+  return (
+    <div
+      id="overflow-drawer"
+      className="mt-1 rounded-md border bg-background/95 backdrop-blur p-2 space-y-0.5"
+      role="region"
+      aria-label="Overflow menu items"
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1 px-2">
+        Previously used
+      </p>
+      {items.map(item => {
+        const task = getTask(item.ref);
+        if (!task) return null;
+        const Icon = task.icon;
+
+        const daysAgo = item.lastUsed
+          ? Math.floor((Date.now() - new Date(item.lastUsed).getTime()) / (1000 * 60 * 60 * 24))
+          : null;
+
+        return (
+          <div key={item.ref} className="group flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+            <Link href={task.href} className="flex items-center gap-2 flex-1 min-w-0">
+              <Icon className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{task.name}</span>
+            </Link>
+            {daysAgo !== null && (
+              <span className="text-[10px] text-muted-foreground/50 shrink-0">{daysAgo}d ago</span>
+            )}
+            <button
+              onClick={() => store.restoreItem(role, item.ref)}
+              className="opacity-0 group-hover:opacity-100 rounded p-0.5 text-muted-foreground/40 hover:text-green-500 transition-all"
+              title="Restore to menu"
+              aria-label={`Restore ${task.name}`}
+            >
+              <RotateCcw className="h-3 w-3" />
+            </button>
+          </div>
+        );
+      })}
+    </div>
   );
 }

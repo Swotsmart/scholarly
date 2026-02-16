@@ -1,0 +1,848 @@
+/* =============================================================================
+ * PHASE 6: MOBILE NAVIGATION, MENU SETTINGS & SYNC STYLES
+ * =============================================================================
+ * Structure:
+ *   1. Mobile Bottom Tabs — fixed bottom nav bar
+ *   2. Mobile Menu Sheet — bottom sheet for growth + overflow
+ *   3. Mobile Seed Cards — swipeable suggestion cards
+ *   4. Mobile Toast Positioning — bottom-centre override
+ *   5. Menu Settings Page — full control panel layout
+ *   6. Sync Status Indicator — online/offline/pending badge
+ *   7. Responsive Breakpoints — mobile ↔ desktop transitions
+ *   8. Reduced Motion — prefers-reduced-motion overrides
+ * ============================================================================= */
+
+:root {
+  --mobile-tab-height: 64px;
+  --mobile-tab-bg: #ffffff;
+  --mobile-tab-border: #e5e7eb;
+  --mobile-tab-active: #2563eb;
+  --mobile-tab-inactive: #6b7280;
+  --mobile-sheet-bg: #ffffff;
+  --mobile-sheet-handle: #d1d5db;
+  --mobile-sheet-backdrop: rgba(0, 0, 0, 0.4);
+  --mobile-seed-bg: #eff6ff;
+  --mobile-seed-border: #bfdbfe;
+  --settings-section-border: #e5e7eb;
+  --settings-decay-bg: #fffbeb;
+  --settings-push-bg: #eff6ff;
+  --settings-overflow-bg: #f9fafb;
+  --settings-drag-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --sync-online: #059669;
+  --sync-offline: #dc2626;
+  --sync-pending: #d97706;
+}
+
+/* =============================================================================
+ * 1. MOBILE BOTTOM TABS
+ * ============================================================================= */
+
+.mobile-bottom-tabs {
+  display: none; /* Hidden on desktop */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--mobile-tab-height);
+  background: var(--mobile-tab-bg);
+  border-top: 1px solid var(--mobile-tab-border);
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (max-width: 767px) {
+  .mobile-bottom-tabs {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+  }
+}
+
+.mobile-bottom-tabs__tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 4px 0;
+  transition: color 150ms ease;
+  color: var(--mobile-tab-inactive);
+}
+
+.mobile-bottom-tabs__tab--active {
+  color: var(--mobile-tab-active);
+}
+
+.mobile-bottom-tabs__tab--pushed {
+  color: var(--mobile-tab-active);
+}
+
+.mobile-bottom-tabs__icon {
+  font-size: 20px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.mobile-bottom-tabs__label {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-bottom-tabs__badge {
+  position: absolute;
+  top: 4px;
+  right: calc(50% - 16px);
+  min-width: 16px;
+  height: 16px;
+  background: #dc2626;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.mobile-bottom-tabs__lock {
+  position: absolute;
+  top: 2px;
+  right: calc(50% - 20px);
+  font-size: 8px;
+}
+
+.mobile-bottom-tabs__tab--hamburger {
+  color: var(--mobile-tab-inactive);
+}
+
+/* =============================================================================
+ * 2. MOBILE MENU SHEET
+ * ============================================================================= */
+
+.mobile-menu-sheet__backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--mobile-sheet-backdrop);
+  z-index: 60;
+  animation: sheet-backdrop-in 200ms ease;
+}
+
+@keyframes sheet-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mobile-menu-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 80vh;
+  background: var(--mobile-sheet-bg);
+  border-radius: 16px 16px 0 0;
+  z-index: 61;
+  overflow-y: auto;
+  padding: 0 16px 24px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  animation: sheet-slide-up 250ms ease;
+}
+
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.mobile-menu-sheet__handle {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 8px;
+  position: sticky;
+  top: 0;
+  background: var(--mobile-sheet-bg);
+  z-index: 1;
+}
+
+.mobile-menu-sheet__handle-bar {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--mobile-sheet-handle);
+}
+
+.mobile-menu-sheet__section {
+  margin-bottom: 16px;
+}
+
+.mobile-menu-sheet__section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin: 0 0 8px 0;
+}
+
+.mobile-menu-sheet__empty {
+  font-size: 14px;
+  color: #9ca3af;
+  padding: 16px 0;
+}
+
+.mobile-menu-sheet__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mobile-menu-sheet__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-menu-sheet__item--overflow {
+  opacity: 0.7;
+}
+
+.mobile-menu-sheet__item-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 8px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 150ms;
+  text-align: left;
+}
+
+.mobile-menu-sheet__item-button:hover,
+.mobile-menu-sheet__item-button:active {
+  background: #f3f4f6;
+}
+
+.mobile-menu-sheet__item-button--active {
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.mobile-menu-sheet__item-button--decaying {
+  opacity: 0.6;
+  text-decoration-style: dotted;
+}
+
+.mobile-menu-sheet__item-button--pushed {
+  border-left: 2px solid #2563eb;
+  padding-left: 10px;
+}
+
+.mobile-menu-sheet__item-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+}
+
+.mobile-menu-sheet__item-label {
+  flex: 1;
+}
+
+.mobile-menu-sheet__lock,
+.mobile-menu-sheet__sparkle {
+  font-size: 12px;
+}
+
+.mobile-menu-sheet__pin {
+  padding: 8px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  opacity: 0.4;
+  cursor: pointer;
+  transition: opacity 150ms;
+}
+
+.mobile-menu-sheet__pin--active {
+  opacity: 1;
+}
+
+.mobile-menu-sheet__restore {
+  padding: 6px 12px;
+  background: none;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  color: #2563eb;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+
+.mobile-menu-sheet__restore:hover {
+  background: #eff6ff;
+}
+
+.mobile-menu-sheet__overflow-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--settings-section-border);
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.mobile-menu-sheet__footer {
+  padding-top: 12px;
+  border-top: 1px solid var(--settings-section-border);
+}
+
+.mobile-menu-sheet__settings-link {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: none;
+  border: 1px dashed var(--settings-section-border);
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 150ms, color 150ms;
+}
+
+.mobile-menu-sheet__settings-link:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+/* =============================================================================
+ * 3. MOBILE SEED CARDS
+ * ============================================================================= */
+
+.mobile-seed-cards {
+  padding: 16px;
+}
+
+.mobile-seed-cards__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+}
+
+.mobile-seed-cards__scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.mobile-seed-cards__card {
+  flex: 0 0 auto;
+  width: 180px;
+  padding: 16px;
+  background: var(--mobile-seed-bg);
+  border: 1px solid var(--mobile-seed-border);
+  border-radius: 12px;
+  scroll-snap-align: start;
+}
+
+.mobile-seed-cards__card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.mobile-seed-cards__card-icon {
+  font-size: 24px;
+}
+
+.mobile-seed-cards__card-sparkle {
+  font-size: 14px;
+}
+
+.mobile-seed-cards__card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 12px 0;
+}
+
+.mobile-seed-cards__card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobile-seed-cards__accept {
+  padding: 8px 12px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+
+.mobile-seed-cards__accept:hover {
+  background: #1d4ed8;
+}
+
+.mobile-seed-cards__dismiss {
+  padding: 6px 12px;
+  background: none;
+  color: #6b7280;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* =============================================================================
+ * 4. MOBILE TOAST POSITIONING
+ * ============================================================================= */
+
+@media (max-width: 767px) {
+  .menu-toast-container {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    bottom: calc(var(--mobile-tab-height) + 16px) !important;
+    width: calc(100% - 32px);
+    max-width: 400px;
+  }
+}
+
+/* =============================================================================
+ * 5. MENU SETTINGS PAGE
+ * ============================================================================= */
+
+.menu-settings {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+@media (max-width: 767px) {
+  .menu-settings {
+    padding: 16px;
+    padding-bottom: calc(16px + var(--mobile-tab-height) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.menu-settings__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+@media (max-width: 767px) {
+  .menu-settings__header {
+    flex-direction: column;
+  }
+}
+
+.menu-settings__title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #111827;
+}
+
+.menu-settings__subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Sync controls */
+.menu-settings__sync {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.menu-settings__sync-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid var(--settings-section-border);
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 150ms;
+}
+
+.menu-settings__sync-button:hover:not(:disabled) {
+  border-color: #2563eb;
+}
+
+.menu-settings__sync-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menu-settings__sync-icon--spinning {
+  display: inline-block;
+  animation: sync-spin 1s linear infinite;
+}
+
+@keyframes sync-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.menu-settings__sync-status {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* Sections */
+.menu-settings__section {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--settings-section-border);
+}
+
+.menu-settings__section:last-child {
+  border-bottom: none;
+}
+
+.menu-settings__section--decaying {
+  background: var(--settings-decay-bg);
+  margin-left: -16px;
+  margin-right: -16px;
+  padding: 16px;
+  border-radius: 8px;
+  border-bottom: none;
+}
+
+.menu-settings__section--pushed {
+  background: var(--settings-push-bg);
+  margin-left: -16px;
+  margin-right: -16px;
+  padding: 16px;
+  border-radius: 8px;
+  border-bottom: none;
+}
+
+.menu-settings__section--overflow {
+  background: var(--settings-overflow-bg);
+  margin-left: -16px;
+  margin-right: -16px;
+  padding: 16px;
+  border-radius: 8px;
+  border-bottom: none;
+}
+
+.menu-settings__section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 4px 0;
+}
+
+.menu-settings__section-count {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.menu-settings__section-description {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+/* Items */
+.menu-settings__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menu-settings__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  transition: box-shadow 200ms ease, opacity 200ms ease;
+}
+
+.menu-settings__item--dragging {
+  box-shadow: var(--settings-drag-shadow);
+  opacity: 0.8;
+}
+
+.menu-settings__item--decay {
+  border-left: 3px solid #f59e0b;
+}
+
+.menu-settings__item--push {
+  border-left: 3px solid #2563eb;
+}
+
+.menu-settings__drag-handle {
+  font-size: 14px;
+  color: #d1d5db;
+  cursor: grab;
+  user-select: none;
+  padding: 0 4px;
+}
+
+.menu-settings__drag-handle:active {
+  cursor: grabbing;
+}
+
+.menu-settings__item-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.menu-settings__item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.menu-settings__item-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.menu-settings__item-subtitle {
+  display: block;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 1px;
+}
+
+.menu-settings__item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.menu-settings__action-button {
+  padding: 4px 10px;
+  border: 1px solid var(--settings-section-border);
+  border-radius: 4px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 150ms, border-color 150ms;
+}
+
+.menu-settings__action-button:hover {
+  border-color: #2563eb;
+}
+
+.menu-settings__action-button--active {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.menu-settings__action-button--restore {
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.menu-settings__action-button--restore:hover {
+  background: #eff6ff;
+}
+
+.menu-settings__action-button--remove {
+  color: #9ca3af;
+  border-color: transparent;
+}
+
+.menu-settings__action-button--remove:hover {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.menu-settings__action-button--confirm {
+  color: #dc2626;
+  border-color: #dc2626;
+  background: #fef2f2;
+  font-weight: 600;
+}
+
+.menu-settings__empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* =============================================================================
+ * 6. SYNC STATUS INDICATOR
+ * ============================================================================= */
+
+.sync-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.sync-indicator--online {
+  color: var(--sync-online);
+  background: #dcfce7;
+}
+
+.sync-indicator--offline {
+  color: var(--sync-offline);
+  background: #fee2e2;
+}
+
+.sync-indicator--pending {
+  color: var(--sync-pending);
+  background: #fef3c7;
+}
+
+.sync-indicator__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* =============================================================================
+ * 7. RESPONSIVE BREAKPOINTS
+ * ============================================================================= */
+
+/* Desktop: sidebar is visible, bottom tabs hidden */
+@media (min-width: 768px) {
+  .mobile-bottom-tabs {
+    display: none !important;
+  }
+
+  .mobile-menu-sheet__backdrop,
+  .mobile-menu-sheet {
+    display: none !important;
+  }
+
+  /* Desktop sidebar gets bottom padding when sync status is shown */
+  .sidebar--with-sync {
+    padding-bottom: 40px;
+  }
+}
+
+/* Mobile: sidebar is hidden, bottom tabs visible */
+@media (max-width: 767px) {
+  /* Add padding to main content to prevent bottom tab overlap */
+  .main-content--with-tabs {
+    padding-bottom: calc(var(--mobile-tab-height) + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Desktop sidebar hidden on mobile */
+  .desktop-sidebar {
+    display: none !important;
+  }
+
+  /* Seed cards only visible on mobile dashboard */
+  .mobile-seed-cards {
+    display: block;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-seed-cards {
+    display: none;
+  }
+}
+
+/* =============================================================================
+ * 8. REDUCED MOTION
+ * ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-menu-sheet {
+    animation: none !important;
+  }
+
+  .mobile-menu-sheet__backdrop {
+    animation: none !important;
+  }
+
+  .mobile-bottom-tabs__tab {
+    transition: none !important;
+  }
+
+  .mobile-menu-sheet__item-button,
+  .mobile-menu-sheet__restore,
+  .mobile-menu-sheet__settings-link {
+    transition: none !important;
+  }
+
+  .mobile-seed-cards__accept,
+  .mobile-seed-cards__scroll {
+    transition: none !important;
+    scroll-behavior: auto;
+  }
+
+  .menu-settings__item {
+    transition: none !important;
+  }
+
+  .menu-settings__action-button,
+  .menu-settings__sync-button {
+    transition: none !important;
+  }
+
+  .menu-settings__sync-icon--spinning {
+    animation: none !important;
+  }
+
+  @keyframes sync-spin {
+    from { transform: none; }
+    to { transform: none; }
+  }
+}
