@@ -8,11 +8,19 @@ export async function GET(request: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const expired = await repository.getExpiredPushes();
-  if (expired.length === 0) {
-    return Response.json({ expired: 0, message: 'No expired pushes' });
-  }
+  try {
+    const expired = await repository.getExpiredPushes();
+    if (expired.length === 0) {
+      return Response.json({ expired: 0, message: 'No expired pushes' });
+    }
 
-  const count = await repository.markExpired(expired.map((p) => p.id));
-  return Response.json({ expired: count, ids: expired.map((p) => p.id) });
+    const count = await repository.markExpired(expired.map((p) => p.id));
+    return Response.json({ expired: count, ids: expired.map((p) => p.id) });
+  } catch (error) {
+    console.error('Push expiry cron failed:', error);
+    return Response.json(
+      { error: 'Failed to process expired pushes' },
+      { status: 500 },
+    );
+  }
 }

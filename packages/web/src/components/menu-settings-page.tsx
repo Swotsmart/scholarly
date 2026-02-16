@@ -35,6 +35,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { PageHeader } from '@/components/shared/page-header';
+import type { MenuItemState } from '@/types/composing-menu-types';
 
 // =============================================================================
 // TYPES
@@ -43,8 +44,8 @@ import { PageHeader } from '@/components/shared/page-header';
 export interface MenuSettingsItem {
   ref: string;
   label: string;
-  icon: string;
-  state: 'anchor' | 'active' | 'seeded' | 'decaying' | 'overflow' | 'pushed' | 'removed';
+  icon: React.ReactNode;
+  state: MenuItemState;
   pinned: boolean;
   lastUsed: string | null;
   useCount: number;
@@ -331,7 +332,7 @@ export function MenuSettingsPage({
         return aRemain - bRemain;
       });
 
-    const seeded = items.filter(i => i.state === 'seeded');
+    const seeded = items.filter(i => i.state === 'seed');
 
     const pushed = items.filter(i => i.state === 'pushed');
 

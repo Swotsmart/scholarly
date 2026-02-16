@@ -6,7 +6,7 @@
  * and see decay timelines for their self-composing navigation.
  */
 
-import { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useComposingMenuStore } from '@/stores/composing-menu-store';
 import { getTask } from '@/config/menu-registry';
@@ -38,12 +38,14 @@ export default function MenuSettingsRoute() {
     const overflow = store.getOverflowItems(role);
     const all = [...visible, ...overflow];
 
-    return all.map((item) => {
+    return all.map((item): MenuSettingsItem => {
       const task = getTask(item.ref);
+      const TaskIcon = task?.icon;
+      const icon: React.ReactNode = TaskIcon ? <TaskIcon className="h-4 w-4" /> : item.ref;
       return {
         ref: item.ref,
         label: task?.name || item.ref,
-        icon: task?.ref || item.ref,
+        icon,
         state: item.state,
         pinned: item.pinned,
         lastUsed: item.lastUsed,

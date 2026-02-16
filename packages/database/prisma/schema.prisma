@@ -6762,10 +6762,11 @@ model MenuPushRecord {
   pushType   String    @default("INSTITUTIONAL")
   pushedBy   String    // admin userId
   expiresAt  DateTime?
-  revokedAt  DateTime?
-  revokedBy  String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  revokedAt         DateTime?
+  revokedBy         String?
+  revocationReason  String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@index([tenantId, targetRole])
   @@index([expiresAt])

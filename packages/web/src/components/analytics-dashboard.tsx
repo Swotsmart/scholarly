@@ -152,6 +152,32 @@ interface HeatmapCell {
 }
 
 // =============================================================================
+// RATE HELPERS
+// =============================================================================
+// Compute rates from count fields. The service type defines promotionRate,
+// decayRate, restoreRate as pre-computed fields, but the Prisma model only
+// stores counts. These helpers ensure the dashboard works correctly regardless
+// of whether the data source pre-computes rates or not.
+// =============================================================================
+
+function computePromotionRate(s: MenuAnalyticsDaily): number {
+  if (s.promotionRate > 0) return s.promotionRate;
+  const denom = s.promotionCount + s.dismissalCount;
+  return denom > 0 ? s.promotionCount / denom : 0;
+}
+
+function computeDecayRate(s: MenuAnalyticsDaily): number {
+  if (s.decayRate > 0) return s.decayRate;
+  const denom = s.overflowCount + s.restoreCount;
+  return denom > 0 ? s.overflowCount / denom : 0;
+}
+
+function computeRestoreRate(s: MenuAnalyticsDaily): number {
+  if (s.restoreRate > 0) return s.restoreRate;
+  return s.overflowCount > 0 ? s.restoreCount / s.overflowCount : 0;
+}
+
+// =============================================================================
 // DATE HELPERS
 // =============================================================================
 
@@ -253,17 +279,17 @@ export function AnalyticsDashboard({
       summaries.flatMap((s: MenuAnalyticsDaily) => Array.from({ length: s.uniqueUsers }, (_: unknown, i: number) => `${s.roleId}-${s.taskRef}-${i}`)),
     ).size;
 
-    const promotionRates = summaries.filter((s: MenuAnalyticsDaily) => s.promotionRate > 0).map((s: MenuAnalyticsDaily) => s.promotionRate);
+    const promotionRates = summaries.map((s: MenuAnalyticsDaily) => computePromotionRate(s)).filter((r: number) => r > 0);
     const avgPromotionRate = promotionRates.length > 0
       ? Math.round((promotionRates.reduce((a: number, b: number) => a + b, 0) / promotionRates.length) * 100) / 100
       : 0;
 
-    const decayRates = summaries.filter((s: MenuAnalyticsDaily) => s.decayRate > 0).map((s: MenuAnalyticsDaily) => s.decayRate);
+    const decayRates = summaries.map((s: MenuAnalyticsDaily) => computeDecayRate(s)).filter((r: number) => r > 0);
     const avgDecayRate = decayRates.length > 0
       ? Math.round((decayRates.reduce((a: number, b: number) => a + b, 0) / decayRates.length) * 100) / 100
       : 0;
 
-    const restoreRates = summaries.filter((s: MenuAnalyticsDaily) => s.restoreRate > 0).map((s: MenuAnalyticsDaily) => s.restoreRate);
+    const restoreRates = summaries.map((s: MenuAnalyticsDaily) => computeRestoreRate(s)).filter((r: number) => r > 0);
     const avgRestoreRate = restoreRates.length > 0
       ? Math.round((restoreRates.reduce((a: number, b: number) => a + b, 0) / restoreRates.length) * 100) / 100
       : 0;
@@ -308,17 +334,17 @@ export function AnalyticsDashboard({
       const totalUses = entries.reduce((sum: number, e: MenuAnalyticsDaily) => sum + e.totalUses, 0);
       const uniqueUsers = Math.max(...entries.map((e: MenuAnalyticsDaily) => e.uniqueUsers));
 
-      const promotionRates = entries.filter((e: MenuAnalyticsDaily) => e.promotionRate > 0).map((e: MenuAnalyticsDaily) => e.promotionRate);
+      const promotionRates = entries.map((e: MenuAnalyticsDaily) => computePromotionRate(e)).filter((r: number) => r > 0);
       const promotionRate = promotionRates.length > 0
         ? Math.round((promotionRates.reduce((a: number, b: number) => a + b, 0) / promotionRates.length) * 100)
         : 0;
 
-      const decayRates = entries.filter((e: MenuAnalyticsDaily) => e.decayRate > 0).map((e: MenuAnalyticsDaily) => e.decayRate);
+      const decayRates = entries.map((e: MenuAnalyticsDaily) => computeDecayRate(e)).filter((r: number) => r > 0);
       const decayRate = decayRates.length > 0
         ? Math.round((decayRates.reduce((a: number, b: number) => a + b, 0) / decayRates.length) * 100)
         : 0;
 
-      const restoreRates = entries.filter((e: MenuAnalyticsDaily) => e.restoreRate > 0).map((e: MenuAnalyticsDaily) => e.restoreRate);
+      const restoreRates = entries.map((e: MenuAnalyticsDaily) => computeRestoreRate(e)).filter((r: number) => r > 0);
       const restoreRate = restoreRates.length > 0
         ? Math.round((restoreRates.reduce((a: number, b: number) => a + b, 0) / restoreRates.length) * 100)
         : 0;

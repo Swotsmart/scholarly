@@ -15,8 +15,19 @@ export async function GET(request: Request) {
     return Response.json({ error: 'Missing user ID, tenant ID, or role' }, { status: 400 });
   }
 
-  const state = await repository.getMenuState(userId, tenantId, role);
-  return Response.json(state);
+  try {
+    const state = await repository.getMenuState(userId, tenantId, role);
+    if (!state) {
+      return Response.json({ error: 'Menu state not found' }, { status: 404 });
+    }
+    return Response.json(state);
+  } catch (error) {
+    console.error('Menu sync GET failed:', error);
+    return Response.json(
+      { error: 'Failed to retrieve menu state' },
+      { status: 500 },
+    );
+  }
 }
 
 export async function PUT(request: Request) {
@@ -32,9 +43,17 @@ export async function PUT(request: Request) {
     return Response.json({ error: 'Missing user ID, tenant ID, or role' }, { status: 400 });
   }
 
-  const body = await request.json();
-  const { items, version } = body as { items: unknown; version: number };
+  try {
+    const body = await request.json();
+    const { items, version } = body as { items: unknown; version: number };
 
-  const result = await repository.saveMenuState(userId, tenantId, role, items, version);
-  return Response.json(result);
+    const result = await repository.saveMenuState(userId, tenantId, role, items, version);
+    return Response.json(result);
+  } catch (error) {
+    console.error('Menu sync PUT failed:', error);
+    return Response.json(
+      { error: 'Failed to save menu state' },
+      { status: 500 },
+    );
+  }
 }
