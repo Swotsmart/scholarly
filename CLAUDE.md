@@ -35,7 +35,14 @@ pnpm run build                                            # Build all (Turbo)
 
 **Theme**: Catppuccin-inspired HSL variables in `globals.css`. Primary purple `#8839ef`/`#cba6f7`. Fonts: Montserrat (sans), Fira Code (mono). Dark mode via class + next-themes.
 
-**Config**: `output: 'standalone'`, `transpilePackages: ['@scholarly/shared']`, API URL from `NEXT_PUBLIC_API_URL` (default `http://localhost:3001`).
+**Config**: `output: 'standalone'`, `transpilePackages: ['@scholarly/shared', '@scholarly/database']`, API URL from `NEXT_PUBLIC_API_URL` (default `http://localhost:3001`).
+
+**Repositories** (`src/repositories/`): Prisma-backed data access for server-side route handlers. Import `prisma` from `@scholarly/database`. All queries include `tenantId` for multi-tenant isolation. Current repositories: `menu-state`, `menu-push`, `menu-analytics`.
+
+**API routes** (server-side only):
+- `/api/v1/menu/sync` — GET/PUT menu state (uses `PrismaMenuStateRepository`)
+- `/api/cron/push-expiry` — expires stale institutional pushes (uses `PrismaMenuPushRepository`)
+- `/api/cron/menu-analytics` — daily event aggregation (uses `PrismaMenuAnalyticsRepository`)
 
 ## API (`packages/api`)
 
@@ -47,7 +54,9 @@ pnpm run build                                            # Build all (Turbo)
 
 ## Database (`packages/database`)
 
-Prisma 5.9 + PostgreSQL. Schema at `prisma/schema.prisma`. Build: tsup (CJS + ESM + DTS).
+Prisma 5.9 + PostgreSQL. Schema at `prisma/schema.prisma`. Build: tsup (CJS + ESM + DTS). After schema changes, run `prisma generate` then `pnpm --filter @scholarly/database build` to regenerate types.
+
+**Self-composing menu models** (Sprint 28): `UserMenuState`, `MenuPushRecord`, `MenuUsageEvent`, `MenuAnalyticsDaily`, `MenuSyncLog`. Migration pending — `prisma generate` provides types; `prisma migrate dev --name add-self-composing-menu-models` required before runtime against a real database.
 
 ## Azure Infrastructure
 
@@ -84,7 +93,7 @@ az containerapp update --name scholarly --resource-group scholarly-rg --image sc
 
 ## Environment Variables
 
-`NEXT_PUBLIC_API_URL` (web), `DATABASE_URL` (database), `REDIS_URL` / `JWT_SECRET` / `SENDGRID_API_KEY` / `STRIPE_SECRET_KEY` / `ELEVENLABS_API_KEY` (api).
+`NEXT_PUBLIC_API_URL` (web), `DATABASE_URL` (database + web server-side routes), `CRON_SECRET` (web cron routes), `REDIS_URL` / `JWT_SECRET` / `SENDGRID_API_KEY` / `STRIPE_SECRET_KEY` / `ELEVENLABS_API_KEY` (api).
 
 ## Mobile App (`apps/mobile`)
 
@@ -102,4 +111,5 @@ az containerapp update --name scholarly --resource-group scholarly-rg --image sc
 - **Components**: Shadcn/UI in `packages/web/src/components/ui/`
 - **Types**: `packages/web/src/types/`
 - **Icons**: lucide-react only (except Early Years + flags)
+- **Repositories**: API uses `prisma` singleton from `@scholarly/database` (no constructor injection). Web server-side routes follow the same pattern via `packages/web/src/repositories/`. All queries must include `tenantId`.
 - **Workspace deps**: `workspace:*` for internal refs

@@ -1,17 +1,6 @@
-import {
-  MenuSyncService,
-  InMemoryMenuStateRepository,
-  InMemoryLocalMenuStore,
-  InMemorySyncEventEmitter,
-} from '@/services/menu-sync.service';
+import { PrismaMenuStateRepository } from '@/repositories/menu-state.repository';
 
-const repository = new InMemoryMenuStateRepository();
-const localStore = new InMemoryLocalMenuStore();
-const events = new InMemorySyncEventEmitter();
-
-function createService(): MenuSyncService {
-  return new MenuSyncService(repository, localStore, events);
-}
+const repository = new PrismaMenuStateRepository();
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
@@ -20,12 +9,13 @@ export async function GET(request: Request) {
   }
 
   const userId = request.headers.get('x-user-id');
-  const roleId = request.headers.get('x-role-id');
-  if (!userId || !roleId) {
-    return Response.json({ error: 'Missing user ID or role ID' }, { status: 400 });
+  const tenantId = request.headers.get('x-tenant-id');
+  const role = request.headers.get('x-role-id');
+  if (!userId || !tenantId || !role) {
+    return Response.json({ error: 'Missing user ID, tenant ID, or role' }, { status: 400 });
   }
 
-  const state = await repository.getMenuState(userId, roleId);
+  const state = await repository.getMenuState(userId, tenantId, role);
   return Response.json(state);
 }
 
@@ -36,12 +26,15 @@ export async function PUT(request: Request) {
   }
 
   const userId = request.headers.get('x-user-id');
-  const roleId = request.headers.get('x-role-id');
-  if (!userId || !roleId) {
-    return Response.json({ error: 'Missing user ID or role ID' }, { status: 400 });
+  const tenantId = request.headers.get('x-tenant-id');
+  const role = request.headers.get('x-role-id');
+  if (!userId || !tenantId || !role) {
+    return Response.json({ error: 'Missing user ID, tenant ID, or role' }, { status: 400 });
   }
 
-  const service = createService();
-  const result = await service.syncOnSessionStart(userId, roleId);
+  const body = await request.json();
+  const { items, version } = body as { items: unknown; version: number };
+
+  const result = await repository.saveMenuState(userId, tenantId, role, items, version);
   return Response.json(result);
 }
