@@ -83,8 +83,9 @@ export default function DashboardLayout({
           }))
         );
       }
-    } catch {
+    } catch (error) {
       // Seed engine errors are non-critical; sidebar still works without seeds
+      console.error('Seed engine error during computeSeeds:', error);
     }
   }, [user?.role, roleMenus, addSeeds, onboarding]);
 

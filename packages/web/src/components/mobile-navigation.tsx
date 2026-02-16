@@ -525,16 +525,16 @@ export function MobileSeedCards({
  * Utility hook that overrides toast positioning on mobile.
  *
  * Phase 2's toast system renders at bottom-right (desktop pattern).
- * On mobile, toasts should appear bottom-centre to avoid overlap with
+ * On mobile, toasts should appear bottom-center to avoid overlap with
  * the bottom tab bar and to be thumb-reachable.
  *
  * This resolves the Phase 2 known limitation:
  *   "No mobile toast positioning — Toasts render at bottom-right
- *    (desktop pattern). Mobile should use bottom-centre."
+ *    (desktop pattern). Mobile should use bottom-center."
  */
 export function useMobileToastPosition(): {
   isMobile: boolean;
-  toastPosition: 'bottom-right' | 'bottom-centre';
+  toastPosition: 'bottom-right' | 'bottom-center';
   toastBottomOffset: number;
 } {
   const [isMobile, setIsMobile] = useState(false);
@@ -551,7 +551,7 @@ export function useMobileToastPosition(): {
 
   return {
     isMobile,
-    toastPosition: isMobile ? 'bottom-centre' : 'bottom-right',
+    toastPosition: isMobile ? 'bottom-center' : 'bottom-right',
     // Bottom tab bar is 64px + 16px safe area = 80px offset on mobile
     toastBottomOffset: isMobile ? 80 : 16,
   };

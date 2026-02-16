@@ -137,7 +137,10 @@ function testE2E(): TestSuite {
   run('E2E-016: step dependencies valid', () => { const s = ig().E2E_SCENARIOS[0].steps; assert(s[0].dependsOn.length === 0 && s[11].dependsOn.includes(10), 'deps'); });
   run('E2E-017: lifecycle starts with register', () => assert(ig().E2E_SCENARIOS[0].steps[0].action.includes('register'), 'reg'));
   run('E2E-018: lifecycle ends with settings', () => assert(ig().E2E_SCENARIOS[0].steps[11].action.includes('settings'), 'set'));
-  run('E2E-019: parent journey verifies <=5 items', () => assert(ig().E2E_SCENARIOS[5].steps[2].verificationQuery.includes('lte', 5), 'lte5'));
+  run('E2E-019: parent journey verifies <=5 items', () => {
+    const vq = ig().E2E_SCENARIOS[5].steps[2].verificationQuery;
+    assert(vq.includes('lte') && vq.includes('5'), 'lte5');
+  });
   run('E2E-020: learner seeds include Arena', () => assert(ig().E2E_SCENARIOS[6].steps[1].verificationQuery.includes('Arena'), 'arena'));
 
   return { name: 'End-to-End Verification', tests };
