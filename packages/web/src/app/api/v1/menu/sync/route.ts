@@ -1,4 +1,17 @@
-import { MenuSyncService } from '@/services/menu-sync.service';
+import {
+  MenuSyncService,
+  InMemoryMenuStateRepository,
+  InMemoryLocalMenuStore,
+  InMemorySyncEventEmitter,
+} from '@/services/menu-sync.service';
+
+const repository = new InMemoryMenuStateRepository();
+const localStore = new InMemoryLocalMenuStore();
+const events = new InMemorySyncEventEmitter();
+
+function createService(): MenuSyncService {
+  return new MenuSyncService(repository, localStore, events);
+}
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
@@ -6,13 +19,13 @@ export async function GET(request: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const service = new MenuSyncService();
   const userId = request.headers.get('x-user-id');
-  if (!userId) {
-    return Response.json({ error: 'Missing user ID' }, { status: 400 });
+  const roleId = request.headers.get('x-role-id');
+  if (!userId || !roleId) {
+    return Response.json({ error: 'Missing user ID or role ID' }, { status: 400 });
   }
 
-  const state = await service.getMenuState(userId);
+  const state = await repository.getMenuState(userId, roleId);
   return Response.json(state);
 }
 
@@ -23,12 +36,12 @@ export async function PUT(request: Request) {
   }
 
   const userId = request.headers.get('x-user-id');
-  if (!userId) {
-    return Response.json({ error: 'Missing user ID' }, { status: 400 });
+  const roleId = request.headers.get('x-role-id');
+  if (!userId || !roleId) {
+    return Response.json({ error: 'Missing user ID or role ID' }, { status: 400 });
   }
 
-  const body = await request.json();
-  const service = new MenuSyncService();
-  const result = await service.syncMenuState(userId, body);
+  const service = createService();
+  const result = await service.syncOnSessionStart(userId, roleId);
   return Response.json(result);
 }

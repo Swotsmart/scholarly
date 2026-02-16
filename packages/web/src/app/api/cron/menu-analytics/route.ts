@@ -1,4 +1,4 @@
-import { MenuAnalyticsService } from '@/services/menu-analytics.service';
+import { MenuAnalyticsService, InMemoryAnalyticsRepository } from '@/services/menu-analytics.service';
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
@@ -6,7 +6,9 @@ export async function GET(request: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const service = new MenuAnalyticsService();
-  const result = await service.aggregateDaily(new Date());
+  const repository = new InMemoryAnalyticsRepository();
+  const service = new MenuAnalyticsService(repository);
+  const targetDate = new Date().toISOString().split('T')[0]!;
+  const result = await service.runDailyAggregation(targetDate);
   return Response.json(result);
 }

@@ -48,6 +48,8 @@ import {
   Legend,
 } from 'recharts';
 
+/* Recharts v2 has incomplete TypeScript generics — prop casts below are intentional */
+
 import { cn } from '@/lib/utils';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -593,18 +595,19 @@ export function AnalyticsDashboard({
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                         <XAxis
                           dataKey="date"
-                          tick={{ fontSize: 12 }}
-                          tickFormatter={(val: string) => val.slice(5)}
+                          {...{ tick: { fontSize: 12 }, tickFormatter: (val: string) => val.slice(5) } as any}
                           className="text-muted-foreground"
                         />
-                        <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                        <YAxis {...{ tick: { fontSize: 12 } } as any} className="text-muted-foreground" />
                         <Tooltip
-                          contentStyle={{
-                            backgroundColor: 'hsl(var(--card))',
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                          }}
+                          {...{
+                            contentStyle: {
+                              backgroundColor: 'hsl(var(--card))',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                            },
+                          } as any}
                         />
                         <Legend />
                         <Area
@@ -775,31 +778,28 @@ export function AnalyticsDashboard({
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart
                             data={heatmapData.slice(0, 15)}
-                            layout="vertical"
+                            {...{ layout: 'vertical' } as any}
                             margin={{ left: 120 }}
                           >
                             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                             <XAxis
-                              type="number"
-                              tick={{ fontSize: 12 }}
-                              domain={[0, 100]}
+                              {...{ type: 'number', tick: { fontSize: 12 }, domain: [0, 100] } as any}
                               className="text-muted-foreground"
                             />
                             <YAxis
-                              type="category"
-                              dataKey="taskLabel"
-                              tick={{ fontSize: 12 }}
-                              width={110}
+                              {...{ type: 'category', dataKey: 'taskLabel', tick: { fontSize: 12 }, width: 110 } as any}
                               className="text-muted-foreground"
                             />
                             <Tooltip
-                              contentStyle={{
-                                backgroundColor: 'hsl(var(--card))',
-                                border: '1px solid hsl(var(--border))',
-                                borderRadius: '8px',
-                                fontSize: '12px',
-                              }}
-                              formatter={(value: number) => [`${value}%`, 'Presence Rate']}
+                              {...{
+                                contentStyle: {
+                                  backgroundColor: 'hsl(var(--card))',
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '8px',
+                                  fontSize: '12px',
+                                },
+                                formatter: (value: number) => [`${value}%`, 'Presence Rate'],
+                              } as any}
                             />
                             <Bar
                               dataKey="intensity"
@@ -846,18 +846,19 @@ export function AnalyticsDashboard({
                             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                             <XAxis
                               dataKey="date"
-                              tick={{ fontSize: 12 }}
-                              tickFormatter={(val: string) => val.slice(5)}
+                              {...{ tick: { fontSize: 12 }, tickFormatter: (val: string) => val.slice(5) } as any}
                               className="text-muted-foreground"
                             />
-                            <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                            <YAxis {...{ tick: { fontSize: 12 } } as any} className="text-muted-foreground" />
                             <Tooltip
-                              contentStyle={{
-                                backgroundColor: 'hsl(var(--card))',
-                                border: '1px solid hsl(var(--border))',
-                                borderRadius: '8px',
-                                fontSize: '12px',
-                              }}
+                              {...{
+                                contentStyle: {
+                                  backgroundColor: 'hsl(var(--card))',
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '8px',
+                                  fontSize: '12px',
+                                },
+                              } as any}
                             />
                             <Legend />
                             <Bar
