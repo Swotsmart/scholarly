@@ -56,7 +56,7 @@ pnpm run build                                            # Build all (Turbo)
 
 Prisma 5.9 + PostgreSQL. Schema at `prisma/schema.prisma`. Build: tsup (CJS + ESM + DTS). After schema changes, run `prisma generate` then `pnpm --filter @scholarly/database build` to regenerate types.
 
-**Self-composing menu models** (Sprint 28): `UserMenuState`, `MenuPushRecord`, `MenuUsageEvent`, `MenuAnalyticsDaily`, `MenuSyncLog`. Migration pending — `prisma generate` provides types; `prisma migrate dev --name add-self-composing-menu-models` required before runtime against a real database.
+**Self-composing menu models** (Sprint 28): `UserMenuState`, `MenuPushRecord`, `MenuUsageEvent`, `MenuAnalyticsDaily`, `MenuSyncLog`. Migration `20260216182621_add_self_composing_menu_models` applied locally. For Azure deployment, run `prisma migrate deploy` against the production DATABASE_URL (stored in Azure Key Vault, secret `database-url`).
 
 ## Azure Infrastructure
 
