@@ -10,6 +10,21 @@ import { Header } from '@/components/layout/header';
 import { CommandPalette } from '@/components/layout/command-palette';
 import { Skeleton } from '@/components/ui/skeleton';
 import { computeSeeds } from '@/services/seed-engine.service';
+import type { RoleId, DayOfWeek, TimeBlock } from '@/types/seed-engine-types';
+
+const DAYS_OF_WEEK: DayOfWeek[] = [
+  'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday',
+];
+
+function getTimeBlock(hour: number): TimeBlock {
+  if (hour < 8) return 'early_morning';
+  if (hour < 10) return 'morning';
+  if (hour < 12) return 'late_morning';
+  if (hour < 14) return 'midday';
+  if (hour < 17) return 'afternoon';
+  if (hour < 20) return 'evening';
+  return 'night';
+}
 
 export default function DashboardLayout({
   children,
@@ -43,7 +58,7 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!user?.role) return;
 
-    const role = user.role;
+    const role = user.role as RoleId;
     const menu = roleMenus[role];
     const lastSeedTime = menu?.lastSeedRun
       ? new Date(menu.lastSeedRun).getTime()
@@ -53,24 +68,41 @@ export default function DashboardLayout({
     if (Date.now() - lastSeedTime < thirtyMinutes) return;
 
     try {
+      const now = new Date();
+      const hour = now.getHours();
+      const day = DAYS_OF_WEEK[now.getDay()];
+      const isSchoolDay = now.getDay() >= 1 && now.getDay() <= 5;
+
       const seeds = computeSeeds({
         role,
         temporal: {
-          currentHour: new Date().getHours(),
-          currentMinute: new Date().getMinutes(),
-          dayOfWeek: new Date().getDay(),
-          weekOfTerm: null,
-          isHoliday: false,
+          hour,
+          dayOfWeek: day,
+          timeBlock: getTimeBlock(hour),
+          termWeek: 1,
+          isSchoolDay,
+        },
+        menuItems: (menu?.items || []).map((item) => ({
+          ...item,
+          lastUsed: item.lastUsed ?? '',
+        })),
+        onboarding: {
+          interests: [],
+          subjects: [],
+          yearLevels: [],
+          languages: [],
+          competitiveInterest: false,
+          hasEarlyYearsChildren: false,
+          profileCompleteness: 0,
+        },
+        peerPatterns: [],
+        institutional: {
+          activeEvents: [],
+          currentTerm: 1,
+          termsPerYear: 4,
+          termWeek: 1,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
-        menuItems: menu?.items || [],
-        onboarding: {
-          completedSteps: onboarding.completedSteps ?? [],
-          interests: [],
-          comfortLevel: 'intermediate',
-        },
-        peerPatterns: null,
-        institutionalContext: null,
       });
 
       if (seeds.seeds && seeds.seeds.length > 0) {
