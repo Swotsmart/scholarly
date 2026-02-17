@@ -80,7 +80,7 @@ export function isSchoolDay(day: DayOfWeek): boolean {
 // progress. These modifiers are applied when isSchoolDay is false.
 // =============================================================================
 
-const WEEKEND_HEURISTICS: Partial<Record<RoleId, Record<TimeBlock, Array<{ taskRef: TaskRef; score: number }>>>> = {
+const WEEKEND_HEURISTICS: Partial<Record<RoleId, Partial<Record<TimeBlock, Array<{ taskRef: TaskRef; score: number }>>>>> = {
   teacher: {
     morning: [
       { taskRef: 'T1', score: 0.6 },   // Lesson planning for next week

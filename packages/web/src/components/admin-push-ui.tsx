@@ -7,24 +7,46 @@
 // school administrators push, preview, and revoke required menu items
 // for their users.
 //
-// Think of it as the school PA system's control room. From here, the admin
-// can see what's currently being broadcast (active pushes), preview what
-// a new announcement would look like (push preview), and manage the
-// bulletin board (revoke, view audit history).
-//
 // Specification references:
 //   Section 5.2  — Admin Push UI (select task, target role, reason,
 //                   optional expiry, preview of affected menus)
 //   Section 15   — Push rules summary (max 3 per role)
 //   Phase 5 plan — "Admin push UI: 2–3 days — Menu Management section"
-//
-// Integration points:
-//   - admin-push.service.ts: createPush, revokePush, previewPush, getAuditHistory
-//   - menu-registry.ts (Phase 1): getAllTasks, getTask for label resolution
-//   - composing-menu-types.ts (Phase 1): PushableRole type
 // =============================================================================
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import {
+  Shield,
+  Lock,
+  Send,
+  Trash2,
+  Clock,
+  AlertTriangle,
+  Users,
+  Settings,
+  Calendar,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+import { PageHeader } from '@/components/shared';
+
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 import type {
   MenuPushRecord,
@@ -32,7 +54,7 @@ import type {
   PushPreview,
   CreatePushInput,
   PushErrorCode,
-} from './admin-push.service';
+} from '@/services/admin-push.service';
 
 // =============================================================================
 // TYPES
@@ -101,7 +123,7 @@ export function AdminPushPanel({
   auditTotal,
   onLoadAuditHistory,
 }: AdminPushPanelProps) {
-  // ── Form state ──
+  // -- Form state --
   const [selectedRole, setSelectedRole] = useState<PushableRole>('teacher');
   const [selectedTaskRef, setSelectedTaskRef] = useState('');
   const [reason, setReason] = useState('');
@@ -111,21 +133,21 @@ export function AdminPushPanel({
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
-  // ── Preview state ──
+  // -- Preview state --
   const [preview, setPreview] = useState<PushPreview | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
-  // ── Revocation state ──
+  // -- Revocation state --
   const [revokingPushId, setRevokingPushId] = useState<string | null>(null);
   const [revokeReason, setRevokeReason] = useState('');
   const [isRevoking, setIsRevoking] = useState(false);
 
-  // ── Tabs & pagination ──
-  const [activeTab, setActiveTab] = useState<'create' | 'active' | 'audit'>('create');
+  // -- Tabs & pagination --
+  const [activeTab, setActiveTab] = useState<string>('create');
   const [auditOffset, setAuditOffset] = useState(0);
   const AUDIT_PAGE_SIZE = 20;
 
-  // ── Derived ──
+  // -- Derived --
   const tasks = useMemo(
     () => getTasksForRole(selectedRole),
     [getTasksForRole, selectedRole],
@@ -138,7 +160,7 @@ export function AdminPushPanel({
 
   const roleAtLimit = rolePushes.length >= MAX_PUSHES_PER_ROLE;
 
-  // ── Clear form on role change ──
+  // -- Clear form on role change --
   useEffect(() => {
     setSelectedTaskRef('');
     setReason('');
@@ -149,7 +171,7 @@ export function AdminPushPanel({
     setPreview(null);
   }, [selectedRole]);
 
-  // ── Load preview when task changes ──
+  // -- Load preview when task changes --
   useEffect(() => {
     if (!selectedTaskRef) {
       setPreview(null);
@@ -174,7 +196,7 @@ export function AdminPushPanel({
     return () => { cancelled = true; };
   }, [selectedTaskRef, selectedRole, onPreviewPush]);
 
-  // ── Submit handler ──
+  // -- Submit handler --
   const handleSubmit = useCallback(async () => {
     setFormError(null);
     setFormSuccess(null);
@@ -212,7 +234,7 @@ export function AdminPushPanel({
       });
 
       if (result.success) {
-        const taskLabel = tasks.find(t => t.ref === selectedTaskRef)?.label ?? selectedTaskRef;
+        const taskLabel = tasks.find((t: TaskOption) => t.ref === selectedTaskRef)?.label ?? selectedTaskRef;
         setFormSuccess(
           `"${taskLabel}" has been pushed to all ${AVAILABLE_ROLES.find(r => r.value === selectedRole)?.label ?? selectedRole}. `
           + `They will see it in their menu immediately.`,
@@ -232,7 +254,7 @@ export function AdminPushPanel({
     }
   }, [institutionId, selectedRole, selectedTaskRef, reason, hasExpiry, expiryDate, tasks, onCreatePush]);
 
-  // ── Revoke handler ──
+  // -- Revoke handler --
   const handleRevoke = useCallback(async (pushId: string) => {
     setIsRevoking(true);
     try {
@@ -250,350 +272,457 @@ export function AdminPushPanel({
     }
   }, [onRevokePush, revokeReason]);
 
-  // ── Pagination ──
+  // -- Pagination --
   const handleLoadMore = useCallback(async () => {
     const nextOffset = auditOffset + AUDIT_PAGE_SIZE;
     await onLoadAuditHistory(nextOffset, AUDIT_PAGE_SIZE);
     setAuditOffset(nextOffset);
   }, [auditOffset, onLoadAuditHistory]);
 
-  // ── Render ──
+  // -- Render --
   return (
-    <div className="admin-push-panel" role="region" aria-label="Menu Management">
-      <h2 className="admin-push-panel__title">Menu Management</h2>
-      <p className="admin-push-panel__description">
-        Push required menu items to users by role. Pushed items appear with a
-        lock icon and cannot be removed by users.
-      </p>
+    <div className="space-y-6" role="region" aria-label="Menu Management">
+      <PageHeader
+        title="Menu Management"
+        description="Push required menu items to users by role. Pushed items appear with a lock icon and cannot be removed by users."
+        actions={
+          <Badge variant="secondary" className="gap-1.5">
+            <Shield className="h-3.5 w-3.5" />
+            Admin Only
+          </Badge>
+        }
+      />
 
-      {/* Tab navigation */}
-      <div className="admin-push-panel__tabs" role="tablist">
-        {(['create', 'active', 'audit'] as const).map(tab => (
-          <button
-            key={tab}
-            role="tab"
-            aria-selected={activeTab === tab}
-            className={`admin-push-panel__tab ${activeTab === tab ? 'admin-push-panel__tab--active' : ''}`}
-            onClick={() => setActiveTab(tab)}
-            type="button"
-          >
-            {tab === 'create' && 'New Push'}
-            {tab === 'active' && `Active Pushes (${activePushes.length})`}
-            {tab === 'audit' && 'Audit History'}
-          </button>
-        ))}
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="create" className="gap-1.5">
+            <Send className="h-4 w-4" />
+            New Push
+          </TabsTrigger>
+          <TabsTrigger value="active" className="gap-1.5">
+            <Lock className="h-4 w-4" />
+            Active Pushes ({activePushes.length})
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="gap-1.5">
+            <Clock className="h-4 w-4" />
+            Audit History
+          </TabsTrigger>
+        </TabsList>
 
-      {/* ── CREATE TAB ── */}
-      {activeTab === 'create' && (
-        <div className="admin-push-panel__create" role="tabpanel">
-          {/* Role selector */}
-          <fieldset className="admin-push-panel__field">
-            <legend className="admin-push-panel__label">Target Role</legend>
-            <div className="admin-push-panel__role-grid">
-              {AVAILABLE_ROLES.map(role => {
-                const count = activePushes.filter(p => p.targetRole === role.value).length;
-                return (
-                  <button
-                    key={role.value}
-                    className={`admin-push-panel__role-button ${
-                      selectedRole === role.value ? 'admin-push-panel__role-button--selected' : ''
-                    }`}
-                    onClick={() => setSelectedRole(role.value)}
-                    type="button"
-                    aria-pressed={selectedRole === role.value}
-                  >
-                    <span>{role.label}</span>
-                    <span className="admin-push-panel__role-count">
-                      {count}/{MAX_PUSHES_PER_ROLE}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
+        {/* ---- CREATE TAB ---- */}
+        <TabsContent value="create">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Create New Push</CardTitle>
+              <CardDescription>
+                Select a target role, choose a menu item, and provide a reason for the push.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Role selector */}
+              <div className="space-y-3">
+                <Label>Target Role</Label>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                  {AVAILABLE_ROLES.map(role => {
+                    const count = activePushes.filter(p => p.targetRole === role.value).length;
+                    const isSelected = selectedRole === role.value;
+                    return (
+                      <Button
+                        key={role.value}
+                        variant={isSelected ? 'default' : 'outline'}
+                        size="sm"
+                        className={cn(
+                          'justify-between gap-2',
+                          isSelected && 'ring-2 ring-primary ring-offset-2',
+                        )}
+                        onClick={() => setSelectedRole(role.value)}
+                        type="button"
+                        aria-pressed={isSelected}
+                      >
+                        <span className="truncate">{role.label}</span>
+                        <Badge
+                          variant={count >= MAX_PUSHES_PER_ROLE ? 'destructive' : 'secondary'}
+                          className="ml-1 text-xs"
+                        >
+                          {count}/{MAX_PUSHES_PER_ROLE}
+                        </Badge>
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {/* Task selector */}
-          <div className="admin-push-panel__field">
-            <label className="admin-push-panel__label" htmlFor="push-task-select">
-              Menu Item to Push
-            </label>
-            <select
-              id="push-task-select"
-              className="admin-push-panel__select"
-              value={selectedTaskRef}
-              onChange={e => setSelectedTaskRef(e.target.value)}
-              disabled={roleAtLimit}
-            >
-              <option value="">
-                {roleAtLimit
-                  ? `Limit reached (${MAX_PUSHES_PER_ROLE}/${MAX_PUSHES_PER_ROLE}). Revoke one first.`
-                  : 'Select a task...'
-                }
-              </option>
-              {tasks.map(task => (
-                <option
-                  key={task.ref}
-                  value={task.ref}
-                  disabled={task.alreadyPushed}
+              {/* Task selector */}
+              <div className="space-y-2">
+                <Label htmlFor="push-task-select">Menu Item to Push</Label>
+                <Select
+                  value={selectedTaskRef}
+                  onValueChange={setSelectedTaskRef}
+                  disabled={roleAtLimit}
                 >
-                  {task.label} ({task.ref})
-                  {task.alreadyPushed ? ' — Already pushed' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
+                  <SelectTrigger id="push-task-select">
+                    <SelectValue
+                      placeholder={
+                        roleAtLimit
+                          ? `Limit reached (${MAX_PUSHES_PER_ROLE}/${MAX_PUSHES_PER_ROLE}). Revoke one first.`
+                          : 'Select a task...'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tasks.map((task: TaskOption) => (
+                      <SelectItem
+                        key={task.ref}
+                        value={task.ref}
+                        disabled={task.alreadyPushed}
+                      >
+                        {task.label} ({task.ref})
+                        {task.alreadyPushed ? ' -- Already pushed' : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Reason */}
-          <div className="admin-push-panel__field">
-            <label className="admin-push-panel__label" htmlFor="push-reason">
-              Reason (shown to users in tooltip)
-            </label>
-            <textarea
-              id="push-reason"
-              className="admin-push-panel__textarea"
-              value={reason}
-              onChange={e => setReason(e.target.value)}
-              placeholder="e.g., New attendance policy effective Monday. All teachers must track daily attendance."
-              maxLength={200}
-              rows={3}
-              disabled={roleAtLimit}
-            />
-            <span className="admin-push-panel__char-count">
-              {reason.length}/200
-            </span>
-          </div>
+              {/* Reason */}
+              <div className="space-y-2">
+                <Label htmlFor="push-reason">Reason (shown to users in tooltip)</Label>
+                <Textarea
+                  id="push-reason"
+                  value={reason}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReason(e.target.value)}
+                  placeholder="e.g., New attendance policy effective Monday. All teachers must track daily attendance."
+                  maxLength={200}
+                  rows={3}
+                  disabled={roleAtLimit}
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {reason.length}/200
+                </p>
+              </div>
 
-          {/* Expiry */}
-          <div className="admin-push-panel__field admin-push-panel__field--inline">
-            <label className="admin-push-panel__checkbox-label">
-              <input
-                type="checkbox"
-                checked={hasExpiry}
-                onChange={e => setHasExpiry(e.target.checked)}
-                disabled={roleAtLimit}
-              />
-              Set expiry date
-            </label>
-            {hasExpiry && (
-              <input
-                type="date"
-                className="admin-push-panel__date-input"
-                value={expiryDate}
-                onChange={e => setExpiryDate(e.target.value)}
-                min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
-              />
-            )}
-          </div>
+              {/* Expiry */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="push-expiry-checkbox"
+                    checked={hasExpiry}
+                    onCheckedChange={(checked: boolean | 'indeterminate') => setHasExpiry(checked === true)}
+                    disabled={roleAtLimit}
+                  />
+                  <Label htmlFor="push-expiry-checkbox" className="cursor-pointer">
+                    Set expiry date
+                  </Label>
+                </div>
+                {hasExpiry && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="date"
+                      value={expiryDate}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setExpiryDate(e.target.value)}
+                      min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                      className="w-auto"
+                    />
+                  </div>
+                )}
+              </div>
 
-          {/* Preview */}
-          {preview && (
-            <div
-              className={`admin-push-panel__preview ${
-                preview.wouldExceedLimit || preview.alreadyPushed
-                  ? 'admin-push-panel__preview--warning'
-                  : 'admin-push-panel__preview--ok'
-              }`}
-              role="status"
-            >
-              <h4 className="admin-push-panel__preview-title">Push Preview</h4>
-              <dl className="admin-push-panel__preview-grid">
-                <dt>Task</dt>
-                <dd>{preview.taskLabel} ({preview.taskRef})</dd>
-                <dt>Target</dt>
-                <dd>{AVAILABLE_ROLES.find(r => r.value === preview.targetRole)?.label}</dd>
-                <dt>Affected users</dt>
-                <dd>{preview.affectedUserCount}</dd>
-                <dt>Current pushes for role</dt>
-                <dd>
-                  {preview.currentPushCount}/{MAX_PUSHES_PER_ROLE}
-                  {preview.wouldExceedLimit && (
-                    <span className="admin-push-panel__warning"> — Limit reached</span>
-                  )}
-                </dd>
-              </dl>
-              {preview.alreadyPushed && (
-                <p className="admin-push-panel__warning">
-                  This task is already pushed to {preview.targetRole}.
+              {/* Preview */}
+              {isPreviewLoading && (
+                <p className="text-sm text-muted-foreground animate-pulse" role="status" aria-live="polite">
+                  Loading preview...
                 </p>
               )}
-            </div>
-          )}
 
-          {isPreviewLoading && (
-            <p className="admin-push-panel__loading" role="status" aria-live="polite">
-              Loading preview...
-            </p>
-          )}
-
-          {/* Messages */}
-          {formError && (
-            <div className="admin-push-panel__message admin-push-panel__message--error" role="alert">
-              {formError}
-            </div>
-          )}
-
-          {formSuccess && (
-            <div className="admin-push-panel__message admin-push-panel__message--success" role="status">
-              {formSuccess}
-            </div>
-          )}
-
-          {/* Submit */}
-          <button
-            className="admin-push-panel__submit"
-            onClick={handleSubmit}
-            disabled={isSubmitting || roleAtLimit || !selectedTaskRef}
-            type="button"
-          >
-            {isSubmitting ? 'Pushing...' : 'Push to All'}
-          </button>
-        </div>
-      )}
-
-      {/* ── ACTIVE PUSHES TAB ── */}
-      {activeTab === 'active' && (
-        <div className="admin-push-panel__active" role="tabpanel">
-          {activePushes.length === 0 ? (
-            <p className="admin-push-panel__empty">
-              No active pushes. Use the "New Push" tab to push required menu
-              items to your users.
-            </p>
-          ) : (
-            <table className="admin-push-panel__table" role="table">
-              <thead>
-                <tr>
-                  <th scope="col">Task</th>
-                  <th scope="col">Role</th>
-                  <th scope="col">Reason</th>
-                  <th scope="col">Pushed By</th>
-                  <th scope="col">Expires</th>
-                  <th scope="col">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activePushes.map(push => (
-                  <tr key={push.id}>
-                    <td>{push.taskRef}</td>
-                    <td>{push.targetRole}</td>
-                    <td className="admin-push-panel__reason-cell">{push.reason}</td>
-                    <td>{push.pushedBy}</td>
-                    <td>
-                      {push.expiresAt
-                        ? new Date(push.expiresAt).toLocaleDateString()
-                        : 'Never'
-                      }
-                    </td>
-                    <td>
-                      {revokingPushId === push.id ? (
-                        <div className="admin-push-panel__revoke-form">
-                          <input
-                            type="text"
-                            className="admin-push-panel__revoke-input"
-                            placeholder="Reason for revocation (optional)"
-                            value={revokeReason}
-                            onChange={e => setRevokeReason(e.target.value)}
-                          />
-                          <button
-                            className="admin-push-panel__revoke-confirm"
-                            onClick={() => handleRevoke(push.id)}
-                            disabled={isRevoking}
-                            type="button"
-                          >
-                            {isRevoking ? 'Revoking...' : 'Confirm'}
-                          </button>
-                          <button
-                            className="admin-push-panel__revoke-cancel"
-                            onClick={() => { setRevokingPushId(null); setRevokeReason(''); }}
-                            type="button"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          className="admin-push-panel__revoke-button"
-                          onClick={() => setRevokingPushId(push.id)}
-                          type="button"
-                        >
-                          Revoke
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
-
-      {/* ── AUDIT HISTORY TAB ── */}
-      {activeTab === 'audit' && (
-        <div className="admin-push-panel__audit" role="tabpanel">
-          {auditHistory.length === 0 ? (
-            <p className="admin-push-panel__empty">No push history yet.</p>
-          ) : (
-            <>
-              <table className="admin-push-panel__table" role="table">
-                <thead>
-                  <tr>
-                    <th scope="col">Task</th>
-                    <th scope="col">Role</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Pushed By</th>
-                    <th scope="col">Created</th>
-                    <th scope="col">Revoked</th>
-                    <th scope="col">Reason</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {auditHistory.map(record => (
-                    <tr
-                      key={record.id}
-                      className={`admin-push-panel__audit-row admin-push-panel__audit-row--${record.status}`}
-                    >
-                      <td>{record.taskRef}</td>
-                      <td>{record.targetRole}</td>
-                      <td>
-                        <span className={`admin-push-panel__status-badge admin-push-panel__status-badge--${record.status}`}>
-                          {record.status}
-                        </span>
-                      </td>
-                      <td>{record.pushedBy}</td>
-                      <td>{new Date(record.createdAt).toLocaleDateString()}</td>
-                      <td>
-                        {record.revokedAt
-                          ? `${new Date(record.revokedAt).toLocaleDateString()} by ${record.revokedBy}`
-                          : '—'
-                        }
-                      </td>
-                      <td className="admin-push-panel__reason-cell">
-                        {record.reason}
-                        {record.revocationReason && (
-                          <span className="admin-push-panel__revocation-reason">
-                            {' '}(Revoked: {record.revocationReason})
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {auditHistory.length < auditTotal && (
-                <button
-                  className="admin-push-panel__load-more"
-                  onClick={handleLoadMore}
-                  type="button"
+              {preview && (
+                <Card
+                  className={cn(
+                    'border-l-4',
+                    preview.wouldExceedLimit || preview.alreadyPushed
+                      ? 'border-l-destructive bg-destructive/5'
+                      : 'border-l-primary bg-primary/5',
+                  )}
+                  role="status"
                 >
-                  Load more ({auditTotal - auditHistory.length} remaining)
-                </button>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      {preview.wouldExceedLimit || preview.alreadyPushed ? (
+                        <AlertTriangle className="h-4 w-4 text-destructive" />
+                      ) : (
+                        <Shield className="h-4 w-4 text-primary" />
+                      )}
+                      Push Preview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                      <dt className="font-medium text-muted-foreground">Task</dt>
+                      <dd>{preview.taskLabel} ({preview.taskRef})</dd>
+                      <dt className="font-medium text-muted-foreground">Target</dt>
+                      <dd>{AVAILABLE_ROLES.find(r => r.value === preview.targetRole)?.label}</dd>
+                      <dt className="font-medium text-muted-foreground">Affected users</dt>
+                      <dd className="flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                        {preview.affectedUserCount}
+                      </dd>
+                      <dt className="font-medium text-muted-foreground">Current pushes for role</dt>
+                      <dd className="flex items-center gap-2">
+                        {preview.currentPushCount}/{MAX_PUSHES_PER_ROLE}
+                        {preview.wouldExceedLimit && (
+                          <Badge variant="destructive" className="text-xs">Limit reached</Badge>
+                        )}
+                      </dd>
+                    </dl>
+                    {preview.alreadyPushed && (
+                      <p className="mt-3 flex items-center gap-1.5 text-sm text-destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        This task is already pushed to {preview.targetRole}.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
               )}
-            </>
-          )}
-        </div>
-      )}
+
+              {/* Messages */}
+              {formError && (
+                <div
+                  className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+                  role="alert"
+                >
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  {formError}
+                </div>
+              )}
+
+              {formSuccess && (
+                <div
+                  className="flex items-center gap-2 rounded-md border border-primary/50 bg-primary/10 px-4 py-3 text-sm text-primary"
+                  role="status"
+                >
+                  <Shield className="h-4 w-4 shrink-0" />
+                  {formSuccess}
+                </div>
+              )}
+            </CardContent>
+            <CardFooter>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || roleAtLimit || !selectedTaskRef}
+                isLoading={isSubmitting}
+                leftIcon={<Send className="h-4 w-4" />}
+              >
+                {isSubmitting ? 'Pushing...' : 'Push to All'}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        {/* ---- ACTIVE PUSHES TAB ---- */}
+        <TabsContent value="active">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Active Pushes</CardTitle>
+              <CardDescription>
+                Currently enforced menu pushes across all roles.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {activePushes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Lock className="h-10 w-10 text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground">
+                    No active pushes. Use the &quot;New Push&quot; tab to push required menu
+                    items to your users.
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Task</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Reason</TableHead>
+                      <TableHead>Pushed By</TableHead>
+                      <TableHead>Expires</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {activePushes.map(push => (
+                      <TableRow key={push.id}>
+                        <TableCell className="font-medium">{push.taskRef}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{push.targetRole}</Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">{push.reason}</TableCell>
+                        <TableCell>{push.pushedBy}</TableCell>
+                        <TableCell>
+                          {push.expiresAt ? (
+                            <span className="flex items-center gap-1.5 text-sm">
+                              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                              {new Date(push.expiresAt).toLocaleDateString()}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Never</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setRevokingPushId(push.id)}
+                            leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                          >
+                            Revoke
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Revoke confirmation dialog */}
+          <Dialog
+            open={revokingPushId !== null}
+            onOpenChange={(open: boolean) => {
+              if (!open) {
+                setRevokingPushId(null);
+                setRevokeReason('');
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Revoke Push</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <p className="text-sm text-muted-foreground">
+                  Are you sure you want to revoke this push? Users will no longer see this
+                  item as a required menu entry.
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="revoke-reason">Reason for revocation (optional)</Label>
+                  <Input
+                    id="revoke-reason"
+                    placeholder="Reason for revocation (optional)"
+                    value={revokeReason}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRevokeReason(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => { setRevokingPushId(null); setRevokeReason(''); }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => revokingPushId && handleRevoke(revokingPushId)}
+                  disabled={isRevoking}
+                  isLoading={isRevoking}
+                >
+                  {isRevoking ? 'Revoking...' : 'Confirm Revoke'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        {/* ---- AUDIT HISTORY TAB ---- */}
+        <TabsContent value="audit">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Audit History</CardTitle>
+              <CardDescription>
+                Complete history of all push and revocation actions.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {auditHistory.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Clock className="h-10 w-10 text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground">No push history yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Task</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Pushed By</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Revoked</TableHead>
+                        <TableHead>Reason</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {auditHistory.map(record => (
+                        <TableRow key={record.id}>
+                          <TableCell className="font-medium">{record.taskRef}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{record.targetRole}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                record.status === 'active'
+                                  ? 'default'
+                                  : record.status === 'revoked'
+                                    ? 'destructive'
+                                    : 'outline'
+                              }
+                            >
+                              {record.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{record.pushedBy}</TableCell>
+                          <TableCell className="text-sm">
+                            {new Date(record.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {record.revokedAt
+                              ? `${new Date(record.revokedAt).toLocaleDateString()} by ${record.revokedBy}`
+                              : <span className="text-muted-foreground">--</span>
+                            }
+                          </TableCell>
+                          <TableCell className="max-w-[200px]">
+                            <span className="truncate block">{record.reason}</span>
+                            {record.revocationReason && (
+                              <span className="block text-xs text-muted-foreground mt-1">
+                                Revoked: {record.revocationReason}
+                              </span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {auditHistory.length < auditTotal && (
+                    <div className="flex justify-center pt-2">
+                      <Button
+                        variant="outline"
+                        onClick={handleLoadMore}
+                        leftIcon={<Clock className="h-4 w-4" />}
+                      >
+                        Load more ({auditTotal - auditHistory.length} remaining)
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

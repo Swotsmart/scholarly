@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
-  transpilePackages: ['@scholarly/shared'],
+  transpilePackages: ['@scholarly/shared', '@scholarly/database'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'scholarly.ai' },

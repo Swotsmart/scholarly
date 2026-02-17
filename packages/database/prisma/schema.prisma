@@ -6732,3 +6732,89 @@ model DataErasureRequest {
   requestedAt DateTime  @default(now())
   completedAt DateTime?
 }
+
+// ============================================================================
+// SELF-COMPOSING MENU MODELS
+// ============================================================================
+
+model UserMenuState {
+  id         String   @id @default(cuid())
+  userId     String
+  tenantId   String
+  role       String
+  items      Json     // Array of ComposingMenuItem serialised as JSON
+  version    Int      @default(1)
+  lastSyncAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, tenantId, role])
+  @@index([tenantId])
+  @@index([userId])
+}
+
+model MenuPushRecord {
+  id         String    @id @default(cuid())
+  tenantId   String
+  taskRef    String
+  targetRole String
+  reason     String
+  pushType   String    @default("INSTITUTIONAL")
+  pushedBy   String    // admin userId
+  expiresAt  DateTime?
+  revokedAt         DateTime?
+  revokedBy         String?
+  revocationReason  String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([tenantId, targetRole])
+  @@index([expiresAt])
+}
+
+model MenuUsageEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  tenantId  String
+  taskRef   String
+  eventType String   // "navigation", "command_palette", "seed_pin", "seed_dismiss"
+  timestamp DateTime @default(now())
+
+  @@index([tenantId, userId])
+  @@index([timestamp])
+  @@index([taskRef])
+}
+
+model MenuAnalyticsDaily {
+  id             String   @id @default(cuid())
+  tenantId       String
+  date           DateTime @db.Date
+  totalEvents    Int      @default(0)
+  promotions     Int      @default(0)
+  decays         Int      @default(0)
+  seedsAccepted  Int      @default(0)
+  seedsDismissed Int      @default(0)
+  pushesCreated  Int      @default(0)
+  pushesExpired  Int      @default(0)
+  avgMenuSize    Float    @default(0)
+  topItems       Json     @default("[]")
+  createdAt      DateTime @default(now())
+
+  @@unique([tenantId, date])
+  @@index([tenantId])
+  @@index([date])
+}
+
+model MenuSyncLog {
+  id        String   @id @default(cuid())
+  userId    String
+  tenantId  String
+  deviceId  String
+  version   Int
+  action    String   // "push", "pull", "conflict_resolved"
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId, tenantId])
+  @@index([deviceId])
+}

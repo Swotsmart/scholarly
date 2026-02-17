@@ -30,7 +30,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-import type { MenuSyncService, SyncResult } from './menu-sync.service';
+import type { MenuSyncService, SyncResult } from '@/services/menu-sync.service';
 
 // =============================================================================
 // TYPES

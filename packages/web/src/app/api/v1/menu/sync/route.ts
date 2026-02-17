@@ -1,4 +1,6 @@
-import { MenuSyncService } from '@/services/menu-sync.service';
+import { PrismaMenuStateRepository } from '@/repositories/menu-state.repository';
+
+const repository = new PrismaMenuStateRepository();
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
@@ -6,14 +8,26 @@ export async function GET(request: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const service = new MenuSyncService();
   const userId = request.headers.get('x-user-id');
-  if (!userId) {
-    return Response.json({ error: 'Missing user ID' }, { status: 400 });
+  const tenantId = request.headers.get('x-tenant-id');
+  const role = request.headers.get('x-role-id');
+  if (!userId || !tenantId || !role) {
+    return Response.json({ error: 'Missing user ID, tenant ID, or role' }, { status: 400 });
   }
 
-  const state = await service.getMenuState(userId);
-  return Response.json(state);
+  try {
+    const state = await repository.getMenuState(userId, tenantId, role);
+    if (!state) {
+      return Response.json({ error: 'Menu state not found' }, { status: 404 });
+    }
+    return Response.json(state);
+  } catch (error) {
+    console.error('Menu sync GET failed:', error);
+    return Response.json(
+      { error: 'Failed to retrieve menu state' },
+      { status: 500 },
+    );
+  }
 }
 
 export async function PUT(request: Request) {
@@ -23,12 +37,23 @@ export async function PUT(request: Request) {
   }
 
   const userId = request.headers.get('x-user-id');
-  if (!userId) {
-    return Response.json({ error: 'Missing user ID' }, { status: 400 });
+  const tenantId = request.headers.get('x-tenant-id');
+  const role = request.headers.get('x-role-id');
+  if (!userId || !tenantId || !role) {
+    return Response.json({ error: 'Missing user ID, tenant ID, or role' }, { status: 400 });
   }
 
-  const body = await request.json();
-  const service = new MenuSyncService();
-  const result = await service.syncMenuState(userId, body);
-  return Response.json(result);
+  try {
+    const body = await request.json();
+    const { items, version } = body as { items: unknown; version: number };
+
+    const result = await repository.saveMenuState(userId, tenantId, role, items, version);
+    return Response.json(result);
+  } catch (error) {
+    console.error('Menu sync PUT failed:', error);
+    return Response.json(
+      { error: 'Failed to save menu state' },
+      { status: 500 },
+    );
+  }
 }

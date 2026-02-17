@@ -313,6 +313,14 @@ export function getTask(ref: string): RegisteredTask | undefined {
 }
 
 /**
+ * Get all registered tasks. Used by the analytics dashboard for
+ * populating task filter dropdowns.
+ */
+export function getAllTasks(): RegisteredTask[] {
+  return Object.values(taskRegistry);
+}
+
+/**
  * Get the anchor definitions for a given role.
  * Checks both the primary role name and aliases.
  */

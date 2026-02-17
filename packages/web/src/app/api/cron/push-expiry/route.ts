@@ -1,4 +1,6 @@
-import { PushExpiryHandler } from '@/services/push-expiry-handler';
+import { PrismaMenuPushRepository } from '@/repositories/menu-push.repository';
+
+const repository = new PrismaMenuPushRepository();
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
@@ -6,7 +8,19 @@ export async function GET(request: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const handler = new PushExpiryHandler();
-  const result = await handler.processExpiredPushes();
-  return Response.json(result);
+  try {
+    const expired = await repository.getExpiredPushes();
+    if (expired.length === 0) {
+      return Response.json({ expired: 0, message: 'No expired pushes' });
+    }
+
+    const count = await repository.markExpired(expired.map((p) => p.id));
+    return Response.json({ expired: count, ids: expired.map((p) => p.id) });
+  } catch (error) {
+    console.error('Push expiry cron failed:', error);
+    return Response.json(
+      { error: 'Failed to process expired pushes' },
+      { status: 500 },
+    );
+  }
 }
