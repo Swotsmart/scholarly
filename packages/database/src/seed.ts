@@ -5,20 +5,24 @@
 
 import { PrismaClient } from '@prisma/client';
 import * as crypto from 'crypto';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-// Simple password hash for demo (in production, use bcrypt)
+// Simple password hash for non-login use (e.g., picture passwords)
 function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(password + 'scholarly_salt').digest('hex');
 }
 
-// Demo password for all users
+// Demo password for all users — must use bcrypt to match auth service
 const DEMO_PASSWORD = 'demo123';
-const DEMO_PASSWORD_HASH = hashPassword(DEMO_PASSWORD);
+let DEMO_PASSWORD_HASH: string;
 
 async function main() {
   console.log('Starting database seed...');
+
+  // Generate bcrypt hash for demo password (matches auth service's bcrypt.compare)
+  DEMO_PASSWORD_HASH = await bcrypt.hash(DEMO_PASSWORD, 12);
 
   // Create default tenant
   const tenant = await prisma.tenant.upsert({
@@ -48,7 +52,7 @@ async function main() {
   // Create demo users
   const teacherUser = await prisma.user.upsert({
     where: { tenantId_email: { tenantId: tenant.id, email: 'teacher@scholarly.app' } },
-    update: {},
+    update: { passwordHash: DEMO_PASSWORD_HASH },
     create: {
       tenantId: tenant.id,
       email: 'teacher@scholarly.app',
@@ -68,7 +72,7 @@ async function main() {
 
   const adminUser = await prisma.user.upsert({
     where: { tenantId_email: { tenantId: tenant.id, email: 'admin@scholarly.app' } },
-    update: {},
+    update: { passwordHash: DEMO_PASSWORD_HASH },
     create: {
       tenantId: tenant.id,
       email: 'admin@scholarly.app',
@@ -87,7 +91,7 @@ async function main() {
 
   const tutorUser = await prisma.user.upsert({
     where: { tenantId_email: { tenantId: tenant.id, email: 'tutor@scholarly.app' } },
-    update: {},
+    update: { passwordHash: DEMO_PASSWORD_HASH },
     create: {
       tenantId: tenant.id,
       email: 'tutor@scholarly.app',
@@ -217,7 +221,7 @@ async function main() {
 
   const parentUser = await prisma.user.upsert({
     where: { tenantId_email: { tenantId: tenant.id, email: 'parent@scholarly.app' } },
-    update: {},
+    update: { passwordHash: DEMO_PASSWORD_HASH },
     create: {
       tenantId: tenant.id,
       email: 'parent@scholarly.app',
@@ -265,7 +269,7 @@ async function main() {
 
   const learnerUser = await prisma.user.upsert({
     where: { tenantId_email: { tenantId: tenant.id, email: 'learner@scholarly.app' } },
-    update: {},
+    update: { passwordHash: DEMO_PASSWORD_HASH },
     create: {
       tenantId: tenant.id,
       email: 'learner@scholarly.app',
