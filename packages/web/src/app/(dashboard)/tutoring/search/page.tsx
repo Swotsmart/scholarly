@@ -1,24 +1,24 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Users,
   Search,
   Star,
   Clock,
   Video,
-  MapPin,
   Filter,
   GraduationCap,
   ShieldCheck,
-  BadgeCheck,
 } from 'lucide-react';
+import { api, TutorSearchProfile } from '@/lib/api';
 
-const tutors = [
+// Fallback data for when API returns no results or is unavailable
+const FALLBACK_TUTORS: TutorSearchProfile[] = [
   {
     id: 'tutor_1',
     name: 'Sarah Chen',
@@ -32,9 +32,7 @@ const tutors = [
     responseTime: '< 1 hour',
     availability: 'Weekday afternoons, Saturdays',
     languages: ['English', 'Mandarin'],
-    kycVerified: true,
-    wwccVerified: true,
-    wwccState: 'NSW',
+    verified: true,
   },
   {
     id: 'tutor_2',
@@ -49,9 +47,7 @@ const tutors = [
     responseTime: '< 2 hours',
     availability: 'Evenings, Weekends',
     languages: ['English'],
-    kycVerified: true,
-    wwccVerified: true,
-    wwccState: 'VIC',
+    verified: true,
   },
   {
     id: 'tutor_3',
@@ -66,14 +62,43 @@ const tutors = [
     responseTime: '< 3 hours',
     availability: 'Flexible',
     languages: ['English'],
-    kycVerified: true,
-    wwccVerified: true,
-    wwccState: 'QLD',
+    verified: true,
   },
 ];
 
 export default function TutorSearchPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [tutors, setTutors] = useState<TutorSearchProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const fetchTutors = useCallback(async (search?: string) => {
+    setIsLoading(true);
+    const response = await api.search.tutors({ search });
+
+    if (response.success && response.data.tutors.length > 0) {
+      setTutors(response.data.tutors);
+    } else {
+      // Fall back to hardcoded data when API returns empty
+      setTutors(FALLBACK_TUTORS);
+    }
+    setHasSearched(true);
+    setIsLoading(false);
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    fetchTutors();
+  }, [fetchTutors]);
+
+  // Search when query changes (debounced)
+  useEffect(() => {
+    if (!hasSearched) return;
+    const timer = setTimeout(() => {
+      fetchTutors(searchQuery || undefined);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, fetchTutors, hasSearched]);
 
   return (
     <div className="space-y-6">
@@ -103,81 +128,103 @@ export default function TutorSearchPage() {
 
       {/* Tutor Cards */}
       <div className="space-y-4">
-        {tutors.map((tutor) => (
-          <Card key={tutor.id}>
-            <CardContent className="p-6">
-              <div className="flex gap-6">
-                {/* Avatar */}
-                <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <GraduationCap className="h-12 w-12 text-primary" />
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-semibold">{tutor.name}</h3>
-                        {tutor.kycVerified && tutor.wwccVerified && (
-                          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 gap-1">
-                            <ShieldCheck className="h-3 w-3" />
-                            Verified
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground">{tutor.bio}</p>
-                      {tutor.wwccVerified && (
-                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                          <BadgeCheck className="h-3 w-3 text-green-600" />
-                          WWCC verified ({tutor.wwccState})
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold">${tutor.hourlyRate}</p>
-                      <p className="text-sm text-muted-foreground">per hour</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {tutor.subjects.map((subject) => (
-                      <Badge key={subject}>{subject}</Badge>
-                    ))}
-                    {tutor.yearLevels.map((level) => (
-                      <Badge key={level} variant="secondary">{level}</Badge>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium text-foreground">{tutor.rating}</span>
-                      <span>({tutor.reviewCount} reviews)</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Video className="h-4 w-4" />
-                      {tutor.sessionsCompleted} sessions
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      Responds {tutor.responseTime}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      Available: {tutor.availability}
-                    </p>
+        {isLoading ? (
+          // Loading skeletons
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="flex gap-6">
+                  <Skeleton className="h-24 w-24 rounded-full flex-shrink-0" />
+                  <div className="flex-1 space-y-4">
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-full" />
                     <div className="flex gap-2">
-                      <Button variant="outline">View Profile</Button>
-                      <Button>Book Session</Button>
+                      <Skeleton className="h-6 w-20" />
+                      <Skeleton className="h-6 w-20" />
+                    </div>
+                    <Skeleton className="h-4 w-64" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : tutors.length === 0 ? (
+          <div className="py-12 text-center">
+            <GraduationCap className="mx-auto h-12 w-12 text-muted-foreground/50" />
+            <p className="mt-4 text-lg font-medium">No tutors found</p>
+            <p className="text-muted-foreground">Try adjusting your search or filters</p>
+          </div>
+        ) : (
+          tutors.map((tutor) => (
+            <Card key={tutor.id}>
+              <CardContent className="p-6">
+                <div className="flex gap-6">
+                  {/* Avatar */}
+                  <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <GraduationCap className="h-12 w-12 text-primary" />
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-semibold">{tutor.name}</h3>
+                          {tutor.verified && (
+                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 gap-1">
+                              <ShieldCheck className="h-3 w-3" />
+                              Verified
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-muted-foreground">{tutor.bio}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold">${tutor.hourlyRate}</p>
+                        <p className="text-sm text-muted-foreground">per hour</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {tutor.subjects.map((subject) => (
+                        <Badge key={subject}>{subject}</Badge>
+                      ))}
+                      {tutor.yearLevels.map((level) => (
+                        <Badge key={level} variant="secondary">{level}</Badge>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-medium text-foreground">{tutor.rating}</span>
+                        <span>({tutor.reviewCount} reviews)</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Video className="h-4 w-4" />
+                        {tutor.sessionsCompleted} sessions
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        Responds {tutor.responseTime}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">
+                        Available: {tutor.availability}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button variant="outline">View Profile</Button>
+                        <Button>Book Session</Button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );

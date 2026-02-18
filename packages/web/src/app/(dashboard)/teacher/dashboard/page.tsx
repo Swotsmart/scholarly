@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
+import { useAuthStore } from '@/stores/auth-store';
+import { useDashboardData } from '@/hooks/use-dashboard-data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -158,9 +160,13 @@ const aiInsights = [
 ];
 
 export default function TeacherDashboardPage() {
+  const { user } = useAuthStore();
+  const { data: dashData } = useDashboardData();
   const currentPeriod = useMemo(() => getCurrentPeriod(), []);
   const currentTime = useMemo(() => formatCurrentTime(), []);
   const currentClass = todaySchedule.find(c => c.isCurrent);
+  const displayName = user ? `${user.firstName} ${user.lastName}` : 'Dr. Wilson';
+  const notificationCount = dashData ? 0 : undefined; // Will be populated when notifications endpoint is available
 
   return (
     <div className="space-y-8">
@@ -179,7 +185,7 @@ export default function TeacherDashboardPage() {
               Teacher Dashboard
             </h1>
             <p className="text-muted-foreground mt-1">
-              Welcome back, Dr. Wilson. Here&apos;s your day at a glance.
+              Welcome back, {displayName}. Here&apos;s your day at a glance.
             </p>
           </div>
 

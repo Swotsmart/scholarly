@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useDashboardData } from '@/hooks/use-dashboard-data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -266,6 +267,14 @@ function getReliefStatusBadge(status: 'covered' | 'partial' | 'pending') {
 
 export default function AdminDashboardPage() {
   const [trendMetric, setTrendMetric] = useState<'enrollment' | 'attendance' | 'engagement'>('enrollment');
+  const { data: dashData } = useDashboardData();
+  const platformStats = dashData?.platformStats;
+
+  // Override KPI stats with real data when available
+  if (platformStats) {
+    kpiStats[0].value = platformStats.userCount.toLocaleString();
+    kpiStats[0].subtitle = `${platformStats.tutorCount} tutors, ${platformStats.contentCount} content items`;
+  }
 
   return (
     <div className="space-y-6">

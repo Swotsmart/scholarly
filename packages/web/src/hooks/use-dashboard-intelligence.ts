@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
+import type { DashboardSummary } from '@/lib/api';
 
 // =============================================================================
 // TYPES
@@ -236,12 +237,16 @@ function getTutorFocusHint(tod: TimeOfDay): string {
   }
 }
 
-function getTutorInsights(): QuickInsight[] {
+function getTutorInsights(realData?: DashboardSummary | null): QuickInsight[] {
+  const tutorStats = realData?.tutorStats as Record<string, number> | undefined;
+  const pendingBookings = realData?.pendingBookings;
+  const monthlyEarnings = realData?.monthlyEarnings;
+
   return [
-    { id: 'sessions-today', icon: 'Calendar', label: 'Sessions Today', value: 4, urgency: 'medium', href: '/tutoring/sessions' },
-    { id: 'earnings-week', icon: 'CreditCard', label: 'This Week', value: '$420', change: 15, urgency: 'low', href: '/tutoring/earnings' },
-    { id: 'rating', icon: 'Star', label: 'Rating', value: '4.9', urgency: 'low', href: '/tutoring/reviews' },
-    { id: 'pending-requests', icon: 'Clock', label: 'Booking Requests', value: 2, urgency: 'high', href: '/tutoring/sessions' },
+    { id: 'sessions-today', icon: 'Calendar', label: 'Sessions Today', value: tutorStats?.totalSessions ?? 4, urgency: 'medium', href: '/tutoring/sessions' },
+    { id: 'earnings-month', icon: 'CreditCard', label: 'This Month', value: monthlyEarnings != null ? `$${monthlyEarnings}` : '$420', change: 15, urgency: 'low', href: '/tutoring/earnings' },
+    { id: 'rating', icon: 'Star', label: 'Rating', value: tutorStats?.averageRating != null ? String(tutorStats.averageRating) : '4.9', urgency: 'low', href: '/tutoring/reviews' },
+    { id: 'pending-requests', icon: 'Clock', label: 'Booking Requests', value: pendingBookings ?? 2, urgency: pendingBookings && pendingBookings > 0 ? 'high' : 'low', href: '/tutoring/sessions' },
   ];
 }
 
@@ -260,12 +265,14 @@ function getAdminFocusHint(tod: TimeOfDay): string {
   }
 }
 
-function getAdminInsights(): QuickInsight[] {
+function getAdminInsights(realData?: DashboardSummary | null): QuickInsight[] {
+  const stats = realData?.platformStats;
+
   return [
-    { id: 'active-users', icon: 'Users', label: 'Active Users', value: '1,247', change: 8, urgency: 'low', href: '/admin/users' },
-    { id: 'system-health', icon: 'Activity', label: 'System Health', value: '99.8%', urgency: 'low' },
-    { id: 'pending-approvals', icon: 'Shield', label: 'Pending Approvals', value: 7, urgency: 'high', href: '/admin/users' },
-    { id: 'revenue-today', icon: 'CreditCard', label: 'Revenue Today', value: '$3,420', change: 12, urgency: 'low', href: '/admin/payments' },
+    { id: 'active-users', icon: 'Users', label: 'Total Users', value: stats ? stats.userCount.toLocaleString() : '1,247', change: 8, urgency: 'low', href: '/admin/users' },
+    { id: 'active-tutors', icon: 'Activity', label: 'Active Tutors', value: stats ? stats.tutorCount.toLocaleString() : '99.8%', urgency: 'low', href: '/admin/users' },
+    { id: 'content-count', icon: 'Shield', label: 'Published Content', value: stats ? stats.contentCount : 7, urgency: 'low', href: '/admin/marketplace' },
+    { id: 'bookings', icon: 'CreditCard', label: 'Total Bookings', value: stats ? stats.bookingCount.toLocaleString() : '$3,420', urgency: 'low', href: '/admin/payments' },
   ];
 }
 
@@ -273,7 +280,7 @@ function getAdminInsights(): QuickInsight[] {
 // MAIN HOOK
 // =============================================================================
 
-export function useDashboardIntelligence(): DashboardIntelligence {
+export function useDashboardIntelligence(realData?: DashboardSummary | null): DashboardIntelligence {
   const { user } = useAuthStore();
 
   return useMemo(() => {
@@ -311,7 +318,7 @@ export function useDashboardIntelligence(): DashboardIntelligence {
       case 'tutor':
       case 'tutor_professional':
         focusHint = getTutorFocusHint(tod);
-        insights = getTutorInsights();
+        insights = getTutorInsights(realData);
         continuations = [];
         upcoming = [];
         suggestions = [];
@@ -319,7 +326,7 @@ export function useDashboardIntelligence(): DashboardIntelligence {
       case 'platform_admin':
       case 'admin':
         focusHint = getAdminFocusHint(tod);
-        insights = getAdminInsights();
+        insights = getAdminInsights(realData);
         continuations = [];
         upcoming = [];
         suggestions = [];
@@ -345,5 +352,5 @@ export function useDashboardIntelligence(): DashboardIntelligence {
       upcoming,
       suggestions,
     };
-  }, [user]);
+  }, [user, realData]);
 }

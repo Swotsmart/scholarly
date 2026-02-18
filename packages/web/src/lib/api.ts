@@ -468,6 +468,120 @@ class ApiClient {
   };
 
   // ==========================================================================
+  // DASHBOARD
+  // ==========================================================================
+
+  dashboard = {
+    getSummary: async (): Promise<ApiResponse<DashboardSummary>> => {
+      if (DEMO_MODE) {
+        return { success: true, data: DEMO_DASHBOARD_SUMMARY };
+      }
+      return this.get<DashboardSummary>('/dashboard/summary');
+    },
+    getActivity: async (limit = 10): Promise<ApiResponse<{ activities: DashboardActivity[] }>> => {
+      if (DEMO_MODE) {
+        return { success: true, data: { activities: [] } };
+      }
+      return this.get<{ activities: DashboardActivity[] }>(`/dashboard/activity?limit=${limit}`);
+    },
+    getNotifications: async (status?: string): Promise<ApiResponse<{ notifications: DashboardNotification[]; unreadCount: number }>> => {
+      if (DEMO_MODE) {
+        return { success: true, data: { notifications: [], unreadCount: 0 } };
+      }
+      return this.get<{ notifications: DashboardNotification[]; unreadCount: number }>(`/dashboard/notifications${status ? `?status=${status}` : ''}`);
+    },
+    getQuickStats: async (): Promise<ApiResponse<{ stats: QuickStats }>> => {
+      if (DEMO_MODE) {
+        return { success: true, data: { stats: { activeTutors: 3, publishedContent: 12, todayBookings: 5, activeFamilies: 8 } } };
+      }
+      return this.get<{ stats: QuickStats }>('/dashboard/quick-stats');
+    },
+  };
+
+  // ==========================================================================
+  // AI BUDDY
+  // ==========================================================================
+
+  aiBuddy = {
+    chat: async (message: string, context?: { conversationId?: string; yearLevel?: string; subjects?: string[]; currentTopic?: string; persona?: string }): Promise<ApiResponse<AiBuddyChatResponse>> => {
+      if (DEMO_MODE) {
+        return {
+          success: true,
+          data: {
+            conversationId: 'demo_conv_1',
+            message: {
+              id: `msg_${Date.now()}`,
+              role: 'assistant',
+              content: 'I\'m your AI learning buddy! In demo mode, I can\'t provide real AI responses, but in a live environment I\'d help you with your studies using personalised, curriculum-aligned guidance. Try logging in with a real account to chat with me!',
+              timestamp: new Date().toISOString(),
+            },
+          },
+        };
+      }
+      return this.post<AiBuddyChatResponse>('/ai-buddy/chat', { message, context });
+    },
+    getConversations: async (): Promise<ApiResponse<AiBuddyConversation[]>> => {
+      if (DEMO_MODE) {
+        return { success: true, data: [] };
+      }
+      return this.get<AiBuddyConversation[]>('/ai-buddy/conversations');
+    },
+    getConversation: async (id: string): Promise<ApiResponse<AiBuddyConversation>> => {
+      if (DEMO_MODE) {
+        return { success: false, error: 'Not available in demo mode' };
+      }
+      return this.get<AiBuddyConversation>(`/ai-buddy/conversations/${id}`);
+    },
+  };
+
+  // ==========================================================================
+  // SEARCH
+  // ==========================================================================
+
+  search = {
+    users: async (query: string, filters?: { role?: string }): Promise<ApiResponse<SearchUsersResult>> => {
+      if (DEMO_MODE) {
+        const q = query.toLowerCase();
+        const demoResults = Object.values(DEMO_USERS).filter(u =>
+          u.firstName.toLowerCase().includes(q) ||
+          u.lastName.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q)
+        );
+        return { success: true, data: { users: demoResults, total: demoResults.length } };
+      }
+      const params = new URLSearchParams({ search: query });
+      if (filters?.role) params.set('role', filters.role);
+      return this.get<SearchUsersResult>(`/users?${params}`);
+    },
+    content: async (query: string, filters?: { type?: string; subject?: string; yearLevel?: string }): Promise<ApiResponse<SearchContentResult>> => {
+      if (DEMO_MODE) {
+        const q = query.toLowerCase();
+        const demoContent = DEMO_CONTENT_ITEMS.filter(c =>
+          c.title.toLowerCase().includes(q) || c.subject.toLowerCase().includes(q)
+        );
+        return { success: true, data: { content: demoContent, total: demoContent.length } };
+      }
+      const params = new URLSearchParams({ search: query });
+      if (filters?.type) params.set('type', filters.type);
+      if (filters?.subject) params.set('subject', filters.subject);
+      if (filters?.yearLevel) params.set('yearLevel', filters.yearLevel);
+      return this.get<SearchContentResult>(`/content?${params}`);
+    },
+    tutors: async (filters: { subject?: string; yearLevel?: string; maxPrice?: number; minRating?: number; search?: string }): Promise<ApiResponse<SearchTutorsResult>> => {
+      if (DEMO_MODE) {
+        return { success: true, data: { tutors: DEMO_TUTOR_PROFILES, total: DEMO_TUTOR_PROFILES.length } };
+      }
+      const params = new URLSearchParams();
+      if (filters.subject) params.set('subject', filters.subject);
+      if (filters.yearLevel) params.set('yearLevel', filters.yearLevel);
+      if (filters.maxPrice) params.set('maxPrice', String(filters.maxPrice));
+      if (filters.minRating) params.set('minRating', String(filters.minRating));
+      if (filters.search) params.set('search', filters.search);
+      return this.get<SearchTutorsResult>(`/tutors/search?${params}`);
+    },
+  };
+
+  // ==========================================================================
   // ANALYTICS & DATA
   // ==========================================================================
 
@@ -805,5 +919,210 @@ export interface LearningPathRecommendation {
   title: string;
   relevance: number;
 }
+
+// ==========================================================================
+// DASHBOARD TYPES
+// ==========================================================================
+
+export interface DashboardSummary {
+  user: {
+    id: string;
+    roles: string[];
+    tokenBalance: number;
+    trustScore: number;
+  };
+  upcomingSessions?: Array<{
+    id: string;
+    scheduledStart: string;
+    status: string;
+    tutorUser?: { displayName: string; avatarUrl?: string };
+  }>;
+  recentPurchases?: Array<{
+    id: string;
+    content: { id: string; title: string; type: string; thumbnailUrl?: string };
+    purchasedAt: string;
+  }>;
+  tutorStats?: Record<string, unknown>;
+  pendingBookings?: number;
+  monthlyEarnings?: number;
+  creatorStats?: {
+    totalContent: number;
+    totalSales: number;
+    totalDownloads: number;
+    averageRating: number;
+    totalEarnings: number;
+    level: string;
+  };
+  platformStats?: {
+    userCount: number;
+    tutorCount: number;
+    contentCount: number;
+    bookingCount: number;
+  };
+  homeschool?: {
+    childrenCount: number;
+    coopsJoined: number;
+    compliance: unknown;
+  };
+  schools?: Array<{
+    id: string;
+    name: string;
+    status: string;
+    studentCount: number;
+    staffCount: number;
+    pendingApplications: number;
+  }>;
+}
+
+export interface DashboardActivity {
+  type: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  data?: Record<string, unknown>;
+}
+
+export interface DashboardNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  inAppStatus: string;
+  createdAt: string;
+}
+
+export interface QuickStats {
+  activeTutors: number;
+  publishedContent: number;
+  todayBookings: number;
+  activeFamilies: number;
+}
+
+// ==========================================================================
+// AI BUDDY TYPES
+// ==========================================================================
+
+export interface AiBuddyChatResponse {
+  conversationId: string;
+  message: {
+    id: string;
+    role: string;
+    content: string;
+    timestamp: string;
+  };
+}
+
+export interface AiBuddyConversation {
+  id: string;
+  title: string;
+  status: string;
+  messages: Array<{ id: string; role: string; content: string; timestamp: string }>;
+  createdAt: string;
+}
+
+// ==========================================================================
+// SEARCH TYPES
+// ==========================================================================
+
+export interface SearchUsersResult {
+  users: Array<{ id: string; email: string; firstName: string; lastName: string; role?: string; avatarUrl?: string }>;
+  total: number;
+}
+
+export interface SearchContentResult {
+  content: Array<{ id: string; title: string; type: string; subject: string; yearLevel?: string; thumbnailUrl?: string }>;
+  total: number;
+}
+
+export interface TutorSearchProfile {
+  id: string;
+  name: string;
+  bio: string;
+  subjects: string[];
+  yearLevels: string[];
+  rating: number;
+  reviewCount: number;
+  hourlyRate: number;
+  sessionsCompleted: number;
+  responseTime: string;
+  availability: string;
+  location?: string;
+  languages: string[];
+  verified: boolean;
+  avatarUrl?: string;
+}
+
+export interface SearchTutorsResult {
+  tutors: TutorSearchProfile[];
+  total: number;
+}
+
+// ==========================================================================
+// DEMO DATA — Search & Dashboard
+// ==========================================================================
+
+const DEMO_CONTENT_ITEMS = [
+  { id: 'content_1', title: 'Mastering Fractions', type: 'lesson', subject: 'Mathematics', yearLevel: 'Year 5' },
+  { id: 'content_2', title: 'Introduction to Algebra', type: 'lesson', subject: 'Mathematics', yearLevel: 'Year 7' },
+  { id: 'content_3', title: 'Creative Writing Workshop', type: 'course', subject: 'English', yearLevel: 'Year 8' },
+  { id: 'content_4', title: 'The Scientific Method', type: 'lesson', subject: 'Science', yearLevel: 'Year 6' },
+  { id: 'content_5', title: 'Australian History: First Peoples', type: 'course', subject: 'History', yearLevel: 'Year 9' },
+];
+
+const DEMO_TUTOR_PROFILES: TutorSearchProfile[] = [
+  {
+    id: 'tutor_sarah',
+    name: 'Sarah Chen',
+    bio: 'Experienced mathematics tutor specializing in making complex concepts simple and engaging.',
+    subjects: ['Mathematics', 'Physics'],
+    yearLevels: ['Year 7-12'],
+    rating: 4.8,
+    reviewCount: 89,
+    hourlyRate: 65,
+    sessionsCompleted: 234,
+    responseTime: '< 1 hour',
+    availability: 'Weekday afternoons, Saturdays',
+    location: 'Sydney, NSW',
+    languages: ['English', 'Mandarin'],
+    verified: true,
+  },
+  {
+    id: 'tutor_michael',
+    name: 'Michael Torres',
+    bio: 'Physics teacher with 10+ years of experience. Passionate about helping students achieve their goals.',
+    subjects: ['Physics', 'Chemistry'],
+    yearLevels: ['Year 10-12'],
+    rating: 4.9,
+    reviewCount: 67,
+    hourlyRate: 70,
+    sessionsCompleted: 189,
+    responseTime: '< 2 hours',
+    availability: 'Evenings, Weekends',
+    location: 'Melbourne, VIC',
+    languages: ['English'],
+    verified: true,
+  },
+  {
+    id: 'tutor_emily',
+    name: 'Emily Watson',
+    bio: 'English literature specialist with a focus on essay writing and critical analysis skills.',
+    subjects: ['English', 'Literature'],
+    yearLevels: ['Year 9-12'],
+    rating: 4.7,
+    reviewCount: 54,
+    hourlyRate: 60,
+    sessionsCompleted: 156,
+    responseTime: '< 3 hours',
+    availability: 'Flexible',
+    location: 'Brisbane, QLD',
+    languages: ['English'],
+    verified: true,
+  },
+];
+
+const DEMO_DASHBOARD_SUMMARY: DashboardSummary = {
+  user: { id: 'user_admin_1', roles: ['platform_admin'], tokenBalance: 0, trustScore: 100 },
+  platformStats: { userCount: 5, tutorCount: 1, contentCount: 12, bookingCount: 3 },
+};
 
 export default api;

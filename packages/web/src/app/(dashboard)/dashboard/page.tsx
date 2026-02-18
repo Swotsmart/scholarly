@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
+import { useDashboardData } from '@/hooks/use-dashboard-data';
 import { useDashboardIntelligence } from '@/hooks/use-dashboard-intelligence';
 import {
   HeroGreeting, InsightsGrid, ContinuationsCard,
@@ -25,7 +26,14 @@ import Link from 'next/link';
 
 function LearnerDashboard() {
   const { user } = useAuthStore();
-  const { time, insights, continuations } = useDashboardIntelligence();
+  const { data: dashData } = useDashboardData();
+  const { time, insights, continuations } = useDashboardIntelligence(dashData);
+
+  // Extract learner profile data from the user object (populated by /auth/me)
+  const learnerProfile = (user as unknown as Record<string, unknown>)?.learnerProfile as Record<string, unknown> | undefined;
+  const streak = (learnerProfile?.currentStreak as number) ?? 12;
+  const xp = (learnerProfile?.totalXp as number) ?? 2450;
+  const level = (learnerProfile?.level as number) ?? 8;
 
   return (
     <div className="space-y-6">
@@ -44,15 +52,15 @@ function LearnerDashboard() {
             <div className="flex items-center gap-2 rounded-xl bg-orange-500/10 px-4 py-2.5">
               <Flame className="h-5 w-5 text-orange-500" />
               <div>
-                <p className="text-xl font-bold text-orange-600">12</p>
+                <p className="text-xl font-bold text-orange-600">{streak}</p>
                 <p className="text-xs text-muted-foreground">Day Streak</p>
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-xl bg-yellow-500/10 px-4 py-2.5">
               <Star className="h-5 w-5 text-yellow-500" />
               <div>
-                <p className="text-xl font-bold text-yellow-600">Level 8</p>
-                <p className="text-xs text-muted-foreground">2,450 XP</p>
+                <p className="text-xl font-bold text-yellow-600">Level {level}</p>
+                <p className="text-xs text-muted-foreground">{xp.toLocaleString()} XP</p>
               </div>
             </div>
           </div>
@@ -122,7 +130,8 @@ function LearnerDashboard() {
 
 function TeacherDashboard() {
   const { user } = useAuthStore();
-  const { time, insights, continuations, upcoming, suggestions } = useDashboardIntelligence();
+  const { data: dashData } = useDashboardData();
+  const { time, insights, continuations, upcoming, suggestions } = useDashboardIntelligence(dashData);
 
   return (
     <div className="space-y-6">
@@ -155,7 +164,10 @@ function TeacherDashboard() {
 
 function ParentDashboard() {
   const { user } = useAuthStore();
-  const { time, insights, continuations } = useDashboardIntelligence();
+  const { data: dashData } = useDashboardData();
+  const { time, insights, continuations } = useDashboardIntelligence(dashData);
+  const parentProfile = (user as unknown as Record<string, unknown>)?.parentProfile as Record<string, unknown> | undefined;
+  const childCount = (parentProfile?.childIds as string[])?.length ?? 2;
 
   return (
     <div className="space-y-6">
@@ -169,7 +181,7 @@ function ParentDashboard() {
         }
         statsSlot={
           <Badge variant="secondary" className="text-sm px-3 py-1">
-            2 children enrolled
+            {childCount} {childCount === 1 ? 'child' : 'children'} enrolled
           </Badge>
         }
       />
@@ -187,7 +199,14 @@ function ParentDashboard() {
 
 function TutorDashboard() {
   const { user } = useAuthStore();
-  const { time, insights } = useDashboardIntelligence();
+  const { data: dashData, isLoading: dashLoading } = useDashboardData();
+  const { time, insights } = useDashboardIntelligence(dashData);
+
+  // Extract tutor profile data from the user object (populated by /auth/me)
+  const tutorProfile = (user as unknown as Record<string, unknown>)?.tutorProfile as Record<string, unknown> | undefined;
+  const tutorMetrics = (tutorProfile?.metrics as Record<string, number>) || {};
+  const rating = tutorMetrics.averageRating ?? 4.9;
+  const upcomingSessions = (dashData?.upcomingSessions || []).slice(0, 4);
 
   return (
     <div className="space-y-6">
@@ -212,11 +231,22 @@ function TutorDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {[
-              { time: '10:00 AM', student: 'Emma S.', subject: 'Maths — Fractions', status: 'upcoming' },
-              { time: '11:30 AM', student: 'Jack W.', subject: 'English — Essay Writing', status: 'upcoming' },
-              { time: '2:00 PM', student: 'Liam T.', subject: 'Science — Chemistry', status: 'upcoming' },
-              { time: '4:00 PM', student: 'Sophie R.', subject: 'Maths — Algebra', status: 'upcoming' },
+            {upcomingSessions.length > 0 ? upcomingSessions.map((session, i) => (
+              <div key={session.id || i} className="flex items-center gap-3 rounded-lg border p-3">
+                <div className="text-sm font-medium text-muted-foreground w-16 shrink-0">
+                  {new Date(session.scheduledStart).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{session.tutorUser?.displayName || 'Student'}</p>
+                  <p className="text-xs text-muted-foreground">{session.status}</p>
+                </div>
+                <Button size="sm" variant="outline">Prep</Button>
+              </div>
+            )) : [
+              { time: '10:00 AM', student: 'Emma S.', subject: 'Maths — Fractions' },
+              { time: '11:30 AM', student: 'Jack W.', subject: 'English — Essay Writing' },
+              { time: '2:00 PM', student: 'Liam T.', subject: 'Science — Chemistry' },
+              { time: '4:00 PM', student: 'Sophie R.', subject: 'Maths — Algebra' },
             ].map((session, i) => (
               <div key={i} className="flex items-center gap-3 rounded-lg border p-3">
                 <div className="text-sm font-medium text-muted-foreground w-16 shrink-0">{session.time}</div>
@@ -238,9 +268,9 @@ function TutorDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             {[
-              { label: 'Sessions Completed', value: '14', max: '18' },
-              { label: 'Student Satisfaction', value: '4.9', max: '5.0' },
-              { label: 'Hours Tutored', value: '21', max: '25' },
+              { label: 'Sessions Completed', value: String(tutorMetrics.totalSessions ?? 14), max: '18' },
+              { label: 'Student Satisfaction', value: String(rating), max: '5.0' },
+              { label: 'Hours Tutored', value: String(tutorMetrics.totalHours ?? 21), max: '25' },
             ].map((metric, i) => (
               <div key={i} className="space-y-1.5">
                 <div className="flex justify-between text-sm">
@@ -263,7 +293,9 @@ function TutorDashboard() {
 
 function AdminDashboard() {
   const { user } = useAuthStore();
-  const { time, insights } = useDashboardIntelligence();
+  const { data: dashData } = useDashboardData();
+  const { time, insights } = useDashboardIntelligence(dashData);
+  const stats = dashData?.platformStats;
 
   return (
     <div className="space-y-6">
@@ -287,10 +319,10 @@ function AdminDashboard() {
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: 'New Registrations', value: '47', change: '+12%' },
-                { label: 'Active Sessions', value: '342', change: '+8%' },
-                { label: 'Content Published', value: '23', change: '+5%' },
-                { label: 'Support Tickets', value: '8', change: '-15%' },
+                { label: 'Total Users', value: stats ? String(stats.userCount) : '47', change: '' },
+                { label: 'Active Tutors', value: stats ? String(stats.tutorCount) : '342', change: '' },
+                { label: 'Published Content', value: stats ? String(stats.contentCount) : '23', change: '' },
+                { label: 'Total Bookings', value: stats ? String(stats.bookingCount) : '8', change: '' },
               ].map((stat, i) => (
                 <div key={i} className="rounded-lg border p-4">
                   <p className="text-2xl font-bold">{stat.value}</p>

@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useDashboardData } from '@/hooks/use-dashboard-data';
+import { api } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -343,13 +345,51 @@ function getUpcomingStatusBadge(status: string) {
 // ---------------------------------------------------------------------------
 export default function ParentDashboardPage() {
   const { user } = useAuthStore();
+  const { data: dashData } = useDashboardData();
   const [selectedChildId, setSelectedChildId] = useState(CHILDREN[0].id);
   const [language, setLanguage] = useState('en');
   const [quickReply, setQuickReply] = useState('');
+  const [realChildren, setRealChildren] = useState<typeof CHILDREN | null>(null);
+
+  // Try to load real children from parentProfile
+  const parentProfile = (user as unknown as Record<string, unknown>)?.parentProfile as Record<string, unknown> | undefined;
+  const childIds = parentProfile?.childIds as string[] | undefined;
+
+  useEffect(() => {
+    if (childIds && childIds.length > 0) {
+      // Fetch real child profiles
+      Promise.all(childIds.map(id => api.get<Record<string, unknown>>(`/users/${id}`))).then(results => {
+        const children = results
+          .filter(r => r.success)
+          .map((r, i) => {
+            const data = (r as { success: true; data: Record<string, unknown> }).data;
+            const learner = data.learnerProfile as Record<string, unknown> | undefined;
+            return {
+              id: String(data.id),
+              firstName: String(data.firstName || `Child ${i + 1}`),
+              lastName: String(data.lastName || ''),
+              avatarUrl: String(data.avatarUrl || ''),
+              grade: String(learner?.yearLevel || 'Year ?'),
+              school: String(learner?.school || ''),
+              overallProgress: Number(learner?.overallProgress || 0),
+              streak: Number(learner?.currentStreak || 0),
+              xp: Number(learner?.totalXp || 0),
+              level: Number(learner?.level || 1),
+            };
+          });
+        if (children.length > 0) {
+          setRealChildren(children);
+          setSelectedChildId(children[0].id);
+        }
+      });
+    }
+  }, [childIds?.join(',')]);
+
+  const children = realChildren || CHILDREN;
 
   const selectedChild = useMemo(
-    () => CHILDREN.find((c) => c.id === selectedChildId) || CHILDREN[0],
-    [selectedChildId]
+    () => children.find((c) => c.id === selectedChildId) || children[0],
+    [selectedChildId, children]
   );
 
   const childAchievements = ACHIEVEMENTS.filter((a) => a.childId === selectedChildId);

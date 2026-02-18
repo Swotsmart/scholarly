@@ -23,6 +23,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useComposingMenuStore } from '@/stores/composing-menu-store';
 import { useMenuToast } from '@/hooks/use-menu-toast';
 import { findTaskByPath, getTask, taskRegistry } from '@/config/menu-registry';
+import { api, type User } from '@/lib/api';
 import {
   LayoutDashboard, BookOpen, Settings, GraduationCap,
   Sparkles, Target, Presentation, ClipboardCheck,
@@ -133,12 +134,25 @@ const commandItems: CommandItem[] = [
 // COMMAND PALETTE COMPONENT
 // ============================================================================
 
+interface ApiSearchResult {
+  id: string;
+  label: string;
+  description?: string;
+  href: string;
+  icon: LucideIcon;
+  section: string;
+  keywords: string[];
+}
+
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [apiResults, setApiResults] = useState<ApiSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
   const { user } = useAuthStore();
   const store = useComposingMenuStore();
@@ -165,9 +179,66 @@ export function CommandPalette() {
     if (open) {
       setQuery('');
       setSelectedIndex(0);
+      setApiResults([]);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
+
+  // Debounced API search when query is 3+ characters
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (!open || query.trim().length < 3) {
+      setApiResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    debounceRef.current = setTimeout(async () => {
+      const results: ApiSearchResult[] = [];
+
+      const [usersRes, contentRes] = await Promise.all([
+        api.search.users(query.trim()).catch(() => null),
+        api.search.content(query.trim()).catch(() => null),
+      ]);
+
+      if (usersRes?.success && usersRes.data.users.length > 0) {
+        for (const u of usersRes.data.users.slice(0, 3)) {
+          results.push({
+            id: `api-user-${u.id}`,
+            label: `${u.firstName} ${u.lastName}`,
+            description: u.role || u.email,
+            href: `/admin/users?search=${encodeURIComponent(u.firstName)}`,
+            icon: Users,
+            section: 'People',
+            keywords: [],
+          });
+        }
+      }
+
+      if (contentRes?.success && contentRes.data.content.length > 0) {
+        for (const c of contentRes.data.content.slice(0, 3)) {
+          results.push({
+            id: `api-content-${c.id}`,
+            label: c.title,
+            description: `${c.type} — ${c.subject}`,
+            href: `/admin/marketplace?search=${encodeURIComponent(c.title)}`,
+            icon: Search,
+            section: 'Content',
+            keywords: [],
+          });
+        }
+      }
+
+      setApiResults(results);
+      setIsSearching(false);
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query, open]);
 
   // ── Navigate and track usage ──
   const navigateAndTrack = useCallback((item: CommandItem) => {
@@ -197,7 +268,7 @@ export function CommandPalette() {
     return item.state === 'anchor' || item.state === 'active' || item.state === 'pushed' || item.state === 'seed';
   }, [store, role]);
 
-  // Filter items by role and query
+  // Filter items by role and query, including API results
   const filteredItems = useMemo(() => {
     const userRole = user?.role || 'learner';
     const roleFiltered = commandItems.filter(
@@ -207,7 +278,7 @@ export function CommandPalette() {
     if (!query.trim()) return roleFiltered.slice(0, 12);
 
     const q = query.toLowerCase();
-    return roleFiltered
+    const staticResults = roleFiltered
       .filter(item =>
         item.label.toLowerCase().includes(q) ||
         item.description?.toLowerCase().includes(q) ||
@@ -215,7 +286,20 @@ export function CommandPalette() {
         item.keywords.some(kw => kw.includes(q))
       )
       .slice(0, 10);
-  }, [query, user?.role]);
+
+    // Merge API results as CommandItems (without taskRef, so they won't trigger menu actions)
+    const apiItems: CommandItem[] = apiResults.map(r => ({
+      id: r.id,
+      label: r.label,
+      description: r.description,
+      href: r.href,
+      icon: r.icon,
+      section: r.section,
+      keywords: r.keywords,
+    }));
+
+    return [...staticResults, ...apiItems];
+  }, [query, user?.role, apiResults]);
 
   // Group by section
   const groupedItems = useMemo(() => {
@@ -294,7 +378,7 @@ export function CommandPalette() {
 
         {/* Results */}
         <div ref={listRef} id="command-list" className="max-h-72 overflow-y-auto p-2" role="listbox">
-          {Object.keys(groupedItems).length === 0 ? (
+          {Object.keys(groupedItems).length === 0 && !isSearching ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
               No results found for &ldquo;{query}&rdquo;
             </div>

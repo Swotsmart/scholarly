@@ -217,7 +217,7 @@ dashboardRouter.get('/summary', async (req, res) => {
     };
   }
 
-  res.json(summary);
+  res.json({ success: true, data: summary });
 });
 
 // Get activity feed
@@ -291,7 +291,7 @@ dashboardRouter.get('/activity', async (req, res) => {
   // Sort by timestamp
   activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-  res.json({ activities: activities.slice(0, parseInt(limit as string)) });
+  res.json({ success: true, data: { activities: activities.slice(0, parseInt(limit as string)) } });
 });
 
 // Get notifications
@@ -322,9 +322,12 @@ dashboardRouter.get('/notifications', async (req, res) => {
   ]);
 
   res.json({
-    notifications,
-    unreadCount,
-    pagination: { page, limit, total },
+    success: true,
+    data: {
+      notifications,
+      unreadCount,
+      pagination: { page, limit, total },
+    },
   });
 });
 
@@ -362,11 +365,14 @@ dashboardRouter.get('/quick-stats', async (req, res) => {
   ]);
 
   res.json({
-    stats: {
-      activeTutors,
-      publishedContent,
-      todayBookings,
-      activeFamilies,
+    success: true,
+    data: {
+      stats: {
+        activeTutors,
+        publishedContent,
+        todayBookings,
+        activeFamilies,
+      },
     },
   });
 });

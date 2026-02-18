@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { api } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -162,6 +163,8 @@ export default function AIBuddyPage() {
   const [selectedPersona, setSelectedPersona] = useState('tutor');
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | undefined>();
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const currentPersona = personas.find((p) => p.id === selectedPersona) || personas[0];
@@ -187,21 +190,51 @@ export default function AIBuddyPage() {
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
     setIsLoading(true);
+    setError(null);
 
-    // Simulate AI response
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const response = await api.aiBuddy.chat(userMessage.content, {
+        conversationId,
+        currentTopic: currentContext.topic,
+        subjects: [currentContext.course],
+        persona: selectedPersona,
+      });
 
-    const aiResponse: Message = {
-      id: `msg-${Date.now() + 1}`,
-      role: 'assistant',
-      content: userMessage.content.toLowerCase().includes('code') || userMessage.content.toLowerCase().includes('factor')
-        ? sampleCodeMessage
-        : `Great question about "${userMessage.content.substring(0, 50)}..."! Let me help you understand this better.\n\nBased on your current topic of **${currentContext.topic}**, here's what you need to know:\n\n1. **Key Concept**: This is fundamental to understanding how quadratic expressions work.\n\n2. **Application**: You'll use this when solving real-world problems involving parabolic motion, optimization, and more.\n\n3. **Practice Tip**: Try working through several examples to build your intuition.\n\nWould you like me to provide some practice problems or explain any part in more detail?`,
-      timestamp: new Date(),
-      persona: selectedPersona,
-    };
+      if (response.success) {
+        const { message, conversationId: convId } = response.data;
+        if (convId) setConversationId(convId);
 
-    setMessages((prev) => [...prev, aiResponse]);
+        const aiResponse: Message = {
+          id: message.id,
+          role: 'assistant',
+          content: message.content,
+          timestamp: new Date(message.timestamp),
+          persona: selectedPersona,
+        };
+
+        setMessages((prev) => [...prev, aiResponse]);
+      } else {
+        setError('AI Buddy is temporarily unavailable. Please try again.');
+        // Add error message to chat
+        setMessages((prev) => [...prev, {
+          id: `msg-err-${Date.now()}`,
+          role: 'assistant',
+          content: 'I\'m sorry, I\'m temporarily unavailable. Please try again in a moment.',
+          timestamp: new Date(),
+          persona: selectedPersona,
+        }]);
+      }
+    } catch {
+      setError('Failed to connect to AI Buddy.');
+      setMessages((prev) => [...prev, {
+        id: `msg-err-${Date.now()}`,
+        role: 'assistant',
+        content: 'I\'m having trouble connecting right now. Please check your connection and try again.',
+        timestamp: new Date(),
+        persona: selectedPersona,
+      }]);
+    }
+
     setIsLoading(false);
   };
 

@@ -14,6 +14,7 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.75.0",
     "@elevenlabs/elevenlabs-js": "^2.33.0",
     "@prisma/client": "^5.8.0",
     "@scholarly/database": "workspace:*",
