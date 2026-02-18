@@ -181,9 +181,15 @@ class ApiClient {
 
       return data;
     } catch (error) {
+      // Normalize browser-specific fetch failure messages into something user-friendly.
+      // Safari: "Load failed", Chrome: "Failed to fetch", Firefox: "NetworkError when attempting to fetch resource."
+      const rawMsg = error instanceof Error ? error.message : '';
+      const isNetworkError = rawMsg === 'Load failed' || rawMsg === 'Failed to fetch' || rawMsg.includes('NetworkError');
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Network error',
+        error: isNetworkError
+          ? 'Unable to connect to the server. Please check your connection and try again.'
+          : rawMsg || 'Network error',
       };
     }
   }
