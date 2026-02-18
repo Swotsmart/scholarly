@@ -77,18 +77,28 @@ All FQDNs end with `.australiaeast.azurecontainerapps.io`.
 1. **ALWAYS use `az acr build`** — never local `docker build`/`docker push`
 2. **NEVER use `latest` tag** — always tag with git SHA (`git rev-parse --short HEAD`)
 3. API Dockerfile uses `|| true` for build (pre-existing type errors)
+4. **Staging and production web MUST be separate builds** — `NEXT_PUBLIC_*` env vars are inlined at build time by Next.js, so each environment needs its own image with the correct `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_DEMO_MODE`. Using the same image for both will cause CORS failures.
 
 ### Deploy Commands
 ```bash
 TAG=$(git rev-parse --short HEAD)
-# Build
+
+# Build web — MUST build separately for staging vs production
 az acr build --registry scholarlyacr --image scholarly-web:$TAG --platform linux/amd64 --file Dockerfile .
+az acr build --registry scholarlyacr --image scholarly-web:staging-$TAG --platform linux/amd64 --file Dockerfile \
+  --build-arg NEXT_PUBLIC_API_URL=https://scholarly-staging-api.bravefield-dce0abaf.australiaeast.azurecontainerapps.io/api/v1 \
+  --build-arg NEXT_PUBLIC_DEMO_MODE=true .
+
+# Build API (shared image for staging + production)
 az acr build --registry scholarlyacr --image scholarly-api:staging-$TAG --platform linux/amd64 --file Dockerfile.api .
+
 # Deploy staging
-az containerapp update --name scholarly-staging --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-web:$TAG
+az containerapp update --name scholarly-staging --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-web:staging-$TAG
 az containerapp update --name scholarly-staging-api --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-api:staging-$TAG
+
 # Deploy production
 az containerapp update --name scholarly --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-web:$TAG
+az containerapp update --name scholarly-api --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-api:staging-$TAG
 ```
 
 ## Environment Variables
