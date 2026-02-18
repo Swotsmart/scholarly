@@ -21,7 +21,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PageHeader } from '@/components/shared';
 import {
   Send,
   Copy,
@@ -29,6 +28,8 @@ import {
   Share2,
   Flag,
   MoreVertical,
+  Download,
+  ClipboardCopy,
   Bot,
   GraduationCap,
   Users,
@@ -37,11 +38,9 @@ import {
   Sparkles,
   Shield,
   BookOpen,
-  MessageSquare,
   Lightbulb,
   HelpCircle,
   Code,
-  RefreshCw,
   ThumbsUp,
   ThumbsDown,
   Check,
@@ -278,6 +277,29 @@ export default function AIBuddyPage() {
     }).format(date);
   };
 
+  const formatTranscript = () => {
+    const lines = messages.map((msg) => {
+      const time = formatTimestamp(msg.timestamp);
+      const speaker = msg.role === 'user' ? 'You' : `AI Buddy (${(personas.find((p) => p.id === msg.persona) || currentPersona).name})`;
+      return `[${time}] ${speaker}:\n${msg.content}\n`;
+    });
+    return `AI Buddy Transcript — ${new Date().toLocaleDateString('en-AU', { dateStyle: 'long' })}\n${'='.repeat(50)}\n\n${lines.join('\n')}`;
+  };
+
+  const handleCopyTranscript = async () => {
+    await navigator.clipboard.writeText(formatTranscript());
+  };
+
+  const handleDownloadTranscript = () => {
+    const blob = new Blob([formatTranscript()], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ai-buddy-transcript-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Simple markdown-like rendering
   const renderContent = (content: string) => {
     // Handle code blocks
@@ -331,47 +353,68 @@ export default function AIBuddyPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col space-y-4">
-      <PageHeader
-        title="AI Buddy"
-        description="Your personalized learning companion"
-        actions={
-          <div className="flex items-center gap-3">
-            {/* Safety Indicator */}
-            <Badge variant="outline" className="border-emerald-500/50 bg-emerald-500/10 text-emerald-600">
-              <Shield className="mr-1 h-3 w-3" />
-              Content Filtered
-            </Badge>
+    <div className="flex h-[calc(100vh-8rem)] flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">AI Buddy</h1>
+          <p className="text-sm text-muted-foreground">Your personalized learning companion</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Transcript Actions */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="mr-1.5 h-3.5 w-3.5" />
+                Transcript
+                <ChevronDown className="ml-1 h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleCopyTranscript}>
+                <ClipboardCopy className="mr-2 h-3.5 w-3.5" />
+                Copy to clipboard
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownloadTranscript}>
+                <Download className="mr-2 h-3.5 w-3.5" />
+                Download as text file
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            {/* Persona Selector */}
-            <Select value={selectedPersona} onValueChange={handlePersonaChange}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {personas.map((persona) => {
-                  const Icon = persona.icon;
-                  return (
-                    <SelectItem key={persona.id} value={persona.id}>
-                      <div className="flex items-center gap-2">
-                        <div className={cn('rounded-full p-1', persona.color)}>
-                          <Icon className="h-3 w-3 text-white" />
-                        </div>
-                        <span>{persona.name}</span>
+          {/* Safety Indicator */}
+          <Badge variant="outline" className="border-emerald-500/50 bg-emerald-500/10 text-emerald-600">
+            <Shield className="mr-1 h-3 w-3" />
+            Content Filtered
+          </Badge>
+
+          {/* Persona Selector */}
+          <Select value={selectedPersona} onValueChange={handlePersonaChange}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {personas.map((persona) => {
+                const Icon = persona.icon;
+                return (
+                  <SelectItem key={persona.id} value={persona.id}>
+                    <div className="flex items-center gap-2">
+                      <div className={cn('rounded-full p-1', persona.color)}>
+                        <Icon className="h-3 w-3 text-white" />
                       </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-        }
-      />
+                      <span>{persona.name}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       <div className="grid flex-1 gap-4 overflow-hidden lg:grid-cols-4">
         {/* Chat Area */}
         <div className="flex flex-col overflow-hidden lg:col-span-3">
-          <Card className="flex flex-1 flex-col overflow-hidden">
+          <Card className="flex flex-1 flex-col overflow-hidden border-0 shadow-none bg-transparent">
             {/* Messages */}
             <CardContent className="flex-1 overflow-y-auto p-4 scrollbar-thin">
               <div className="space-y-4">
