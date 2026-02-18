@@ -50,39 +50,39 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
-// KPI Stats
-const kpiStats = [
+// KPI Stats defaults — overridden with real data when available
+const DEFAULT_KPI_STATS = [
   {
-    label: 'Total Enrollment',
-    value: '2,847',
-    icon: GraduationCap,
+    label: 'Total Users',
+    value: '—',
+    icon: Users,
     variant: 'primary' as const,
-    change: 8.2,
-    subtitle: '+234 this term',
+    change: 0,
+    subtitle: 'Loading...',
   },
   {
-    label: 'Daily Attendance',
-    value: '94.2%',
+    label: 'Active Tutors',
+    value: '—',
     icon: UserCheck,
     variant: 'success' as const,
-    change: 1.5,
-    subtitle: 'Today',
+    change: 0,
+    subtitle: 'Verified tutors',
   },
   {
-    label: 'Engagement Score',
-    value: '78%',
-    icon: Target,
+    label: 'Published Content',
+    value: '—',
+    icon: BookOpen,
     variant: 'primary' as const,
-    change: 4.3,
-    subtitle: 'Platform-wide',
+    change: 0,
+    subtitle: 'Marketplace items',
   },
   {
-    label: 'Compliance Score',
-    value: '96%',
-    icon: Shield,
+    label: 'Total Bookings',
+    value: '—',
+    icon: Target,
     variant: 'success' as const,
-    change: 2.1,
-    subtitle: 'All frameworks',
+    change: 0,
+    subtitle: 'All time',
   },
 ];
 
@@ -270,11 +270,43 @@ export default function AdminDashboardPage() {
   const { data: dashData } = useDashboardData();
   const platformStats = dashData?.platformStats;
 
-  // Override KPI stats with real data when available
-  if (platformStats) {
-    kpiStats[0].value = platformStats.userCount.toLocaleString();
-    kpiStats[0].subtitle = `${platformStats.tutorCount} tutors, ${platformStats.contentCount} content items`;
-  }
+  // Build KPI stats from real data, falling back to defaults
+  const kpiStats = platformStats
+    ? [
+        {
+          label: 'Total Users',
+          value: platformStats.userCount.toLocaleString(),
+          icon: Users,
+          variant: 'primary' as const,
+          change: 0,
+          subtitle: `${platformStats.tutorCount} tutors, ${platformStats.contentCount} content items`,
+        },
+        {
+          label: 'Active Tutors',
+          value: platformStats.tutorCount.toLocaleString(),
+          icon: UserCheck,
+          variant: 'success' as const,
+          change: 0,
+          subtitle: 'Verified tutors',
+        },
+        {
+          label: 'Published Content',
+          value: platformStats.contentCount.toLocaleString(),
+          icon: BookOpen,
+          variant: 'primary' as const,
+          change: 0,
+          subtitle: 'Marketplace items',
+        },
+        {
+          label: 'Total Bookings',
+          value: platformStats.bookingCount.toLocaleString(),
+          icon: Target,
+          variant: 'success' as const,
+          change: 0,
+          subtitle: 'All time',
+        },
+      ]
+    : DEFAULT_KPI_STATS;
 
   return (
     <div className="space-y-6">
@@ -308,7 +340,6 @@ export default function AdminDashboardPage() {
             value={stat.value}
             icon={stat.icon}
             variant={stat.variant}
-            change={stat.change}
             subtitle={stat.subtitle}
           />
         ))}

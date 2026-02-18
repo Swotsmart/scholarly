@@ -352,38 +352,37 @@ export default function ParentDashboardPage() {
   const [realChildren, setRealChildren] = useState<typeof CHILDREN | null>(null);
 
   // Try to load real children from parentProfile
-  const parentProfile = (user as unknown as Record<string, unknown>)?.parentProfile as Record<string, unknown> | undefined;
-  const childIds = parentProfile?.childIds as string[] | undefined;
+  const childIds = user?.parentProfile?.childIds;
+  const childIdsKey = childIds?.join(',') ?? '';
 
   useEffect(() => {
-    if (childIds && childIds.length > 0) {
-      // Fetch real child profiles
-      Promise.all(childIds.map(id => api.get<Record<string, unknown>>(`/users/${id}`))).then(results => {
-        const children = results
-          .filter(r => r.success)
-          .map((r, i) => {
-            const data = (r as { success: true; data: Record<string, unknown> }).data;
-            const learner = data.learnerProfile as Record<string, unknown> | undefined;
-            return {
-              id: String(data.id),
-              firstName: String(data.firstName || `Child ${i + 1}`),
-              lastName: String(data.lastName || ''),
-              avatarUrl: String(data.avatarUrl || ''),
-              grade: String(learner?.yearLevel || 'Year ?'),
-              school: String(learner?.school || ''),
-              overallProgress: Number(learner?.overallProgress || 0),
-              streak: Number(learner?.currentStreak || 0),
-              xp: Number(learner?.totalXp || 0),
-              level: Number(learner?.level || 1),
-            };
-          });
-        if (children.length > 0) {
-          setRealChildren(children);
-          setSelectedChildId(children[0].id);
-        }
-      });
-    }
-  }, [childIds?.join(',')]);
+    if (!childIds || childIds.length === 0) return;
+    // Fetch real child profiles
+    Promise.all(childIds.map(id => api.get<Record<string, unknown>>(`/users/${id}`))).then(results => {
+      const fetched = results
+        .filter(r => r.success)
+        .map((r, i) => {
+          const data = (r as { success: true; data: Record<string, unknown> }).data;
+          const learner = data.learnerProfile as Record<string, unknown> | undefined;
+          return {
+            id: String(data.id),
+            firstName: String(data.firstName || `Child ${i + 1}`),
+            lastName: String(data.lastName || ''),
+            avatarUrl: String(data.avatarUrl || ''),
+            grade: String(learner?.yearLevel || 'Year ?'),
+            school: String(learner?.school || ''),
+            overallProgress: Number(learner?.overallProgress || 0),
+            streak: Number(learner?.currentStreak || 0),
+            xp: Number(learner?.totalXp || 0),
+            level: Number(learner?.level || 1),
+          };
+        });
+      if (fetched.length > 0) {
+        setRealChildren(fetched);
+        setSelectedChildId(fetched[0].id);
+      }
+    });
+  }, [childIdsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const children = realChildren || CHILDREN;
 
@@ -456,7 +455,7 @@ export default function ParentDashboardPage() {
         <CardContent className="p-4">
           <Tabs value={selectedChildId} onValueChange={setSelectedChildId}>
             <TabsList className="w-full justify-start gap-2 bg-transparent h-auto flex-wrap">
-              {CHILDREN.map((child) => (
+              {children.map((child) => (
                 <TabsTrigger
                   key={child.id}
                   value={child.id}

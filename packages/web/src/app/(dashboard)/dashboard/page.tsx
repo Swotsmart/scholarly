@@ -30,10 +30,10 @@ function LearnerDashboard() {
   const { time, insights, continuations } = useDashboardIntelligence(dashData);
 
   // Extract learner profile data from the user object (populated by /auth/me)
-  const learnerProfile = (user as unknown as Record<string, unknown>)?.learnerProfile as Record<string, unknown> | undefined;
-  const streak = (learnerProfile?.currentStreak as number) ?? 12;
-  const xp = (learnerProfile?.totalXp as number) ?? 2450;
-  const level = (learnerProfile?.level as number) ?? 8;
+  const lp = user?.learnerProfile;
+  const streak = lp?.currentStreak ?? 12;
+  const xp = lp?.totalXp ?? 2450;
+  const level = lp?.level ?? 8;
 
   return (
     <div className="space-y-6">
@@ -166,8 +166,7 @@ function ParentDashboard() {
   const { user } = useAuthStore();
   const { data: dashData } = useDashboardData();
   const { time, insights, continuations } = useDashboardIntelligence(dashData);
-  const parentProfile = (user as unknown as Record<string, unknown>)?.parentProfile as Record<string, unknown> | undefined;
-  const childCount = (parentProfile?.childIds as string[])?.length ?? 2;
+  const childCount = user?.parentProfile?.childIds?.length ?? 2;
 
   return (
     <div className="space-y-6">
@@ -203,8 +202,8 @@ function TutorDashboard() {
   const { time, insights } = useDashboardIntelligence(dashData);
 
   // Extract tutor profile data from the user object (populated by /auth/me)
-  const tutorProfile = (user as unknown as Record<string, unknown>)?.tutorProfile as Record<string, unknown> | undefined;
-  const tutorMetrics = (tutorProfile?.metrics as Record<string, number>) || {};
+  const tp = user?.tutorProfile;
+  const tutorMetrics = tp?.metrics || {};
   const rating = tutorMetrics.averageRating ?? 4.9;
   const upcomingSessions = (dashData?.upcomingSessions || []).slice(0, 4);
 

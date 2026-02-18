@@ -621,6 +621,63 @@ export const api = new ApiClient(API_BASE_URL);
 // TYPES
 // ==========================================================================
 
+export interface LearnerProfile {
+  id: string;
+  userId: string;
+  yearLevel: string;
+  school?: string;
+  currentStreak?: number;
+  longestStreak?: number;
+  totalXp?: number;
+  level?: number;
+  overallProgress?: number;
+  specialNeeds?: string[];
+  subjects?: Array<{
+    id: string;
+    subject: { id: string; name: string } | null;
+    currentLevel?: string;
+    needsHelp?: boolean;
+  }>;
+}
+
+export interface TutorProfile {
+  id: string;
+  userId: string;
+  tutorType: string;
+  verificationStatus: string;
+  yearLevelsTeaching?: string[];
+  languages?: string[];
+  metrics?: Record<string, number>;
+  subjects?: Array<{
+    id: string;
+    subject: { id: string; name: string } | null;
+  }>;
+  qualifications?: Array<{
+    id: string;
+    title: string;
+    institution?: string;
+  }>;
+}
+
+export interface ParentProfile {
+  id: string;
+  userId: string;
+  childIds?: string[];
+  isHomeschoolParent?: boolean;
+  monthlyBudget?: number;
+}
+
+export interface CreatorProfile {
+  id: string;
+  userId: string;
+  totalContent: number;
+  totalSales: number;
+  totalDownloads: number;
+  averageRating: number;
+  totalEarnings: number;
+  level: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -632,6 +689,10 @@ export interface User {
   avatarUrl?: string;
   permissions?: string[];
   groups?: string[];
+  learnerProfile?: LearnerProfile | null;
+  tutorProfile?: TutorProfile | null;
+  parentProfile?: ParentProfile | null;
+  creatorProfile?: CreatorProfile | null;
 }
 
 export interface RegisterData {

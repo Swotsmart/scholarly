@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
-import type { DashboardSummary } from '@/lib/api';
+import type { DashboardSummary, User } from '@/lib/api';
 
 // =============================================================================
 // TYPES
@@ -104,8 +104,9 @@ function getTeacherFocusHint(tod: TimeOfDay, dayType: DayType): string {
   }
 }
 
-function getTeacherInsights(tod: TimeOfDay): QuickInsight[] {
-  // In production these come from API — here we demonstrate the contextual structure
+function getTeacherInsights(tod: TimeOfDay, _realData?: DashboardSummary | null): QuickInsight[] {
+  // Teacher-specific DB models (Class, Enrollment, Attendance) are not yet seeded,
+  // so these values remain as presentation defaults for now.
   const base: QuickInsight[] = [
     { id: 'attendance', icon: 'ClipboardCheck', label: 'Attendance Today', value: '28/30', urgency: 'medium', href: '/teacher/scheduling' },
     { id: 'pending-grades', icon: 'FileText', label: 'Pending Grades', value: 12, urgency: 'high', href: '/teacher/grading' },
@@ -173,11 +174,15 @@ function getLearnerFocusHint(tod: TimeOfDay, dayType: DayType): string {
   }
 }
 
-function getLearnerInsights(): QuickInsight[] {
+function getLearnerInsights(user?: User | null): QuickInsight[] {
+  const lp = user?.learnerProfile;
+  const streak = lp?.currentStreak ?? 12;
+  const xp = lp?.totalXp ?? 2450;
+
   return [
-    { id: 'streak', icon: 'Flame', label: 'Day Streak', value: 12, urgency: 'medium', href: '/achievements' },
+    { id: 'streak', icon: 'Flame', label: 'Day Streak', value: streak, urgency: streak > 7 ? 'medium' : 'high', href: '/achievements' },
     { id: 'daily-goal', icon: 'Target', label: 'Daily Goal', value: '75%', urgency: 'medium' },
-    { id: 'xp', icon: 'Star', label: 'Total XP', value: '2,450', change: 120, urgency: 'low', href: '/achievements' },
+    { id: 'xp', icon: 'Star', label: 'Total XP', value: xp.toLocaleString(), change: 120, urgency: 'low', href: '/achievements' },
     { id: 'tasks-due', icon: 'Clock', label: 'Tasks Due Today', value: 3, urgency: 'high', href: '/tasks' },
   ];
 }
@@ -206,11 +211,15 @@ function getParentFocusHint(tod: TimeOfDay, dayType: DayType): string {
   }
 }
 
-function getParentInsights(): QuickInsight[] {
+function getParentInsights(user?: User | null, realData?: DashboardSummary | null): QuickInsight[] {
+  const pp = user?.parentProfile;
+  const childCount = pp?.childIds?.length ?? 2;
+  const sessions = realData?.upcomingSessions?.length ?? 0;
+
   return [
-    { id: 'children-active', icon: 'Users', label: 'Children', value: '2 active', urgency: 'low', href: '/parent/children' },
+    { id: 'children-active', icon: 'Users', label: 'Children', value: `${childCount} active`, urgency: 'low', href: '/parent/children' },
     { id: 'messages', icon: 'MessageSquare', label: 'New Messages', value: 3, urgency: 'high', href: '/parent/messages' },
-    { id: 'upcoming-events', icon: 'Calendar', label: 'Events This Week', value: 4, urgency: 'low', href: '/parent/calendar' },
+    { id: 'upcoming-sessions', icon: 'Calendar', label: 'Upcoming Sessions', value: sessions, urgency: sessions > 0 ? 'medium' : 'low', href: '/parent/calendar' },
     { id: 'progress', icon: 'TrendingUp', label: 'Weekly Progress', value: '+12%', urgency: 'low', href: '/parent/progress' },
   ];
 }
@@ -302,7 +311,7 @@ export function useDashboardIntelligence(realData?: DashboardSummary | null): Da
       case 'teacher':
       case 'educator':
         focusHint = getTeacherFocusHint(tod, dayType);
-        insights = getTeacherInsights(tod);
+        insights = getTeacherInsights(tod, realData);
         continuations = getTeacherContinuations();
         upcoming = getTeacherUpcoming(tod);
         suggestions = getTeacherSuggestions(tod);
@@ -310,7 +319,7 @@ export function useDashboardIntelligence(realData?: DashboardSummary | null): Da
       case 'parent':
       case 'guardian':
         focusHint = getParentFocusHint(tod, dayType);
-        insights = getParentInsights();
+        insights = getParentInsights(user, realData);
         continuations = getParentContinuations();
         upcoming = [];
         suggestions = [];
@@ -333,7 +342,7 @@ export function useDashboardIntelligence(realData?: DashboardSummary | null): Da
         break;
       default: // learner
         focusHint = getLearnerFocusHint(tod, dayType);
-        insights = getLearnerInsights();
+        insights = getLearnerInsights(user);
         continuations = getLearnerContinuations();
         upcoming = [];
         suggestions = [];
