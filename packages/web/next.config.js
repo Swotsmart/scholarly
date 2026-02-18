@@ -11,7 +11,24 @@ const nextConfig = {
     ],
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1',
+  },
+  async headers() {
+    return [
+      {
+        // Prevent browsers from caching HTML pages — avoids stale chunk
+        // references after deploys (the "Load failed" / ChunkLoadError issue).
+        // Static assets under /_next/static/ already have content hashes in
+        // their filenames and are served with immutable cache headers by Next.js.
+        source: '/((?!_next/static|_next/image|favicon\\.ico).*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
   },
   async rewrites() {
     return [

@@ -2,7 +2,7 @@
  * API Client for Scholarly Backend
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'; // Demo mode only when explicitly enabled
 
 // ==========================================================================

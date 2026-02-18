@@ -56,6 +56,28 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Recover from stale chunk errors after deploys — if the browser has
+            cached old HTML that references chunk hashes that no longer exist,
+            this catches the resulting load failure and forces a clean reload. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var reloaded = sessionStorage.getItem('chunk_reload');
+                window.addEventListener('error', function(e) {
+                  var msg = (e.message || '') + ' ' + ((e.filename || ''));
+                  if ((msg.indexOf('Loading chunk') !== -1 || msg.indexOf('Load failed') !== -1 || msg.indexOf('ChunkLoadError') !== -1) && !reloaded) {
+                    sessionStorage.setItem('chunk_reload', '1');
+                    window.location.reload();
+                  }
+                });
+                if (reloaded) sessionStorage.removeItem('chunk_reload');
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
