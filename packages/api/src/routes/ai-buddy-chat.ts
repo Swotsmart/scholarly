@@ -27,7 +27,7 @@ const chatSchema = z.object({
   }).optional(),
 });
 
-// Fetch user profile data for system prompt enrichment
+// Fetch user profile data for system prompt enrichment (all roles)
 async function fetchUserContext(userId: string, tenantId: string) {
   try {
     const user = await prisma.user.findUnique({
@@ -52,10 +52,56 @@ async function fetchUserContext(userId: string, tenantId: string) {
             },
           },
         },
-        tutorProfile: true,
+        tutorProfile: {
+          include: {
+            subjects: { include: { subject: true } },
+            sessions: {
+              where: {
+                scheduledStart: { gte: new Date() },
+                status: { in: ['scheduled', 'confirmed'] },
+              },
+              include: { subject: true },
+              take: 10,
+              orderBy: { scheduledStart: 'asc' },
+            },
+            qualifications: true,
+          },
+        },
+        parentProfile: true,
       },
     });
-    return user;
+
+    // For parents, also fetch children's profiles
+    let childrenData: Array<{ firstName: string; lastName: string; learnerProfile: { yearLevel: string; subjects: Array<{ subject: { name: string } | null }> } | null }> = [];
+    if (user?.parentProfile?.childIds?.length) {
+      childrenData = await prisma.user.findMany({
+        where: { id: { in: user.parentProfile.childIds } },
+        select: {
+          firstName: true,
+          lastName: true,
+          learnerProfile: {
+            select: {
+              yearLevel: true,
+              subjects: { include: { subject: true } },
+            },
+          },
+        },
+      });
+    }
+
+    // For admins, fetch platform stats
+    let platformStats: { userCount: number; tutorCount: number; contentCount: number; bookingCount: number } | null = null;
+    if (user?.roles?.includes('platform_admin') || user?.roles?.includes('admin')) {
+      const [userCount, tutorCount, contentCount, bookingCount] = await Promise.all([
+        prisma.user.count({ where: { tenantId, status: 'active' } }),
+        prisma.tutorProfile.count({ where: { user: { tenantId } } }),
+        prisma.content.count({ where: { tenantId } }),
+        prisma.booking.count({ where: { tenantId } }),
+      ]);
+      platformStats = { userCount, tutorCount, contentCount, bookingCount };
+    }
+
+    return { user, childrenData, platformStats };
   } catch (err) {
     log.error('Failed to fetch user context for Ask Issy', err instanceof Error ? err : undefined);
     return null;
@@ -83,19 +129,21 @@ function buildSystemPrompt(
     mentor: 'You are a thoughtful mentor offering guidance on growth and long-term learning goals.',
   };
 
-  // Build profile context
+  // Build profile context for all roles
   const profileLines: string[] = [];
-  if (profileData) {
-    profileLines.push(`- Student name: ${profileData.firstName} ${profileData.lastName}`);
+  const userData = profileData?.user;
+  if (userData) {
+    profileLines.push(`- Name: ${userData.firstName} ${userData.lastName}`);
 
-    const lp = profileData.learnerProfile;
+    // === LEARNER CONTEXT ===
+    const lp = userData.learnerProfile;
     if (lp) {
       profileLines.push(`- Year level: ${lp.yearLevel}`);
       if (lp.specialNeeds?.length) {
         profileLines.push(`- Learning needs: ${lp.specialNeeds.join(', ')}`);
       }
       if (lp.subjects?.length) {
-        const subjectList = lp.subjects.map(s => {
+        const subjectList = lp.subjects.map((s: { subject: { name: string } | null; currentLevel?: string; needsHelp?: boolean }) => {
           const name = s.subject?.name || 'Unknown';
           const level = s.currentLevel ? ` (${s.currentLevel})` : '';
           const help = s.needsHelp ? ' — needs help' : '';
@@ -103,8 +151,6 @@ function buildSystemPrompt(
         }).join(', ');
         profileLines.push(`- Enrolled subjects: ${subjectList}`);
       }
-
-      // Upcoming sessions
       const upcoming = lp.sessionParticipations || [];
       if (upcoming.length > 0) {
         profileLines.push(`\n### Upcoming Sessions`);
@@ -121,10 +167,72 @@ function buildSystemPrompt(
         profileLines.push(`- No upcoming tutoring sessions scheduled`);
       }
     }
+
+    // === TUTOR CONTEXT ===
+    const tp = userData.tutorProfile;
+    if (tp) {
+      profileLines.push(`- Tutor type: ${tp.tutorType}`);
+      profileLines.push(`- Verification: ${tp.verificationStatus}`);
+      if (tp.yearLevelsTeaching?.length) profileLines.push(`- Year levels: ${tp.yearLevelsTeaching.join(', ')}`);
+      if (tp.languages?.length) profileLines.push(`- Languages: ${tp.languages.join(', ')}`);
+      const metrics = (tp.metrics as Record<string, number>) || {};
+      if (metrics.totalSessions) profileLines.push(`- Total sessions completed: ${metrics.totalSessions}`);
+      if (metrics.averageRating) profileLines.push(`- Average rating: ${metrics.averageRating}`);
+      if (tp.subjects?.length) {
+        const subjects = tp.subjects.map((s: { subject: { name: string } | null }) => s.subject?.name || 'Unknown').join(', ');
+        profileLines.push(`- Teaching subjects: ${subjects}`);
+      }
+      if (tp.qualifications?.length) {
+        const quals = tp.qualifications.map((q: { title: string; institution?: string }) => `${q.title}${q.institution ? ` (${q.institution})` : ''}`).join(', ');
+        profileLines.push(`- Qualifications: ${quals}`);
+      }
+      const tutorSessions = tp.sessions || [];
+      if (tutorSessions.length > 0) {
+        profileLines.push(`\n### Upcoming Teaching Sessions`);
+        for (const s of tutorSessions) {
+          const date = new Date(s.scheduledStart).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' });
+          const time = new Date(s.scheduledStart).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+          const subjectName = s.subject?.name || 'General';
+          profileLines.push(`- ${date} ${time}: ${subjectName}`);
+        }
+      }
+    }
+
+    // === PARENT CONTEXT ===
+    const pp = userData.parentProfile;
+    if (pp) {
+      profileLines.push(`- Number of children: ${pp.childIds?.length || 0}`);
+      if (pp.isHomeschoolParent) profileLines.push(`- Homeschool parent`);
+      if (pp.monthlyBudget) profileLines.push(`- Monthly tutoring budget: $${pp.monthlyBudget}`);
+      const children = profileData?.childrenData || [];
+      if (children.length > 0) {
+        profileLines.push(`\n### Children`);
+        for (const child of children) {
+          const subjects = child.learnerProfile?.subjects?.map((s: { subject: { name: string } | null }) => s.subject?.name || '').filter(Boolean).join(', ') || 'none';
+          profileLines.push(`- ${child.firstName} ${child.lastName} (${child.learnerProfile?.yearLevel || 'unknown year'}) — Subjects: ${subjects}`);
+        }
+      }
+    }
+
+    // === ADMIN CONTEXT ===
+    const stats = profileData?.platformStats;
+    if (stats) {
+      profileLines.push(`\n### Platform Overview`);
+      profileLines.push(`- Active users: ${stats.userCount}`);
+      profileLines.push(`- Registered tutors: ${stats.tutorCount}`);
+      profileLines.push(`- Published content items: ${stats.contentCount}`);
+      profileLines.push(`- Total bookings: ${stats.bookingCount}`);
+    }
   }
 
+  const sectionTitle = role === 'teacher' ? 'Teacher Profile'
+    : role === 'parent' ? 'Parent Profile'
+    : userData?.tutorProfile ? 'Tutor Profile'
+    : userData?.roles?.includes('platform_admin') || userData?.roles?.includes('admin') ? 'Admin Overview'
+    : 'Student Profile';
+
   const profileSection = profileLines.length > 0
-    ? `\n## Student Profile\n${profileLines.join('\n')}`
+    ? `\n## ${sectionTitle}\n${profileLines.join('\n')}`
     : '';
 
   const systemPrompt = `You are Scholarly Ask Issy, an educational AI assistant on the Scholarly learning platform.
@@ -142,15 +250,18 @@ ${profileSection}
 - Keep responses educational, age-appropriate, and curriculum-aligned
 - Use Australian English spelling and terminology
 - Reference the Australian Curriculum where relevant
-- You have access to the student's profile, enrolled subjects, and upcoming session schedule. Use this information to give personalised, contextual answers.
-- If asked about timetable or schedule, refer to the upcoming sessions listed above. If no sessions are scheduled, let them know and suggest they check with their school or book a tutoring session.
-- For students: use Socratic questioning to guide understanding rather than just giving answers
-- For teachers: provide pedagogical strategies and classroom resources
-- For parents: give clear, jargon-free explanations of their child's learning
+- You have full access to the user's profile, role-specific data, and schedule. ALWAYS use this information to give personalised, proactive, contextual answers.
+- If asked about timetable, schedule, or upcoming classes, refer to the sessions listed in the profile above. If no sessions are listed, suggest they check with their school, book a tutoring session, or contact their administrator.
+- For students: use Socratic questioning, reference their enrolled subjects and year level, know their upcoming sessions
+- For teachers/educators: provide pedagogical strategies, classroom resources, help with lesson planning. Know their qualifications and teaching subjects.
+- For tutors: help with session preparation, student progress tracking, teaching strategies. Reference their upcoming teaching sessions and student roster.
+- For parents/guardians: give clear, jargon-free updates about their children's learning. Reference their children's names, year levels, and subjects. Help them understand progress and support learning at home.
+- For admins: provide platform insights, help with operational decisions, reference user/tutor/content/booking counts.
 - Never generate inappropriate, violent, or non-educational content
 - If asked about non-educational topics, gently redirect to learning
 - Use markdown formatting for clarity (bold, lists, code blocks where appropriate)
-- Keep responses concise but thorough — aim for 2-4 paragraphs unless more detail is needed`;
+- Keep responses concise but thorough — aim for 2-4 paragraphs unless more detail is needed
+- Be proactive: if you notice something relevant in the user's profile (e.g. an upcoming session, a subject they need help with), mention it naturally`;
 
   return systemPrompt;
 }
