@@ -49,6 +49,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth-store';
 
 // Persona definitions
 const personas = [
@@ -110,19 +111,38 @@ interface Message {
   bookmarked?: boolean;
 }
 
-// Quick question prompts
-const quickPrompts = [
-  { id: 'qp-1', text: 'Explain the concept I just learned', icon: Lightbulb },
-  { id: 'qp-2', text: 'Give me a practice problem', icon: BookOpen },
-  { id: 'qp-3', text: 'Why is this important?', icon: HelpCircle },
-  { id: 'qp-4', text: 'Show me an example', icon: Code },
-];
-
-// Current context
-const currentContext = {
-  course: 'Algebra II',
-  lesson: 'Quadratic Functions',
-  topic: 'Factoring Quadratic Expressions',
+// Role-aware quick prompts
+const quickPromptsByRole: Record<string, Array<{ id: string; text: string; icon: typeof Lightbulb }>> = {
+  learner: [
+    { id: 'qp-1', text: 'Explain the concept I just learned', icon: Lightbulb },
+    { id: 'qp-2', text: 'Give me a practice problem', icon: BookOpen },
+    { id: 'qp-3', text: 'Why is this important?', icon: HelpCircle },
+    { id: 'qp-4', text: 'Show me an example', icon: Code },
+  ],
+  teacher: [
+    { id: 'qp-1', text: 'Help me plan a lesson on...', icon: BookOpen },
+    { id: 'qp-2', text: 'Suggest differentiation strategies', icon: Lightbulb },
+    { id: 'qp-3', text: 'Create an assessment rubric', icon: Code },
+    { id: 'qp-4', text: 'How can I support a struggling student?', icon: HelpCircle },
+  ],
+  tutor: [
+    { id: 'qp-1', text: 'Prepare me for my next session', icon: BookOpen },
+    { id: 'qp-2', text: 'Suggest practice exercises for...', icon: Code },
+    { id: 'qp-3', text: 'How do I explain this concept simply?', icon: Lightbulb },
+    { id: 'qp-4', text: 'Tips for engaging a reluctant learner', icon: HelpCircle },
+  ],
+  parent: [
+    { id: 'qp-1', text: "How is my child progressing?", icon: HelpCircle },
+    { id: 'qp-2', text: 'How can I support learning at home?', icon: Lightbulb },
+    { id: 'qp-3', text: 'Explain this topic in simple terms', icon: BookOpen },
+    { id: 'qp-4', text: "What should I discuss at parent-teacher night?", icon: Code },
+  ],
+  admin: [
+    { id: 'qp-1', text: 'Summarise platform activity this week', icon: BookOpen },
+    { id: 'qp-2', text: 'What are the key engagement metrics?', icon: Code },
+    { id: 'qp-3', text: 'Suggest ways to improve tutor retention', icon: Lightbulb },
+    { id: 'qp-4', text: 'Help me draft a communication to parents', icon: HelpCircle },
+  ],
 };
 
 // Sample code block for demonstration
@@ -158,7 +178,95 @@ The key steps are:
 3. Those same numbers should add up to b
 4. Use those numbers to split the middle term and factor by grouping`;
 
+// Map user role to a simplified role key for prompts/context
+function getUserRoleKey(role?: string): string {
+  if (!role) return 'learner';
+  if (role === 'teacher' || role === 'educator') return 'teacher';
+  if (role === 'tutor' || role === 'tutor_professional') return 'tutor';
+  if (role === 'parent' || role === 'guardian') return 'parent';
+  if (role === 'platform_admin' || role === 'admin') return 'admin';
+  return 'learner';
+}
+
+// Role-aware sidebar context
+function getRoleContext(roleKey: string, user: { firstName?: string; lastName?: string } | null) {
+  switch (roleKey) {
+    case 'teacher':
+      return {
+        heading: 'Teaching Context',
+        items: [
+          { label: 'Role', value: 'Teacher / Educator' },
+          { label: 'Focus', value: 'Lesson planning & delivery' },
+          { label: 'Support', value: 'Pedagogy, resources, differentiation' },
+        ],
+      };
+    case 'tutor':
+      return {
+        heading: 'Tutoring Context',
+        items: [
+          { label: 'Role', value: 'Tutor' },
+          { label: 'Focus', value: 'Session prep & student progress' },
+          { label: 'Support', value: 'Explanations, exercises, strategies' },
+        ],
+      };
+    case 'parent':
+      return {
+        heading: 'Parent Context',
+        items: [
+          { label: 'Role', value: 'Parent / Guardian' },
+          { label: 'Focus', value: "Your children's learning" },
+          { label: 'Support', value: 'Progress, home learning, communication' },
+        ],
+      };
+    case 'admin':
+      return {
+        heading: 'Admin Context',
+        items: [
+          { label: 'Role', value: 'Platform Administrator' },
+          { label: 'Focus', value: 'Platform operations' },
+          { label: 'Support', value: 'Metrics, communications, decisions' },
+        ],
+      };
+    default:
+      return {
+        heading: 'Learning Context',
+        items: [
+          { label: 'Role', value: 'Learner' },
+          { label: 'Focus', value: 'Your courses & subjects' },
+          { label: 'Support', value: 'Explanations, practice, study tips' },
+        ],
+      };
+  }
+}
+
+// Role-aware placeholder text
+function getPlaceholder(roleKey: string): string {
+  switch (roleKey) {
+    case 'teacher': return 'Ask about lesson planning, pedagogy, student support...';
+    case 'tutor': return 'Ask about session prep, teaching strategies, exercises...';
+    case 'parent': return "Ask about your child's progress, home learning tips...";
+    case 'admin': return 'Ask about platform metrics, operations, communications...';
+    default: return 'Ask me anything about your learning...';
+  }
+}
+
+// Role-aware subtitle
+function getSubtitle(roleKey: string): string {
+  switch (roleKey) {
+    case 'teacher': return 'Your intelligent teaching assistant';
+    case 'tutor': return 'Your tutoring preparation companion';
+    case 'parent': return "Your guide to your child's education";
+    case 'admin': return 'Your platform intelligence assistant';
+    default: return 'Your personalised learning companion';
+  }
+}
+
 export default function AIBuddyPage() {
+  const { user } = useAuthStore();
+  const roleKey = getUserRoleKey(user?.role);
+  const quickPrompts = quickPromptsByRole[roleKey] || quickPromptsByRole.learner;
+  const sidebarContext = getRoleContext(roleKey, user);
+
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
   const [selectedPersona, setSelectedPersona] = useState('tutor');
@@ -234,8 +342,6 @@ export default function AIBuddyPage() {
     try {
       const response = await api.askIssy.chat(userMessage.content, {
         conversationId,
-        currentTopic: currentContext.topic,
-        subjects: [currentContext.course],
         persona: selectedPersona,
       });
 
@@ -397,7 +503,7 @@ export default function AIBuddyPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Ask Issy</h1>
-          <p className="text-sm text-muted-foreground">Your personalized learning companion</p>
+          <p className="text-sm text-muted-foreground">{getSubtitle(roleKey)}</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Transcript Actions */}
@@ -633,7 +739,7 @@ export default function AIBuddyPage() {
                 <Textarea
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Ask me anything about your learning..."
+                  placeholder={getPlaceholder(roleKey)}
                   className="min-h-[44px] max-h-32 resize-none"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
@@ -671,24 +777,20 @@ export default function AIBuddyPage() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <BookOpen className="h-4 w-4" />
-                Current Context
+                {sidebarContext.heading}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Course</span>
-                <Badge variant="secondary" className="text-xs">
-                  {currentContext.course}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Lesson</span>
-                <span className="font-medium">{currentContext.lesson}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Topic</span>
-                <span className="text-xs">{currentContext.topic}</span>
-              </div>
+              {sidebarContext.items.map((item, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{item.label}</span>
+                  {i === 0 ? (
+                    <Badge variant="secondary" className="text-xs">{item.value}</Badge>
+                  ) : (
+                    <span className="text-xs text-right max-w-[60%]">{item.value}</span>
+                  )}
+                </div>
+              ))}
             </CardContent>
           </Card>
 

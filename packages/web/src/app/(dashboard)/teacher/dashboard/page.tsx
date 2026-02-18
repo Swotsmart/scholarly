@@ -251,6 +251,42 @@ export default function TeacherDashboardPage() {
         />
       </div>
 
+      {/* Quick Actions — top of page for start-of-lesson tasks */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Common tasks at your fingertips</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+              <Link href="/teacher/attendance">
+                <ClipboardList className="h-6 w-6 text-blue-500" />
+                <span>Take Attendance</span>
+              </Link>
+            </Button>
+            <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+              <Link href="/teacher/lessons/new">
+                <PlusCircle className="h-6 w-6 text-green-500" />
+                <span>Create Lesson Plan</span>
+              </Link>
+            </Button>
+            <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+              <Link href="/teacher/grading">
+                <PenLine className="h-6 w-6 text-orange-500" />
+                <span>Grade Work</span>
+              </Link>
+            </Button>
+            <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+              <Link href="/teacher/challenges/create">
+                <Lightbulb className="h-6 w-6 text-purple-500" />
+                <span>New Challenge</span>
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Class Overview - Takes 2 columns */}
@@ -546,41 +582,6 @@ export default function TeacherDashboardPage() {
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common tasks at your fingertips</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
-              <Link href="/teacher/attendance">
-                <ClipboardList className="h-6 w-6 text-blue-500" />
-                <span>Take Attendance</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
-              <Link href="/teacher/lessons/new">
-                <PlusCircle className="h-6 w-6 text-green-500" />
-                <span>Create Lesson Plan</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
-              <Link href="/teacher/grading">
-                <PenLine className="h-6 w-6 text-orange-500" />
-                <span>Grade Work</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
-              <Link href="/teacher/challenges/create">
-                <Lightbulb className="h-6 w-6 text-purple-500" />
-                <span>New Challenge</span>
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
