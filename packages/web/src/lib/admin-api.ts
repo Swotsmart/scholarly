@@ -54,7 +54,7 @@ const demoActivities: AdminActivity[] = [
   { id: 'a2', action: 'Config Updated', description: 'Maintenance window scheduled for 28 Jan 02:00-04:00 AEST', user: 'Jack Williams', timestamp: '2026-01-26T08:45:00Z', type: 'config' },
   { id: 'a3', action: 'Report Generated', description: 'Term 1 enrolment summary exported', user: 'Charlotte Nguyen', timestamp: '2026-01-26T08:30:00Z', type: 'report' },
   { id: 'a4', action: 'User Suspended', description: 'Account suspended for Thomas Brown (policy violation)', user: 'Jack Williams', timestamp: '2026-01-26T07:15:00Z', type: 'user' },
-  { id: 'a5', action: 'Feature Flag Toggled', description: 'AI Buddy chat enabled for Year 11-12 learners', user: 'Jack Williams', timestamp: '2026-01-25T16:50:00Z', type: 'config' },
+  { id: 'a5', action: 'Feature Flag Toggled', description: 'Ask Issy chat enabled for Year 11-12 learners', user: 'Jack Williams', timestamp: '2026-01-25T16:50:00Z', type: 'config' },
 ];
 
 const demoReliefTeachers: ReliefTeacher[] = [
@@ -102,7 +102,7 @@ const demoReports: SystemReport[] = [
 ];
 
 const demoFeatureFlags: FeatureFlag[] = [
-  { id: 'ff1', name: 'AI Buddy Chat', enabled: true, description: 'AI-powered learning assistant for student queries', scope: 'global' },
+  { id: 'ff1', name: 'Ask Issy Chat', enabled: true, description: 'AI-powered learning assistant for student queries', scope: 'global' },
   { id: 'ff2', name: 'LinguaFlow Module', enabled: true, description: 'CEFR-based language learning with IB integration', scope: 'tenant' },
   { id: 'ff3', name: 'Blockchain Credentials', enabled: false, description: 'Verified digital credentials on blockchain', scope: 'global' },
   { id: 'ff4', name: 'Early Years Module', enabled: true, description: 'EYLF-aligned early childhood learning tools', scope: 'tenant' },

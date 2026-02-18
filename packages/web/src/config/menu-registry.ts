@@ -80,7 +80,7 @@ export const taskRegistry: Record<string, RegisteredTask> = {
 
   // ── CLUSTER 3: LEARNING & GROWTH ──
   L1: { ref: 'L1', name: 'Courses', href: '/learning/courses', icon: BookOpen, type: 'atomic', cluster: 'learning', description: 'Browse and enrol in courses' },
-  L3: { ref: 'L3', name: 'AI Buddy', href: '/ai-buddy', icon: Bot, type: 'atomic', cluster: 'learning', description: 'Your personal learning assistant' },
+  L3: { ref: 'L3', name: 'Ask Issy', href: '/ask-issy', icon: Bot, type: 'atomic', cluster: 'learning', description: 'Your personal learning assistant' },
   L4L5: { ref: 'L4L5', name: 'Golden Path', href: '/golden-path', icon: Compass, type: 'compound', cluster: 'learning', description: 'Adaptive learning pathway', children: [
     { name: 'Adaptation', href: '/golden-path/adaptation', icon: Brain },
     { name: 'Curiosity', href: '/golden-path/curiosity', icon: Sparkles },
@@ -238,7 +238,7 @@ export const roleAnchors: RoleAnchors[] = [
     anchors: [
       { ref: 'D1', position: 0 },         // Home / Dashboard
       { ref: 'L1', position: 1 },         // Courses
-      { ref: 'L3', position: 2 },         // AI Buddy
+      { ref: 'L3', position: 2 },         // Ask Issy
     ],
   },
   {

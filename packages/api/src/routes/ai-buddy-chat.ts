@@ -1,10 +1,10 @@
 /**
- * AI Buddy Chat Route — Lightweight Anthropic-powered endpoint
+ * Ask Issy Chat Route — Lightweight Anthropic-powered endpoint
  *
  * This is a focused chat endpoint that directly calls the Anthropic API,
- * bypassing the full Sprint 15 AI Buddy service (which has complex
+ * bypassing the full Sprint 15 Ask Issy service (which has complex
  * unresolved dependencies). It provides real AI conversations for
- * the AI Buddy page while the full service is being integrated.
+ * the Ask Issy page while the full service is being integrated.
  */
 
 import { Router } from 'express';
@@ -27,8 +27,47 @@ const chatSchema = z.object({
   }).optional(),
 });
 
+// Fetch user profile data for system prompt enrichment
+async function fetchUserContext(userId: string, tenantId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        learnerProfile: {
+          include: {
+            subjects: { include: { subject: true } },
+            sessionParticipations: {
+              where: {
+                session: {
+                  scheduledStart: { gte: new Date() },
+                  status: { in: ['scheduled', 'confirmed'] },
+                },
+              },
+              include: {
+                session: {
+                  include: { subject: true, booking: true },
+                },
+              },
+              take: 10,
+            },
+          },
+        },
+        tutorProfile: true,
+      },
+    });
+    return user;
+  } catch (err) {
+    log.error('Failed to fetch user context for Ask Issy', err instanceof Error ? err : undefined);
+    return null;
+  }
+}
+
 // Build system prompt based on user context
-function buildSystemPrompt(user: { roles: string[]; email: string }, context?: z.infer<typeof chatSchema>['context']): string {
+function buildSystemPrompt(
+  user: { roles: string[]; email: string },
+  context: z.infer<typeof chatSchema>['context'] | undefined,
+  profileData: Awaited<ReturnType<typeof fetchUserContext>>,
+): string {
   const role = user.roles.includes('teacher') || user.roles.includes('educator')
     ? 'teacher'
     : user.roles.includes('parent') || user.roles.includes('guardian')
@@ -44,7 +83,51 @@ function buildSystemPrompt(user: { roles: string[]; email: string }, context?: z
     mentor: 'You are a thoughtful mentor offering guidance on growth and long-term learning goals.',
   };
 
-  let systemPrompt = `You are Scholarly AI Buddy, an educational AI assistant on the Scholarly learning platform.
+  // Build profile context
+  const profileLines: string[] = [];
+  if (profileData) {
+    profileLines.push(`- Student name: ${profileData.firstName} ${profileData.lastName}`);
+
+    const lp = profileData.learnerProfile;
+    if (lp) {
+      profileLines.push(`- Year level: ${lp.yearLevel}`);
+      if (lp.specialNeeds?.length) {
+        profileLines.push(`- Learning needs: ${lp.specialNeeds.join(', ')}`);
+      }
+      if (lp.subjects?.length) {
+        const subjectList = lp.subjects.map(s => {
+          const name = s.subject?.name || 'Unknown';
+          const level = s.currentLevel ? ` (${s.currentLevel})` : '';
+          const help = s.needsHelp ? ' — needs help' : '';
+          return `${name}${level}${help}`;
+        }).join(', ');
+        profileLines.push(`- Enrolled subjects: ${subjectList}`);
+      }
+
+      // Upcoming sessions
+      const upcoming = lp.sessionParticipations || [];
+      if (upcoming.length > 0) {
+        profileLines.push(`\n### Upcoming Sessions`);
+        for (const sp of upcoming) {
+          const s = sp.session;
+          const date = new Date(s.scheduledStart).toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' });
+          const time = new Date(s.scheduledStart).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+          const endTime = new Date(s.scheduledEnd).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+          const subjectName = s.subject?.name || 'General';
+          const topics = s.topicsFocus?.length ? ` — Topics: ${s.topicsFocus.join(', ')}` : '';
+          profileLines.push(`- ${date} ${time}–${endTime}: ${subjectName}${topics}`);
+        }
+      } else {
+        profileLines.push(`- No upcoming tutoring sessions scheduled`);
+      }
+    }
+  }
+
+  const profileSection = profileLines.length > 0
+    ? `\n## Student Profile\n${profileLines.join('\n')}`
+    : '';
+
+  const systemPrompt = `You are Scholarly Ask Issy, an educational AI assistant on the Scholarly learning platform.
 
 ${personaInstructions[persona] || personaInstructions.tutor}
 
@@ -53,11 +136,14 @@ ${personaInstructions[persona] || personaInstructions.tutor}
 ${context?.yearLevel ? `- Year level: ${context.yearLevel}` : ''}
 ${context?.subjects?.length ? `- Subjects: ${context.subjects.join(', ')}` : ''}
 ${context?.currentTopic ? `- Current topic: ${context.currentTopic}` : ''}
+${profileSection}
 
 ## Guidelines
 - Keep responses educational, age-appropriate, and curriculum-aligned
 - Use Australian English spelling and terminology
 - Reference the Australian Curriculum where relevant
+- You have access to the student's profile, enrolled subjects, and upcoming session schedule. Use this information to give personalised, contextual answers.
+- If asked about timetable or schedule, refer to the upcoming sessions listed above. If no sessions are scheduled, let them know and suggest they check with their school or book a tutoring session.
 - For students: use Socratic questioning to guide understanding rather than just giving answers
 - For teachers: provide pedagogical strategies and classroom resources
 - For parents: give clear, jargon-free explanations of their child's learning
@@ -70,7 +156,7 @@ ${context?.currentTopic ? `- Current topic: ${context.currentTopic}` : ''}
 }
 
 /**
- * POST /api/v1/ai-buddy/chat
+ * POST /api/v1/ask-issy/chat
  * Send a message and get an AI response
  */
 aiBuddyChatRouter.post('/chat', async (req, res) => {
@@ -85,7 +171,7 @@ aiBuddyChatRouter.post('/chat', async (req, res) => {
       log.error('ANTHROPIC_API_KEY not configured');
       return res.status(503).json({
         success: false,
-        error: 'AI Buddy is temporarily unavailable. Please try again later.',
+        error: 'Ask Issy is temporarily unavailable. Please try again later.',
       });
     }
 
@@ -117,10 +203,14 @@ aiBuddyChatRouter.post('/chat', async (req, res) => {
     // Add user's new message
     conversationMessages.push({ role: 'user', content: data.message });
 
+    // Fetch user profile data for enriched context
+    const profileData = await fetchUserContext(userId, tenantId);
+
     // Build system prompt
     const systemPrompt = buildSystemPrompt(
       { roles: req.user!.roles as string[], email: req.user!.email },
       data.context,
+      profileData,
     );
 
     // Call Anthropic
@@ -175,7 +265,7 @@ aiBuddyChatRouter.post('/chat', async (req, res) => {
       });
     }
 
-    log.info('AI Buddy chat response generated', { userId, conversationId });
+    log.info('Ask Issy chat response generated', { userId, conversationId });
 
     res.json({
       success: true,
@@ -198,10 +288,10 @@ aiBuddyChatRouter.post('/chat', async (req, res) => {
       });
     }
 
-    log.error('AI Buddy chat error', error instanceof Error ? error : undefined, { userId });
+    log.error('Ask Issy chat error', error instanceof Error ? error : undefined, { userId });
     res.status(500).json({
       success: false,
-      error: 'AI Buddy encountered an error. Please try again.',
+      error: 'Ask Issy encountered an error. Please try again.',
     });
   }
 });

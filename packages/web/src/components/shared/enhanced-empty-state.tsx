@@ -156,7 +156,7 @@ export function NoCourses() {
       variant="illustration"
       tips={[
         "Courses adapt to your pace — no pressure to keep up",
-        "Your AI Buddy can recommend courses based on your interests",
+        "Your Ask Issy can recommend courses based on your interests",
         "Complete courses to earn XP and unlock achievements",
       ]}
     />
@@ -254,9 +254,9 @@ export function NoResults() {
     <EnhancedEmptyState
       icon={FolderOpen}
       title="No Results Found"
-      description="Try adjusting your search or filters. If you're looking for something specific, our AI Buddy might be able to help."
-      secondaryLabel="Ask AI Buddy"
-      secondaryHref="/ai-buddy"
+      description="Try adjusting your search or filters. If you're looking for something specific, our Ask Issy might be able to help."
+      secondaryLabel="Ask Issy"
+      secondaryHref="/ask-issy"
       variant="minimal"
     />
   );

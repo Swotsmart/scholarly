@@ -102,7 +102,7 @@ subscriptionsRouter.get('/plans', async (req, res) => {
         ],
         features: [
           { key: 'max_learners', label: 'Learners', value: 2 },
-          { key: 'ai_buddy_messages', label: 'AI Buddy messages/month', value: 50 },
+          { key: 'ai_buddy_messages', label: 'Ask Issy messages/month', value: 50 },
           { key: 'portfolio_storage_mb', label: 'Portfolio storage', value: 500 },
           { key: 'curriculum_access', label: 'Australian Curriculum access', value: true },
         ],
@@ -126,7 +126,7 @@ subscriptionsRouter.get('/plans', async (req, res) => {
         ],
         features: [
           { key: 'max_learners', label: 'Learners', value: 6 },
-          { key: 'ai_buddy_messages', label: 'AI Buddy messages/month', value: 500 },
+          { key: 'ai_buddy_messages', label: 'Ask Issy messages/month', value: 500 },
           { key: 'portfolio_storage_mb', label: 'Portfolio storage', value: 5000 },
           { key: 'curriculum_access', label: 'Full Australian Curriculum + IB', value: true },
           { key: 'homeschool_compliance', label: 'NESA/VRQA homeschool compliance', value: true },
@@ -155,7 +155,7 @@ subscriptionsRouter.get('/plans', async (req, res) => {
         features: [
           { key: 'max_learners', label: 'Learners', value: 500 },
           { key: 'max_educators', label: 'Educators', value: 50 },
-          { key: 'ai_buddy_messages', label: 'AI Buddy messages/month', value: 'unlimited' },
+          { key: 'ai_buddy_messages', label: 'Ask Issy messages/month', value: 'unlimited' },
           { key: 'portfolio_storage_mb', label: 'Portfolio storage', value: 50000 },
           { key: 'eduscrum', label: 'EduScrum orchestration', value: true },
           { key: 'analytics_dashboard', label: 'Advanced analytics', value: true },
@@ -233,7 +233,7 @@ subscriptionsRouter.get('/plans/:planId', async (req, res) => {
         prices: [{ billingCycle: 'monthly', amount: 0, displayAmount: 'Free' }],
         features: [
           { key: 'max_learners', label: 'Learners', value: 2 },
-          { key: 'ai_buddy_messages', label: 'AI Buddy messages/month', value: 50 },
+          { key: 'ai_buddy_messages', label: 'Ask Issy messages/month', value: 50 },
         ],
         entitlements: ['basic_curriculum', 'ai_buddy_limited', 'portfolio_basic'],
         isPublic: true,
@@ -824,7 +824,7 @@ subscriptionsRouter.get('/entitlements', async (req, res) => {
         },
         {
           key: 'ai_buddy_standard',
-          label: 'AI Buddy - Standard',
+          label: 'Ask Issy - Standard',
           granted: true,
           source: 'plan_family_au',
           limits: { messagesPerMonth: 500, currentUsage: 127 },
@@ -900,7 +900,7 @@ subscriptionsRouter.get('/entitlements/:key/check', async (req, res) => {
       ai_buddy_standard: {
         key: 'ai_buddy_standard',
         granted: true,
-        label: 'AI Buddy - Standard',
+        label: 'Ask Issy - Standard',
         source: 'plan_family_au',
         limits: { messagesPerMonth: 500, currentUsage: 127 },
         withinLimits: true,

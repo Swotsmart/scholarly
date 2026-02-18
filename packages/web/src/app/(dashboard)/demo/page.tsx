@@ -248,7 +248,7 @@ function StudentDashboardPreview() {
         </div>
       </div>
 
-      {/* AI Buddy */}
+      {/* Ask Issy */}
       <div className="fixed bottom-4 right-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-blue-500 shadow-lg">
         <MessageSquare className="h-6 w-6 text-white" />
         <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">3</span>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,8 @@ import {
   MoreVertical,
   Download,
   ClipboardCopy,
+  Mic,
+  MicOff,
   Bot,
   GraduationCap,
   Users,
@@ -56,7 +58,7 @@ const personas = [
     description: 'Expert guidance and explanations',
     icon: GraduationCap,
     color: 'bg-blue-500',
-    greeting: "Hello! I'm your AI Tutor. I'm here to help you understand concepts deeply and guide you through challenging material. What would you like to learn about today?",
+    greeting: "Hello! I'm your Issy Tutor. I'm here to help you understand concepts deeply and guide you through challenging material. What would you like to learn about today?",
     style: 'formal',
   },
   {
@@ -93,7 +95,7 @@ const initialMessages: Message[] = [
   {
     id: 'msg-1',
     role: 'assistant' as const,
-    content: "Hello! I'm your AI Tutor. I'm here to help you understand concepts deeply and guide you through challenging material. What would you like to learn about today?",
+    content: "Hello! I'm your Issy Tutor. I'm here to help you understand concepts deeply and guide you through challenging material. What would you like to learn about today?",
     timestamp: new Date(Date.now() - 300000),
     persona: 'tutor',
   },
@@ -164,6 +166,10 @@ export default function AIBuddyPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const currentPersona = personas.find((p) => p.id === selectedPersona) || personas[0];
@@ -175,6 +181,40 @@ export default function AIBuddyPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Speech recognition setup
+  useEffect(() => {
+    const SpeechRecognitionAPI = (window as unknown as Record<string, unknown>).SpeechRecognition || (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
+    if (SpeechRecognitionAPI) {
+      setSpeechSupported(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const recognition = new (SpeechRecognitionAPI as any)();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-AU';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onresult = (event: any) => {
+        const transcript = event.results?.[0]?.[0]?.transcript;
+        if (transcript) {
+          setInputValue((prev: string) => prev ? `${prev} ${transcript}` : transcript);
+        }
+      };
+      recognition.onend = () => setIsListening(false);
+      recognition.onerror = () => setIsListening(false);
+      recognitionRef.current = recognition;
+    }
+  }, []);
+
+  const toggleSpeechRecognition = useCallback(() => {
+    if (!recognitionRef.current) return;
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  }, [isListening]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -192,7 +232,7 @@ export default function AIBuddyPage() {
     setError(null);
 
     try {
-      const response = await api.aiBuddy.chat(userMessage.content, {
+      const response = await api.askIssy.chat(userMessage.content, {
         conversationId,
         currentTopic: currentContext.topic,
         subjects: [currentContext.course],
@@ -213,7 +253,7 @@ export default function AIBuddyPage() {
 
         setMessages((prev) => [...prev, aiResponse]);
       } else {
-        setError('AI Buddy is temporarily unavailable. Please try again.');
+        setError('Ask Issy is temporarily unavailable. Please try again.');
         // Add error message to chat
         setMessages((prev) => [...prev, {
           id: `msg-err-${Date.now()}`,
@@ -224,7 +264,7 @@ export default function AIBuddyPage() {
         }]);
       }
     } catch {
-      setError('Failed to connect to AI Buddy.');
+      setError('Failed to connect to Ask Issy.');
       setMessages((prev) => [...prev, {
         id: `msg-err-${Date.now()}`,
         role: 'assistant',
@@ -280,10 +320,10 @@ export default function AIBuddyPage() {
   const formatTranscript = () => {
     const lines = messages.map((msg) => {
       const time = formatTimestamp(msg.timestamp);
-      const speaker = msg.role === 'user' ? 'You' : `AI Buddy (${(personas.find((p) => p.id === msg.persona) || currentPersona).name})`;
+      const speaker = msg.role === 'user' ? 'You' : `Ask Issy (${(personas.find((p) => p.id === msg.persona) || currentPersona).name})`;
       return `[${time}] ${speaker}:\n${msg.content}\n`;
     });
-    return `AI Buddy Transcript — ${new Date().toLocaleDateString('en-AU', { dateStyle: 'long' })}\n${'='.repeat(50)}\n\n${lines.join('\n')}`;
+    return `Ask Issy Transcript — ${new Date().toLocaleDateString('en-AU', { dateStyle: 'long' })}\n${'='.repeat(50)}\n\n${lines.join('\n')}`;
   };
 
   const handleCopyTranscript = async () => {
@@ -356,7 +396,7 @@ export default function AIBuddyPage() {
     <div className="flex h-[calc(100vh-8rem)] flex-col gap-2">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">AI Buddy</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Ask Issy</h1>
           <p className="text-sm text-muted-foreground">Your personalized learning companion</p>
         </div>
         <div className="flex items-center gap-2">
@@ -414,7 +454,7 @@ export default function AIBuddyPage() {
       <div className="grid flex-1 gap-4 overflow-hidden lg:grid-cols-4">
         {/* Chat Area */}
         <div className="flex flex-col overflow-hidden lg:col-span-3">
-          <Card className="flex flex-1 flex-col overflow-hidden border-0 shadow-none bg-transparent">
+          <Card className="flex flex-1 flex-col overflow-hidden">
             {/* Messages */}
             <CardContent className="flex-1 overflow-y-auto p-4 scrollbar-thin">
               <div className="space-y-4">
@@ -483,7 +523,7 @@ export default function AIBuddyPage() {
 
                         {/* Message Actions */}
                         {message.role === 'assistant' && (
-                          <div className="absolute -right-2 top-0 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                          <div className="mt-1 flex items-center gap-1">
                             <Button
                               variant="ghost"
                               size="icon-sm"
@@ -602,6 +642,16 @@ export default function AIBuddyPage() {
                     }
                   }}
                 />
+                {speechSupported && (
+                  <Button
+                    variant={isListening ? 'destructive' : 'outline'}
+                    onClick={toggleSpeechRecognition}
+                    className="shrink-0"
+                    title={isListening ? 'Stop listening' : 'Voice input'}
+                  >
+                    {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  </Button>
+                )}
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim() || isLoading}

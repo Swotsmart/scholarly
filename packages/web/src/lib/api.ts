@@ -499,10 +499,10 @@ class ApiClient {
   };
 
   // ==========================================================================
-  // AI BUDDY
+  // ASK ISSY
   // ==========================================================================
 
-  aiBuddy = {
+  askIssy = {
     chat: async (message: string, context?: { conversationId?: string; yearLevel?: string; subjects?: string[]; currentTopic?: string; persona?: string }): Promise<ApiResponse<AiBuddyChatResponse>> => {
       if (DEMO_MODE) {
         return {
@@ -518,19 +518,19 @@ class ApiClient {
           },
         };
       }
-      return this.post<AiBuddyChatResponse>('/ai-buddy/chat', { message, context });
+      return this.post<AiBuddyChatResponse>('/ask-issy/chat', { message, context });
     },
     getConversations: async (): Promise<ApiResponse<AiBuddyConversation[]>> => {
       if (DEMO_MODE) {
         return { success: true, data: [] };
       }
-      return this.get<AiBuddyConversation[]>('/ai-buddy/conversations');
+      return this.get<AiBuddyConversation[]>('/ask-issy/conversations');
     },
     getConversation: async (id: string): Promise<ApiResponse<AiBuddyConversation>> => {
       if (DEMO_MODE) {
         return { success: false, error: 'Not available in demo mode' };
       }
-      return this.get<AiBuddyConversation>(`/ai-buddy/conversations/${id}`);
+      return this.get<AiBuddyConversation>(`/ask-issy/conversations/${id}`);
     },
   };
 

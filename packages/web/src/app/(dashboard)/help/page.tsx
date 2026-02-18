@@ -67,7 +67,7 @@ const helpCategories = [
 
 const popularArticles = [
   { title: 'How to reset your password', views: 1234 },
-  { title: 'Getting started with AI Buddy', views: 987 },
+  { title: 'Getting started with Ask Issy', views: 987 },
   { title: 'Booking your first tutoring session', views: 856 },
   { title: 'Understanding your learning dashboard', views: 743 },
   { title: 'Managing notification preferences', views: 621 },

@@ -74,7 +74,7 @@ const commandItems: CommandItem[] = [
   { id: 'dashboard', label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, section: 'Navigation', keywords: ['home', 'overview'], role: ['learner', 'student'], taskRef: 'D1' },
   { id: 'courses', label: 'My Courses', href: '/learning/courses', icon: BookOpen, section: 'Learning', keywords: ['classes', 'lessons', 'study'], role: ['learner', 'student'], taskRef: 'L1' },
   { id: 'progress', label: 'My Progress', href: '/learning/progress', icon: TrendingUp, section: 'Learning', keywords: ['grades', 'performance'], role: ['learner', 'student'], taskRef: 'PROGRESS' },
-  { id: 'ai-buddy', label: 'AI Buddy', href: '/ai-buddy', icon: Bot, section: 'Learning', keywords: ['help', 'assistant', 'chat', 'tutor'], role: ['learner', 'student'], taskRef: 'L3' },
+  { id: 'ask-issy', label: 'Ask Issy', href: '/ask-issy', icon: Bot, section: 'Learning', keywords: ['help', 'assistant', 'chat', 'tutor'], role: ['learner', 'student'], taskRef: 'L3' },
   { id: 'design-challenges', label: 'Design Challenges', href: '/design-pitch/challenges', icon: Sparkles, section: 'Create', keywords: ['project', 'creative'], role: ['learner', 'student'], taskRef: 'L6L7' },
   { id: 'pitch-decks', label: 'Pitch Decks', href: '/design-pitch/pitch-decks', icon: Presentation, section: 'Create', keywords: ['present', 'slides'], role: ['learner', 'student'], taskRef: 'L6L7' },
   { id: 'portfolio', label: 'My Portfolio', href: '/portfolio', icon: Briefcase, section: 'Create', keywords: ['work', 'showcase'], role: ['learner', 'student'], taskRef: 'L8' },

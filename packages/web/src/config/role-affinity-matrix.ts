@@ -128,7 +128,7 @@ export const ROLE_AFFINITY_MATRIX: RoleAffinityMatrix = {
     learner: 0.9,
     homeschool: 0.3,
   },
-  L3: { // Chat with AI Buddy
+  L3: { // Chat with Ask Issy
     learner: 1.0,   // Anchor item
   },
   L4: { // Follow Golden Path

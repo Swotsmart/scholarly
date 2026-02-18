@@ -66,7 +66,7 @@ import type { LucideIcon } from 'lucide-react';
 
 // Feature flags
 const featureFlagsData = [
-  { id: 'ff1', name: 'AI Buddy Chat', enabled: true, description: 'AI-powered learning assistant for student queries', scope: 'global' as const },
+  { id: 'ff1', name: 'Ask Issy Chat', enabled: true, description: 'AI-powered learning assistant for student queries', scope: 'global' as const },
   { id: 'ff2', name: 'LinguaFlow Module', enabled: true, description: 'CEFR-based language learning with IB integration', scope: 'tenant' as const },
   { id: 'ff3', name: 'Blockchain Credentials', enabled: false, description: 'Verified digital credentials on blockchain', scope: 'global' as const },
   { id: 'ff4', name: 'Early Years Module', enabled: true, description: 'EYLF-aligned early childhood learning tools', scope: 'tenant' as const },
