@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,71 +13,10 @@ import {
   Search,
   Star,
   Plus,
+  Loader2,
 } from 'lucide-react';
-
-const stats = [
-  { label: 'Total Relief Teachers', value: '32', icon: Users, color: 'blue' },
-  { label: 'Available Today', value: '8', icon: UserCheck, color: 'green' },
-  { label: 'Active Assignments', value: '5', icon: ClipboardCheck, color: 'purple' },
-  { label: 'Coverage Rate', value: '94%', icon: TrendingUp, color: 'orange' },
-];
-
-const reliefTeachers = [
-  {
-    id: 'rt1',
-    name: 'Sarah Mitchell',
-    qualifications: ['Mathematics', 'Physics'],
-    availability: 'Monday to Friday',
-    rating: 4.8,
-    status: 'available' as const,
-    completedAssignments: 42,
-  },
-  {
-    id: 'rt2',
-    name: 'David Park',
-    qualifications: ['English', 'History'],
-    availability: 'Mon, Wed, Fri',
-    rating: 4.6,
-    status: 'assigned' as const,
-    completedAssignments: 28,
-  },
-  {
-    id: 'rt3',
-    name: 'Emma Kowalski',
-    qualifications: ['Science', 'Biology', 'Chemistry'],
-    availability: 'Tuesday to Thursday',
-    rating: 4.9,
-    status: 'available' as const,
-    completedAssignments: 56,
-  },
-  {
-    id: 'rt4',
-    name: 'James Okafor',
-    qualifications: ['PE', 'Health', 'Outdoor Ed'],
-    availability: 'Monday to Friday',
-    rating: 4.5,
-    status: 'available' as const,
-    completedAssignments: 35,
-  },
-  {
-    id: 'rt5',
-    name: 'Priya Sharma',
-    qualifications: ['Art', 'Design & Technology'],
-    availability: 'Monday to Thursday',
-    rating: 4.7,
-    status: 'unavailable' as const,
-    completedAssignments: 19,
-  },
-  {
-    id: 'rt6',
-    name: 'Michael Torres',
-    qualifications: ['Music', 'Drama'],
-    availability: 'Wednesday to Friday',
-    rating: 4.4,
-    status: 'available' as const,
-    completedAssignments: 22,
-  },
-];
+import { api } from '@/lib/api';
+import type { ReliefTeacherItem, ReliefStats } from '@/lib/api';
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -85,6 +25,7 @@ function getStatusBadge(status: string) {
     case 'assigned':
       return <Badge className="bg-blue-100 text-blue-800 border-blue-300">Assigned</Badge>;
     case 'unavailable':
+    case 'pending_verification':
       return <Badge className="bg-gray-100 text-gray-800 border-gray-300">Unavailable</Badge>;
     default:
       return <Badge variant="secondary">{status}</Badge>;
@@ -109,6 +50,55 @@ function renderStars(rating: number) {
 }
 
 export default function AdminReliefPage() {
+  const [teachers, setTeachers] = useState<ReliefTeacherItem[]>([]);
+  const [stats, setStats] = useState<ReliefStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [teachersRes, statsRes] = await Promise.all([
+          api.relief.getTeachers(),
+          api.relief.getStats(),
+        ]);
+        if (teachersRes.success && teachersRes.data) {
+          setTeachers(teachersRes.data.teachers);
+        }
+        if (statsRes.success && statsRes.data) {
+          setStats(statsRes.data.stats);
+        }
+      } catch (err) {
+        console.error('Failed to load relief data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const filteredTeachers = searchQuery
+    ? teachers.filter(t =>
+        t.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.subjects.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : teachers;
+
+  const statCards = [
+    { label: 'Total Relief Teachers', value: String(stats?.availableTeachers ?? teachers.length), icon: Users, color: 'blue' },
+    { label: 'Available Today', value: String(stats?.availableTeachers ?? 0), icon: UserCheck, color: 'green' },
+    { label: 'Pending Requests', value: String(stats?.pendingRequests ?? 0), icon: ClipboardCheck, color: 'purple' },
+    { label: 'Coverage Rate', value: `${stats?.fillRate ?? 100}%`, icon: TrendingUp, color: 'orange' },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -126,7 +116,7 @@ export default function AdminReliefPage() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => {
+        {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
             <Card key={stat.label}>
@@ -154,6 +144,8 @@ export default function AdminReliefPage() {
             <Input
               placeholder="Search relief teachers by name or qualification..."
               className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </CardContent>
@@ -166,65 +158,85 @@ export default function AdminReliefPage() {
           <CardDescription>All registered relief and casual teachers</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="p-4 text-left font-medium">Name</th>
-                <th className="p-4 text-left font-medium">Qualifications</th>
-                <th className="p-4 text-left font-medium">Availability</th>
-                <th className="p-4 text-left font-medium">Rating</th>
-                <th className="p-4 text-left font-medium">Completed</th>
-                <th className="p-4 text-left font-medium">Status</th>
-                <th className="p-4 text-left font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reliefTeachers.map((teacher) => (
-                <tr key={teacher.id} className="border-b">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-xs font-medium text-primary">
-                          {teacher.name.split(' ').map((n) => n[0]).join('')}
-                        </span>
-                      </div>
-                      <span className="font-medium">{teacher.name}</span>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex flex-wrap gap-1">
-                      {teacher.qualifications.map((qual) => (
-                        <Badge key={qual} variant="secondary" className="text-xs">
-                          {qual}
-                        </Badge>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm text-muted-foreground">{teacher.availability}</td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-1">
-                      {renderStars(teacher.rating)}
-                      <span className="ml-1 text-sm text-muted-foreground">{teacher.rating}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm">{teacher.completedAssignments}</td>
-                  <td className="p-4">{getStatusBadge(teacher.status)}</td>
-                  <td className="p-4">
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        View Profile
-                      </Button>
-                      {teacher.status === 'available' && (
-                        <Button size="sm">
-                          Assign
-                        </Button>
-                      )}
-                    </div>
-                  </td>
+          {filteredTeachers.length === 0 ? (
+            <div className="p-12 text-center text-muted-foreground">
+              {searchQuery ? 'No teachers match your search.' : 'No relief teachers registered yet.'}
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="p-4 text-left font-medium">Name</th>
+                  <th className="p-4 text-left font-medium">Qualifications</th>
+                  <th className="p-4 text-left font-medium">Year Levels</th>
+                  <th className="p-4 text-left font-medium">Rating</th>
+                  <th className="p-4 text-left font-medium">Completed</th>
+                  <th className="p-4 text-left font-medium">Status</th>
+                  <th className="p-4 text-left font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredTeachers.map((teacher) => {
+                  const metrics = teacher.metrics || {};
+                  const rating = metrics.averageRating ?? 0;
+                  const completed = metrics.completedAssignments ?? metrics.totalAssignments ?? 0;
+
+                  return (
+                    <tr key={teacher.id} className="border-b">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-xs font-medium text-primary">
+                              {teacher.displayName.split(' ').map((n) => n[0]).join('')}
+                            </span>
+                          </div>
+                          <span className="font-medium">{teacher.displayName}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-wrap gap-1">
+                          {teacher.subjects.map((subj) => (
+                            <Badge key={subj} variant="secondary" className="text-xs">
+                              {subj}
+                            </Badge>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-muted-foreground">
+                        {teacher.yearLevels.length > 3
+                          ? `${teacher.yearLevels[0]} - ${teacher.yearLevels[teacher.yearLevels.length - 1]}`
+                          : teacher.yearLevels.join(', ')}
+                      </td>
+                      <td className="p-4">
+                        {rating > 0 ? (
+                          <div className="flex items-center gap-1">
+                            {renderStars(rating)}
+                            <span className="ml-1 text-sm text-muted-foreground">{rating.toFixed(1)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">No rating</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-sm">{completed}</td>
+                      <td className="p-4">{getStatusBadge(teacher.status)}</td>
+                      <td className="p-4">
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline">
+                            View Profile
+                          </Button>
+                          {teacher.status === 'available' && (
+                            <Button size="sm">
+                              Assign
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </CardContent>
       </Card>
     </div>

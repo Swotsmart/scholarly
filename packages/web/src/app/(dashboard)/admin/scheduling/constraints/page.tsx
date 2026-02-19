@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,31 +15,10 @@ import {
   AlertTriangle,
   CheckCircle2,
   Shield,
+  Loader2,
 } from 'lucide-react';
-
-const teacherPreferences = [
-  { id: 'sc1', name: 'No Period 1 for Senior Staff', description: 'Head of Department and coordinators should not have Period 1 classes to allow for morning meetings', priority: 'medium' as const, enabled: true },
-  { id: 'sc6', name: 'Part-Time Teacher Days', description: 'Part-time staff teaching days must align with contracted days', priority: 'high' as const, enabled: true },
-  { id: 'sc10', name: 'Senior Teacher Preference', description: 'Teachers with 15+ years experience may request preferred teaching periods', priority: 'low' as const, enabled: true },
-  { id: 'sc13', name: 'Maximum Consecutive Periods', description: 'No teacher should be scheduled for more than 3 consecutive periods without a break', priority: 'high' as const, enabled: true },
-  { id: 'sc14', name: 'Yard Duty Distribution', description: 'Yard duty assignments should be distributed evenly across all teaching staff', priority: 'medium' as const, enabled: false },
-];
-
-const roomRequirements = [
-  { id: 'sc2', name: 'Double Periods for Science Labs', description: 'All science practical sessions require consecutive double periods in lab facilities', priority: 'high' as const, enabled: true },
-  { id: 'sc4', name: 'PE Outdoor Availability', description: 'Physical Education classes require access to the oval or gymnasium', priority: 'medium' as const, enabled: true },
-  { id: 'sc7', name: 'Art Room Ventilation', description: 'Ceramics and painting classes must be in rooms with proper ventilation', priority: 'low' as const, enabled: false },
-  { id: 'sc9', name: 'Music Noise Buffer', description: 'Music practice rooms should not be adjacent to exam rooms during assessment periods', priority: 'medium' as const, enabled: true },
-  { id: 'sc12', name: 'Computer Lab Maintenance', description: 'Computer Lab 2 unavailable on Monday mornings for IT maintenance', priority: 'medium' as const, enabled: true },
-];
-
-const timeBlocks = [
-  { id: 'sc3', name: 'Year 12 Morning Block', description: 'Year 12 ATAR subjects must be scheduled in Periods 1-4 for optimal focus', priority: 'high' as const, enabled: true },
-  { id: 'sc5', name: 'Staff Meeting Wednesday P5', description: 'No classes scheduled for Period 5 on Wednesdays to allow weekly staff meetings', priority: 'high' as const, enabled: true },
-  { id: 'sc8', name: 'Lunch Break Coverage', description: 'No Year 7-8 classes in the period immediately after lunch (transition buffer)', priority: 'low' as const, enabled: false },
-  { id: 'sc11', name: 'Assembly Block Friday P6', description: 'Friday Period 6 reserved for whole-school or year-level assemblies', priority: 'medium' as const, enabled: true },
-  { id: 'sc15', name: 'Exam Block Periods', description: 'Assessment weeks reserve Periods 1-4 for formal examinations only', priority: 'high' as const, enabled: true },
-];
+import { api } from '@/lib/api';
+import type { SchedulingConstraintItem } from '@/lib/api';
 
 function getPriorityBadge(priority: string) {
   switch (priority) {
@@ -58,7 +37,7 @@ function ConstraintCard({
   constraint,
   onToggle,
 }: {
-  constraint: { id: string; name: string; description: string; priority: 'high' | 'medium' | 'low'; enabled: boolean };
+  constraint: SchedulingConstraintItem;
   onToggle: (id: string) => void;
 }) {
   return (
@@ -99,35 +78,57 @@ function ConstraintCard({
 }
 
 export default function AdminConstraintsPage() {
-  const [teacherConstraints, setTeacherConstraints] = useState(teacherPreferences);
-  const [roomConstraints, setRoomConstraints] = useState(roomRequirements);
-  const [timeConstraints, setTimeConstraints] = useState(timeBlocks);
+  const [constraints, setConstraints] = useState<SchedulingConstraintItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const toggleTeacher = (id: string) => {
-    setTeacherConstraints((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, enabled: !c.enabled } : c))
-    );
+  const fetchConstraints = useCallback(async () => {
+    try {
+      const res = await api.scheduling.getConstraints();
+      if (res.success && res.data) {
+        setConstraints(res.data.constraints);
+      }
+    } catch (err) {
+      console.error('Failed to load constraints:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchConstraints();
+  }, [fetchConstraints]);
+
+  const handleToggle = async (id: string) => {
+    const constraint = constraints.find(c => c.id === id);
+    if (!constraint) return;
+
+    // Optimistic update
+    setConstraints(prev => prev.map(c => c.id === id ? { ...c, enabled: !c.enabled } : c));
+
+    try {
+      await api.scheduling.updateConstraint(id, { enabled: !constraint.enabled });
+    } catch (err) {
+      // Revert on failure
+      setConstraints(prev => prev.map(c => c.id === id ? { ...c, enabled: constraint.enabled } : c));
+      console.error('Failed to toggle constraint:', err);
+    }
   };
 
-  const toggleRoom = (id: string) => {
-    setRoomConstraints((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, enabled: !c.enabled } : c))
+  const teacherConstraints = constraints.filter(c => c.category === 'teacher');
+  const roomConstraints = constraints.filter(c => c.category === 'room');
+  const timeConstraints = constraints.filter(c => c.category === 'time');
+
+  const totalEnabled = constraints.filter(c => c.enabled).length;
+  const totalConstraints = constraints.length;
+  const highPriorityActive = constraints.filter(c => c.priority === 'high' && c.enabled).length;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
     );
-  };
-
-  const toggleTime = (id: string) => {
-    setTimeConstraints((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, enabled: !c.enabled } : c))
-    );
-  };
-
-  const totalEnabled =
-    teacherConstraints.filter((c) => c.enabled).length +
-    roomConstraints.filter((c) => c.enabled).length +
-    timeConstraints.filter((c) => c.enabled).length;
-
-  const totalConstraints =
-    teacherConstraints.length + roomConstraints.length + timeConstraints.length;
+  }
 
   return (
     <div className="space-y-6">
@@ -192,11 +193,7 @@ export default function AdminConstraintsPage() {
                 <AlertTriangle className="h-6 w-6 text-purple-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">
-                  {teacherConstraints.filter((c) => c.priority === 'high' && c.enabled).length +
-                    roomConstraints.filter((c) => c.priority === 'high' && c.enabled).length +
-                    timeConstraints.filter((c) => c.priority === 'high' && c.enabled).length}
-                </p>
+                <p className="text-2xl font-bold">{highPriorityActive}</p>
                 <p className="text-sm text-muted-foreground">High Priority Active</p>
               </div>
             </div>
@@ -230,11 +227,13 @@ export default function AdminConstraintsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {teacherConstraints.map((constraint) => (
+              {teacherConstraints.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No teacher constraints configured</p>
+              ) : teacherConstraints.map((constraint) => (
                 <ConstraintCard
                   key={constraint.id}
                   constraint={constraint}
-                  onToggle={toggleTeacher}
+                  onToggle={handleToggle}
                 />
               ))}
             </CardContent>
@@ -250,11 +249,13 @@ export default function AdminConstraintsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {roomConstraints.map((constraint) => (
+              {roomConstraints.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No room constraints configured</p>
+              ) : roomConstraints.map((constraint) => (
                 <ConstraintCard
                   key={constraint.id}
                   constraint={constraint}
-                  onToggle={toggleRoom}
+                  onToggle={handleToggle}
                 />
               ))}
             </CardContent>
@@ -270,11 +271,13 @@ export default function AdminConstraintsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {timeConstraints.map((constraint) => (
+              {timeConstraints.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No time block constraints configured</p>
+              ) : timeConstraints.map((constraint) => (
                 <ConstraintCard
                   key={constraint.id}
                   constraint={constraint}
-                  onToggle={toggleTime}
+                  onToggle={handleToggle}
                 />
               ))}
             </CardContent>

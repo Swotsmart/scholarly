@@ -613,6 +613,88 @@ class ApiClient {
     getRecommendations: (studentId: string) =>
       this.get<LearningPathRecommendation[]>(`/ml/recommendations/${studentId}`),
   };
+
+  // ==========================================================================
+  // SCHEDULING
+  // ==========================================================================
+
+  scheduling = {
+    getRooms: (filters?: { type?: string; status?: string; search?: string }) => {
+      const params = new URLSearchParams();
+      if (filters?.type) params.set('type', filters.type);
+      if (filters?.status) params.set('status', filters.status);
+      if (filters?.search) params.set('search', filters.search);
+      const qs = params.toString();
+      return this.get<{ rooms: SchedulingRoom[] }>(`/scheduling/rooms${qs ? `?${qs}` : ''}`);
+    },
+    createRoom: (data: Partial<SchedulingRoom>) =>
+      this.post<SchedulingRoom>('/scheduling/rooms', data),
+    updateRoom: (id: string, data: Partial<SchedulingRoom>) =>
+      this.put<SchedulingRoom>(`/scheduling/rooms/${id}`, data),
+    deleteRoom: (id: string) =>
+      this.delete(`/scheduling/rooms/${id}`),
+
+    getPeriods: () =>
+      this.get<{ periods: SchedulingPeriod[] }>('/scheduling/periods'),
+    createPeriod: (data: Partial<SchedulingPeriod>) =>
+      this.post<SchedulingPeriod>('/scheduling/periods', data),
+
+    getTimetable: (filters?: { teacherId?: string; roomId?: string; yearLevel?: string; term?: string }) => {
+      const params = new URLSearchParams();
+      if (filters?.teacherId) params.set('teacherId', filters.teacherId);
+      if (filters?.roomId) params.set('roomId', filters.roomId);
+      if (filters?.yearLevel) params.set('yearLevel', filters.yearLevel);
+      if (filters?.term) params.set('term', filters.term);
+      const qs = params.toString();
+      return this.get<{ slots: TimetableSlot[] }>(`/scheduling/timetable${qs ? `?${qs}` : ''}`);
+    },
+    createSlot: (data: Partial<TimetableSlot>) =>
+      this.post<TimetableSlot>('/scheduling/timetable', data),
+    updateSlot: (id: string, data: Partial<TimetableSlot>) =>
+      this.put<TimetableSlot>(`/scheduling/timetable/${id}`, data),
+    deleteSlot: (id: string) =>
+      this.delete(`/scheduling/timetable/${id}`),
+
+    getConstraints: (filters?: { category?: string; enabled?: boolean }) => {
+      const params = new URLSearchParams();
+      if (filters?.category) params.set('category', filters.category);
+      if (filters?.enabled !== undefined) params.set('enabled', String(filters.enabled));
+      const qs = params.toString();
+      return this.get<{ constraints: SchedulingConstraintItem[] }>(`/scheduling/constraints${qs ? `?${qs}` : ''}`);
+    },
+    createConstraint: (data: Partial<SchedulingConstraintItem>) =>
+      this.post<SchedulingConstraintItem>('/scheduling/constraints', data),
+    updateConstraint: (id: string, data: Partial<SchedulingConstraintItem>) =>
+      this.put<SchedulingConstraintItem>(`/scheduling/constraints/${id}`, data),
+    deleteConstraint: (id: string) =>
+      this.delete(`/scheduling/constraints/${id}`),
+
+    getStats: () =>
+      this.get<SchedulingStats>('/scheduling/stats'),
+  };
+
+  // ==========================================================================
+  // RELIEF
+  // ==========================================================================
+
+  relief = {
+    getTeachers: (filters?: { subject?: string; yearLevel?: string }) => {
+      const params = new URLSearchParams();
+      if (filters?.subject) params.set('subject', filters.subject);
+      if (filters?.yearLevel) params.set('yearLevel', filters.yearLevel);
+      return this.get<{ teachers: ReliefTeacherItem[]; pagination: { total: number } }>(`/relief/teachers?${params}`);
+    },
+    getTeacher: (id: string) =>
+      this.get<{ teacher: ReliefTeacherItem }>(`/relief/teachers/${id}`),
+    getStats: () =>
+      this.get<{ stats: ReliefStats }>('/relief/stats'),
+    getAbsences: (filters?: { date?: string; status?: string }) => {
+      const params = new URLSearchParams();
+      if (filters?.date) params.set('date', filters.date);
+      if (filters?.status) params.set('status', filters.status);
+      return this.get<{ absences: ReliefAbsence[]; pagination: { total: number } }>(`/relief/absences?${params}`);
+    },
+  };
 }
 
 export const api = new ApiClient(API_BASE_URL);
@@ -1191,5 +1273,100 @@ const DEMO_DASHBOARD_SUMMARY: DashboardSummary = {
   user: { id: 'user_admin_1', roles: ['platform_admin'], tokenBalance: 0, trustScore: 100 },
   platformStats: { userCount: 5, tutorCount: 1, contentCount: 12, bookingCount: 3 },
 };
+
+// ==========================================================================
+// SCHEDULING TYPES
+// ==========================================================================
+
+export interface SchedulingRoom {
+  id: string;
+  tenantId: string;
+  name: string;
+  type: string;
+  capacity: number;
+  building?: string;
+  floor?: number;
+  equipment: string[];
+  status: string;
+}
+
+export interface SchedulingPeriod {
+  id: string;
+  tenantId: string;
+  periodNumber: number;
+  name: string;
+  startTime: string;
+  endTime: string;
+  type: string;
+}
+
+export interface TimetableSlot {
+  id: string;
+  tenantId: string;
+  dayOfWeek: number;
+  periodId: string;
+  classCode?: string;
+  subjectId?: string;
+  teacherId?: string;
+  roomId?: string;
+  yearLevel?: string;
+  term?: string;
+  period?: SchedulingPeriod;
+  subject?: { id: string; name: string; code: string; learningArea?: string } | null;
+  teacher?: { id: string; displayName: string; firstName?: string; lastName?: string } | null;
+  room?: { id: string; name: string; type?: string; building?: string } | null;
+}
+
+export interface SchedulingConstraintItem {
+  id: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  category: string;
+  priority: string;
+  enabled: boolean;
+  rules: Record<string, unknown>;
+}
+
+export interface SchedulingStats {
+  rooms: { total: number; available: number; maintenance: number };
+  periods: number;
+  timetableSlots: number;
+  constraints: { total: number; enabled: number };
+}
+
+export interface ReliefTeacherItem {
+  id: string;
+  userId: string;
+  displayName: string;
+  email: string;
+  phone?: string;
+  avatarUrl?: string;
+  subjects: string[];
+  yearLevels: string[];
+  specializations: string[];
+  availability: Record<string, boolean>;
+  metrics: Record<string, number>;
+  tier: string;
+  status: string;
+  user?: { id: string; displayName: string; avatarUrl?: string };
+}
+
+export interface ReliefStats {
+  todayAbsences: number;
+  pendingRequests: number;
+  coveredToday: number;
+  availableTeachers: number;
+  fillRate: number;
+}
+
+export interface ReliefAbsence {
+  id: string;
+  teacherName: string;
+  date: string;
+  reason: string;
+  status: string;
+  coverageRequired: unknown[];
+}
 
 export default api;

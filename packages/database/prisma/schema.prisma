@@ -96,6 +96,7 @@ model Subject {
   bookings        Booking[]
   sessions        TutoringSession[]
   content         Content[]
+  timetableSlots  TimetableSlot[]
   Tenant          Tenant            @relation(fields: [tenantId], references: [id])
 
   @@unique([tenantId, code])
@@ -252,6 +253,9 @@ model User {
   treasuryVotesCast        ArenaTreasuryVoteCast[] @relation("TreasuryVoteCaster")
   contentBountiesCreated   ContentBounty[]         @relation("BountyCreator")
   bountySubmissions        BountySubmission[]      @relation("BountySubmitter")
+
+  // Scheduling
+  timetableSlots TimetableSlot[] @relation("TimetableTeacher")
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -6817,4 +6821,102 @@ model MenuSyncLog {
 
   @@index([userId, tenantId])
   @@index([deviceId])
+}
+
+// ============================================================================
+// SCHEDULING MODELS
+// ============================================================================
+
+model Room {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name      String
+  type      String   @default("classroom") // classroom, lab, hall, library, studio, office
+  capacity  Int      @default(30)
+  building  String?
+  floor     Int?
+  equipment String[] @default([])
+  status    String   @default("available") // available, occupied, maintenance
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  timetableSlots TimetableSlot[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+}
+
+model SchoolPeriod {
+  id       String @id @default(cuid())
+  tenantId String
+
+  periodNumber Int
+  name         String    // "Period 1", "Recess", "Lunch"
+  startTime    String    // "08:30"
+  endTime      String    // "09:20"
+  type         String    @default("teaching") // teaching, break, assembly
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  timetableSlots TimetableSlot[]
+
+  @@unique([tenantId, periodNumber])
+  @@index([tenantId])
+}
+
+model TimetableSlot {
+  id       String @id @default(cuid())
+  tenantId String
+
+  dayOfWeek Int // 1=Monday ... 5=Friday
+
+  periodId String
+  period   SchoolPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  classCode String?
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id])
+
+  teacherId String?
+  teacher   User? @relation("TimetableTeacher", fields: [teacherId], references: [id])
+
+  roomId String?
+  room   Room? @relation(fields: [roomId], references: [id])
+
+  yearLevel String?
+  term      String? // "Term 1 2026"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, dayOfWeek, periodId])
+  @@index([tenantId])
+  @@index([teacherId])
+  @@index([roomId])
+  @@index([subjectId])
+}
+
+model SchedulingConstraint {
+  id       String @id @default(cuid())
+  tenantId String
+
+  name        String
+  description String?
+  category    String    // teacher, room, time
+  priority    String    @default("medium") // high, medium, low
+  enabled     Boolean   @default(true)
+
+  rules Json @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, category])
+  @@index([tenantId, enabled])
 }

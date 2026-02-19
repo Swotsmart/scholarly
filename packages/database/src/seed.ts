@@ -1448,6 +1448,267 @@ Consider areas such as:
   console.log('  • James Wilson (Teacher): KYC verified + WWCC NSW verified');
   console.log('  • David Smith (Parent): KYC verified');
   console.log('  • Verification audit trail records');
+
+  // ==========================================================================
+  // SCHEDULING DATA
+  // ==========================================================================
+  console.log('\n📅 Seeding Scheduling Data...');
+
+  // Create additional subjects for timetable
+  const engSubject = await prisma.subject.upsert({
+    where: { tenantId_code: { tenantId: tenant.id, code: 'ENG' } },
+    update: {},
+    create: { tenantId: tenant.id, code: 'ENG', name: 'English', description: 'English Language and Literature', learningArea: 'Humanities' },
+  });
+  const sciSubject = await prisma.subject.upsert({
+    where: { tenantId_code: { tenantId: tenant.id, code: 'SCI' } },
+    update: {},
+    create: { tenantId: tenant.id, code: 'SCI', name: 'Science', description: 'General Science', learningArea: 'STEM' },
+  });
+  const histSubject = await prisma.subject.upsert({
+    where: { tenantId_code: { tenantId: tenant.id, code: 'HIST' } },
+    update: {},
+    create: { tenantId: tenant.id, code: 'HIST', name: 'History', description: 'Ancient and Modern History', learningArea: 'Humanities' },
+  });
+  const artSubject = await prisma.subject.upsert({
+    where: { tenantId_code: { tenantId: tenant.id, code: 'ART' } },
+    update: {},
+    create: { tenantId: tenant.id, code: 'ART', name: 'Visual Arts', description: 'Drawing, Painting, Sculpture', learningArea: 'Arts' },
+  });
+  const peSubject = await prisma.subject.upsert({
+    where: { tenantId_code: { tenantId: tenant.id, code: 'PE' } },
+    update: {},
+    create: { tenantId: tenant.id, code: 'PE', name: 'Physical Education', description: 'Sport, Health, and Fitness', learningArea: 'Health & PE' },
+  });
+  const musSubject = await prisma.subject.upsert({
+    where: { tenantId_code: { tenantId: tenant.id, code: 'MUS' } },
+    update: {},
+    create: { tenantId: tenant.id, code: 'MUS', name: 'Music', description: 'Music Performance and Theory', learningArea: 'Arts' },
+  });
+  const dtSubject = await prisma.subject.upsert({
+    where: { tenantId_code: { tenantId: tenant.id, code: 'DT' } },
+    update: {},
+    create: { tenantId: tenant.id, code: 'DT', name: 'Design & Technology', description: 'Design Thinking and Fabrication', learningArea: 'Technology' },
+  });
+
+  // Create teacher users for timetable
+  const teacherNguyen = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: 'nguyen@scholarly.app' } },
+    update: {},
+    create: { tenantId: tenant.id, email: 'nguyen@scholarly.app', passwordHash: DEMO_PASSWORD_HASH, displayName: 'Ms. Nguyen', firstName: 'Mai', lastName: 'Nguyen', roles: ['teacher'], status: 'active', emailVerified: true },
+  });
+  const teacherPatel = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: 'patel@scholarly.app' } },
+    update: {},
+    create: { tenantId: tenant.id, email: 'patel@scholarly.app', passwordHash: DEMO_PASSWORD_HASH, displayName: 'Mr. Patel', firstName: 'Raj', lastName: 'Patel', roles: ['teacher'], status: 'active', emailVerified: true },
+  });
+  const teacherChen = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: 'drchen@scholarly.app' } },
+    update: {},
+    create: { tenantId: tenant.id, email: 'drchen@scholarly.app', passwordHash: DEMO_PASSWORD_HASH, displayName: 'Dr. Chen', firstName: 'Wei', lastName: 'Chen', roles: ['teacher'], status: 'active', emailVerified: true },
+  });
+  const teacherOConnor = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: 'oconnor@scholarly.app' } },
+    update: {},
+    create: { tenantId: tenant.id, email: 'oconnor@scholarly.app', passwordHash: DEMO_PASSWORD_HASH, displayName: "Mr. O'Connor", firstName: 'Sean', lastName: "O'Connor", roles: ['teacher'], status: 'active', emailVerified: true },
+  });
+  const teacherKowalski = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: 'kowalski@scholarly.app' } },
+    update: {},
+    create: { tenantId: tenant.id, email: 'kowalski@scholarly.app', passwordHash: DEMO_PASSWORD_HASH, displayName: 'Ms. Kowalski', firstName: 'Anna', lastName: 'Kowalski', roles: ['teacher'], status: 'active', emailVerified: true },
+  });
+  const teacherOkafor = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: 'okafor@scholarly.app' } },
+    update: {},
+    create: { tenantId: tenant.id, email: 'okafor@scholarly.app', passwordHash: DEMO_PASSWORD_HASH, displayName: 'Mr. Okafor', firstName: 'Chidi', lastName: 'Okafor', roles: ['teacher'], status: 'active', emailVerified: true },
+  });
+  const teacherTorres = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: 'torres@scholarly.app' } },
+    update: {},
+    create: { tenantId: tenant.id, email: 'torres@scholarly.app', passwordHash: DEMO_PASSWORD_HASH, displayName: 'Mr. Torres', firstName: 'Miguel', lastName: 'Torres', roles: ['teacher'], status: 'active', emailVerified: true },
+  });
+  const teacherMitchell = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: 'mitchell@scholarly.app' } },
+    update: {},
+    create: { tenantId: tenant.id, email: 'mitchell@scholarly.app', passwordHash: DEMO_PASSWORD_HASH, displayName: 'Ms. Mitchell', firstName: 'Kate', lastName: 'Mitchell', roles: ['teacher'], status: 'active', emailVerified: true },
+  });
+
+  // Create rooms
+  const roomDefs = [
+    { name: 'Room 101', type: 'classroom', capacity: 30, building: 'Block A', equipment: ['Projector', 'Whiteboard', 'Air Conditioning'] },
+    { name: 'Room 203', type: 'classroom', capacity: 32, building: 'Block A', equipment: ['Interactive Whiteboard', 'Projector', 'Air Conditioning'] },
+    { name: 'Room 204', type: 'classroom', capacity: 32, building: 'Block A', equipment: ['Interactive Whiteboard', 'Projector', 'Air Conditioning'], status: 'maintenance' },
+    { name: 'Room 108', type: 'classroom', capacity: 28, building: 'Block A', equipment: ['Projector', 'Whiteboard'] },
+    { name: 'Science Lab A', type: 'lab', capacity: 24, building: 'Block B', equipment: ['Fume Hood', 'Projector', 'Lab Benches', 'Safety Shower'] },
+    { name: 'Computer Lab 1', type: 'lab', capacity: 28, building: 'Block C', equipment: ['28 Workstations', 'Projector', 'Printer'] },
+    { name: 'Assembly Hall', type: 'hall', capacity: 400, building: 'Main Building', equipment: ['Stage', 'Sound System', 'Lighting Rig', 'Projector'] },
+    { name: 'Library', type: 'library', capacity: 80, building: 'Main Building', equipment: ['Study Desks', 'Computers', 'Projector', 'Quiet Zones'] },
+    { name: 'Art Studio', type: 'studio', capacity: 20, building: 'Block D', equipment: ['Easels', 'Kiln', 'Sink Stations', 'Natural Lighting'] },
+    { name: 'Music Room', type: 'studio', capacity: 25, building: 'Block D', equipment: ['Piano', 'Sound System', 'Recording Booth', 'Instruments'] },
+    { name: 'Gymnasium', type: 'hall', capacity: 200, building: 'Sports Complex', equipment: ['Basketball Court', 'Volleyball Net', 'Climbing Wall'] },
+  ];
+
+  const rooms: Record<string, { id: string }> = {};
+  for (const def of roomDefs) {
+    const room = await prisma.room.upsert({
+      where: { tenantId_name: { tenantId: tenant.id, name: def.name } },
+      update: {},
+      create: { tenantId: tenant.id, ...def, status: def.status || 'available' },
+    });
+    rooms[def.name] = room;
+  }
+
+  // Create periods (standard Australian high school)
+  const periodDefs = [
+    { periodNumber: 1, name: 'Period 1', startTime: '08:30', endTime: '09:20', type: 'teaching' },
+    { periodNumber: 2, name: 'Period 2', startTime: '09:25', endTime: '10:15', type: 'teaching' },
+    { periodNumber: 3, name: 'Period 3', startTime: '10:35', endTime: '11:25', type: 'teaching' },
+    { periodNumber: 4, name: 'Period 4', startTime: '11:30', endTime: '12:20', type: 'teaching' },
+    { periodNumber: 5, name: 'Period 5', startTime: '13:20', endTime: '14:10', type: 'teaching' },
+    { periodNumber: 6, name: 'Period 6', startTime: '14:15', endTime: '15:05', type: 'teaching' },
+  ];
+
+  const periods: Record<number, { id: string }> = {};
+  for (const def of periodDefs) {
+    const period = await prisma.schoolPeriod.upsert({
+      where: { tenantId_periodNumber: { tenantId: tenant.id, periodNumber: def.periodNumber } },
+      update: {},
+      create: { tenantId: tenant.id, ...def },
+    });
+    periods[def.periodNumber] = period;
+  }
+
+  // Create timetable slots (Mon-Fri, 6 periods each)
+  // Map: [dayOfWeek, periodNum, classCode, subjectId, teacherId, roomName, yearLevel]
+  type SlotDef = [number, number, string, string, string, string, string];
+  const slotDefs: (SlotDef | null)[] = [
+    // Monday
+    [1, 1, '10ENG-A', engSubject.id, teacherNguyen.id, 'Room 101', 'Year 10'],
+    [1, 2, '11MAT-B', mathSubject.id, teacherPatel.id, 'Room 203', 'Year 11'],
+    [1, 3, '12PHY-A', physicsSubject.id, teacherChen.id, 'Science Lab A', 'Year 12'],
+    [1, 4, '9ART-C', artSubject.id, teacherKowalski.id, 'Art Studio', 'Year 9'],
+    [1, 5, '10HIS-A', histSubject.id, teacherOConnor.id, 'Room 108', 'Year 10'],
+    [1, 6, '11PE-B', peSubject.id, teacherOkafor.id, 'Gymnasium', 'Year 11'],
+    // Tuesday
+    [2, 1, '12MAT-A', mathSubject.id, teacherPatel.id, 'Room 203', 'Year 12'],
+    [2, 2, '10SCI-B', sciSubject.id, teacherChen.id, 'Science Lab A', 'Year 10'],
+    [2, 3, '11ENG-A', engSubject.id, teacherNguyen.id, 'Room 101', 'Year 11'],
+    [2, 4, '9MUS-A', musSubject.id, teacherTorres.id, 'Music Room', 'Year 9'],
+    null, // Tuesday P5 free
+    [2, 6, '10DT-A', dtSubject.id, teacherMitchell.id, 'Computer Lab 1', 'Year 10'],
+    // Wednesday
+    [3, 1, '11SCI-A', sciSubject.id, teacherChen.id, 'Science Lab A', 'Year 11'],
+    [3, 2, '10ENG-A', engSubject.id, teacherNguyen.id, 'Room 101', 'Year 10'],
+    [3, 3, '12HIS-A', histSubject.id, teacherOConnor.id, 'Room 108', 'Year 12'],
+    [3, 4, '9MAT-C', mathSubject.id, teacherPatel.id, 'Room 203', 'Year 9'],
+    null, // Wednesday P5 free (staff meeting)
+    [3, 6, '10ART-B', artSubject.id, teacherKowalski.id, 'Art Studio', 'Year 10'],
+    // Thursday
+    [4, 1, '12ENG-A', engSubject.id, teacherNguyen.id, 'Room 101', 'Year 12'],
+    [4, 2, '11PE-B', peSubject.id, teacherOkafor.id, 'Gymnasium', 'Year 11'],
+    [4, 3, '10MAT-A', mathSubject.id, teacherPatel.id, 'Room 203', 'Year 10'],
+    [4, 4, '9SCI-B', sciSubject.id, teacherChen.id, 'Science Lab A', 'Year 9'],
+    [4, 5, '11DT-A', dtSubject.id, teacherMitchell.id, 'Computer Lab 1', 'Year 11'],
+    [4, 6, '10MUS-A', musSubject.id, teacherTorres.id, 'Music Room', 'Year 10'],
+    // Friday
+    [5, 1, '11MAT-B', mathSubject.id, teacherPatel.id, 'Room 203', 'Year 11'],
+    [5, 2, '10SCI-B', sciSubject.id, teacherChen.id, 'Science Lab A', 'Year 10'],
+    [5, 3, '12ART-A', artSubject.id, teacherKowalski.id, 'Art Studio', 'Year 12'],
+    [5, 4, '9ENG-C', engSubject.id, teacherNguyen.id, 'Room 101', 'Year 9'],
+    [5, 5, '10PE-A', peSubject.id, teacherOkafor.id, 'Gymnasium', 'Year 10'],
+    null, // Friday P6 free (assembly)
+  ];
+
+  for (const def of slotDefs) {
+    if (!def) continue;
+    const [dayOfWeek, periodNum, classCode, subjectId, teacherId, roomName, yearLevel] = def;
+    await prisma.timetableSlot.upsert({
+      where: { tenantId_dayOfWeek_periodId: { tenantId: tenant.id, dayOfWeek, periodId: periods[periodNum].id } },
+      update: {},
+      create: {
+        tenantId: tenant.id,
+        dayOfWeek,
+        periodId: periods[periodNum].id,
+        classCode,
+        subjectId,
+        teacherId,
+        roomId: rooms[roomName]?.id,
+        yearLevel,
+        term: 'Term 1 2026',
+      },
+    });
+  }
+
+  // Create scheduling constraints
+  const constraintDefs = [
+    { name: 'No Period 1 for Senior Staff', description: 'Head of Department and coordinators should not have Period 1 classes to allow for morning meetings', category: 'teacher', priority: 'medium', enabled: true },
+    { name: 'Double Periods for Science Labs', description: 'All science practical sessions require consecutive double periods in lab facilities', category: 'room', priority: 'high', enabled: true },
+    { name: 'Year 12 Morning Block', description: 'Year 12 ATAR subjects must be scheduled in Periods 1-4 for optimal focus', category: 'time', priority: 'high', enabled: true },
+    { name: 'PE Outdoor Availability', description: 'Physical Education classes require access to the oval or gymnasium', category: 'room', priority: 'medium', enabled: true },
+    { name: 'Staff Meeting Wednesday P5', description: 'No classes scheduled for Period 5 on Wednesdays to allow weekly staff meetings', category: 'time', priority: 'high', enabled: true },
+    { name: 'Part-Time Teacher Days', description: 'Part-time staff teaching days must align with contracted days', category: 'teacher', priority: 'high', enabled: true },
+    { name: 'Art Room Ventilation', description: 'Ceramics and painting classes must be in rooms with proper ventilation', category: 'room', priority: 'low', enabled: false },
+    { name: 'Lunch Break Coverage', description: 'No Year 7-8 classes in the period immediately after lunch (transition buffer)', category: 'time', priority: 'low', enabled: false },
+    { name: 'Music Noise Buffer', description: 'Music practice rooms should not be adjacent to exam rooms during assessment periods', category: 'room', priority: 'medium', enabled: true },
+    { name: 'Senior Teacher Preference', description: 'Teachers with 15+ years experience may request preferred teaching periods', category: 'teacher', priority: 'low', enabled: true },
+    { name: 'Assembly Block Friday P6', description: 'Friday Period 6 reserved for whole-school or year-level assemblies', category: 'time', priority: 'medium', enabled: true },
+    { name: 'Computer Lab Maintenance', description: 'Computer Lab 2 unavailable on Monday mornings for IT maintenance', category: 'room', priority: 'medium', enabled: true },
+    { name: 'Maximum Consecutive Periods', description: 'No teacher should be scheduled for more than 3 consecutive periods without a break', category: 'teacher', priority: 'high', enabled: true },
+    { name: 'Yard Duty Distribution', description: 'Yard duty assignments should be distributed evenly across all teaching staff', category: 'teacher', priority: 'medium', enabled: false },
+    { name: 'Exam Block Periods', description: 'Assessment weeks reserve Periods 1-4 for formal examinations only', category: 'time', priority: 'high', enabled: true },
+  ];
+
+  for (const def of constraintDefs) {
+    // Use upsert by checking name within the tenant
+    const existing = await prisma.schedulingConstraint.findFirst({
+      where: { tenantId: tenant.id, name: def.name },
+    });
+    if (!existing) {
+      await prisma.schedulingConstraint.create({
+        data: { tenantId: tenant.id, ...def },
+      });
+    }
+  }
+
+  // Create relief teachers from existing teacher users
+  for (const teacher of [
+    { user: teacherNguyen, subjects: ['English', 'History'], yearLevels: ['Year 9', 'Year 10', 'Year 11', 'Year 12'] },
+    { user: teacherPatel, subjects: ['Mathematics', 'Physics'], yearLevels: ['Year 7', 'Year 8', 'Year 9', 'Year 10', 'Year 11', 'Year 12'] },
+    { user: teacherChen, subjects: ['Science', 'Biology', 'Chemistry'], yearLevels: ['Year 9', 'Year 10', 'Year 11', 'Year 12'] },
+    { user: teacherOkafor, subjects: ['PE', 'Health', 'Outdoor Ed'], yearLevels: ['Year 7', 'Year 8', 'Year 9', 'Year 10', 'Year 11', 'Year 12'] },
+    { user: teacherKowalski, subjects: ['Art', 'Design & Technology'], yearLevels: ['Year 7', 'Year 8', 'Year 9', 'Year 10'] },
+    { user: teacherTorres, subjects: ['Music', 'Drama'], yearLevels: ['Year 7', 'Year 8', 'Year 9', 'Year 10', 'Year 11'] },
+  ]) {
+    const existing = await prisma.reliefTeacher.findUnique({ where: { userId: teacher.user.id } });
+    if (!existing) {
+      await prisma.reliefTeacher.create({
+        data: {
+          tenantId: tenant.id,
+          userId: teacher.user.id,
+          displayName: teacher.user.displayName,
+          email: teacher.user.email,
+          location: { state: 'NSW', country: 'Australia' },
+          qualifications: [{ type: 'teaching', title: 'Bachelor of Education' }],
+          teachingRegistration: { state: 'NSW', number: `NESA-${Math.floor(100000 + Math.random() * 900000)}`, verified: true },
+          safeguardingCheck: { wwcc: true, number: `WWC${Math.floor(1000000 + Math.random() * 9000000)}`, verified: true },
+          subjects: teacher.subjects,
+          yearLevels: teacher.yearLevels,
+          availability: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true },
+          metrics: { totalAssignments: Math.floor(20 + Math.random() * 40), averageRating: 4.4 + Math.random() * 0.5, completedAssignments: Math.floor(15 + Math.random() * 35) },
+          tier: 'standard',
+          status: 'available',
+          verifiedAt: new Date(),
+        },
+      });
+    }
+  }
+
+  console.log('\n📅 Scheduling Data:');
+  console.log('  • 11 Rooms (classrooms, labs, studios, hall, library)');
+  console.log('  • 6 School Periods (standard Australian timetable)');
+  console.log('  • 28 Timetable Slots (Mon-Fri schedule)');
+  console.log('  • 15 Scheduling Constraints (teacher, room, time)');
+  console.log('  • 6 Relief Teachers');
 }
 
 main()

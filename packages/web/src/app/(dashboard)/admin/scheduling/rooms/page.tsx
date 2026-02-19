@@ -1,6 +1,7 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -15,106 +16,20 @@ import {
   Monitor,
   FlaskConical,
   BookOpen,
-  Music,
   Palette,
-  Dumbbell,
+  Loader2,
 } from 'lucide-react';
-
-const stats = [
-  { label: 'Total Rooms', value: '48', icon: School, color: 'blue' },
-  { label: 'Available Now', value: '12', icon: CheckCircle2, color: 'green' },
-  { label: 'In Maintenance', value: '3', icon: Wrench, color: 'orange' },
-];
-
-const rooms = [
-  {
-    id: 'rm1',
-    name: 'Room 101',
-    type: 'classroom' as const,
-    capacity: 30,
-    equipment: ['Projector', 'Whiteboard', 'Air Conditioning'],
-    status: 'available' as const,
-    building: 'Block A',
-  },
-  {
-    id: 'rm2',
-    name: 'Science Lab A',
-    type: 'lab' as const,
-    capacity: 24,
-    equipment: ['Fume Hood', 'Projector', 'Lab Benches', 'Safety Shower'],
-    status: 'occupied' as const,
-    building: 'Block B',
-  },
-  {
-    id: 'rm3',
-    name: 'Computer Lab 1',
-    type: 'lab' as const,
-    capacity: 28,
-    equipment: ['28 Workstations', 'Projector', 'Printer'],
-    status: 'available' as const,
-    building: 'Block C',
-  },
-  {
-    id: 'rm4',
-    name: 'Assembly Hall',
-    type: 'hall' as const,
-    capacity: 400,
-    equipment: ['Stage', 'Sound System', 'Lighting Rig', 'Projector'],
-    status: 'available' as const,
-    building: 'Main Building',
-  },
-  {
-    id: 'rm5',
-    name: 'Library',
-    type: 'library' as const,
-    capacity: 80,
-    equipment: ['Study Desks', 'Computers', 'Projector', 'Quiet Zones'],
-    status: 'occupied' as const,
-    building: 'Main Building',
-  },
-  {
-    id: 'rm6',
-    name: 'Art Studio',
-    type: 'studio' as const,
-    capacity: 20,
-    equipment: ['Easels', 'Kiln', 'Sink Stations', 'Natural Lighting'],
-    status: 'available' as const,
-    building: 'Block D',
-  },
-  {
-    id: 'rm7',
-    name: 'Room 204',
-    type: 'classroom' as const,
-    capacity: 32,
-    equipment: ['Interactive Whiteboard', 'Projector', 'Air Conditioning'],
-    status: 'maintenance' as const,
-    building: 'Block A',
-  },
-  {
-    id: 'rm8',
-    name: 'Music Room',
-    type: 'studio' as const,
-    capacity: 25,
-    equipment: ['Piano', 'Sound System', 'Recording Booth', 'Instruments'],
-    status: 'available' as const,
-    building: 'Block D',
-  },
-];
+import { api } from '@/lib/api';
+import type { SchedulingRoom } from '@/lib/api';
 
 function getRoomIcon(type: string) {
   switch (type) {
-    case 'classroom':
-      return Monitor;
-    case 'lab':
-      return FlaskConical;
-    case 'hall':
-      return Users;
-    case 'library':
-      return BookOpen;
-    case 'studio':
-      return Palette;
-    default:
-      return School;
+    case 'classroom': return Monitor;
+    case 'lab': return FlaskConical;
+    case 'hall': return Users;
+    case 'library': return BookOpen;
+    case 'studio': return Palette;
+    default: return School;
   }
 }
 
@@ -148,24 +63,64 @@ function getStatusIndicator(status: string) {
 
 function getTypeLabel(type: string) {
   switch (type) {
-    case 'classroom':
-      return 'Classroom';
-    case 'lab':
-      return 'Laboratory';
-    case 'hall':
-      return 'Assembly Hall';
-    case 'library':
-      return 'Library';
-    case 'studio':
-      return 'Studio';
-    case 'office':
-      return 'Office';
-    default:
-      return type;
+    case 'classroom': return 'Classroom';
+    case 'lab': return 'Laboratory';
+    case 'hall': return 'Assembly Hall';
+    case 'library': return 'Library';
+    case 'studio': return 'Studio';
+    case 'office': return 'Office';
+    default: return type;
   }
 }
 
 export default function AdminRoomsPage() {
+  const [rooms, setRooms] = useState<SchedulingRoom[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    async function fetchRooms() {
+      try {
+        const res = await api.scheduling.getRooms();
+        if (res.success && res.data) {
+          setRooms(res.data.rooms);
+        }
+      } catch (err) {
+        console.error('Failed to load rooms:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchRooms();
+  }, []);
+
+  const filteredRooms = searchQuery
+    ? rooms.filter(r =>
+        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.building?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.equipment.some(e => e.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : rooms;
+
+  const totalRooms = rooms.length;
+  const availableRooms = rooms.filter(r => r.status === 'available').length;
+  const maintenanceRooms = rooms.filter(r => r.status === 'maintenance').length;
+
+  const stats = [
+    { label: 'Total Rooms', value: String(totalRooms), icon: School, color: 'blue' },
+    { label: 'Available Now', value: String(availableRooms), icon: CheckCircle2, color: 'green' },
+    { label: 'In Maintenance', value: String(maintenanceRooms), icon: Wrench, color: 'orange' },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -211,55 +166,67 @@ export default function AdminRoomsPage() {
             <Input
               placeholder="Search rooms by name, type, or equipment..."
               className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </CardContent>
       </Card>
 
       {/* Rooms Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {rooms.map((room) => {
-          const RoomIcon = getRoomIcon(room.type);
-          return (
-            <Card key={room.id}>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4">
-                    <div className="rounded-lg bg-primary/10 p-3">
-                      <RoomIcon className="h-6 w-6 text-primary" />
+      {filteredRooms.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center text-muted-foreground">
+            {searchQuery ? 'No rooms match your search.' : 'No rooms configured yet. Add your first room to get started.'}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredRooms.map((room) => {
+            const RoomIcon = getRoomIcon(room.type);
+            return (
+              <Card key={room.id}>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="rounded-lg bg-primary/10 p-3">
+                        <RoomIcon className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">{room.name}</h3>
+                        <p className="text-sm text-muted-foreground">{getTypeLabel(room.type)}</p>
+                        {room.building && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{room.building}</p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold">{room.name}</h3>
-                      <p className="text-sm text-muted-foreground">{getTypeLabel(room.type)}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{room.building}</p>
-                    </div>
+                    {getStatusIndicator(room.status)}
                   </div>
-                  {getStatusIndicator(room.status)}
-                </div>
-                <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                  <Users className="h-4 w-4" />
-                  Capacity: {room.capacity}
-                </div>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {room.equipment.map((item) => (
-                    <Badge key={item} variant="secondary" className="text-xs">
-                      {item}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="mt-4 flex gap-2">
-                  <Button size="sm" variant="outline" className="flex-1">
-                    View Schedule
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    Edit
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    Capacity: {room.capacity}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {room.equipment.map((item) => (
+                      <Badge key={item} variant="secondary" className="text-xs">
+                        {item}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <Button size="sm" variant="outline" className="flex-1">
+                      View Schedule
+                    </Button>
+                    <Button size="sm" variant="outline">
+                      Edit
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
