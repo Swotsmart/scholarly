@@ -31,6 +31,9 @@
     "src/services/collaboration",
     "src/services/parent",
     "src/services/storage",
-    "src/infrastructure"
+    "src/services/voice",
+    "src/infrastructure",
+    "tests",
+    "scripts"
   ]
 }

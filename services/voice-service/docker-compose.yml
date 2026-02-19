@@ -1,0 +1,106 @@
+# =============================================================================
+# SCHOLARLY VOICE SERVICE — Docker Compose (Development)
+# =============================================================================
+# Local development stack:
+#   - voice-service: The FastAPI application (with hot reload)
+#   - redis: Cache backend for development
+#
+# Usage:
+#   docker compose up              # Start all services
+#   docker compose up voice-service # Start just the voice service
+#   docker compose down            # Stop and remove containers
+#
+# GPU support:
+#   docker compose --profile gpu up  # Start with GPU passthrough
+#
+# Without GPU, Kokoro falls back to CPU (3-11x realtime, acceptable
+# for development and testing).
+# =============================================================================
+
+services:
+  # -------------------------------------------------------------------------
+  # Voice Service — the main application
+  # -------------------------------------------------------------------------
+  voice-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8100:8100"
+    environment:
+      # Development overrides
+      SVS_ENVIRONMENT: development
+      SVS_LOG_LEVEL: DEBUG
+      SVS_SERVER_RELOAD: "true"
+      SVS_SERVER_WORKERS: "1"  # Single worker for hot reload
+      SVS_TTS_KOKORO_DEVICE: "auto"
+
+      # Storage: local filesystem (mounted volume)
+      SVS_STORAGE_BACKEND: local_fs
+      SVS_STORAGE_LOCAL_STORAGE_PATH: /data/voice-assets
+
+      # Cache: Redis
+      SVS_CACHE_BACKEND: redis
+      SVS_CACHE_REDIS_URL: redis://redis:6379/0
+
+      # Auth disabled for development
+      SVS_AUTH_ENABLED: "false"
+
+      # CORS: allow local Next.js dev server
+      SVS_SERVER_CORS_ORIGINS: "http://localhost:3000,http://localhost:3001,http://localhost:8100"
+    volumes:
+      # Mount source code for hot reload
+      - .:/home/svs/app
+      # Persistent audio storage
+      - voice-assets:/data/voice-assets
+      # Model cache (persists across container rebuilds)
+      - model-cache:/home/svs/.cache
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8100/healthz')"]
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  # -------------------------------------------------------------------------
+  # Voice Service (GPU) — same as above but with NVIDIA GPU passthrough
+  # -------------------------------------------------------------------------
+  voice-service-gpu:
+    extends:
+      service: voice-service
+    profiles:
+      - gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # -------------------------------------------------------------------------
+  # Redis — cache backend
+  # -------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"  # 6380 to avoid conflicts with host Redis
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+volumes:
+  voice-assets:
+    driver: local
+  model-cache:
+    driver: local
+  redis-data:
+    driver: local
