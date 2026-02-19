@@ -363,7 +363,13 @@ function AdminDashboard() {
 export default function IntelligentDashboardPage() {
   const router = useRouter();
   const { user, isLoading } = useAuthStore();
-  const role = user?.role || 'learner';
+  // Derive primary role from the roles array (DB stores roles as String[])
+  const roles = user?.roles || [];
+  const role = roles.includes('teacher') || roles.includes('educator') ? 'teacher'
+    : roles.includes('parent') || roles.includes('guardian') ? 'parent'
+    : roles.includes('tutor') || roles.includes('tutor_professional') || roles.includes('tutor_university') || roles.includes('tutor_peer') ? 'tutor'
+    : roles.includes('platform_admin') || roles.includes('admin') ? 'platform_admin'
+    : user?.role || 'learner';
 
   useEffect(() => {
     if (isLoading) return;

@@ -178,13 +178,13 @@ The key steps are:
 3. Those same numbers should add up to b
 4. Use those numbers to split the middle term and factor by grouping`;
 
-// Map user role to a simplified role key for prompts/context
-function getUserRoleKey(role?: string): string {
-  if (!role) return 'learner';
-  if (role === 'teacher' || role === 'educator') return 'teacher';
-  if (role === 'tutor' || role === 'tutor_professional') return 'tutor';
-  if (role === 'parent' || role === 'guardian') return 'parent';
-  if (role === 'platform_admin' || role === 'admin') return 'admin';
+// Map user roles array to a simplified role key for prompts/context
+function getUserRoleKey(roles?: string[]): string {
+  if (!roles || roles.length === 0) return 'learner';
+  if (roles.includes('teacher') || roles.includes('educator')) return 'teacher';
+  if (roles.includes('tutor') || roles.includes('tutor_professional') || roles.includes('tutor_university') || roles.includes('tutor_peer')) return 'tutor';
+  if (roles.includes('parent') || roles.includes('guardian')) return 'parent';
+  if (roles.includes('platform_admin') || roles.includes('admin')) return 'admin';
   return 'learner';
 }
 
@@ -263,7 +263,7 @@ function getSubtitle(roleKey: string): string {
 
 export default function AIBuddyPage() {
   const { user } = useAuthStore();
-  const roleKey = getUserRoleKey(user?.role);
+  const roleKey = getUserRoleKey(user?.roles);
   const quickPrompts = quickPromptsByRole[roleKey] || quickPromptsByRole.learner;
   const sidebarContext = getRoleContext(roleKey, user);
 
