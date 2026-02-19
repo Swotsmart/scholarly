@@ -133,6 +133,7 @@ const segmentLabels: Record<string, string> = {
   immersion: 'Immersion',
   exchange: 'Exchange',
   voice: 'Voice Practice',
+  'voice-studio': 'Voice Studio',
 };
 
 // Segments that are route groups (Next.js convention) — skip these in breadcrumbs
