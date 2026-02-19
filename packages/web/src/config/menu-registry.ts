@@ -200,6 +200,9 @@ export const taskRegistry: Record<string, RegisteredTask> = {
     { name: 'Capacity', href: '/teacher/scheduling/capacity', icon: Maximize },
   ]},
 
+  // ── TEACHER VOICE STUDIO ──
+  VOICE_STUDIO: { ref: 'VOICE_STUDIO', name: 'Voice Studio', href: '/teacher/voice-studio', icon: Mic, type: 'atomic', cluster: 'teaching', description: 'TTS synthesis, audio processing, and phonics narration' },
+
   // ── TEACHER STUDENTS (compound anchor) ──
   TEACHER_STUDENTS: { ref: 'TEACHER_STUDENTS', name: 'Students', href: '/teacher/students', icon: Users, type: 'atomic', cluster: 'teaching', description: 'Student profiles and wellbeing' },
 

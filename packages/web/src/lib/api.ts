@@ -588,6 +588,138 @@ class ApiClient {
   };
 
   // ==========================================================================
+  // VOICE STUDIO
+  // ==========================================================================
+
+  voiceStudio = {
+    _baseUrl: process.env.NEXT_PUBLIC_VOICE_SERVICE_URL || 'https://scholarly-voice.bravefield-dce0abaf.australiaeast.azurecontainerapps.io',
+
+    _fetch: async <T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> => {
+      try {
+        const res = await fetch(`${this.voiceStudio._baseUrl}${endpoint}`, {
+          ...options,
+          headers: { 'Content-Type': 'application/json', ...options.headers },
+        });
+        const data = await res.json();
+        if (!res.ok) return { success: false, error: data.detail || data.message || `HTTP ${res.status}` };
+        return { success: true, data };
+      } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : 'Voice service unavailable' };
+      }
+    },
+
+    /** List available TTS voices */
+    getVoices: (filters?: { language?: string; gender?: string; style?: string }): Promise<ApiResponse<VoiceListResult>> => {
+      const params = new URLSearchParams();
+      if (filters?.language) params.set('language', filters.language);
+      if (filters?.gender) params.set('gender', filters.gender);
+      if (filters?.style) params.set('style', filters.style);
+      const qs = params.toString();
+      return this.voiceStudio._fetch<VoiceListResult>(`/api/v1/tts/voices${qs ? `?${qs}` : ''}`);
+    },
+
+    /** Synthesize speech from text */
+    synthesize: (data: { text: string; voice_id?: string; language?: string; pace?: number; pitch?: number; warmth?: number; output_format?: string; word_timestamps?: boolean }): Promise<ApiResponse<SynthesizeResult>> =>
+      this.voiceStudio._fetch<SynthesizeResult>('/api/v1/tts/synthesize', { method: 'POST', body: JSON.stringify(data) }),
+
+    /** Estimate synthesis cost */
+    estimateCost: (textLength: number): Promise<ApiResponse<VoiceCostEstimate>> =>
+      this.voiceStudio._fetch<VoiceCostEstimate>('/api/v1/tts/estimate-cost', { method: 'POST', body: JSON.stringify({ text_length: textLength }) }),
+
+    /** Normalise audio (5-stage) */
+    normalise: (data: { audio_base64: string; target_lufs?: number; denoise?: boolean; trim_silence?: boolean; output_format?: string }): Promise<ApiResponse<NormaliseResult>> =>
+      this.voiceStudio._fetch<NormaliseResult>('/api/v1/studio/normalise', { method: 'POST', body: JSON.stringify(data) }),
+
+    /** Adjust audio pace/pitch/warmth */
+    adjust: (data: { audio_base64: string; pace?: number; pitch?: number; warmth?: number; output_format?: string }): Promise<ApiResponse<AdjustResult>> =>
+      this.voiceStudio._fetch<AdjustResult>('/api/v1/studio/adjust', { method: 'POST', body: JSON.stringify(data) }),
+
+    /** Preview adjustment (first 5 seconds) */
+    adjustPreview: (data: { audio_base64: string; pace?: number; pitch?: number; warmth?: number; output_format?: string }): Promise<ApiResponse<AdjustResult>> =>
+      this.voiceStudio._fetch<AdjustResult>('/api/v1/studio/adjust/preview', { method: 'POST', body: JSON.stringify(data) }),
+
+    /** Phonics-aware pace adjustment */
+    phonicsPace: (data: { audio_base64: string; text: string; target_gpcs: string[]; emphasis_pace?: number; word_timestamps: Array<{ word: string; start: number; end: number; confidence?: number }> }): Promise<ApiResponse<AdjustResult>> =>
+      this.voiceStudio._fetch<AdjustResult>('/api/v1/studio/phonics-pace', { method: 'POST', body: JSON.stringify(data) }),
+
+    /** Generate pace/pitch variants */
+    variants: (data: { audio_base64: string; variants: Array<{ name: string; pace?: number; pitch?: number; warmth?: number }>; output_format?: string }): Promise<ApiResponse<VariantsResult>> =>
+      this.voiceStudio._fetch<VariantsResult>('/api/v1/studio/variants', { method: 'POST', body: JSON.stringify(data) }),
+
+    /** Get health status */
+    health: (): Promise<ApiResponse<{ status: string }>> =>
+      this.voiceStudio._fetch<{ status: string }>('/healthz'),
+
+    /** Upload file (multipart/form-data) — used by cloning + analyse */
+    _uploadFile: async <T>(endpoint: string, file: File, additionalFields?: Record<string, string>): Promise<ApiResponse<T>> => {
+      try {
+        const formData = new FormData();
+        formData.append('audio', file);
+        if (additionalFields) {
+          Object.entries(additionalFields).forEach(([k, v]) => formData.append(k, v));
+        }
+        const res = await fetch(`${this.voiceStudio._baseUrl}${endpoint}`, {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) return { success: false, error: data.detail || data.message || `HTTP ${res.status}` };
+        return { success: true, data };
+      } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : 'Upload failed' };
+      }
+    },
+
+    // ── Voice Cloning ──
+
+    /** Grant voice cloning consent */
+    createConsent: (data: VoiceCloneConsentRequest): Promise<ApiResponse<VoiceCloneConsentResponse>> =>
+      this.voiceStudio._fetch<VoiceCloneConsentResponse>('/api/v1/cloning/consent', { method: 'POST', body: JSON.stringify(data) }),
+
+    /** Get consent record */
+    getConsent: (id: string): Promise<ApiResponse<VoiceCloneConsentResponse>> =>
+      this.voiceStudio._fetch<VoiceCloneConsentResponse>(`/api/v1/cloning/consent/${id}`),
+
+    /** Revoke consent (archives linked profiles) */
+    revokeConsent: (id: string): Promise<ApiResponse<{ consent_id: string; revoked: boolean; profiles_archived: number }>> =>
+      this.voiceStudio._fetch<{ consent_id: string; revoked: boolean; profiles_archived: number }>(`/api/v1/cloning/consent/${id}`, { method: 'DELETE' }),
+
+    /** Create voice clone profile */
+    createProfile: (data: VoiceCloneProfileRequest): Promise<ApiResponse<VoiceCloneProfileResponse>> =>
+      this.voiceStudio._fetch<VoiceCloneProfileResponse>('/api/v1/cloning/profiles', { method: 'POST', body: JSON.stringify(data) }),
+
+    /** List voice clone profiles */
+    listProfiles: (status?: string): Promise<ApiResponse<{ profiles: VoiceCloneProfileResponse[]; total: number }>> => {
+      const qs = status ? `?status=${status}` : '';
+      return this.voiceStudio._fetch<{ profiles: VoiceCloneProfileResponse[]; total: number }>(`/api/v1/cloning/profiles${qs}`);
+    },
+
+    /** Get voice clone profile */
+    getProfile: (id: string): Promise<ApiResponse<VoiceCloneProfileResponse>> =>
+      this.voiceStudio._fetch<VoiceCloneProfileResponse>(`/api/v1/cloning/profiles/${id}`),
+
+    /** Delete voice clone profile */
+    deleteProfile: (id: string): Promise<ApiResponse<{ status: string; profile_id: string }>> =>
+      this.voiceStudio._fetch<{ status: string; profile_id: string }>(`/api/v1/cloning/profiles/${id}`, { method: 'DELETE' }),
+
+    /** Upload audio sample for cloning */
+    uploadSample: (profileId: string, file: File): Promise<ApiResponse<VoiceCloneSampleResult>> =>
+      this.voiceStudio._uploadFile<VoiceCloneSampleResult>(`/api/v1/cloning/profiles/${profileId}/samples`, file),
+
+    /** List uploaded samples */
+    listSamples: (profileId: string): Promise<ApiResponse<{ samples: VoiceCloneSampleInfo[]; total: number; total_duration_ms: number }>> =>
+      this.voiceStudio._fetch<{ samples: VoiceCloneSampleInfo[]; total: number; total_duration_ms: number }>(`/api/v1/cloning/profiles/${profileId}/samples`),
+
+    /** Build voice clone (extract speaker embedding) */
+    buildProfile: (profileId: string): Promise<ApiResponse<VoiceCloneBuildResult>> =>
+      this.voiceStudio._fetch<VoiceCloneBuildResult>(`/api/v1/cloning/profiles/${profileId}/build`, { method: 'POST' }),
+
+    /** Analyse audio quality (multipart upload) */
+    analyse: (file: File, wordCount?: number): Promise<ApiResponse<AudioQualityReport>> =>
+      this.voiceStudio._uploadFile<AudioQualityReport>('/api/v1/studio/analyse', file, wordCount ? { word_count: String(wordCount) } : undefined),
+  };
+
+  // ==========================================================================
   // ANALYTICS & DATA
   // ==========================================================================
 
@@ -1367,6 +1499,186 @@ export interface ReliefAbsence {
   reason: string;
   status: string;
   coverageRequired: unknown[];
+}
+
+// ==========================================================================
+// VOICE STUDIO TYPES
+// ==========================================================================
+
+export interface VoiceInfo {
+  voice_id: string;
+  name: string;
+  language: string;
+  gender: string;
+  style: string;
+  provider: string;
+  is_cloned: boolean;
+  preview_url?: string;
+  supported_languages?: string[];
+}
+
+export interface VoiceListResult {
+  voices: VoiceInfo[];
+  total: number;
+}
+
+export interface VoiceWordTimestamp {
+  word: string;
+  start: number;
+  end: number;
+  confidence?: number;
+}
+
+export interface VoiceCostEstimate {
+  provider: string;
+  compute_seconds: number;
+  estimated_cost_usd: number;
+  model: string;
+  characters_processed?: number;
+  audio_seconds_processed?: number;
+}
+
+export interface SynthesizeResult {
+  audio_base64: string;
+  duration_seconds: number;
+  sample_rate: number;
+  format: string;
+  word_timestamps: VoiceWordTimestamp[];
+  cost: VoiceCostEstimate;
+}
+
+export interface AudioQualityReport {
+  loudness_lufs: number;
+  peak_dbfs: number;
+  snr_db: number;
+  pace_wpm?: number;
+  pitch_hz_mean?: number;
+  pitch_hz_range?: [number, number];
+  silence_ratio?: number;
+  duration_seconds: number;
+  sample_rate: number;
+  channels: number;
+}
+
+export interface NormaliseResult {
+  audio_base64: string;
+  quality_before: AudioQualityReport;
+  quality_after: AudioQualityReport;
+  cost: VoiceCostEstimate;
+}
+
+export interface AdjustResult {
+  audio_base64: string;
+  duration_seconds: number;
+  word_timestamps: VoiceWordTimestamp[];
+  adjustments_applied: Record<string, unknown>;
+  cost: VoiceCostEstimate;
+}
+
+export interface VariantItem {
+  name: string;
+  audio_base64: string;
+  duration_seconds: number;
+  word_timestamps: VoiceWordTimestamp[];
+}
+
+export interface VariantsResult {
+  variants: VariantItem[];
+  total_cost: VoiceCostEstimate;
+}
+
+// ==========================================================================
+// VOICE CLONING TYPES
+// ==========================================================================
+
+export interface VoiceCloneConsentRequest {
+  voice_owner_id: string;
+  purpose: string;
+  granted_by: string;
+  expires_at?: string;
+}
+
+export interface VoiceCloneConsentResponse {
+  id: string;
+  voice_owner_id: string;
+  purpose: string;
+  granted_by: string;
+  granted_at: string;
+  expires_at?: string;
+  revoked: boolean;
+}
+
+export interface VoiceCloneProfileRequest {
+  name: string;
+  language: string;
+  consent_id: string;
+  description?: string;
+}
+
+export type VoiceCloneProfileStatus = 'creating' | 'ready' | 'failed' | 'archived';
+
+export interface VoiceCloneProfileResponse {
+  id: string;
+  tenant_id: string;
+  owner_id: string;
+  name: string;
+  language: string;
+  provider: string;
+  status: VoiceCloneProfileStatus;
+  quality_score: number | null;
+  sample_count: number;
+  verified_languages: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VoiceCloneSampleResult {
+  valid: boolean;
+  sample_id?: string;
+  profile_id: string;
+  duration_seconds: number;
+  quality_metrics: { duration_seconds: number; rms: number; peak: number; snr_db: number };
+  issues?: string[];
+  total_samples?: number;
+  total_duration_ms?: number;
+}
+
+export interface VoiceCloneSampleInfo {
+  id: string;
+  audio_url: string;
+  duration_ms: number;
+  normalised: boolean;
+  quality_assessment: { rms: number; peak: number; snr_db: number };
+  created_at: string;
+}
+
+export interface VoiceCloneBuildResult {
+  profile_id: string;
+  status: VoiceCloneProfileStatus;
+  quality_score: number;
+  voice_id: string;
+  verified_languages: string[];
+  compute_seconds: number;
+  total_build_seconds: number;
+  cost: VoiceCostEstimate;
+}
+
+// ==========================================================================
+// PROCESSING JOB TYPES (client-side tracking)
+// ==========================================================================
+
+export type ProcessingJobType = 'narrate-book' | 'batch-variant' | 'clone-profile';
+export type ProcessingJobStatus = 'queued' | 'processing' | 'complete' | 'failed';
+
+export interface ProcessingJob {
+  id: string;
+  type: ProcessingJobType;
+  status: ProcessingJobStatus;
+  progress: number;
+  detail: string;
+  startedAt: string;
+  completedAt?: string;
+  error?: string;
 }
 
 export default api;
