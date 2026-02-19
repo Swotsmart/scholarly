@@ -102,6 +102,7 @@ const commandItems: CommandItem[] = [
   { id: 't-challenges', label: 'Create Challenge', href: '/teacher/challenges/create', icon: PlusCircle, section: 'Quick Actions', keywords: ['new', 'assignment', 'task'], role: ['teacher', 'educator'], taskRef: 'T6' },
   { id: 't-reports', label: 'Reports', href: '/teacher/reports', icon: BarChart3, section: 'Analytics', keywords: ['data', 'insights', 'analytics'], role: ['teacher', 'educator'], taskRef: 'T8' },
   { id: 't-standards', label: 'Standards', href: '/teacher/standards', icon: Shield, section: 'Compliance', keywords: ['audit', 'curriculum'], role: ['teacher', 'educator'], taskRef: 'T7' },
+  { id: 't-voice-studio', label: 'Voice Studio', href: '/teacher/voice-studio', icon: Mic, section: 'Teaching', keywords: ['voice', 'tts', 'speech', 'synthesis', 'narration', 'phonics', 'audio'], role: ['teacher', 'educator'], taskRef: 'VOICE_STUDIO' },
 
   // Parent
   { id: 'p-dashboard', label: 'Parent Dashboard', href: '/parent/dashboard', icon: LayoutDashboard, section: 'Navigation', keywords: ['home', 'family'], role: ['parent', 'guardian'], taskRef: 'D1-parent' },
