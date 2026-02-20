@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import api, { type SynthesizeResult, type VoiceWordTimestamp } from '@/lib/api';
 import { VOICE_PERSONAS, PACE_CONFIG, phaseToMultiplier, PREVIEW_SENTENCE, type VoicePersona } from './voice-persona-data';
 import { KaraokePlayer } from './karaoke-player';
@@ -84,6 +85,7 @@ export function SynthesiseTab({
   const [synthPace, setSynthPace] = useState(1.0);
   const [synthPitch, setSynthPitch] = useState(0);
   const [synthWarmth, setSynthWarmth] = useState(0);
+  const [synthLanguage, setSynthLanguage] = useState<string>('auto');
   const [wordTimestamps, setWordTimestamps] = useState(true);
   const [synthesizing, setSynthesizing] = useState(false);
   const [synthResult, setSynthResult] = useState<SynthesizeResult | null>(null);
@@ -132,6 +134,7 @@ export function SynthesiseTab({
       const res = await api.voiceStudio.synthesize({
         text: synthText,
         voice_id: customVoiceId || selectedPersona?.voiceId || undefined,
+        language: synthLanguage !== 'auto' ? synthLanguage : undefined,
         pace: synthPace,
         pitch: synthPitch,
         warmth: synthWarmth,
@@ -260,6 +263,7 @@ export function SynthesiseTab({
                     onClick={() => {
                       setCustomVoiceId(voice.voice_id);
                       setSelectedPersona(null);
+                      setSynthLanguage(voice.language);
                     }}
                     className={cn(
                       'rounded-lg border p-3 cursor-pointer transition-all hover:shadow-sm text-sm',
@@ -327,6 +331,30 @@ export function SynthesiseTab({
                     Clear
                   </Button>
                 )}
+              </div>
+            </div>
+
+            {/* Language selector */}
+            <div className="space-y-2">
+              <Label>Language</Label>
+              <div className="flex items-center gap-3">
+                <Select value={synthLanguage} onValueChange={(v) => setSynthLanguage(v)}>
+                  <SelectTrigger className="w-[220px]">
+                    <Globe className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Auto-detect" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Auto-detect</SelectItem>
+                    {Object.entries(LANGUAGE_LABELS).map(([code, label]) => (
+                      <SelectItem key={code} value={code}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-xs text-muted-foreground">
+                  {synthLanguage === 'auto'
+                    ? 'Voice language determines output'
+                    : `Text will be spoken in ${LANGUAGE_LABELS[synthLanguage] || synthLanguage}`}
+                </span>
               </div>
             </div>
 
