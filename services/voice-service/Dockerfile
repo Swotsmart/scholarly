@@ -57,10 +57,11 @@ RUN pip install --no-cache-dir --prefix=/install \
     httpx \
     spacy
 
-# Download spaCy English model (required by Kokoro for text tokenisation)
+# Download spaCy English model (required by Kokoro for text tokenisation).
+# spacy download installs to system site-packages; copy to /install prefix.
 RUN PYTHONPATH=/install/lib/python3.11/site-packages \
     python3 -m spacy download en_core_web_sm \
-    --pip-args="--prefix=/install --no-cache-dir"
+    && cp -r /usr/local/lib/python3.11/site-packages/en_core_web_sm* /install/lib/python3.11/site-packages/
 
 # Conditionally install Chatterbox TTS for voice cloning
 # This is separated because the package adds significant weight and
