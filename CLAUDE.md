@@ -31,6 +31,8 @@ pnpm run build                                            # Build all (Turbo)
 
 **Route groups**: `(dashboard)/` authenticated pages, `(early-years)/` ages 3-7, `(auth)/` login/onboarding.
 
+**Auth store** (`src/stores/auth-store.ts`): Zustand with `persist` middleware. Must persist `accessToken`, `user`, AND `isAuthenticated` — if only `accessToken` is persisted, direct URL navigation (full page load) causes the `checkAuth` flow to call `api.auth.me()` which can fail and log the user out. Client-side navigation (sidebar clicks) doesn't trigger this because auth state is already in memory.
+
 **Icons**: lucide-react ONLY. No emoji except: Early Years module (child-friendliness) and country flags. `Bear` icon doesn't exist — use `PawPrint`.
 
 **Theme**: Catppuccin-inspired HSL variables in `globals.css`. Primary purple `#8839ef`/`#cba6f7`. Fonts: Montserrat (sans), Fira Code (mono). Dark mode via class + next-themes.
@@ -70,6 +72,7 @@ Prisma 5.9 + PostgreSQL. Schema at `prisma/schema.prisma`. Build: tsup (CJS + ES
 | `scholarly-api` (prod API) | `scholarly-api.bravefield-dce0abaf...` | 1-3 | |
 | `scholarly-staging` (staging web) | `scholarly-staging.bravefield-dce0abaf...` | 0-2 | `NEXT_PUBLIC_DEMO_MODE=true` |
 | `scholarly-staging-api` | `scholarly-staging-api.bravefield-dce0abaf...` | 0-2 | DB: `scholarly_staging` on shared server |
+| `scholarly-voice` | `scholarly-voice.bravefield-dce0abaf...` | 1-1 | GPU T4, port 8100, Kokoro TTS |
 
 All FQDNs end with `.australiaeast.azurecontainerapps.io`.
 
@@ -100,6 +103,35 @@ az containerapp update --name scholarly-staging-api --resource-group scholarly-r
 az containerapp update --name scholarly --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-web:$TAG
 az containerapp update --name scholarly-api --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-api:staging-$TAG
 ```
+
+## Voice Service (`services/voice-service`)
+
+**Stack**: Python 3.11, FastAPI, Uvicorn, PyTorch, CUDA 12.1 runtime. Runs on `gpu-t4` workload profile in Azure Container Apps.
+
+**Architecture**: Standalone Python microservice for TTS, STT, voice cloning, and phonics-aware narration. Communicates via REST API, no direct database access.
+
+**Providers**: Kokoro TTS (primary, Apache 2.0, 48 voices), Whisper STT (optional, requires `faster-whisper`), Chatterbox voice cloning (optional, requires `ENABLE_CLONING=true` build arg).
+
+**Port**: 8100 (internal). Health check at `/healthz`. API routes at `/api/v1/tts/*`, `/api/v1/stt/*`, `/api/v1/studio/*`, `/api/v1/cloning/*`.
+
+**Container App**: `scholarly-voice` on `scholarly-env`. FQDN: `scholarly-voice.bravefield-dce0abaf.australiaeast.azurecontainerapps.io`.
+
+**Dockerfile notes**:
+- Multi-stage build: `python:3.11-slim` (builder) → `nvidia/cuda:12.1.0-runtime-ubuntu22.04` (runtime)
+- `PYTHONPATH` must include `/usr/local/lib/python3.11/site-packages` because Ubuntu Python looks in `dist-packages`, not `site-packages` where pip `--prefix` installs
+- spaCy `en_core_web_sm` model must be downloaded during build (required by Kokoro for tokenisation)
+- Builder installs with `pip --prefix=/install`, runtime copies to `/usr/local`
+
+**Deploy commands**:
+```bash
+TAG=$(git rev-parse --short HEAD)
+az acr build --registry scholarlyacr --image voice-service:gpu-$TAG --platform linux/amd64 \
+  --file services/voice-service/Dockerfile services/voice-service/
+az containerapp update --name scholarly-voice --resource-group scholarly-rg \
+  --image scholarlyacr.azurecr.io/voice-service:gpu-$TAG
+```
+
+**CRITICAL**: `minReplicas` must be ≥1 for the voice service. With `minReplicas: 0`, the GPU container scales to zero and the health endpoint returns 404 ("Container App is stopped or does not exist"). GPU cold starts are slow (~30s for model loading).
 
 ## Environment Variables
 
