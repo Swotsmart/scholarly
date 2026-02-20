@@ -601,7 +601,17 @@ class ApiClient {
           headers: { 'Content-Type': 'application/json', ...options.headers },
         });
         const data = await res.json();
-        if (!res.ok) return { success: false, error: data.detail || data.message || `HTTP ${res.status}` };
+        if (!res.ok) {
+          let error: string;
+          if (typeof data.detail === 'string') {
+            error = data.detail;
+          } else if (Array.isArray(data.detail)) {
+            error = data.detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join('; ');
+          } else {
+            error = data.message || `HTTP ${res.status}`;
+          }
+          return { success: false, error };
+        }
         return { success: true, data };
       } catch (e) {
         return { success: false, error: e instanceof Error ? e.message : 'Voice service unavailable' };
@@ -663,7 +673,17 @@ class ApiClient {
           body: formData,
         });
         const data = await res.json();
-        if (!res.ok) return { success: false, error: data.detail || data.message || `HTTP ${res.status}` };
+        if (!res.ok) {
+          let error: string;
+          if (typeof data.detail === 'string') {
+            error = data.detail;
+          } else if (Array.isArray(data.detail)) {
+            error = data.detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join('; ');
+          } else {
+            error = data.message || `HTTP ${res.status}`;
+          }
+          return { success: false, error };
+        }
         return { success: true, data };
       } catch (e) {
         return { success: false, error: e instanceof Error ? e.message : 'Upload failed' };

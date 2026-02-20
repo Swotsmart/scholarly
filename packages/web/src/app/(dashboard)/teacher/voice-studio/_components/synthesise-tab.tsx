@@ -13,9 +13,31 @@ import api, { type SynthesizeResult, type VoiceWordTimestamp } from '@/lib/api';
 import { VOICE_PERSONAS, PACE_CONFIG, phaseToMultiplier, PREVIEW_SENTENCE, type VoicePersona } from './voice-persona-data';
 import { KaraokePlayer } from './karaoke-player';
 import {
-  Mic, Play, Pause, Square, Download, Loader2, Check,
+  Mic, Play, Pause, Square, Download, Loader2, Check, Globe, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Language display names
+const LANGUAGE_LABELS: Record<string, string> = {
+  'en-us': 'English (US)',
+  'en-gb': 'English (UK)',
+  'es-es': 'Spanish',
+  'fr-fr': 'French',
+  'hi-in': 'Hindi',
+  'it-it': 'Italian',
+  'ja-jp': 'Japanese',
+  'ko-kr': 'Korean',
+  'pt-br': 'Portuguese (BR)',
+  'zh-cn': 'Chinese (Mandarin)',
+};
+
+interface VoiceOption {
+  voice_id: string;
+  name: string;
+  language: string;
+  gender: string;
+  style: string;
+}
 
 interface StudioAudio {
   base64: string;
@@ -66,6 +88,19 @@ export function SynthesiseTab({
   const [synthesizing, setSynthesizing] = useState(false);
   const [synthResult, setSynthResult] = useState<SynthesizeResult | null>(null);
 
+  // All voices from API (for language browser)
+  const [allVoices, setAllVoices] = useState<VoiceOption[]>([]);
+  const [showVoiceBrowser, setShowVoiceBrowser] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const [customVoiceId, setCustomVoiceId] = useState<string | null>(null);
+
+  // Fetch all voices on mount
+  useEffect(() => {
+    api.voiceStudio.getVoices().then(res => {
+      if (res.success) setAllVoices(res.data.voices);
+    });
+  }, []);
+
   // Apply preselected persona from Voice Library tab
   useEffect(() => {
     if (preselectedPersona) {
@@ -96,7 +131,7 @@ export function SynthesiseTab({
     try {
       const res = await api.voiceStudio.synthesize({
         text: synthText,
-        voice_id: selectedPersona?.voiceId || undefined,
+        voice_id: customVoiceId || selectedPersona?.voiceId || undefined,
         pace: synthPace,
         pitch: synthPitch,
         warmth: synthWarmth,
@@ -168,6 +203,98 @@ export function SynthesiseTab({
             ))}
           </div>
         </CardContent>
+      </Card>
+
+      {/* All Voices Browser */}
+      <Card>
+        <CardHeader
+          className="cursor-pointer"
+          onClick={() => setShowVoiceBrowser(!showVoiceBrowser)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-lg">All Voices</CardTitle>
+              <Badge variant="secondary">{allVoices.length} voices &middot; {Object.keys(LANGUAGE_LABELS).length} languages</Badge>
+              {customVoiceId && (
+                <Badge variant="default" className="font-mono">{customVoiceId}</Badge>
+              )}
+            </div>
+            {showVoiceBrowser ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </div>
+        </CardHeader>
+        {showVoiceBrowser && (
+          <CardContent className="space-y-3">
+            {/* Language filter */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={selectedLanguage === null ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedLanguage(null)}
+              >
+                All
+              </Button>
+              {Object.entries(LANGUAGE_LABELS).map(([code, label]) => {
+                const count = allVoices.filter(v => v.language === code).length;
+                if (count === 0) return null;
+                return (
+                  <Button
+                    key={code}
+                    variant={selectedLanguage === code ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedLanguage(code)}
+                  >
+                    {label} ({count})
+                  </Button>
+                );
+              })}
+            </div>
+
+            {/* Voice grid */}
+            <div className="grid gap-2 md:grid-cols-3 lg:grid-cols-4">
+              {allVoices
+                .filter(v => !selectedLanguage || v.language === selectedLanguage)
+                .map(voice => (
+                  <div
+                    key={voice.voice_id}
+                    onClick={() => {
+                      setCustomVoiceId(voice.voice_id);
+                      setSelectedPersona(null);
+                    }}
+                    className={cn(
+                      'rounded-lg border p-3 cursor-pointer transition-all hover:shadow-sm text-sm',
+                      customVoiceId === voice.voice_id
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                        : 'border-border hover:border-muted-foreground/30',
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium">{voice.name}</span>
+                      <Badge variant="outline" className="font-mono text-xs">{voice.voice_id}</Badge>
+                    </div>
+                    <div className="flex gap-1">
+                      <Badge variant="secondary" className="text-xs">{LANGUAGE_LABELS[voice.language] || voice.language}</Badge>
+                      <Badge variant="outline" className="text-xs capitalize">{voice.gender}</Badge>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            {customVoiceId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setCustomVoiceId(null);
+                  setSelectedPersona(VOICE_PERSONAS[0]);
+                  applyPersona(VOICE_PERSONAS[0]);
+                }}
+              >
+                Clear custom voice &middot; back to personas
+              </Button>
+            )}
+          </CardContent>
+        )}
       </Card>
 
       {/* Phonics Phase + Text + Controls */}

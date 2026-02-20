@@ -126,7 +126,8 @@ export const PACE_CONFIG: Record<number, { wpm: number; label: string }> = {
 export const KOKORO_NATURAL_WPM = 130;
 
 export function phaseToMultiplier(phase: number): number {
-  return (PACE_CONFIG[phase]?.wpm ?? KOKORO_NATURAL_WPM) / KOKORO_NATURAL_WPM;
+  const raw = (PACE_CONFIG[phase]?.wpm ?? KOKORO_NATURAL_WPM) / KOKORO_NATURAL_WPM;
+  return Math.max(0.5, Math.round(raw * 100) / 100);
 }
 
 // Adjust presets
