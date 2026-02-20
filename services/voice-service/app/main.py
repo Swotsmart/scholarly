@@ -204,7 +204,7 @@ def create_app() -> FastAPI:
     from app.routes.stt import router as stt_router
     from app.routes.studio import router as studio_router
     from app.routes.cloning import router as cloning_router
-    from app.routes.alignment import router as alignment_router
+    from app.routes.alignment import alignment_router, phonics_router
 
     app.include_router(health_router)
     app.include_router(tts_router)
@@ -212,6 +212,7 @@ def create_app() -> FastAPI:
     app.include_router(studio_router)
     app.include_router(cloning_router)
     app.include_router(alignment_router)
+    app.include_router(phonics_router)
 
     return app
 
