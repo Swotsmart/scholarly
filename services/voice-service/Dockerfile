@@ -54,7 +54,13 @@ RUN pip install --no-cache-dir --prefix=/install \
     azure-storage-blob \
     redis \
     prometheus-client \
-    httpx
+    httpx \
+    spacy
+
+# Download spaCy English model (required by Kokoro for text tokenisation)
+RUN PYTHONPATH=/install/lib/python3.11/site-packages \
+    python3 -m spacy download en_core_web_sm \
+    --pip-args="--prefix=/install --no-cache-dir"
 
 # Conditionally install Chatterbox TTS for voice cloning
 # This is separated because the package adds significant weight and
