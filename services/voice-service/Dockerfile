@@ -126,7 +126,7 @@ ENV SVS_ENVIRONMENT=production \
     SVS_STORAGE_BACKEND=local_fs \
     SVS_STORAGE_LOCAL_STORAGE_PATH=/home/svs/data/voice-assets \
     SVS_CACHE_BACKEND=memory \
-    PYTHONPATH=/home/svs/app \
+    PYTHONPATH=/home/svs/app:/usr/local/lib/python3.11/site-packages \
     PYTHONUNBUFFERED=1
 
 # Health check — liveness probe

@@ -194,6 +194,8 @@ export const useAuthStore = create<AuthState>()(
       name: 'scholarly-auth',
       partialize: (state) => ({
         accessToken: state.accessToken,
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
       }),
     }
   )
