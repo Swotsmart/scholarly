@@ -133,6 +133,8 @@ az containerapp update --name scholarly-voice --resource-group scholarly-rg \
 
 **CRITICAL**: `minReplicas` must be ≥1 for the voice service. With `minReplicas: 0`, the GPU container scales to zero and the health endpoint returns 404 ("Container App is stopped or does not exist"). GPU cold starts are slow (~30s for model loading).
 
+**CORS**: Default origins only allow localhost. For staging/production, set `SVS_SERVER_CORS_ORIGINS` env var as a **JSON array** (pydantic-settings parses `list[str]` as JSON, NOT comma-separated): `'["https://staging.scholar.ly","https://scholar.ly"]'`
+
 ## Environment Variables
 
 `NEXT_PUBLIC_API_URL` (web), `DATABASE_URL` (database + web server-side routes), `CRON_SECRET` (web cron routes), `REDIS_URL` / `JWT_SECRET` / `SENDGRID_API_KEY` / `STRIPE_SECRET_KEY` / `ELEVENLABS_API_KEY` (api).
