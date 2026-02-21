@@ -158,7 +158,7 @@ export default function DashboardLayout({
 
         {/* Page content — with consistent padding and scroll */}
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-7xl p-6">
+          <div className="dashboard-content mx-auto max-w-7xl p-6">
             {children}
           </div>
         </main>

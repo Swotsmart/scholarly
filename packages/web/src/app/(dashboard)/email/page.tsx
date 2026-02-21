@@ -310,10 +310,10 @@ export default function EmailPage() {
   );
 
   return (
-    <div className="-m-6 flex h-[calc(100vh-3.5rem)] flex-col">
+    <div className="full-bleed-page flex h-[calc(100vh-3.5rem)] flex-col">
       <ResizablePanelGroup orientation="horizontal" className="flex-1">
         {/* Folder sidebar */}
-        <ResizablePanel defaultSize={18} minSize={14} maxSize={25}>
+        <ResizablePanel defaultSize={20} minSize={14} maxSize={28}>
           <EmailFolderSidebar
             folders={DEMO_FOLDERS}
             selectedFolder={selectedFolder}
