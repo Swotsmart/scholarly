@@ -229,7 +229,7 @@ class ApiClient {
           this.currentDemoUser = user;
           return { success: true, data: { user, accessToken } };
         }
-        return { success: false, error: 'Invalid credentials. Try: teacher@scholarly.app or learner@scholarly.app with password: demo123' };
+        // Fall through to real API for non-demo accounts (e.g. admin)
       }
       return this.post<{ user: User; accessToken: string }>('/auth/login', { email, password });
     },
