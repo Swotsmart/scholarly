@@ -54,6 +54,9 @@ import voiceIntelligenceRouter from './routes/voice-intelligence';
 import knowledgeWorkspaceRouter from './routes/knowledge-workspace';
 import { googleDriveRouter } from './routes/google-drive';
 import oneDriveRouter from './routes/onedrive';
+import { emailRouter } from './routes/email';
+import { integrationsRouter } from './routes/integrations';
+import { adminCommunicationsRouter } from './routes/admin-communications';
 
 // Sprint Module Routes (Sprints 1-18)
 import { storybookRouter } from './routes/storybook';
@@ -171,6 +174,9 @@ api.use('/voice', voiceIntelligenceRouter); // Voice Intelligence with TTS, STT,
 api.use('/workspace', knowledgeWorkspaceRouter); // Knowledge Workspace (AFFiNE) integration
 api.use('/integrations/google-drive', googleDriveRouter); // Google Drive Integration (has webhook route that's public)
 api.use('/integrations/onedrive', oneDriveRouter); // OneDrive/SharePoint Integration
+api.use('/email', authMiddleware, emailRouter);                          // Unified email client
+api.use('/integrations', authMiddleware, integrationsRouter);            // Canva, Google Classroom, provider connections
+api.use('/admin/communications', authMiddleware, adminCommunicationsRouter); // Admin comm provider config
 
 // Sprint Module Routes (Sprints 1-18)
 api.use('/storybook', authMiddleware, storybookRouter);       // Storybook engine, generation, review, marketplace

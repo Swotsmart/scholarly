@@ -6920,3 +6920,37 @@ model SchedulingConstraint {
   @@index([tenantId, category])
   @@index([tenantId, enabled])
 }
+
+// =============================================================================
+// COMMUNICATIONS — Tenant-level provider configuration
+// =============================================================================
+
+model TenantIntegrationConfig {
+  id       String @id @default(cuid())
+  tenantId String @unique
+
+  // Email provider (gmail, outlook, zimbra)
+  emailProvider    String?
+  emailCredentials Json?   // Encrypted credentials / OAuth tokens
+  emailConfigured  Boolean @default(false)
+
+  // SMS provider (twilio, vonage)
+  smsProvider    String?
+  smsCredentials Json?   // API keys, account SID, auth token
+  smsConfigured  Boolean @default(false)
+
+  // WhatsApp provider (twilio-whatsapp, meta-cloud)
+  whatsappProvider    String?
+  whatsappCredentials Json?   // API keys, phone number IDs
+  whatsappConfigured  Boolean @default(false)
+
+  // Feature flags
+  emailEnabled    Boolean @default(true)
+  smsEnabled      Boolean @default(false)
+  whatsappEnabled Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+}

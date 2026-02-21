@@ -38,6 +38,7 @@ import {
   Layers,
   Settings2,
 } from 'lucide-react';
+import { CanvaDesignButton } from '@/components/shared/canva-design-button';
 import { cn } from '@/lib/utils';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -647,10 +648,13 @@ Write down:
             Generate curriculum-aligned educational content with AI
           </p>
         </div>
-        <Badge variant="secondary" className="text-sm">
-          <GraduationCap className="w-3 h-3 mr-1" />
-          Australian Curriculum
-        </Badge>
+        <div className="flex items-center gap-2">
+          <CanvaDesignButton designTypeFilter={['document', 'presentation']} />
+          <Badge variant="secondary" className="text-sm">
+            <GraduationCap className="w-3 h-3 mr-1" />
+            Australian Curriculum
+          </Badge>
+        </div>
       </motion.div>
 
       {/* Stats Cards */}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { CanvaDesignButton } from '@/components/shared/canva-design-button';
 import {
   Sparkles,
   Clock,
@@ -76,6 +77,7 @@ export default function ChallengesPage() {
             Choose a challenge and start your design thinking journey
           </p>
         </div>
+        <CanvaDesignButton designTypeFilter={['poster', 'infographic']} />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

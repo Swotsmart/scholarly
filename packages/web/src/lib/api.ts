@@ -632,6 +632,10 @@ class ApiClient {
     synthesize: (data: { text: string; voice_id?: string; language?: string; pace?: number; pitch?: number; warmth?: number; output_format?: string; word_timestamps?: boolean }): Promise<ApiResponse<SynthesizeResult>> =>
       this.voiceStudio._fetch<SynthesizeResult>('/api/v1/tts/synthesize', { method: 'POST', body: JSON.stringify(data) }),
 
+    /** Translate text and synthesize as speech in the target language */
+    translateAndSpeak: (data: { text: string; target_language: string; source_language?: string; voice_id?: string; speed?: number; word_timestamps?: boolean; age_group?: string; output_format?: string }): Promise<ApiResponse<TranslateAndSpeakResult>> =>
+      this.voiceStudio._fetch<TranslateAndSpeakResult>('/api/v1/tts/translate-and-speak', { method: 'POST', body: JSON.stringify(data) }),
+
     /** Estimate synthesis cost */
     estimateCost: (textLength: number): Promise<ApiResponse<VoiceCostEstimate>> =>
       this.voiceStudio._fetch<VoiceCostEstimate>('/api/v1/tts/estimate-cost', { method: 'POST', body: JSON.stringify({ text_length: textLength }) }),
@@ -845,6 +849,109 @@ class ApiClient {
       if (filters?.date) params.set('date', filters.date);
       if (filters?.status) params.set('status', filters.status);
       return this.get<{ absences: ReliefAbsence[]; pagination: { total: number } }>(`/relief/absences?${params}`);
+    },
+  };
+
+  // ==========================================================================
+  // EMAIL
+  // ==========================================================================
+
+  email = {
+    getFolders: () =>
+      this.get<{ folders: Array<{ id: string; name: string; unreadCount: number; totalCount: number }> }>('/email/folders'),
+
+    listMessages: (filters?: { folder?: string; search?: string; label?: string; isRead?: boolean; isStarred?: boolean; page?: number; limit?: number }) => {
+      const params = new URLSearchParams();
+      if (filters?.folder) params.set('folder', filters.folder);
+      if (filters?.search) params.set('search', filters.search);
+      if (filters?.label) params.set('label', filters.label);
+      if (filters?.isRead !== undefined) params.set('isRead', String(filters.isRead));
+      if (filters?.isStarred !== undefined) params.set('isStarred', String(filters.isStarred));
+      if (filters?.page) params.set('page', String(filters.page));
+      if (filters?.limit) params.set('limit', String(filters.limit));
+      const qs = params.toString();
+      return this.get<{ messages: unknown[]; total: number; hasMore: boolean }>(`/email/messages${qs ? `?${qs}` : ''}`);
+    },
+
+    getMessage: (id: string) =>
+      this.get<{ message: unknown }>(`/email/messages/${id}`),
+
+    getThread: (threadId: string) =>
+      this.get<{ thread: unknown }>(`/email/threads/${threadId}`),
+
+    send: (data: { to: string[]; cc?: string[]; bcc?: string[]; subject: string; body: string; inReplyTo?: string; threadId?: string }) =>
+      this.post<{ messageId: string }>('/email/send', data),
+
+    update: (id: string, data: { isRead?: boolean; isStarred?: boolean; isMuted?: boolean; folder?: string; labels?: string[] }) =>
+      this.put<{ message: unknown }>(`/email/messages/${id}`, data),
+
+    delete: (id: string) =>
+      this.delete(`/email/messages/${id}`),
+  };
+
+  // ==========================================================================
+  // CANVA
+  // ==========================================================================
+
+  canva = {
+    getAuthUrl: () =>
+      this.get<{ url: string }>('/integrations/canva/auth-url'),
+
+    getConnection: () =>
+      this.get<{ connected: boolean; user?: { displayName: string } }>('/integrations/canva/connection'),
+
+    searchTemplates: (query: string, designType?: string) => {
+      const params = new URLSearchParams({ query });
+      if (designType) params.set('designType', designType);
+      return this.get<{ templates: Array<{ id: string; title: string; thumbnail: string; designType: string }> }>(`/integrations/canva/templates?${params}`);
+    },
+
+    createDesign: (data: { templateId?: string; designType: string; title: string }) =>
+      this.post<{ designUrl: string; designId: string }>('/integrations/canva/designs', data),
+  };
+
+  // ==========================================================================
+  // ADMIN COMMUNICATIONS
+  // ==========================================================================
+
+  adminComms = {
+    getConfig: () =>
+      this.get<{ config: unknown }>('/admin/communications/config'),
+
+    updateConfig: (data: unknown) =>
+      this.put<{ config: unknown }>('/admin/communications/config', data),
+
+    testEmail: (data: { to: string; subject: string; body: string }) =>
+      this.post<{ success: boolean; messageId?: string }>('/admin/communications/test-email', data),
+
+    testSms: (data: { to: string; message: string }) =>
+      this.post<{ success: boolean; messageId?: string }>('/admin/communications/test-sms', data),
+
+    testWhatsapp: (data: { to: string; message: string }) =>
+      this.post<{ success: boolean; messageId?: string }>('/admin/communications/test-whatsapp', data),
+  };
+
+  // ==========================================================================
+  // INTEGRATIONS (Google Classroom)
+  // ==========================================================================
+
+  integrations = {
+    getConnections: () =>
+      this.get<{ connections: Array<{ provider: string; connected: boolean; user?: unknown }> }>('/integrations/connections'),
+
+    getAuthUrl: (provider: string) =>
+      this.get<{ url: string }>(`/integrations/${provider}/auth-url`),
+
+    disconnect: (provider: string) =>
+      this.delete(`/integrations/${provider}/connection`),
+
+    googleClassroom: {
+      listCourses: () =>
+        this.get<{ courses: unknown[] }>('/integrations/google-classroom/courses'),
+      syncCourse: (courseId: string) =>
+        this.post<{ syncJob: unknown }>(`/integrations/google-classroom/courses/${courseId}/sync`),
+      createAssignment: (courseId: string, data: { title: string; description: string; dueDate?: string }) =>
+        this.post<{ assignment: unknown }>(`/integrations/google-classroom/courses/${courseId}/assignments`, data),
     },
   };
 }
@@ -1565,6 +1672,24 @@ export interface SynthesizeResult {
   format: string;
   word_timestamps: VoiceWordTimestamp[];
   cost: VoiceCostEstimate;
+}
+
+export interface TranslateAndSpeakResult {
+  source_text: string;
+  source_language: string;
+  translated_text: string;
+  target_language: string;
+  transliteration: string | null;
+  audio_base64: string;
+  audio_format: string;
+  duration_seconds: number;
+  voice_id: string;
+  word_timestamps: VoiceWordTimestamp[] | null;
+  cost: {
+    translation_cost_usd: number;
+    synthesis_cost_usd: number;
+    total_cost_usd: number;
+  };
 }
 
 export interface AudioQualityReport {

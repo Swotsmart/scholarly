@@ -58,6 +58,7 @@ import {
   Target,
   ListChecks,
 } from 'lucide-react';
+import { CanvaDesignButton } from '@/components/shared/canva-design-button';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -272,6 +273,7 @@ export default function AssessmentBuilderPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <CanvaDesignButton designTypeFilter={['document', 'worksheet']} />
           <Button variant="outline" onClick={() => setShowPreviewDialog(true)}>
             <Eye className="mr-2 h-4 w-4" />
             Preview

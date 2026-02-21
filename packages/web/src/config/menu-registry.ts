@@ -21,7 +21,7 @@ import {
   Sparkles, Target, Presentation, ClipboardCheck,
   School, FileText, TrendingUp, Languages, Bot,
   MessageSquare, Compass, Brain, Briefcase, Lightbulb,
-  Users, Search, Clock, Mic,
+  Users, Search, Clock, Mic, Mail, Radio,
   PenLine, ClipboardList,
   BookCheck, Library, PenTool, DoorOpen, Maximize,
   CreditCard, Eye, Kanban, FolderKanban, Building2,
@@ -50,7 +50,7 @@ export const taskRegistry: Record<string, RegisteredTask> = {
   'D1-parent': { ref: 'D1-parent', name: 'Dashboard', href: '/parent/dashboard', icon: LayoutDashboard, type: 'atomic', cluster: 'daily', description: 'Family overview' },
   'D1-admin': { ref: 'D1-admin', name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, type: 'atomic', cluster: 'daily', description: 'Administration overview' },
   D2: { ref: 'D2', name: 'Attendance', href: '/teacher/attendance', icon: ClipboardList, type: 'atomic', cluster: 'daily', description: 'Mark the roll' },
-  D3: { ref: 'D3', name: 'Messages', href: '/messages', icon: MessageSquare, type: 'atomic', cluster: 'daily', description: 'Read and respond to messages' },
+  D3: { ref: 'D3', name: 'Email', href: '/email', icon: Mail, type: 'atomic', cluster: 'daily', description: 'Read and respond to emails' },
   'D3-parent': { ref: 'D3-parent', name: 'Messages', href: '/parent/messages', icon: MessageSquare, type: 'compound', cluster: 'daily', description: 'Messages with teachers and tutors', children: [
     { name: 'Teachers', href: '/parent/messages/teachers', icon: School },
     { name: 'Tutors', href: '/parent/messages/tutors', icon: GraduationCap },
@@ -168,6 +168,7 @@ export const taskRegistry: Record<string, RegisteredTask> = {
   A8: { ref: 'A8', name: 'Micro-Schools', href: '/admin/micro-schools', icon: Building, type: 'atomic', cluster: 'admin', description: 'Manage micro-school tenants' },
   A9: { ref: 'A9', name: 'Governance', href: '/admin/governance', icon: Landmark, type: 'atomic', cluster: 'admin', description: 'DAO governance and treasury' },
   A10: { ref: 'A10', name: 'ML Pipeline', href: '/admin/ml', icon: Cpu, type: 'atomic', cluster: 'admin', description: 'Predictive models and AI' },
+  A_COMMS: { ref: 'A_COMMS', name: 'Communications', href: '/admin/communications', icon: Radio, type: 'atomic', cluster: 'admin', description: 'Email, SMS, and WhatsApp provider configuration' },
 
   // ── CLUSTER 9: ARENA ──
   AR: { ref: 'AR', name: 'Arena', href: '/arena', icon: Swords, type: 'compound', cluster: 'arena', description: 'Compete, earn, collaborate', children: [

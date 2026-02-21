@@ -24,6 +24,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { PageHeader, StatsCard } from '@/components/shared';
+import { CanvaDesignButton } from '@/components/shared/canva-design-button';
 import { Progress } from '@/components/ui/progress';
 import {
   Calendar,
@@ -526,6 +527,7 @@ export default function LessonPlannerPage() {
         description="Plan, create, and share your lessons"
         actions={
           <div className="flex gap-2">
+            <CanvaDesignButton designTypeFilter={['document', 'presentation']} />
             <Button variant="outline" onClick={() => setAiGeneratorOpen(true)}>
               <Sparkles className="mr-2 h-4 w-4" />
               AI Generate

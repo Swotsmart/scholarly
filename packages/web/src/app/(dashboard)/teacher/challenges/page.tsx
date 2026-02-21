@@ -15,6 +15,7 @@ import {
   Copy,
   Trash2,
 } from 'lucide-react';
+import { CanvaDesignButton } from '@/components/shared/canva-design-button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,12 +72,15 @@ export default function TeacherChallengesPage() {
             Create and manage design thinking challenges for your classes
           </p>
         </div>
-        <Button asChild>
-          <Link href="/teacher/challenges/create">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Challenge
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <CanvaDesignButton designTypeFilter={['poster', 'document']} />
+          <Button asChild>
+            <Link href="/teacher/challenges/create">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Challenge
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6">

@@ -15,6 +15,7 @@ import {
   Play,
   Edit,
 } from 'lucide-react';
+import { CanvaDesignButton } from '@/components/shared/canva-design-button';
 
 const pitchDecks = [
   {
@@ -62,12 +63,15 @@ export default function PitchDecksPage() {
             Create and practice your presentations using the 10/20/30 rule
           </p>
         </div>
-        <Button asChild>
-          <Link href="/design-pitch/pitch-decks/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Pitch Deck
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <CanvaDesignButton designTypeFilter="presentation" />
+          <Button asChild>
+            <Link href="/design-pitch/pitch-decks/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New Pitch Deck
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* 10/20/30 Rule Reminder */}

@@ -29,6 +29,7 @@ import {
   HardDrive,
   Tag,
 } from 'lucide-react';
+import { CanvaDesignButton } from '@/components/shared/canva-design-button';
 
 const typeIcon: Record<string, React.ComponentType<{ className?: string }>> = {
   document: FileText,
@@ -171,6 +172,7 @@ export default function ArtifactsPage() {
             </p>
           </div>
         </div>
+        <CanvaDesignButton />
       </div>
 
       {/* Upload Area */}
