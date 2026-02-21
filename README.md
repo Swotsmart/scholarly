@@ -6,7 +6,7 @@ An AI-powered education platform connecting learners with tutors, enabling homes
 
 Scholarly is Chekd's education vertical - a comprehensive platform that brings together:
 
-- **AI Buddy**: Personalized learning companion
+- **Ask Issy**: Personalized learning companion
 - **Design & Pitch AI**: Guy Kawasaki 10/20/30 methodology for student pitches
 - **Showcase Portfolio**: Digital portfolio system for student work
 - **Tutor Marketplace**: AI-powered matching between learners and verified tutors
@@ -90,7 +90,7 @@ scholarly/
 | **Content Marketplace** | `content-marketplace.service.ts` | Educational content trading |
 | **EduScrum Orchestrator** | `eduscrum-orchestrator.service.ts` | Agile learning sprints |
 | **AI Content Studio** | `ai-content-studio.service.ts` | AI-generated learning content |
-| **AI Buddy** | `ai-buddy.service.ts` | Personalized student AI assistant |
+| **Ask Issy** | `ai-buddy.service.ts` | Personalized student AI assistant |
 | **AI Integration** | `ai-integration.service.ts` | LLM provider abstraction |
 | **Analytics & Reporting** | `analytics-reporting.service.ts` | Learning analytics dashboard |
 | **Standards Compliance** | `standards-compliance.service.ts` | Regulatory compliance checking |

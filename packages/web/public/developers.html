@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Developers — Build on Scholarly</title>
+<meta name="description" content="Scholarly Developer Portal. API documentation, developer tiers, getting started guides, and terms & conditions for building on the Scholarly education platform.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sapphire-900: #0C1B3A; --sapphire-800: #142952; --sapphire-700: #1B3A6B;
+  --sapphire-600: #234E8F; --sapphire-500: #2B62B3; --sapphire-400: #4A80CC;
+  --sapphire-300: #7BA5DD; --sapphire-200: #B0CCEE; --sapphire-100: #DAE6F7; --sapphire-50: #EEF3FB;
+  --amber-600: #B8860B; --amber-500: #D4A017; --amber-400: #E8BF33; --amber-300: #F0D060;
+  --amber-200: #F5E0A0; --amber-100: #FBF0D0; --amber-50: #FDF8EB;
+  --teal-700: #0D6E6E; --teal-600: #109090; --teal-500: #14B8B8; --teal-400: #3DD4D4;
+  --teal-300: #80E5E5; --teal-200: #B3F0F0; --teal-100: #E0FAFA; --teal-50: #F0FDFD;
+  --rose-600: #B44D6C; --rose-500: #D4587E; --rose-400: #E87C9E; --rose-100: #FCE8EF;
+  --ivory-900: #2D2418; --ivory-100: #F5F1EB; --ivory-50: #FAF8F5;
+  --text-primary: #1A1A2E; --text-secondary: #4A4A5A; --text-tertiary: #8D8D9B;
+  --bg-primary: #FAFBFE; --bg-card: #FFFFFF; --bg-elevated: #F2F4F8;
+  --border-subtle: rgba(28, 28, 60, 0.06); --border-medium: rgba(28, 28, 60, 0.12);
+  --shadow-sm: 0 1px 3px rgba(12, 27, 58, 0.05); --shadow-md: 0 4px 16px rgba(12, 27, 58, 0.07);
+  --shadow-lg: 0 8px 32px rgba(12, 27, 58, 0.09); --shadow-xl: 0 16px 48px rgba(12, 27, 58, 0.11);
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px; --radius-xl: 24px; --radius-full: 9999px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 200ms; --duration-normal: 350ms;
+  --nav-height: 72px; --max-width: 1280px;
+  --space-xs: 0.25rem; --space-sm: 0.5rem; --space-md: 1rem; --space-lg: 1.5rem;
+  --space-xl: 2rem; --space-2xl: 3rem; --space-3xl: 4rem; --space-4xl: 6rem; --space-5xl: 8rem;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font-body); color: var(--text-primary); background: var(--bg-primary); line-height: 1.6; overflow-x: hidden; }
+a { text-decoration: none; color: inherit; }
+button { border: none; background: none; cursor: pointer; font-family: inherit; }
+.container { max-width: var(--max-width); margin: 0 auto; padding: 0 var(--space-xl); }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 0.5; } 80%, 100% { transform: scale(2); opacity: 0; } }
+.reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; } .reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; } .reveal-delay-4 { transition-delay: 0.4s; }
+
+/* Nav */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: var(--nav-height); }
+.nav::before { content: ''; position: absolute; inset: 0; background: rgba(250, 251, 254, 0.92); backdrop-filter: blur(20px) saturate(1.5); border-bottom: 1px solid var(--border-subtle); }
+.nav-inner { position: relative; display: flex; align-items: center; justify-content: space-between; height: 100%; max-width: var(--max-width); margin: 0 auto; padding: 0 var(--space-xl); }
+.nav-logo { display: flex; align-items: center; gap: var(--space-sm); font-family: var(--font-display); font-size: 1.4rem; color: var(--sapphire-800); }
+.nav-logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--sapphire-700), var(--sapphire-500)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; font-weight: 700; box-shadow: 0 2px 8px rgba(27, 58, 107, 0.3); }
+.nav-actions { display: flex; align-items: center; gap: var(--space-sm); }
+.btn { display: inline-flex; align-items: center; gap: var(--space-sm); padding: 10px 20px; font-size: 0.875rem; font-weight: 600; border-radius: var(--radius-sm); transition: all var(--duration-fast) var(--ease-out); white-space: nowrap; }
+.btn-ghost { color: var(--text-secondary); }
+.btn-ghost:hover { color: var(--sapphire-700); background: var(--sapphire-50); }
+.btn-primary { background: linear-gradient(135deg, var(--sapphire-700), var(--sapphire-600)); color: white; box-shadow: 0 2px 8px rgba(27, 58, 107, 0.25); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(27, 58, 107, 0.35); }
+.btn-outline { border: 1.5px solid var(--border-medium); color: var(--text-primary); }
+.btn-outline:hover { border-color: var(--sapphire-400); color: var(--sapphire-700); background: var(--sapphire-50); }
+.btn-lg { padding: 14px 28px; font-size: 1rem; border-radius: var(--radius-md); }
+.btn-icon { font-size: 1.1em; transition: transform var(--duration-fast) var(--ease-out); }
+.btn:hover .btn-icon { transform: translateX(3px); }
+.back-link { display: inline-flex; align-items: center; gap: var(--space-sm); font-size: 0.85rem; color: var(--text-tertiary); transition: color var(--duration-fast); }
+.back-link:hover { color: var(--sapphire-600); }
+
+/* Inner Page Hero */
+.inner-hero { padding-top: calc(var(--nav-height) + var(--space-4xl)); padding-bottom: var(--space-4xl); position: relative; overflow: hidden; }
+.inner-hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--sapphire-50) 0%, var(--bg-primary) 60%, var(--ivory-100) 100%); z-index: 0; }
+.inner-hero-content { position: relative; z-index: 1; max-width: 800px; }
+.inner-hero-badge { display: inline-flex; align-items: center; gap: var(--space-sm); padding: 6px 16px; background: rgba(43, 98, 179, 0.08); border: 1px solid rgba(43, 98, 179, 0.15); border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; color: var(--sapphire-700); margin-bottom: var(--space-xl); }
+.inner-hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sapphire-600); position: relative; }
+.inner-hero-badge-dot::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid var(--sapphire-600); animation: pulse-ring 2s ease-out infinite; }
+.inner-hero h1 { font-family: var(--font-display); font-size: clamp(2.2rem, 4.5vw, 3.2rem); line-height: 1.12; color: var(--sapphire-900); letter-spacing: -0.02em; margin-bottom: var(--space-lg); }
+.inner-hero h1 em { font-style: italic; color: var(--sapphire-600); }
+.inner-hero-desc { font-size: 1.1rem; line-height: 1.7; color: var(--text-secondary); max-width: 640px; margin-bottom: var(--space-2xl); }
+.inner-hero-actions { display: flex; gap: var(--space-md); flex-wrap: wrap; }
+.inner-hero-icon { font-size: 3rem; margin-bottom: var(--space-lg); }
+
+/* Content Sections */
+.section { padding: var(--space-5xl) 0; }
+.section-alt { background: var(--bg-elevated); }
+.section-dark { background: var(--sapphire-900); color: white; }
+.section-label { display: inline-flex; align-items: center; gap: var(--space-sm); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--sapphire-600); margin-bottom: var(--space-md); }
+.section-label-line { width: 24px; height: 2px; background: var(--sapphire-600); border-radius: 1px; }
+.section-title { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.4rem); line-height: 1.15; color: var(--sapphire-900); letter-spacing: -0.02em; margin-bottom: var(--space-md); }
+.section-dark .section-title { color: white; }
+.section-subtitle { font-size: 1.05rem; line-height: 1.7; color: var(--text-secondary); max-width: 600px; }
+.section-dark .section-subtitle { color: rgba(255,255,255,0.65); }
+
+/* Feature Grid */
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-xl); margin-top: var(--space-3xl); }
+.feature-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: var(--space-2xl); transition: all var(--duration-normal) var(--ease-out); }
+.feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: transparent; }
+.feature-card-icon { width: 52px; height: 52px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: var(--space-lg); background: var(--sapphire-50); }
+.feature-card h3 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: var(--space-sm); }
+.feature-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+
+/* Steps */
+.steps { display: flex; flex-direction: column; gap: var(--space-xl); margin-top: var(--space-2xl); }
+.step { display: flex; gap: var(--space-xl); align-items: flex-start; }
+.step-number { width: 48px; height: 48px; border-radius: 50%; background: var(--sapphire-50); color: var(--sapphire-600); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.1rem; flex-shrink: 0; font-weight: 700; }
+.step-content h4 { font-size: 1rem; font-weight: 600; margin-bottom: var(--space-xs); }
+.step-content p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+
+/* Tiers Table */
+.tiers-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: var(--space-2xl); background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-sm); }
+.tiers-table th { padding: var(--space-lg) var(--space-xl); text-align: left; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); background: var(--bg-elevated); border-bottom: 1px solid var(--border-subtle); }
+.tiers-table td { padding: var(--space-lg) var(--space-xl); font-size: 0.9rem; color: var(--text-secondary); border-bottom: 1px solid var(--border-subtle); vertical-align: top; }
+.tiers-table tr:last-child td { border-bottom: none; }
+.tiers-table .tier-name { font-weight: 700; color: var(--text-primary); font-size: 0.95rem; }
+.tiers-table .tier-highlight { background: rgba(43, 98, 179, 0.03); }
+.tier-badge { display: inline-flex; padding: 3px 10px; background: var(--sapphire-50); color: var(--sapphire-700); font-size: 0.7rem; font-weight: 700; border-radius: var(--radius-full); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* API Cards */
+.api-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-lg); margin-top: var(--space-2xl); }
+.api-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-xl); transition: all var(--duration-normal) var(--ease-out); }
+.api-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: transparent; }
+.api-card-header { display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md); }
+.api-card-icon { width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+.api-card h4 { font-family: var(--font-display); font-size: 1.05rem; }
+.api-card p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: var(--space-md); }
+.api-endpoints { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.api-endpoint { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; background: var(--bg-elevated); border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-tertiary); }
+.api-method { font-weight: 700; font-size: 0.6rem; text-transform: uppercase; }
+.api-method.get { color: var(--teal-600); }
+.api-method.post { color: var(--sapphire-600); }
+.api-method.put { color: var(--amber-600); }
+.api-method.delete { color: var(--rose-600); }
+
+/* Requirements List */
+.req-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-lg); margin-top: var(--space-2xl); }
+.req-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-xl); }
+.req-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: var(--space-md); display: flex; align-items: center; gap: var(--space-sm); }
+.req-list { list-style: none; display: flex; flex-direction: column; gap: var(--space-sm); }
+.req-list li { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; padding-left: var(--space-lg); position: relative; }
+.req-list li::before { content: ''; position: absolute; left: 0; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--sapphire-400); }
+
+/* Terms */
+.terms { margin-top: var(--space-2xl); }
+.terms-section { margin-bottom: var(--space-2xl); }
+.terms-section h3 { font-family: var(--font-display); font-size: 1.15rem; margin-bottom: var(--space-md); color: var(--sapphire-900); }
+.terms-section p, .terms-section li { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7; }
+.terms-section ol, .terms-section ul { padding-left: var(--space-xl); margin-top: var(--space-sm); display: flex; flex-direction: column; gap: var(--space-sm); }
+
+/* Split Section */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4xl); align-items: center; }
+.split .section-subtitle { margin-bottom: var(--space-xl); }
+
+/* CTA */
+.cta-section { padding: var(--space-5xl) 0; }
+.cta-card { background: linear-gradient(135deg, var(--sapphire-700), var(--sapphire-600)); border-radius: var(--radius-xl); padding: var(--space-4xl); text-align: center; color: white; position: relative; overflow: hidden; }
+.cta-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 60% at 30% 20%, rgba(255,255,255,0.08), transparent); }
+.cta-title { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.4rem); margin-bottom: var(--space-md); position: relative; }
+.cta-subtitle { font-size: 1.05rem; color: rgba(255,255,255,0.75); max-width: 500px; margin: 0 auto var(--space-xl); position: relative; }
+.cta-actions { display: flex; gap: var(--space-md); justify-content: center; flex-wrap: wrap; position: relative; }
+.cta-actions .btn-primary { background: white; color: var(--sapphire-800); }
+.cta-actions .btn-primary:hover { background: var(--ivory-50); transform: translateY(-2px); }
+.cta-actions .btn-outline { border-color: rgba(255,255,255,0.3); color: white; }
+.cta-actions .btn-outline:hover { border-color: white; background: rgba(255,255,255,0.1); }
+
+/* Footer */
+.footer { background: var(--sapphire-900); color: white; padding: var(--space-2xl) 0; }
+.footer-inner { display: flex; justify-content: space-between; align-items: center; }
+.footer-brand { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+.footer-links-row { display: flex; gap: var(--space-xl); }
+.footer-links-row a { font-size: 0.8rem; color: rgba(255,255,255,0.5); transition: color var(--duration-fast); }
+.footer-links-row a:hover { color: white; }
+
+@media (max-width: 1024px) {
+  .feature-grid { grid-template-columns: 1fr 1fr; }
+  .api-grid { grid-template-columns: 1fr; }
+  .req-grid { grid-template-columns: 1fr; }
+  .split { grid-template-columns: 1fr; }
+  .tiers-table { font-size: 0.85rem; }
+  .tiers-table th, .tiers-table td { padding: var(--space-md); }
+}
+@media (max-width: 640px) {
+  .feature-grid { grid-template-columns: 1fr; }
+  .footer-inner { flex-direction: column; gap: var(--space-md); text-align: center; }
+  .footer-links-row { flex-wrap: wrap; justify-content: center; }
+  .tiers-table { display: block; overflow-x: auto; }
+}
+
+/* Lucide SVG icon sizing */
+.lucide { width: 1em; height: 1em; vertical-align: -0.125em; stroke-width: 1.75; }
+.feature-card-icon .lucide { width: 24px; height: 24px; }
+.api-card-icon .lucide { width: 20px; height: 20px; }
+.req-card h4 .lucide { width: 18px; height: 18px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">S</div>
+      Scholarly
+    </a>
+    <div class="nav-actions">
+      <a href="index.html" class="btn btn-ghost">&larr; Back to Platform</a>
+      <a href="/marketplace/developer" class="btn btn-primary">Developer Console <span class="btn-icon">&rarr;</span></a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="inner-hero">
+  <div class="container">
+    <div class="inner-hero-content" style="animation: fadeUp 0.8s var(--ease-out) 0.1s both;">
+      <a href="index.html" class="back-link" style="margin-bottom: var(--space-lg); display: inline-flex;">&larr; Back to Platform Overview</a>
+      <div class="inner-hero-icon"><i data-lucide="code-2"></i></div>
+      <div class="inner-hero-badge">
+        <span class="inner-hero-badge-dot"></span>
+        Developer Portal &middot; APIs &middot; Documentation
+      </div>
+      <h1>Build on Scholarly &mdash; <em>the education platform</em></h1>
+      <p class="inner-hero-desc">Access RESTful APIs across 12+ education services, build extensions for 50,000+ educators and learners, and monetise your apps through the Scholarly marketplace. TypeScript SDK, OAuth 2.0, and event-driven architecture included.</p>
+      <div class="inner-hero-actions">
+        <a href="/marketplace/developer" class="btn btn-primary btn-lg">Create Developer Account <span class="btn-icon">&rarr;</span></a>
+        <a href="#api-reference" class="btn btn-outline btn-lg">View APIs</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- API Reference -->
+<section class="section" id="api-reference">
+  <div class="container">
+    <div class="reveal" style="text-align: center; max-width: 600px; margin: 0 auto;">
+      <div class="section-label"><span class="section-label-line"></span>API Reference</div>
+      <h2 class="section-title">Available APIs</h2>
+      <p class="section-subtitle" style="margin: 0 auto;">RESTful endpoints with JSON responses, JWT authentication, and comprehensive error handling. All APIs are versioned under <code style="font-family: var(--font-mono); background: var(--bg-elevated); padding: 2px 8px; border-radius: 4px; font-size: 0.85em;">/api/v1/</code>.</p>
+    </div>
+    <div class="api-grid">
+      <div class="api-card reveal">
+        <div class="api-card-header">
+          <div class="api-card-icon" style="background: var(--sapphire-50);"><i data-lucide="book-open"></i></div>
+          <h4>Stories &amp; Content</h4>
+        </div>
+        <p>Create, manage, and distribute educational stories and content. Includes AI-generated illustrations and curriculum alignment.</p>
+        <div class="api-endpoints">
+          <span class="api-endpoint"><span class="api-method get">GET</span> /storybook/stories</span>
+          <span class="api-endpoint"><span class="api-method post">POST</span> /storybook/generate</span>
+          <span class="api-endpoint"><span class="api-method get">GET</span> /content</span>
+        </div>
+      </div>
+      <div class="api-card reveal reveal-delay-1">
+        <div class="api-card-header">
+          <div class="api-card-icon" style="background: var(--amber-50);"><i data-lucide="library"></i></div>
+          <h4>Curriculum &amp; Library</h4>
+        </div>
+        <p>Access Australian Curriculum (ACARA) standards, learning progressions, and cross-curricular connections. Full-text search with filters.</p>
+        <div class="api-endpoints">
+          <span class="api-endpoint"><span class="api-method get">GET</span> /curriculum/standards</span>
+          <span class="api-endpoint"><span class="api-method get">GET</span> /curriculum/search</span>
+          <span class="api-endpoint"><span class="api-method get">GET</span> /curriculum/progressions</span>
+        </div>
+      </div>
+      <div class="api-card reveal reveal-delay-2">
+        <div class="api-card-header">
+          <div class="api-card-icon" style="background: var(--teal-50);"><i data-lucide="swords"></i></div>
+          <h4>Arena &amp; Assessment</h4>
+        </div>
+        <p>Gamified quiz battles, adaptive assessments, and real-time multiplayer challenges. Supports various question types and difficulty scaling.</p>
+        <div class="api-endpoints">
+          <span class="api-endpoint"><span class="api-method post">POST</span> /arena/create</span>
+          <span class="api-endpoint"><span class="api-method post">POST</span> /arena/join</span>
+          <span class="api-endpoint"><span class="api-method get">GET</span> /arena/leaderboard</span>
+        </div>
+      </div>
+      <div class="api-card reveal reveal-delay-3">
+        <div class="api-card-header">
+          <div class="api-card-icon" style="background: var(--rose-100);"><i data-lucide="coins"></i></div>
+          <h4>Token Economy</h4>
+        </div>
+        <p>EDU-Nexus token management, rewards, staking, and soulbound credential issuance. On-chain verification for academic achievements.</p>
+        <div class="api-endpoints">
+          <span class="api-endpoint"><span class="api-method get">GET</span> /tokens/balance</span>
+          <span class="api-endpoint"><span class="api-method post">POST</span> /tokens/transfer</span>
+          <span class="api-endpoint"><span class="api-method post">POST</span> /tokens/credentials</span>
+        </div>
+      </div>
+      <div class="api-card reveal">
+        <div class="api-card-header">
+          <div class="api-card-icon" style="background: var(--sapphire-50);"><i data-lucide="webhook"></i></div>
+          <h4>Webhooks &amp; Events</h4>
+        </div>
+        <p>Subscribe to real-time events across the platform. NATS event bus for cross-service communication. Configurable retry policies.</p>
+        <div class="api-endpoints">
+          <span class="api-endpoint"><span class="api-method post">POST</span> /webhooks/register</span>
+          <span class="api-endpoint"><span class="api-method get">GET</span> /webhooks</span>
+          <span class="api-endpoint"><span class="api-method delete">DEL</span> /webhooks/:id</span>
+        </div>
+      </div>
+      <div class="api-card reveal reveal-delay-1">
+        <div class="api-card-header">
+          <div class="api-card-icon" style="background: var(--amber-50);"><i data-lucide="graduation-cap"></i></div>
+          <h4>LMS Integration</h4>
+        </div>
+        <p>1EdTech certified LTI 1.3, OneRoster, CASE, and CLR standards. Seamless integration with Canvas, Blackboard, Moodle, and Google Classroom.</p>
+        <div class="api-endpoints">
+          <span class="api-endpoint"><span class="api-method post">POST</span> /interoperability/lti/launch</span>
+          <span class="api-endpoint"><span class="api-method get">GET</span> /interoperability/oneroster</span>
+          <span class="api-endpoint"><span class="api-method get">GET</span> /interoperability/case</span>
+        </div>
+      </div>
+      <div class="api-card reveal reveal-delay-2">
+        <div class="api-card-header">
+          <div class="api-card-icon" style="background: var(--teal-50);"><i data-lucide="mic"></i></div>
+          <h4>Voice &amp; TTS Studio</h4>
+        </div>
+        <p>Text-to-speech synthesis with 48+ voices, phonics-aware narration, voice cloning, and speech-to-text transcription for educational content.</p>
+        <div class="api-endpoints">
+          <span class="api-endpoint"><span class="api-method post">POST</span> /tts/synthesize</span>
+          <span class="api-endpoint"><span class="api-method get">GET</span> /tts/voices</span>
+          <span class="api-endpoint"><span class="api-method post">POST</span> /stt/transcribe</span>
+        </div>
+      </div>
+      <div class="api-card reveal reveal-delay-3">
+        <div class="api-card-header">
+          <div class="api-card-icon" style="background: var(--rose-100);"><i data-lucide="store"></i></div>
+          <h4>Marketplace</h4>
+        </div>
+        <p>Publish and manage apps, handle reviews, process payments, and manage developer profiles. Revenue sharing and analytics included.</p>
+        <div class="api-endpoints">
+          <span class="api-endpoint"><span class="api-method post">POST</span> /marketplace/apps</span>
+          <span class="api-endpoint"><span class="api-method get">GET</span> /marketplace/apps</span>
+          <span class="api-endpoint"><span class="api-method get">GET</span> /marketplace/analytics</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Getting Started -->
+<section class="section section-alt" id="getting-started">
+  <div class="container">
+    <div class="split reveal">
+      <div>
+        <div class="section-label"><span class="section-label-line"></span>Getting Started</div>
+        <h2 class="section-title">Three steps to your first API call</h2>
+        <p class="section-subtitle">Get up and running in minutes. Our TypeScript SDK provides full type safety, IDE autocompletion, and comprehensive documentation.</p>
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h4>Register as a Developer</h4>
+              <p>Create a Scholarly account and enable developer mode from the Developer Console. Choose your tier based on your usage needs.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h4>Generate API Keys</h4>
+              <p>Create API keys from the Developer Console. Each key is scoped to specific services and rate limits based on your tier.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h4>Make Your First Request</h4>
+              <p>Install the TypeScript SDK (<code style="font-family: var(--font-mono); background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; font-size: 0.85em;">npm install @scholarly/sdk</code>) or call the REST API directly with your API key in the Authorization header.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: var(--space-2xl); box-shadow: var(--shadow-lg);">
+        <div style="font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.8; color: var(--text-secondary);">
+          <div style="color: var(--text-tertiary); margin-bottom: var(--space-md);">// Install the SDK</div>
+          <div style="color: var(--sapphire-600);">npm install @scholarly/sdk</div>
+          <br>
+          <div style="color: var(--text-tertiary);">// Make your first API call</div>
+          <div><span style="color: var(--sapphire-400);">import</span> { Scholarly } <span style="color: var(--sapphire-400);">from</span> <span style="color: var(--teal-600);">'@scholarly/sdk'</span>;</div>
+          <br>
+          <div><span style="color: var(--sapphire-400);">const</span> client = <span style="color: var(--sapphire-400);">new</span> <span style="color: var(--amber-500);">Scholarly</span>({</div>
+          <div>&nbsp;&nbsp;apiKey: <span style="color: var(--teal-600);">'sk_dev_...'</span>,</div>
+          <div>});</div>
+          <br>
+          <div><span style="color: var(--sapphire-400);">const</span> standards = <span style="color: var(--sapphire-400);">await</span> client.<span style="color: var(--amber-500);">curriculum</span>.<span style="color: var(--amber-500);">search</span>({</div>
+          <div>&nbsp;&nbsp;query: <span style="color: var(--teal-600);">'fractions year 5'</span>,</div>
+          <div>&nbsp;&nbsp;state: <span style="color: var(--teal-600);">'WA'</span>,</div>
+          <div>});</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Developer Tiers -->
+<section class="section" id="tiers">
+  <div class="container">
+    <div class="reveal" style="text-align: center; max-width: 600px; margin: 0 auto;">
+      <div class="section-label"><span class="section-label-line"></span>Developer Tiers</div>
+      <h2 class="section-title">Choose the right plan for your project</h2>
+      <p class="section-subtitle" style="margin: 0 auto;">Start free and scale as you grow. All tiers include access to the full API surface &mdash; limits increase with each tier.</p>
+    </div>
+    <table class="tiers-table reveal">
+      <thead>
+        <tr>
+          <th>Tier</th>
+          <th>Rate Limit</th>
+          <th>Monthly Calls</th>
+          <th>Webhooks</th>
+          <th>Revenue Share</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tier-name">Explorer</span> <span class="tier-badge">Free</span></td>
+          <td>60 req/min</td>
+          <td>10,000</td>
+          <td>5</td>
+          <td>70/30</td>
+          <td>Free</td>
+        </tr>
+        <tr class="tier-highlight">
+          <td><span class="tier-name">Builder</span> <span class="tier-badge">Popular</span></td>
+          <td>300 req/min</td>
+          <td>100,000</td>
+          <td>25</td>
+          <td>80/20</td>
+          <td>$29/mo</td>
+        </tr>
+        <tr>
+          <td><span class="tier-name">Professional</span></td>
+          <td>1,000 req/min</td>
+          <td>1,000,000</td>
+          <td>100</td>
+          <td>85/15</td>
+          <td>$99/mo</td>
+        </tr>
+        <tr>
+          <td><span class="tier-name">Enterprise</span></td>
+          <td>Custom</td>
+          <td>Unlimited</td>
+          <td>Unlimited</td>
+          <td>90/10</td>
+          <td>Contact Us</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Minimum Requirements -->
+<section class="section section-alt" id="requirements">
+  <div class="container">
+    <div class="reveal" style="max-width: 600px;">
+      <div class="section-label"><span class="section-label-line"></span>Requirements</div>
+      <h2 class="section-title">Minimum requirements for developers</h2>
+      <p class="section-subtitle">All apps and integrations must meet these technical and compliance standards before publishing to the Scholarly marketplace.</p>
+    </div>
+    <div class="req-grid">
+      <div class="req-card reveal">
+        <h4><i data-lucide="shield"></i> Technical Requirements</h4>
+        <ul class="req-list">
+          <li>All API communication over HTTPS (TLS 1.2+)</li>
+          <li>OAuth 2.0 authentication with PKCE for public clients</li>
+          <li>Respect rate limits and implement exponential backoff</li>
+          <li>Handle API errors gracefully with user-friendly messages</li>
+          <li>Webhook endpoints must respond within 5 seconds</li>
+          <li>Support API versioning (current: v1)</li>
+        </ul>
+      </div>
+      <div class="req-card reveal reveal-delay-1">
+        <h4><i data-lucide="scale"></i> Compliance Standards</h4>
+        <ul class="req-list">
+          <li>COPPA compliance for apps accessed by children under 13</li>
+          <li>FERPA compliance for apps handling student education records</li>
+          <li>Australian Privacy Act 1988 compliance for Australian users</li>
+          <li>No collection of personal data beyond stated purposes</li>
+          <li>Data retention policies aligned with Scholarly standards</li>
+          <li>Mandatory breach notification within 72 hours</li>
+        </ul>
+      </div>
+      <div class="req-card reveal reveal-delay-2">
+        <h4><i data-lucide="check-circle-2"></i> Quality Standards</h4>
+        <ul class="req-list">
+          <li>App must have a clear educational purpose</li>
+          <li>WCAG 2.1 AA accessibility compliance</li>
+          <li>Responsive design supporting desktop and tablet</li>
+          <li>Error-free operation under normal usage conditions</li>
+          <li>Documentation including setup guide and API usage</li>
+          <li>Support contact and issue reporting mechanism</li>
+        </ul>
+      </div>
+      <div class="req-card reveal reveal-delay-3">
+        <h4><i data-lucide="globe"></i> Content Guidelines</h4>
+        <ul class="req-list">
+          <li>Age-appropriate content for the targeted year levels</li>
+          <li>No advertising or tracking within educational contexts</li>
+          <li>Australian English spelling and terminology preferred</li>
+          <li>Curriculum references must align with ACARA standards</li>
+          <li>AI-generated content must be clearly labelled</li>
+          <li>No misleading claims about educational outcomes</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Terms & Conditions -->
+<section class="section" id="terms">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label"><span class="section-label-line"></span>Legal</div>
+      <h2 class="section-title">Developer Terms &amp; Conditions</h2>
+      <p class="section-subtitle">By accessing the Scholarly Developer Platform, you agree to the following terms. Last updated: February 2026.</p>
+    </div>
+    <div class="terms reveal">
+      <div class="terms-section">
+        <h3>1. License Grant</h3>
+        <p>Scholarly grants you a limited, non-exclusive, non-transferable, revocable licence to access and use the Scholarly APIs solely for the purpose of developing, testing, and distributing applications that integrate with the Scholarly platform. This licence does not grant you any rights to Scholarly&rsquo;s trademarks, brand assets, or proprietary content beyond what is necessary for integration.</p>
+      </div>
+
+      <div class="terms-section">
+        <h3>2. Restrictions</h3>
+        <p>You agree not to:</p>
+        <ol>
+          <li>Use the APIs for any purpose other than building educational applications or integrations</li>
+          <li>Attempt to reverse-engineer, decompile, or extract source code from any Scholarly service</li>
+          <li>Resell, sublicence, or redistribute API access to third parties</li>
+          <li>Circumvent rate limits, authentication mechanisms, or security controls</li>
+          <li>Store or cache student data beyond the minimum period necessary for your application&rsquo;s function</li>
+          <li>Use the platform to build a competing education service that replicates Scholarly&rsquo;s core functionality</li>
+        </ol>
+      </div>
+
+      <div class="terms-section">
+        <h3>3. Data Handling Obligations</h3>
+        <p>You are responsible for the security and privacy of any data accessed through the Scholarly APIs. You must:</p>
+        <ol>
+          <li>Process personal data only as necessary for your application&rsquo;s stated purpose</li>
+          <li>Implement appropriate technical and organisational security measures</li>
+          <li>Comply with all applicable privacy laws including the Australian Privacy Act 1988, COPPA, and FERPA</li>
+          <li>Notify Scholarly within 72 hours of any data breach affecting Scholarly user data</li>
+          <li>Delete all Scholarly user data upon request or when a user revokes access to your application</li>
+        </ol>
+      </div>
+
+      <div class="terms-section">
+        <h3>4. Suspension and Termination</h3>
+        <p>Scholarly reserves the right to suspend or terminate your API access at any time, with or without cause, and with or without notice. Reasons for suspension or termination may include, but are not limited to:</p>
+        <ol>
+          <li>Violation of these Terms &amp; Conditions or Scholarly&rsquo;s Acceptable Use Policy</li>
+          <li>Security concerns or suspected misuse of the APIs</li>
+          <li>Non-payment of fees associated with your developer tier</li>
+          <li>Complaints from users about your application&rsquo;s quality or behaviour</li>
+          <li>Failure to maintain compliance with applicable laws and regulations</li>
+          <li>Scholarly&rsquo;s business decision to modify, discontinue, or restrict API access</li>
+        </ol>
+        <p style="margin-top: var(--space-md);">Upon termination, you must immediately cease all use of the Scholarly APIs and delete any cached or stored Scholarly user data. Scholarly will not be liable for any damages arising from the suspension or termination of your access.</p>
+      </div>
+
+      <div class="terms-section">
+        <h3>5. Indemnification</h3>
+        <p>You agree to indemnify, defend, and hold harmless Scholarly Pty Ltd, its officers, directors, employees, and agents from and against any claims, damages, losses, liabilities, and expenses (including reasonable legal fees) arising from or related to your use of the APIs, your application, or your violation of these Terms.</p>
+      </div>
+
+      <div class="terms-section">
+        <h3>6. Limitation of Liability</h3>
+        <p>To the maximum extent permitted by law, Scholarly shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Developer Platform. Scholarly&rsquo;s total liability for all claims arising from these Terms shall not exceed the fees paid by you in the twelve (12) months preceding the claim. The APIs are provided &ldquo;as is&rdquo; without warranty of any kind, express or implied.</p>
+      </div>
+
+      <div class="terms-section">
+        <h3>7. Governing Law</h3>
+        <p>These Terms are governed by and construed in accordance with the laws of Western Australia, Australia. Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts of Western Australia. If any provision of these Terms is found to be unenforceable, the remaining provisions shall continue in full force and effect.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-card reveal">
+      <h2 class="cta-title">Start building on Scholarly</h2>
+      <p class="cta-subtitle">Create your developer account, generate API keys, and ship your first integration today.</p>
+      <div class="cta-actions">
+        <a href="/marketplace/developer" class="btn btn-primary btn-lg">Create Developer Account <span class="btn-icon">&rarr;</span></a>
+        <a href="developer-platform.html" class="btn btn-outline btn-lg">Technical Architecture</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">&copy; 2026 Scholarly &mdash; The Unified Learning Nexus. Built in Perth, WA</div>
+      <div class="footer-links-row">
+        <a href="index.html">Home</a>
+        <a href="index.html#ecosystem">All Services</a>
+        <a href="developers.html">Developers</a>
+        <a href="developer-platform.html">Technical Docs</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+<script src="https://unpkg.com/lucide@0.303.0/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

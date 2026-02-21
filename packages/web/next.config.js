@@ -36,6 +36,8 @@ const nextConfig = {
       // Landing site pages with clean URLs
       { source: '/site', destination: '/index.html' },
       { source: '/site/ask-issy', destination: '/ask-issy.html' },
+      { source: '/site/ai-buddy', destination: '/ask-issy.html' },
+      { source: '/site/developers', destination: '/developers.html' },
       { source: '/site/assessment-engine', destination: '/assessment-engine.html' },
       { source: '/site/content-marketplace', destination: '/content-marketplace.html' },
       { source: '/site/curriculum-intelligence', destination: '/curriculum-intelligence.html' },

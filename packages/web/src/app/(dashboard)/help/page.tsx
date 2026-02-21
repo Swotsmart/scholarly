@@ -40,7 +40,7 @@ const helpCategories = [
     icon: BookOpen,
     color: 'bg-green-500',
     articles: 15,
-    description: 'Explore courses, AI buddy, and more',
+    description: 'Explore courses, Ask Issy, and more',
   },
   {
     title: 'Tutoring',

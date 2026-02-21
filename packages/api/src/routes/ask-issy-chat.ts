@@ -13,7 +13,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from '@scholarly/database';
 import { log } from '../lib/logger.js';
 
-export const aiBuddyChatRouter: Router = Router();
+export const askIssyChatRouter: Router = Router();
 
 // Validation schema
 const chatSchema = z.object({
@@ -270,7 +270,7 @@ ${profileSection}
  * POST /api/v1/ask-issy/chat
  * Send a message and get an AI response
  */
-aiBuddyChatRouter.post('/chat', async (req, res) => {
+askIssyChatRouter.post('/chat', async (req, res) => {
   const userId = req.user!.id;
   const tenantId = req.user!.tenantId;
 

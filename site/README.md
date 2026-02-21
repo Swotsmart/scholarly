@@ -261,7 +261,7 @@ Each inner page carries its own accent colour from the design system, creating v
 
 | Colour | Services |
 |--------|----------|
-| **Sapphire** | AI Buddy, Curriculum Intelligence, LIS Bridge, Developer Platform |
+| **Sapphire** | Ask Issy, Curriculum Intelligence, LIS Bridge, Developer Platform |
 | **Amber** | Golden Learning Path, Homeschool Hub, Token Economy, EduScrum |
 | **Teal** | Tutor Booking, Scheduling Engine, Micro-Schools, LinguaFlow, Learning Portfolio |
 | **Rose** | Content Marketplace, Relief Marketplace, Assessment Engine |

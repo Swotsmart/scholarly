@@ -1,7 +1,7 @@
 /**
- * AI Buddy Routes
+ * Ask Issy Routes
  *
- * API endpoints for the AI learning buddy functionality.
+ * API endpoints for the Ask Issy learning companion.
  */
 
 import { Router } from 'express';
@@ -11,10 +11,10 @@ import { authMiddleware } from '../middleware/auth';
 import { getAIBuddyService, type BuddyRole } from '../services';
 import { log } from '../lib/logger';
 
-export const aiBuddyRouter: Router = Router();
+export const askIssyRouter: Router = Router();
 
 // All routes require authentication
-aiBuddyRouter.use(authMiddleware);
+askIssyRouter.use(authMiddleware);
 
 // ============================================================================
 // Validation Schemas
@@ -54,10 +54,10 @@ const settingsSchema = z.object({
 // ============================================================================
 
 /**
- * POST /api/v1/ai-buddy/message
- * Send a message to the AI Buddy
+ * POST /api/v1/ask-issy/message
+ * Send a message to Ask Issy
  */
-aiBuddyRouter.post('/message', async (req, res) => {
+askIssyRouter.post('/message', async (req, res) => {
   const requestId = (req as any).id || 'unknown';
   const tenantId = req.user!.tenantId;
   const userId = req.user!.id;
@@ -86,7 +86,7 @@ aiBuddyRouter.post('/message', async (req, res) => {
       return res.status(error.statusCode).json(error.toResponse(requestId));
     }
 
-    log.info('AI Buddy message sent', { userId, conversationId: result.data.conversationId });
+    log.info('Ask Issy message sent', { userId, conversationId: result.data.conversationId });
 
     res.json({
       success: true,
@@ -102,10 +102,10 @@ aiBuddyRouter.post('/message', async (req, res) => {
 });
 
 /**
- * GET /api/v1/ai-buddy/conversations
+ * GET /api/v1/ask-issy/conversations
  * List user's conversations
  */
-aiBuddyRouter.get('/conversations', async (req, res) => {
+askIssyRouter.get('/conversations', async (req, res) => {
   const requestId = (req as any).id || 'unknown';
   const tenantId = req.user!.tenantId;
   const userId = req.user!.id;
@@ -133,10 +133,10 @@ aiBuddyRouter.get('/conversations', async (req, res) => {
 });
 
 /**
- * GET /api/v1/ai-buddy/conversations/:id
+ * GET /api/v1/ask-issy/conversations/:id
  * Get a specific conversation
  */
-aiBuddyRouter.get('/conversations/:id', async (req, res) => {
+askIssyRouter.get('/conversations/:id', async (req, res) => {
   const requestId = (req as any).id || 'unknown';
   const tenantId = req.user!.tenantId;
   const conversationId = req.params.id;
@@ -161,10 +161,10 @@ aiBuddyRouter.get('/conversations/:id', async (req, res) => {
 });
 
 /**
- * POST /api/v1/ai-buddy/conversations/:id/archive
+ * POST /api/v1/ask-issy/conversations/:id/archive
  * Archive a conversation
  */
-aiBuddyRouter.post('/conversations/:id/archive', async (req, res) => {
+askIssyRouter.post('/conversations/:id/archive', async (req, res) => {
   const requestId = (req as any).id || 'unknown';
   const tenantId = req.user!.tenantId;
   const userId = req.user!.id;
@@ -182,10 +182,10 @@ aiBuddyRouter.post('/conversations/:id/archive', async (req, res) => {
 });
 
 /**
- * POST /api/v1/ai-buddy/conversations/:conversationId/messages/:messageId/feedback
+ * POST /api/v1/ask-issy/conversations/:conversationId/messages/:messageId/feedback
  * Provide feedback on a message
  */
-aiBuddyRouter.post('/conversations/:conversationId/messages/:messageId/feedback', async (req, res) => {
+askIssyRouter.post('/conversations/:conversationId/messages/:messageId/feedback', async (req, res) => {
   const requestId = (req as any).id || 'unknown';
   const tenantId = req.user!.tenantId;
   const userId = req.user!.id;
@@ -217,10 +217,10 @@ aiBuddyRouter.post('/conversations/:conversationId/messages/:messageId/feedback'
 });
 
 /**
- * GET /api/v1/ai-buddy/settings
- * Get user's AI Buddy settings
+ * GET /api/v1/ask-issy/settings
+ * Get user's Ask Issy settings
  */
-aiBuddyRouter.get('/settings', async (req, res) => {
+askIssyRouter.get('/settings', async (req, res) => {
   const tenantId = req.user!.tenantId;
   const userId = req.user!.id;
 
@@ -244,10 +244,10 @@ aiBuddyRouter.get('/settings', async (req, res) => {
 });
 
 /**
- * PATCH /api/v1/ai-buddy/settings
- * Update user's AI Buddy settings
+ * PATCH /api/v1/ask-issy/settings
+ * Update user's Ask Issy settings
  */
-aiBuddyRouter.patch('/settings', async (req, res) => {
+askIssyRouter.patch('/settings', async (req, res) => {
   const requestId = (req as any).id || 'unknown';
   const tenantId = req.user!.tenantId;
   const userId = req.user!.id;
@@ -277,10 +277,10 @@ aiBuddyRouter.patch('/settings', async (req, res) => {
 });
 
 /**
- * GET /api/v1/ai-buddy/profile
+ * GET /api/v1/ask-issy/profile
  * Get learner profile for AI personalization
  */
-aiBuddyRouter.get('/profile', async (req, res) => {
+askIssyRouter.get('/profile', async (req, res) => {
   const tenantId = req.user!.tenantId;
   const userId = req.user!.id;
 

@@ -261,7 +261,7 @@ function getSubtitle(roleKey: string): string {
   }
 }
 
-export default function AIBuddyPage() {
+export default function AskIssyPage() {
   const { user } = useAuthStore();
   const roleKey = getUserRoleKey(user?.roles);
   const quickPrompts = quickPromptsByRole[roleKey] || quickPromptsByRole.learner;
@@ -441,7 +441,7 @@ export default function AIBuddyPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `ai-buddy-transcript-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.download = `ask-issy-transcript-${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };

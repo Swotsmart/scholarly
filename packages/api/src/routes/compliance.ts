@@ -81,7 +81,7 @@ const RETENTION_POLICIES = [
     retentionDays: 180,
     strategy: 'hard_delete',
     regulation: 'COPPA',
-    description: 'AI buddy conversation messages',
+    description: 'Ask Issy conversation messages',
   },
   {
     id: 'pol_portfolio_artifacts',

@@ -509,7 +509,7 @@ class ApiClient {
   // ==========================================================================
 
   askIssy = {
-    chat: async (message: string, context?: { conversationId?: string; yearLevel?: string; subjects?: string[]; currentTopic?: string; persona?: string }): Promise<ApiResponse<AiBuddyChatResponse>> => {
+    chat: async (message: string, context?: { conversationId?: string; yearLevel?: string; subjects?: string[]; currentTopic?: string; persona?: string }): Promise<ApiResponse<AskIssyChatResponse>> => {
       if (DEMO_MODE) {
         return {
           success: true,
@@ -524,19 +524,19 @@ class ApiClient {
           },
         };
       }
-      return this.post<AiBuddyChatResponse>('/ask-issy/chat', { message, context });
+      return this.post<AskIssyChatResponse>('/ask-issy/chat', { message, context });
     },
-    getConversations: async (): Promise<ApiResponse<AiBuddyConversation[]>> => {
+    getConversations: async (): Promise<ApiResponse<AskIssyConversation[]>> => {
       if (DEMO_MODE) {
         return { success: true, data: [] };
       }
-      return this.get<AiBuddyConversation[]>('/ask-issy/conversations');
+      return this.get<AskIssyConversation[]>('/ask-issy/conversations');
     },
-    getConversation: async (id: string): Promise<ApiResponse<AiBuddyConversation>> => {
+    getConversation: async (id: string): Promise<ApiResponse<AskIssyConversation>> => {
       if (DEMO_MODE) {
         return { success: false, error: 'Not available in demo mode' };
       }
-      return this.get<AiBuddyConversation>(`/ask-issy/conversations/${id}`);
+      return this.get<AskIssyConversation>(`/ask-issy/conversations/${id}`);
     },
   };
 
@@ -1456,10 +1456,10 @@ export interface QuickStats {
 }
 
 // ==========================================================================
-// AI BUDDY TYPES
+// ASK ISSY TYPES
 // ==========================================================================
 
-export interface AiBuddyChatResponse {
+export interface AskIssyChatResponse {
   conversationId: string;
   message: {
     id: string;
@@ -1469,7 +1469,7 @@ export interface AiBuddyChatResponse {
   };
 }
 
-export interface AiBuddyConversation {
+export interface AskIssyConversation {
   id: string;
   title: string;
   status: string;
