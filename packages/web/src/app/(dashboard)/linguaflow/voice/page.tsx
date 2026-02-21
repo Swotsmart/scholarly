@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,8 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
   Mic,
-  MicOff,
-  Play,
   Square,
   Volume2,
   MessageSquare,
@@ -22,13 +20,34 @@ import {
   Settings,
   Clock,
   TrendingUp,
+  Play,
+  Loader2,
 } from 'lucide-react';
+import { api } from '@/lib/api';
+
+function audioBase64ToUrl(base64: string, format: string): string {
+  const mime = format === 'wav' ? 'audio/wav' : format === 'opus' ? 'audio/opus' : 'audio/mpeg';
+  return `data:${mime};base64,${base64}`;
+}
+
+// Language code mapping for Kokoro voices
+const LANGUAGE_VOICES: Record<string, { language: string; voiceId: string }> = {
+  french:   { language: 'fr-fr', voiceId: 'ff_siwis' },
+  spanish:  { language: 'es-es', voiceId: 'ef_dora' },
+  german:   { language: 'de-de', voiceId: 'df_anna' },
+  mandarin: { language: 'zh-cn', voiceId: 'zf_xiaobei' },
+  japanese: { language: 'ja-jp', voiceId: 'jf_alpha' },
+};
 
 export default function VoiceIntelligencePage() {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('french');
+  const [playingWord, setPlayingWord] = useState<string | null>(null);
+  const [loadingWord, setLoadingWord] = useState<string | null>(null);
+  const [playingDialogue, setPlayingDialogue] = useState<string | null>(null);
+  const [loadingDialogue, setLoadingDialogue] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Mock data
   const recentSessions = [
     { id: 1, language: 'French', scenario: 'Cafe Conversation', score: 85, duration: '15 min', date: 'Today' },
     { id: 2, language: 'Spanish', scenario: 'Hotel Check-in', score: 78, duration: '12 min', date: 'Yesterday' },
@@ -36,9 +55,49 @@ export default function VoiceIntelligencePage() {
   ];
 
   const voiceAgents = [
-    { id: 1, name: 'Pierre', language: 'French', role: 'Cafe Waiter', level: 'Beginner', avatar: '/agents/pierre.png' },
-    { id: 2, name: 'Maria', language: 'Spanish', role: 'Hotel Receptionist', level: 'Intermediate', avatar: '/agents/maria.png' },
-    { id: 3, name: 'Hans', language: 'German', role: 'Museum Guide', level: 'Advanced', avatar: '/agents/hans.png' },
+    { id: 1, name: 'Pierre', language: 'French', role: 'Cafe Waiter', level: 'Beginner', langCode: 'fr-fr', voiceId: 'fm_marcelo' },
+    { id: 2, name: 'Maria', language: 'Spanish', role: 'Hotel Receptionist', level: 'Intermediate', langCode: 'es-es', voiceId: 'ef_dora' },
+    { id: 3, name: 'Hans', language: 'German', role: 'Museum Guide', level: 'Advanced', langCode: 'de-de', voiceId: 'dm_hans' },
+  ];
+
+  const pronunciationWords: Record<string, { word: string; text: string }[]> = {
+    french: [
+      { word: 'Bonjour', text: 'Bonjour' },
+      { word: 'Croissant', text: 'Croissant' },
+      { word: 'Rendez-vous', text: 'Rendez-vous' },
+      { word: "Aujourd'hui", text: "Aujourd'hui" },
+    ],
+    spanish: [
+      { word: 'Buenos días', text: 'Buenos días' },
+      { word: 'Gracias', text: 'Gracias' },
+      { word: 'Por favor', text: 'Por favor' },
+      { word: 'Hasta luego', text: 'Hasta luego' },
+    ],
+    german: [
+      { word: 'Guten Tag', text: 'Guten Tag' },
+      { word: 'Entschuldigung', text: 'Entschuldigung' },
+      { word: 'Bitte schön', text: 'Bitte schön' },
+      { word: 'Auf Wiedersehen', text: 'Auf Wiedersehen' },
+    ],
+    mandarin: [
+      { word: '你好 (Nǐ hǎo)', text: '你好' },
+      { word: '谢谢 (Xièxiè)', text: '谢谢' },
+      { word: '再见 (Zàijiàn)', text: '再见' },
+      { word: '对不起 (Duìbùqǐ)', text: '对不起' },
+    ],
+    japanese: [
+      { word: 'こんにちは', text: 'こんにちは' },
+      { word: 'ありがとう', text: 'ありがとう' },
+      { word: 'すみません', text: 'すみません' },
+      { word: 'さようなら', text: 'さようなら' },
+    ],
+  };
+
+  const dialogues = [
+    { title: 'At the Restaurant', speakers: 2, duration: '5 min', level: 'Beginner', text: 'Bonsoir! Bienvenue au restaurant. Je voudrais une table pour deux personnes, s\'il vous plaît. Bien sûr, suivez-moi. Voici le menu.' },
+    { title: 'Airport Check-in', speakers: 3, duration: '8 min', level: 'Intermediate', text: '¡Buenos días! Necesito hacer el check-in para mi vuelo a Madrid. ¿Tiene su pasaporte y tarjeta de embarque? Sí, aquí tiene.' },
+    { title: 'Job Interview', speakers: 2, duration: '12 min', level: 'Advanced', text: 'Guten Tag, mein Name ist Anna Schmidt. Ich bewerbe mich für die Stelle als Projektmanagerin. Erzählen Sie mir bitte etwas über Ihre Berufserfahrung.' },
+    { title: 'Shopping at the Market', speakers: 2, duration: '6 min', level: 'Beginner', text: 'Combien coûtent les pommes? Deux euros le kilo. Je prends un kilo, s\'il vous plaît. Voilà, et avec ceci?' },
   ];
 
   const pronunciationStats = {
@@ -46,8 +105,93 @@ export default function VoiceIntelligencePage() {
     accuracy: 85,
     fluency: 78,
     prosody: 80,
-    trending: 'up',
   };
+
+  const stopAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+      audioRef.current = null;
+    }
+    setPlayingWord(null);
+    setPlayingDialogue(null);
+  }, []);
+
+  const playWord = useCallback(async (word: string, text: string) => {
+    if (playingWord === word) {
+      stopAudio();
+      return;
+    }
+
+    stopAudio();
+    setLoadingWord(word);
+
+    try {
+      const langConfig = LANGUAGE_VOICES[selectedLanguage];
+      const result = await api.voiceStudio.synthesize({
+        text,
+        voice_id: langConfig.voiceId,
+        language: langConfig.language,
+        output_format: 'mp3',
+      });
+
+      if (result.success && result.data) {
+        const audio = new Audio(audioBase64ToUrl(result.data.audio_base64, 'mp3'));
+        audioRef.current = audio;
+        audio.addEventListener('ended', () => setPlayingWord(null), { once: true });
+        audio.addEventListener('error', () => setPlayingWord(null), { once: true });
+        await audio.play();
+        setPlayingWord(word);
+      }
+    } catch {
+      // Synthesis failed
+    } finally {
+      setLoadingWord(null);
+    }
+  }, [playingWord, selectedLanguage, stopAudio]);
+
+  const playDialogue = useCallback(async (title: string, text: string, index: number) => {
+    if (playingDialogue === title) {
+      stopAudio();
+      return;
+    }
+
+    stopAudio();
+    setLoadingDialogue(title);
+
+    try {
+      // Detect language from the dialogue
+      const langMap: Record<number, { language: string; voiceId: string }> = {
+        0: { language: 'fr-fr', voiceId: 'ff_siwis' },
+        1: { language: 'es-es', voiceId: 'ef_dora' },
+        2: { language: 'de-de', voiceId: 'df_anna' },
+        3: { language: 'fr-fr', voiceId: 'fm_marcelo' },
+      };
+      const lang = langMap[index] || langMap[0];
+
+      const result = await api.voiceStudio.synthesize({
+        text,
+        voice_id: lang.voiceId,
+        language: lang.language,
+        output_format: 'mp3',
+      });
+
+      if (result.success && result.data) {
+        const audio = new Audio(audioBase64ToUrl(result.data.audio_base64, 'mp3'));
+        audioRef.current = audio;
+        audio.addEventListener('ended', () => setPlayingDialogue(null), { once: true });
+        audio.addEventListener('error', () => setPlayingDialogue(null), { once: true });
+        await audio.play();
+        setPlayingDialogue(title);
+      }
+    } catch {
+      // Synthesis failed
+    } finally {
+      setLoadingDialogue(null);
+    }
+  }, [playingDialogue, stopAudio]);
+
+  const currentWords = pronunciationWords[selectedLanguage] || pronunciationWords.french;
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -321,19 +465,30 @@ export default function VoiceIntelligencePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Word Practice</CardTitle>
-                <CardDescription>Practice difficult words</CardDescription>
+                <CardDescription>Practice difficult words — click the speaker to hear pronunciation</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {['Bonjour', 'Croissant', 'Rendez-vous', 'Aujourd\'hui'].map((word) => (
+                  {currentWords.map(({ word, text }) => (
                     <div key={word} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <p className="font-medium">{word}</p>
                         <p className="text-sm text-muted-foreground">Click to hear pronunciation</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Volume2 className="h-4 w-4" />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => playWord(word, text)}
+                          disabled={loadingWord === word}
+                        >
+                          {loadingWord === word ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : playingWord === word ? (
+                            <Square className="h-4 w-4" />
+                          ) : (
+                            <Volume2 className="h-4 w-4" />
+                          )}
                         </Button>
                         <Button size="sm">
                           <Mic className="h-4 w-4" />
@@ -358,12 +513,7 @@ export default function VoiceIntelligencePage() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
-                {[
-                  { title: 'At the Restaurant', speakers: 2, duration: '5 min', level: 'Beginner' },
-                  { title: 'Airport Check-in', speakers: 3, duration: '8 min', level: 'Intermediate' },
-                  { title: 'Job Interview', speakers: 2, duration: '12 min', level: 'Advanced' },
-                  { title: 'Shopping at the Market', speakers: 2, duration: '6 min', level: 'Beginner' },
-                ].map((dialogue, i) => (
+                {dialogues.map((dialogue, i) => (
                   <div key={i} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium">{dialogue.title}</h4>
@@ -380,9 +530,20 @@ export default function VoiceIntelligencePage() {
                       </span>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Play className="h-4 w-4 mr-1" />
-                        Listen
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => playDialogue(dialogue.title, dialogue.text, i)}
+                        disabled={loadingDialogue === dialogue.title}
+                      >
+                        {loadingDialogue === dialogue.title ? (
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        ) : playingDialogue === dialogue.title ? (
+                          <Square className="h-4 w-4 mr-1" />
+                        ) : (
+                          <Play className="h-4 w-4 mr-1" />
+                        )}
+                        {playingDialogue === dialogue.title ? 'Stop' : 'Listen'}
                       </Button>
                       <Button size="sm">
                         <Mic className="h-4 w-4 mr-1" />

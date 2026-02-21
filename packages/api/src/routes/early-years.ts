@@ -25,14 +25,17 @@ const ttsRateLimiter = rateLimit({
 });
 
 // =============================================================================
-// PHONICS TTS (ElevenLabs)
+// PHONICS TTS (Kokoro via Voice Service)
 // =============================================================================
 
-const PHONICS_VOICES: Record<string, { voiceId: string; stability: number; similarityBoost: number; style: number; useSpeakerBoost: boolean }> = {
-  pip:    { voiceId: 'cgSgspJ2msm6clMCkdW9', stability: 0.6, similarityBoost: 0.7, style: 0.5, useSpeakerBoost: true },   // Jessica - Playful, Bright, Warm
-  sarah:  { voiceId: 'EXAVITQu4vr4xnSDxMaL', stability: 0.7, similarityBoost: 0.8, style: 0.4, useSpeakerBoost: true },   // Sarah - Mature, Reassuring, Confident
-  alex:   { voiceId: 'TX3LPaxmHKxFdv7VOQHJ', stability: 0.55, similarityBoost: 0.75, style: 0.6, useSpeakerBoost: true },  // Liam - Energetic, Social Media Creator
-  willow: { voiceId: 'Xb7hH8MSUJpSbSDYk0k2', stability: 0.75, similarityBoost: 0.85, style: 0.3, useSpeakerBoost: false }, // Alice - Clear, Engaging Educator
+const VOICE_SERVICE_URL = process.env.VOICE_SERVICE_URL
+  || 'https://scholarly-voice.bravefield-dce0abaf.australiaeast.azurecontainerapps.io';
+
+const PHONICS_VOICES: Record<string, { voiceId: string; description: string }> = {
+  pip:    { voiceId: 'af_jessica', description: 'Jessica - Playful, Bright' },
+  sarah:  { voiceId: 'af_sarah',   description: 'Sarah - Mature, Reassuring' },
+  alex:   { voiceId: 'am_fenrir',  description: 'Fenrir - Energetic' },
+  willow: { voiceId: 'bf_alice',   description: 'Alice - Clear, Engaging Educator' },
 };
 
 const phonicsTtsSchema = z.object({
@@ -46,34 +49,28 @@ export const earlyYearsRouter: Router = Router();
 export const earlyYearsTtsRouter: Router = Router();
 
 earlyYearsTtsRouter.post('/tts', ttsRateLimiter, async (req, res) => {
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) {
-    return res.status(503).json({ error: 'TTS service unavailable' });
-  }
-
   const data = phonicsTtsSchema.parse(req.body);
   const voice = PHONICS_VOICES[data.voicePersona];
 
   try {
-    const { ElevenLabsClient } = await import('@elevenlabs/elevenlabs-js');
-    const client = new ElevenLabsClient({ apiKey });
-
-    const audioStream = await client.textToSpeech.convert(voice.voiceId, {
-      text: data.text,
-      modelId: 'eleven_turbo_v2_5',
-      voiceSettings: {
-        stability: voice.stability,
-        similarityBoost: voice.similarityBoost,
-        style: voice.style,
-        useSpeakerBoost: voice.useSpeakerBoost,
-      },
+    const response = await fetch(`${VOICE_SERVICE_URL}/api/v1/tts/synthesize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: data.text,
+        voice_id: voice.voiceId,
+        output_format: 'mp3',
+      }),
     });
 
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of audioStream) {
-      chunks.push(chunk);
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      logger.error({ status: response.status, body: errorText, event: 'phonics.tts.voice_service_error' }, 'Voice service returned error');
+      return res.status(503).json({ error: 'TTS generation failed' });
     }
-    const audioBuffer = Buffer.concat(chunks);
+
+    const result = await response.json() as { audio_base64: string };
+    const audioBuffer = Buffer.from(result.audio_base64, 'base64');
 
     res.set('Content-Type', 'audio/mpeg');
     res.set('Cache-Control', 'public, max-age=86400');
@@ -438,46 +435,38 @@ earlyYearsRouter.get('/phonics-phases', async (_req, res) => {
 });
 
 // =============================================================================
-// TEXT-TO-SPEECH (ElevenLabs)
+// TEXT-TO-SPEECH (Kokoro via Voice Service)
 // =============================================================================
 
 /**
  * POST /api/v1/early-years/tts
  * Generate child-friendly speech for phonics activities.
  * Returns audio/mpeg binary. Defaults to "Playful Pip" voice.
- * Returns 503 if ELEVENLABS_API_KEY is not configured (frontend falls back to browser TTS).
+ * Uses the Voice Service (Kokoro TTS) instead of ElevenLabs.
  */
 earlyYearsRouter.post('/tts', async (req, res) => {
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) {
-    return res.status(503).json({ error: 'TTS service unavailable' });
-  }
-
   const data = phonicsTtsSchema.parse(req.body);
   const voice = PHONICS_VOICES[data.voicePersona];
 
   try {
-    // Dynamic import to avoid issues if elevenlabs package isn't installed
-    const { ElevenLabsClient } = await import('@elevenlabs/elevenlabs-js');
-    const client = new ElevenLabsClient({ apiKey });
-
-    const audioStream = await client.textToSpeech.convert(voice.voiceId, {
-      text: data.text,
-      modelId: 'eleven_turbo_v2_5', // Lowest latency for instant feedback
-      voiceSettings: {
-        stability: voice.stability,
-        similarityBoost: voice.similarityBoost,
-        style: voice.style,
-        useSpeakerBoost: voice.useSpeakerBoost,
-      },
+    const response = await fetch(`${VOICE_SERVICE_URL}/api/v1/tts/synthesize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: data.text,
+        voice_id: voice.voiceId,
+        output_format: 'mp3',
+      }),
     });
 
-    // Collect audio chunks
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of audioStream) {
-      chunks.push(chunk);
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      logger.error({ status: response.status, body: errorText, event: 'phonics.tts.voice_service_error' }, 'Voice service returned error');
+      return res.status(503).json({ error: 'TTS generation failed' });
     }
-    const audioBuffer = Buffer.concat(chunks);
+
+    const result = await response.json() as { audio_base64: string };
+    const audioBuffer = Buffer.from(result.audio_base64, 'base64');
 
     res.set('Content-Type', 'audio/mpeg');
     res.set('Cache-Control', 'public, max-age=86400');

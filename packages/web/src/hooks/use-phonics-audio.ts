@@ -20,7 +20,7 @@ interface UsePhonicsAudioOptions {
 }
 
 interface UsePhonicsAudioReturn {
-  /** Speak text via ElevenLabs TTS (or browser fallback) */
+  /** Speak text via Kokoro TTS (or browser fallback) */
   speak: (text: string, options?: { priority?: 'high' | 'normal' }) => Promise<void>;
   /** Speak a single phoneme (uses pre-cached audio for instant playback) */
   speakPhoneme: (phoneme: string) => Promise<void>;
@@ -30,7 +30,7 @@ interface UsePhonicsAudioReturn {
   stop: () => void;
   /** Whether audio is currently playing */
   isPlaying: boolean;
-  /** Whether ElevenLabs TTS API is available */
+  /** Whether TTS API is available */
   isTTSAvailable: boolean;
   /** Pre-generate and cache phoneme audio for instant playback */
   preloadPhonemes: (phonemes: string[]) => Promise<void>;
@@ -259,7 +259,7 @@ export function usePhonicsAudio(
     ): Promise<void> => {
       if (!enabled) return;
 
-      // Always kill browser SpeechSynthesis — we only use ElevenLabs
+      // Always kill browser SpeechSynthesis — we only use Kokoro TTS
       cancelBrowserTTS();
 
       const priority = opts?.priority ?? 'normal';
