@@ -6954,3 +6954,31 @@ model TenantIntegrationConfig {
 
   @@index([tenantId])
 }
+
+// =============================================================================
+// SITE PASSWORD PROTECTION — Per-tenant and platform-wide access gating
+// =============================================================================
+
+model SitePasswordProtection {
+  id       String  @id @default(cuid())
+  tenantId String? // null = platform-wide (platform_admin only)
+
+  scope        String  @default("site") // "site" | "route_pattern"
+  routePattern String? // e.g. "/admin/*", "/teacher/*"
+
+  passwordHash String // bcrypt(12)
+  hint         String? // shown on gate page
+
+  bypassRoles String[] @default([]) // roles that skip the gate
+
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
+
+  createdBy String
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, isActive])
+  @@index([scope])
+}

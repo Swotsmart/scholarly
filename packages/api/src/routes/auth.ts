@@ -82,7 +82,7 @@ authRouter.post('/login', generateCsrfToken, async (req, res) => {
     path: '/api/v1/auth',
   });
 
-  // Get user details for response
+  // Get user details for response (fetched early so we can set sp_roles cookie)
   const user = await prisma.user.findFirst({
     where: { email: email.toLowerCase(), ...(tenantId && { tenantId }) },
     select: {
@@ -105,6 +105,17 @@ authRouter.post('/login', generateCsrfToken, async (req, res) => {
     where: { id: user!.tenantId },
     select: { id: true, name: true, slug: true },
   });
+
+  // Set sp_roles cookie for site-protection middleware bypass
+  if (user?.roles) {
+    res.cookie('sp_roles', JSON.stringify(user.roles), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+  }
 
   res.json({
     success: true,
@@ -196,6 +207,15 @@ authRouter.post('/register', async (req, res) => {
     path: '/api/v1/auth',
   });
 
+  // Set sp_roles cookie for site-protection middleware bypass
+  res.cookie('sp_roles', JSON.stringify(user.roles), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000,
+    path: '/',
+  });
+
   res.status(201).json({
     success: true,
     data: {
@@ -264,6 +284,7 @@ authRouter.post('/logout', async (req, res) => {
   }
 
   res.clearCookie('refresh_token', { path: '/api/v1/auth' });
+  res.clearCookie('sp_roles', { path: '/' });
 
   res.json({ success: true });
 });
@@ -277,6 +298,7 @@ authRouter.post('/logout-all', authMiddleware, async (req, res) => {
   await authService.logoutAll(userId);
 
   res.clearCookie('refresh_token', { path: '/api/v1/auth' });
+  res.clearCookie('sp_roles', { path: '/' });
 
   res.json({ success: true });
 });

@@ -6,7 +6,7 @@
  * Updated to follow UI/UX Design System v2.0
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -61,8 +61,14 @@ import {
   ToggleLeft,
   Link2,
   Circle,
+  Plus,
+  Trash2,
+  Pencil,
+  Loader2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { api, type SiteProtectionRule } from '@/lib/api';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Feature flags
 const featureFlagsData = [
@@ -228,6 +234,139 @@ export default function AdminSettingsPage() {
     ...passwordPolicies,
     ...sessionSettings,
   });
+
+  // Site protection state
+  const [protectionRules, setProtectionRules] = useState<SiteProtectionRule[]>([]);
+  const [protectionLoading, setProtectionLoading] = useState(false);
+  const [protectionDialogOpen, setProtectionDialogOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<SiteProtectionRule | null>(null);
+  const [protectionForm, setProtectionForm] = useState({
+    scope: 'site' as 'site' | 'route_pattern',
+    routePattern: '',
+    password: '',
+    confirmPassword: '',
+    hint: '',
+    bypassRoles: ['platform_admin'] as string[],
+    expiresAt: '',
+  });
+  const [protectionFormError, setProtectionFormError] = useState('');
+  const [protectionSaving, setProtectionSaving] = useState(false);
+
+  const loadProtectionRules = useCallback(async () => {
+    setProtectionLoading(true);
+    const result = await api.siteProtection.getConfig();
+    if (result.success) {
+      setProtectionRules(result.data);
+    }
+    setProtectionLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadProtectionRules();
+  }, [loadProtectionRules]);
+
+  const resetProtectionForm = () => {
+    setProtectionForm({
+      scope: 'site',
+      routePattern: '',
+      password: '',
+      confirmPassword: '',
+      hint: '',
+      bypassRoles: ['platform_admin'],
+      expiresAt: '',
+    });
+    setProtectionFormError('');
+    setEditingRule(null);
+  };
+
+  const handleProtectionSubmit = async () => {
+    setProtectionFormError('');
+
+    if (!editingRule && protectionForm.password !== protectionForm.confirmPassword) {
+      setProtectionFormError('Passwords do not match');
+      return;
+    }
+
+    if (!editingRule && protectionForm.password.length < 4) {
+      setProtectionFormError('Password must be at least 4 characters');
+      return;
+    }
+
+    if (protectionForm.scope === 'route_pattern' && !protectionForm.routePattern) {
+      setProtectionFormError('Route pattern is required');
+      return;
+    }
+
+    setProtectionSaving(true);
+
+    if (editingRule) {
+      const updateData: Record<string, unknown> = {
+        scope: protectionForm.scope,
+        routePattern: protectionForm.scope === 'route_pattern' ? protectionForm.routePattern : null,
+        hint: protectionForm.hint || null,
+        bypassRoles: protectionForm.bypassRoles,
+        expiresAt: protectionForm.expiresAt || null,
+      };
+      if (protectionForm.password) {
+        updateData.password = protectionForm.password;
+      }
+      const result = await api.siteProtection.updateProtection(editingRule.id, updateData as any);
+      if (!result.success) {
+        setProtectionFormError(result.error);
+        setProtectionSaving(false);
+        return;
+      }
+    } else {
+      const result = await api.siteProtection.createProtection({
+        scope: protectionForm.scope,
+        routePattern: protectionForm.scope === 'route_pattern' ? protectionForm.routePattern : undefined,
+        password: protectionForm.password,
+        hint: protectionForm.hint || undefined,
+        bypassRoles: protectionForm.bypassRoles,
+        expiresAt: protectionForm.expiresAt || undefined,
+      });
+      if (!result.success) {
+        setProtectionFormError(result.error);
+        setProtectionSaving(false);
+        return;
+      }
+    }
+
+    setProtectionSaving(false);
+    setProtectionDialogOpen(false);
+    resetProtectionForm();
+    loadProtectionRules();
+  };
+
+  const handleDeleteProtection = async (id: string) => {
+    await api.siteProtection.deleteProtection(id);
+    loadProtectionRules();
+  };
+
+  const handleEditProtection = (rule: SiteProtectionRule) => {
+    setEditingRule(rule);
+    setProtectionForm({
+      scope: rule.scope,
+      routePattern: rule.routePattern || '',
+      password: '',
+      confirmPassword: '',
+      hint: rule.hint || '',
+      bypassRoles: rule.bypassRoles.length > 0 ? rule.bypassRoles : ['platform_admin'],
+      expiresAt: rule.expiresAt ? rule.expiresAt.slice(0, 16) : '',
+    });
+    setProtectionFormError('');
+    setProtectionDialogOpen(true);
+  };
+
+  const toggleBypassRole = (role: string) => {
+    if (role === 'platform_admin') return; // Always required
+    setProtectionForm(prev => ({
+      ...prev,
+      bypassRoles: prev.bypassRoles.includes(role)
+        ? prev.bypassRoles.filter(r => r !== role)
+        : [...prev.bypassRoles, role],
+    }));
+  };
 
   const toggleFlag = (id: string) => {
     setFlags((prev) =>
@@ -925,6 +1064,102 @@ export default function AdminSettingsPage() {
             </CardContent>
           </Card>
 
+          {/* Site Password Protection */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    <Lock className="h-4 w-4" />
+                    Site Password Protection
+                  </CardTitle>
+                  <CardDescription>
+                    Require a shared password to access the platform or specific routes. Users with bypass roles are exempt.
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={() => {
+                    resetProtectionForm();
+                    setProtectionDialogOpen(true);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Rule
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {protectionLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : protectionRules.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Shield className="mx-auto h-10 w-10 mb-3 opacity-50" />
+                  <p className="font-medium">No protection rules</p>
+                  <p className="text-sm mt-1">Add a rule to password-protect the platform or specific routes.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {protectionRules.map((rule) => (
+                    <div
+                      key={rule.id}
+                      className="flex items-center justify-between rounded-lg border p-4"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={rule.scope === 'site' ? 'default' : 'secondary'}>
+                            {rule.scope === 'site' ? 'Entire Site' : rule.routePattern}
+                          </Badge>
+                          {rule.isActive && (!rule.expiresAt || new Date(rule.expiresAt) > new Date()) ? (
+                            <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Active</Badge>
+                          ) : (
+                            <Badge variant="secondary">
+                              {!rule.isActive ? 'Inactive' : 'Expired'}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap mt-1">
+                          {rule.bypassRoles.map((role) => (
+                            <Badge key={role} variant="outline" className="text-xs">
+                              {role.replace(/_/g, ' ')}
+                            </Badge>
+                          ))}
+                        </div>
+                        {rule.hint && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Hint: {rule.hint}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Created {new Date(rule.createdAt).toLocaleDateString()}
+                          {rule.expiresAt && ` · Expires ${new Date(rule.expiresAt).toLocaleDateString()}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditProtection(rule)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteProtection(rule.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <div className="flex justify-end gap-2">
             <Button variant="outline">
               <RotateCcw className="mr-2 h-4 w-4" />
@@ -937,6 +1172,158 @@ export default function AdminSettingsPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Site Protection Rule Dialog */}
+      <Dialog open={protectionDialogOpen} onOpenChange={(open) => {
+        setProtectionDialogOpen(open);
+        if (!open) resetProtectionForm();
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editingRule ? 'Edit Protection Rule' : 'Add Protection Rule'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingRule
+                ? 'Update the settings for this protection rule.'
+                : 'Create a new password protection rule for the platform or specific routes.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {protectionFormError && (
+              <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {protectionFormError}
+              </div>
+            )}
+
+            {/* Scope */}
+            <div className="space-y-2">
+              <Label>Scope</Label>
+              <Select
+                value={protectionForm.scope}
+                onValueChange={(v) => setProtectionForm(prev => ({ ...prev, scope: v as 'site' | 'route_pattern' }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="site">Entire Site</SelectItem>
+                  <SelectItem value="route_pattern">Specific Routes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Route Pattern */}
+            {protectionForm.scope === 'route_pattern' && (
+              <div className="space-y-2">
+                <Label>Route Pattern</Label>
+                <Input
+                  placeholder="/admin/*"
+                  value={protectionForm.routePattern}
+                  onChange={(e) => setProtectionForm(prev => ({ ...prev, routePattern: e.target.value }))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Use glob patterns: /admin/*, /teacher/**, /reports/*
+                </p>
+              </div>
+            )}
+
+            {/* Password */}
+            <div className="space-y-2">
+              <Label>{editingRule ? 'New Password (leave blank to keep current)' : 'Password'}</Label>
+              <Input
+                type="password"
+                placeholder={editingRule ? 'Leave blank to keep current' : 'Enter site password'}
+                value={protectionForm.password}
+                onChange={(e) => setProtectionForm(prev => ({ ...prev, password: e.target.value }))}
+                required={!editingRule}
+              />
+            </div>
+
+            {/* Confirm Password */}
+            {protectionForm.password && (
+              <div className="space-y-2">
+                <Label>Confirm Password</Label>
+                <Input
+                  type="password"
+                  placeholder="Confirm password"
+                  value={protectionForm.confirmPassword}
+                  onChange={(e) => setProtectionForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                />
+              </div>
+            )}
+
+            {/* Hint */}
+            <div className="space-y-2">
+              <Label>Password Hint (optional)</Label>
+              <Input
+                placeholder="e.g. Company name + year"
+                value={protectionForm.hint}
+                onChange={(e) => setProtectionForm(prev => ({ ...prev, hint: e.target.value }))}
+              />
+            </div>
+
+            {/* Bypass Roles */}
+            <div className="space-y-2">
+              <Label>Bypass Roles</Label>
+              <p className="text-xs text-muted-foreground">
+                Users with these roles skip the password gate when logged in.
+              </p>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {[
+                  { value: 'platform_admin', label: 'Platform Admin' },
+                  { value: 'school_admin', label: 'School Admin' },
+                  { value: 'teacher', label: 'Teacher' },
+                  { value: 'tutor', label: 'Tutor' },
+                  { value: 'parent', label: 'Parent' },
+                  { value: 'learner', label: 'Learner' },
+                ].map(({ value, label }) => (
+                  <div key={value} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`bypass-${value}`}
+                      checked={protectionForm.bypassRoles.includes(value)}
+                      onCheckedChange={() => toggleBypassRole(value)}
+                      disabled={value === 'platform_admin'}
+                    />
+                    <Label htmlFor={`bypass-${value}`} className="text-sm font-normal cursor-pointer">
+                      {label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Expires At */}
+            <div className="space-y-2">
+              <Label>Expires At (optional)</Label>
+              <Input
+                type="datetime-local"
+                value={protectionForm.expiresAt}
+                onChange={(e) => setProtectionForm(prev => ({ ...prev, expiresAt: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setProtectionDialogOpen(false);
+              resetProtectionForm();
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleProtectionSubmit} disabled={protectionSaving}>
+              {protectionSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                editingRule ? 'Update Rule' : 'Create Rule'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* API Key Regeneration Dialog */}
       <Dialog open={apiKeyDialogOpen} onOpenChange={setApiKeyDialogOpen}>

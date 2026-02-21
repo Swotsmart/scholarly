@@ -57,6 +57,7 @@ import oneDriveRouter from './routes/onedrive';
 import { emailRouter } from './routes/email';
 import { integrationsRouter } from './routes/integrations';
 import { adminCommunicationsRouter } from './routes/admin-communications';
+import { siteProtectionRouter } from './routes/site-protection';
 
 // Sprint Module Routes (Sprints 1-18)
 import { storybookRouter } from './routes/storybook';
@@ -135,6 +136,7 @@ const api = express.Router();
 // Public routes
 api.use('/auth', authRateLimiter, authRouter);
 api.use('/early-years', earlyYearsTtsRouter); // Public TTS for phonics audio
+api.use('/site-protection', siteProtectionRouter); // Has both public (verify, active) and protected (config) routes
 
 // Protected routes
 api.use('/users', authMiddleware, usersRouter);

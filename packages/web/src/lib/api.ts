@@ -954,6 +954,40 @@ class ApiClient {
         this.post<{ assignment: unknown }>(`/integrations/google-classroom/courses/${courseId}/assignments`, data),
     },
   };
+
+  // ==========================================================================
+  // SITE PROTECTION
+  // ==========================================================================
+
+  siteProtection = {
+    getConfig: () =>
+      this.get<SiteProtectionRule[]>('/site-protection/config'),
+
+    createProtection: (data: {
+      scope: 'site' | 'route_pattern';
+      routePattern?: string;
+      password: string;
+      hint?: string;
+      bypassRoles: string[];
+      expiresAt?: string;
+      tenantId?: string;
+    }) =>
+      this.post<SiteProtectionRule>('/site-protection/config', data),
+
+    updateProtection: (id: string, data: {
+      scope?: 'site' | 'route_pattern';
+      routePattern?: string;
+      password?: string;
+      hint?: string | null;
+      bypassRoles?: string[];
+      expiresAt?: string | null;
+      isActive?: boolean;
+    }) =>
+      this.put<SiteProtectionRule>(`/site-protection/config/${id}`, data),
+
+    deleteProtection: (id: string) =>
+      this.delete(`/site-protection/config/${id}`),
+  };
 }
 
 export const api = new ApiClient(API_BASE_URL);
@@ -961,6 +995,21 @@ export const api = new ApiClient(API_BASE_URL);
 // ==========================================================================
 // TYPES
 // ==========================================================================
+
+export interface SiteProtectionRule {
+  id: string;
+  tenantId: string | null;
+  scope: 'site' | 'route_pattern';
+  routePattern: string | null;
+  hint: string | null;
+  bypassRoles: string[];
+  isActive: boolean;
+  expiresAt: string | null;
+  createdBy: string;
+  updatedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface LearnerProfile {
   id: string;
