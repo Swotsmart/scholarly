@@ -305,7 +305,7 @@ export default function AdminSettingsPage() {
         routePattern: protectionForm.scope === 'route_pattern' ? protectionForm.routePattern : null,
         hint: protectionForm.hint || null,
         bypassRoles: protectionForm.bypassRoles,
-        expiresAt: protectionForm.expiresAt || null,
+        expiresAt: protectionForm.expiresAt ? new Date(protectionForm.expiresAt).toISOString() : null,
       };
       if (protectionForm.password) {
         updateData.password = protectionForm.password;
@@ -323,7 +323,7 @@ export default function AdminSettingsPage() {
         password: protectionForm.password,
         hint: protectionForm.hint || undefined,
         bypassRoles: protectionForm.bypassRoles,
-        expiresAt: protectionForm.expiresAt || undefined,
+        expiresAt: protectionForm.expiresAt ? new Date(protectionForm.expiresAt).toISOString() : undefined,
       });
       if (!result.success) {
         setProtectionFormError(result.error);
