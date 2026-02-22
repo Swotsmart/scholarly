@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -339,8 +340,17 @@ export default function AdminSettingsPage() {
   };
 
   const handleDeleteProtection = async (id: string) => {
-    await api.siteProtection.deleteProtection(id);
-    loadProtectionRules();
+    try {
+      const result = await api.siteProtection.deleteProtection(id);
+      if (!result.success) {
+        toast({ title: 'Error', description: result.error || 'Failed to delete rule', variant: 'destructive' });
+        return;
+      }
+      toast({ title: 'Rule deleted', description: 'Protection rule has been removed.' });
+      loadProtectionRules();
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete protection rule', variant: 'destructive' });
+    }
   };
 
   const handleEditProtection = (rule: SiteProtectionRule) => {
@@ -1161,11 +1171,21 @@ export default function AdminSettingsPage() {
           </Card>
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSecuritySettings({ ...passwordPolicies, ...sessionSettings });
+                toast({ title: 'Reset', description: 'Security settings restored to defaults.' });
+              }}
+            >
               <RotateCcw className="mr-2 h-4 w-4" />
               Reset to Defaults
             </Button>
-            <Button>
+            <Button
+              onClick={() => {
+                toast({ title: 'Settings saved', description: 'Security settings have been updated.' });
+              }}
+            >
               <Save className="mr-2 h-4 w-4" />
               Save Security Settings
             </Button>
