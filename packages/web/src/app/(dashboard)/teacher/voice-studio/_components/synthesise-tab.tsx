@@ -10,7 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import api, { type SynthesizeResult, type VoiceWordTimestamp } from '@/lib/api';
+import api, { type SynthesizeResult, type TranslateAndSpeakResult, type VoiceWordTimestamp } from '@/lib/api';
 import { VOICE_PERSONAS, PACE_CONFIG, phaseToMultiplier, PREVIEW_SENTENCE, type VoicePersona } from './voice-persona-data';
 import { KaraokePlayer } from './karaoke-player';
 import {
@@ -89,6 +89,12 @@ export function SynthesiseTab({
   const [wordTimestamps, setWordTimestamps] = useState(true);
   const [synthesizing, setSynthesizing] = useState(false);
   const [synthResult, setSynthResult] = useState<SynthesizeResult | null>(null);
+  const [translationInfo, setTranslationInfo] = useState<{
+    translatedText: string;
+    transliteration: string | null;
+    sourceLanguage: string;
+    targetLanguage: string;
+  } | null>(null);
 
   // All voices from API (for language browser)
   const [allVoices, setAllVoices] = useState<VoiceOption[]>([]);
@@ -126,32 +132,80 @@ export function SynthesiseTab({
   const charCount = synthText.length;
   const estimatedSeconds = Math.ceil(charCount / 15);
 
+  // Determine if the selected language needs translation (non-English)
+  const needsTranslation = synthLanguage !== 'auto' && !synthLanguage.startsWith('en-');
+
   const handleSynthesize = async () => {
     if (!synthText.trim()) return;
     setError(null);
     setSynthesizing(true);
     try {
-      const res = await api.voiceStudio.synthesize({
-        text: synthText,
-        voice_id: customVoiceId || selectedPersona?.voiceId || undefined,
-        language: synthLanguage !== 'auto' ? synthLanguage : undefined,
-        pace: synthPace,
-        pitch: synthPitch,
-        warmth: synthWarmth,
-        word_timestamps: wordTimestamps,
-      });
-      if (!res.success) {
-        setError(res.error || 'Synthesis failed');
-        return;
+      if (needsTranslation) {
+        // Use translate-and-speak for non-English languages
+        const res = await api.voiceStudio.translateAndSpeak({
+          text: synthText,
+          target_language: synthLanguage,
+          voice_id: customVoiceId || selectedPersona?.voiceId || undefined,
+          speed: synthPace,
+          word_timestamps: wordTimestamps,
+        });
+        if (!res.success) {
+          setError(res.error || 'Translation & synthesis failed');
+          return;
+        }
+        // Map translate-and-speak result to SynthesizeResult shape
+        const mapped: SynthesizeResult = {
+          audio_base64: res.data.audio_base64,
+          duration_seconds: res.data.duration_seconds,
+          sample_rate: 24000,
+          format: res.data.audio_format,
+          word_timestamps: res.data.word_timestamps ?? [],
+          cost: {
+            provider: 'kokoro+claude',
+            compute_seconds: res.data.duration_seconds,
+            estimated_cost_usd: res.data.cost.total_cost_usd,
+            model: 'kokoro-v1',
+          },
+        };
+        setSynthResult(mapped);
+        setTranslationInfo({
+          translatedText: res.data.translated_text,
+          transliteration: res.data.transliteration,
+          sourceLanguage: res.data.source_language,
+          targetLanguage: res.data.target_language,
+        });
+        setStudioAudio({
+          base64: res.data.audio_base64,
+          duration: res.data.duration_seconds,
+          format: res.data.audio_format,
+          timestamps: res.data.word_timestamps ?? [],
+        });
+        playAudio(res.data.audio_base64, res.data.audio_format);
+      } else {
+        // Use direct synthesis for English or auto-detect
+        const res = await api.voiceStudio.synthesize({
+          text: synthText,
+          voice_id: customVoiceId || selectedPersona?.voiceId || undefined,
+          language: synthLanguage !== 'auto' ? synthLanguage : undefined,
+          pace: synthPace,
+          pitch: synthPitch,
+          warmth: synthWarmth,
+          word_timestamps: wordTimestamps,
+        });
+        if (!res.success) {
+          setError(res.error || 'Synthesis failed');
+          return;
+        }
+        setSynthResult(res.data);
+        setTranslationInfo(null);
+        setStudioAudio({
+          base64: res.data.audio_base64,
+          duration: res.data.duration_seconds,
+          format: res.data.format,
+          timestamps: res.data.word_timestamps,
+        });
+        playAudio(res.data.audio_base64, res.data.format);
       }
-      setSynthResult(res.data);
-      setStudioAudio({
-        base64: res.data.audio_base64,
-        duration: res.data.duration_seconds,
-        format: res.data.format,
-        timestamps: res.data.word_timestamps,
-      });
-      playAudio(res.data.audio_base64, res.data.format);
     } catch {
       setError('Failed to connect to voice service');
     } finally {
@@ -353,7 +407,9 @@ export function SynthesiseTab({
                 <span className="text-xs text-muted-foreground">
                   {synthLanguage === 'auto'
                     ? 'Voice language determines output'
-                    : `Text will be spoken in ${LANGUAGE_LABELS[synthLanguage] || synthLanguage}`}
+                    : needsTranslation
+                      ? `Text will be translated to ${LANGUAGE_LABELS[synthLanguage] || synthLanguage} and spoken`
+                      : `Text will be spoken in ${LANGUAGE_LABELS[synthLanguage] || synthLanguage}`}
                 </span>
               </div>
             </div>
@@ -405,8 +461,8 @@ export function SynthesiseTab({
               <Slider value={[synthWarmth]} onValueChange={([v]) => setSynthWarmth(v)} min={-6} max={6} step={0.5} />
             </div>
             <Button className="w-full" onClick={handleSynthesize} disabled={synthesizing || !synthText.trim() || serviceStatus !== 'online'}>
-              {synthesizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mic className="mr-2 h-4 w-4" />}
-              {synthesizing ? 'Synthesising...' : 'Synthesise'}
+              {synthesizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : needsTranslation ? <Globe className="mr-2 h-4 w-4" /> : <Mic className="mr-2 h-4 w-4" />}
+              {synthesizing ? (needsTranslation ? 'Translating & Synthesising...' : 'Synthesising...') : (needsTranslation ? 'Translate & Speak' : 'Synthesise')}
             </Button>
           </CardContent>
         </Card>
@@ -440,6 +496,22 @@ export function SynthesiseTab({
                 Download
               </Button>
             </div>
+
+            {/* Translation result */}
+            {translationInfo && (
+              <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Globe className="h-3.5 w-3.5 text-primary" />
+                  <Label className="text-xs font-medium">
+                    Translated: {LANGUAGE_LABELS[translationInfo.sourceLanguage] || translationInfo.sourceLanguage} → {LANGUAGE_LABELS[translationInfo.targetLanguage] || translationInfo.targetLanguage}
+                  </Label>
+                </div>
+                <p className="text-sm font-medium">{translationInfo.translatedText}</p>
+                {translationInfo.transliteration && (
+                  <p className="text-xs text-muted-foreground italic">{translationInfo.transliteration}</p>
+                )}
+              </div>
+            )}
 
             {/* Karaoke word display */}
             {synthResult.word_timestamps.length > 0 && (

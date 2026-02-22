@@ -22,6 +22,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import AsyncGenerator
 
+from fastapi import HTTPException
+
 from app.config import CacheBackend, Settings, StorageBackend
 from providers.kokoro_provider import KokoroTTSProvider
 from providers.registry import ProviderRegistry
@@ -109,6 +111,20 @@ async def create_registry(settings: Settings) -> ProviderRegistry:
     except ImportError:
         logger.info("faster-whisper not installed — STT provider skipped")
 
+    # --- WhisperX Alignment Provider (registered if whisperx is installed) ---
+    try:
+        from providers.whisperx_provider import WhisperXAlignmentProvider, WhisperXConfig
+        whisperx_config = WhisperXConfig(
+            whisperx_model_size=settings.stt.whisper_model_size,
+            device=settings.stt.whisper_device,
+            compute_type=settings.stt.whisper_compute_type,
+        )
+        whisperx_provider = WhisperXAlignmentProvider(config=whisperx_config)
+        registry.register_stt(whisperx_provider, enabled=True)
+    except ImportError:
+        whisperx_provider = None
+        logger.info("whisperx not installed — alignment provider skipped")
+
     # --- No external providers ---
     # The self-hosted stack handles all TTS/STT.
     # ElevenLabs was removed in Sprint 30 Week 3.
@@ -121,6 +137,17 @@ async def create_registry(settings: Settings) -> ProviderRegistry:
                 "Provider '%s' failed warmup — will be unavailable for routing",
                 provider_id,
             )
+
+    # --- Wire WhisperX into alignment routes (if available) ---
+    if whisperx_provider is not None:
+        try:
+            from processing.phonics_narrator import PhonicsNarrator, PhonicsNarratorConfig
+            from app.routes.alignment import set_providers as set_alignment_providers
+            phonics_narrator = PhonicsNarrator(PhonicsNarratorConfig())
+            set_alignment_providers(whisperx_provider, phonics_narrator)
+            logger.info("Alignment routes wired (WhisperX + PhonicsNarrator)")
+        except Exception as e:
+            logger.warning("Failed to wire alignment routes: %s", e)
 
     _registry = registry
     return registry
@@ -182,7 +209,9 @@ async def create_cloning_dependencies(
         consent_manager = ConsentManager(require_consent=True)
         profile_manager = ProfileManager(max_samples_per_profile=10)
         clone_engine = CloneEngine(
-            sample_rate=settings.tts.default_sample_rate,
+            model_path=settings.cloning.chatterbox_model_path,
+            device=settings.cloning.chatterbox_device,
+            min_sample_duration_seconds=settings.cloning.min_sample_duration_seconds,
         )
 
         # Register Chatterbox as a TTS provider in the registry
@@ -219,21 +248,21 @@ async def create_cloning_dependencies(
 def get_consent_manager() -> object:
     """FastAPI dependency: get the consent manager."""
     if _consent_manager is None:
-        raise RuntimeError("Consent manager not initialised — cloning unavailable")
+        raise HTTPException(status_code=503, detail="Voice cloning not available — consent manager not initialised")
     return _consent_manager
 
 
 def get_profile_manager() -> object:
     """FastAPI dependency: get the profile manager."""
     if _profile_manager is None:
-        raise RuntimeError("Profile manager not initialised — cloning unavailable")
+        raise HTTPException(status_code=503, detail="Voice cloning not available — profile manager not initialised")
     return _profile_manager
 
 
 def get_clone_engine() -> object:
     """FastAPI dependency: get the clone engine."""
     if _clone_engine is None:
-        raise RuntimeError("Clone engine not initialised — cloning unavailable")
+        raise HTTPException(status_code=503, detail="Voice cloning not available — clone engine not initialised")
     return _clone_engine
 
 

@@ -339,6 +339,12 @@ class Settings(BaseSettings):
         description="Service version. Updated on release."
     )
 
+    # Translation (Claude API for translate-and-speak endpoint)
+    anthropic_api_key: str = Field(
+        default="",
+        description="Anthropic API key for Claude translation. Required for /tts/translate-and-speak."
+    )
+
     # Sub-configurations
     tts: TTSSettings = Field(default_factory=TTSSettings)
     stt: STTSettings = Field(default_factory=STTSettings)

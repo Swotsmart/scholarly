@@ -22,22 +22,10 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { useComposingMenuStore } from '@/stores/composing-menu-store';
 import { useMenuToast } from '@/hooks/use-menu-toast';
-import { findTaskByPath, getTask, taskRegistry } from '@/config/menu-registry';
-import { api, type User } from '@/lib/api';
+import { taskRegistry } from '@/config/menu-registry';
+import { api } from '@/lib/api';
 import {
-  LayoutDashboard, BookOpen, Settings, GraduationCap,
-  Sparkles, Target, Presentation, ClipboardCheck,
-  School, FileText, TrendingUp, Languages, Bot,
-  MessageSquare, Compass, Brain, Briefcase,
-  Users, Search, Calendar, Clock,
-  Lightbulb, PlusCircle, PenLine, ClipboardList,
-  BookCheck, Library, PenTool, DoorOpen,
-  CreditCard, Eye, Kanban, FolderKanban,
-  Trophy, FolderOpen, Rocket, Award,
-  Network, Shield, Cpu, BarChart3,
-  Building, Landmark, Store, Map,
-  ArrowRight, Command, CornerDownLeft,
-  Mic, Pin, Check,
+  Users, Search, Command, CornerDownLeft, Pin, Check,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -60,76 +48,72 @@ interface CommandItem {
 }
 
 // ============================================================================
-// COMMAND REGISTRY — All navigable destinations indexed for search
-// ============================================================================
-// Each item now includes a taskRef where it maps to a registered task.
-// This enables the "Add to menu" action and usage tracking integration.
+// CLUSTER → SECTION LABEL MAPPING
 // ============================================================================
 
-const commandItems: CommandItem[] = [
-  // Universal
-  { id: 'settings', label: 'Settings', href: '/settings', icon: Settings, section: 'General', keywords: ['preferences', 'account', 'profile'], taskRef: 'X1' },
+const clusterLabels: Record<string, string> = {
+  daily: 'Daily Operations',
+  teaching: 'Teaching & Curriculum',
+  learning: 'Learning & Growth',
+  language: 'Language Learning',
+  family: 'Family & Parenting',
+  homeschool: 'Homeschool',
+  tutoring: 'Tutoring',
+  admin: 'Administration',
+  arena: 'Arena & Competitions',
+  creator: 'Content Creation',
+  cross: 'General',
+};
 
-  // Student/Learner
-  { id: 'dashboard', label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, section: 'Navigation', keywords: ['home', 'overview'], role: ['learner', 'student'], taskRef: 'D1' },
-  { id: 'courses', label: 'My Courses', href: '/learning/courses', icon: BookOpen, section: 'Learning', keywords: ['classes', 'lessons', 'study'], role: ['learner', 'student'], taskRef: 'L1' },
-  { id: 'progress', label: 'My Progress', href: '/learning/progress', icon: TrendingUp, section: 'Learning', keywords: ['grades', 'performance'], role: ['learner', 'student'], taskRef: 'PROGRESS' },
-  { id: 'ask-issy', label: 'Ask Issy', href: '/ask-issy', icon: Bot, section: 'Learning', keywords: ['help', 'assistant', 'chat', 'tutor'], role: ['learner', 'student'], taskRef: 'L3' },
-  { id: 'design-challenges', label: 'Design Challenges', href: '/design-pitch/challenges', icon: Sparkles, section: 'Create', keywords: ['project', 'creative'], role: ['learner', 'student'], taskRef: 'L6L7' },
-  { id: 'pitch-decks', label: 'Pitch Decks', href: '/design-pitch/pitch-decks', icon: Presentation, section: 'Create', keywords: ['present', 'slides'], role: ['learner', 'student'], taskRef: 'L6L7' },
-  { id: 'portfolio', label: 'My Portfolio', href: '/portfolio', icon: Briefcase, section: 'Create', keywords: ['work', 'showcase'], role: ['learner', 'student'], taskRef: 'L8' },
-  { id: 'showcase', label: 'Showcase', href: '/portfolio/showcase', icon: Eye, section: 'Create', keywords: ['public', 'gallery'], role: ['learner', 'student'], taskRef: 'L8' },
-  { id: 'linguaflow', label: 'LinguaFlow', href: '/linguaflow', icon: Languages, section: 'Languages', keywords: ['language', 'learn', 'speak'], role: ['learner', 'student'], taskRef: 'LF' },
-  { id: 'voice-practice', label: 'Voice Practice', href: '/linguaflow/voice', icon: Mic, section: 'Languages', keywords: ['speaking', 'pronunciation', 'elevenlabs'], role: ['learner', 'student'], taskRef: 'LF' },
-  { id: 'vocabulary', label: 'Vocabulary', href: '/linguaflow/vocabulary', icon: FileText, section: 'Languages', keywords: ['words', 'flashcards'], role: ['learner', 'student'], taskRef: 'LF' },
-  { id: 'conversation', label: 'Conversation Practice', href: '/linguaflow/conversation', icon: MessageSquare, section: 'Languages', keywords: ['speaking', 'chat'], role: ['learner', 'student'], taskRef: 'LF' },
-  { id: 'golden-path', label: 'Golden Path', href: '/golden-path', icon: Compass, section: 'Adaptive', keywords: ['personalized', 'pathway'], role: ['learner', 'student'], taskRef: 'L4L5' },
-  { id: 'find-tutors', label: 'Find Tutors', href: '/tutoring/search', icon: Search, section: 'Support', keywords: ['help', 'teacher', 'mentor'], role: ['learner', 'student'], taskRef: 'F5-learner' },
-  { id: 'achievements', label: 'Achievements', href: '/achievements', icon: Trophy, section: 'Rewards', keywords: ['badges', 'awards', 'xp'], role: ['learner', 'student'], taskRef: 'L9' },
+// ============================================================================
+// AUTO-GENERATED SEARCH INDEX from the task registry
+// ============================================================================
+// Every registered task and every child of compound tasks becomes a
+// searchable item. This ensures the search can find anything on the platform.
+// ============================================================================
 
-  // Teacher
-  { id: 't-dashboard', label: 'Teacher Dashboard', href: '/teacher/dashboard', icon: LayoutDashboard, section: 'Navigation', keywords: ['home', 'overview', 'today'], role: ['teacher', 'educator'], taskRef: 'D1-teacher' },
-  { id: 't-classes', label: 'My Classes', href: '/teacher/classes', icon: School, section: 'Teaching', keywords: ['rosters', 'students'], role: ['teacher', 'educator'], taskRef: 'TEACHER_CLASSES' },
-  { id: 't-students', label: 'Students', href: '/teacher/students', icon: Users, section: 'Teaching', keywords: ['roster', 'at-risk', 'wellbeing'], role: ['teacher', 'educator'], taskRef: 'TEACHER_STUDENTS' },
-  { id: 't-lesson-planner', label: 'Lesson Planner', href: '/teacher/lesson-planner', icon: BookOpen, section: 'Teaching', keywords: ['plan', 'schedule', 'prepare'], role: ['teacher', 'educator'], taskRef: 'T1' },
-  { id: 't-gradebook', label: 'Gradebook', href: '/teacher/gradebook', icon: BookCheck, section: 'Assessment', keywords: ['grades', 'marks', 'scores', 'feedback'], role: ['teacher', 'educator'], taskRef: 'T2' },
-  { id: 't-assessment-lib', label: 'Assessment Library', href: '/teacher/assessment/library', icon: Library, section: 'Assessment', keywords: ['tests', 'quizzes', 'exams'], role: ['teacher', 'educator'], taskRef: 'T3T4' },
-  { id: 't-assessment-build', label: 'Assessment Builder', href: '/teacher/assessment/builder', icon: PenTool, section: 'Assessment', keywords: ['create', 'new', 'quiz'], role: ['teacher', 'educator'], taskRef: 'T3T4' },
-  { id: 't-grading', label: 'Grade Work', href: '/teacher/grading', icon: PenLine, section: 'Assessment', keywords: ['mark', 'review', 'submit'], role: ['teacher', 'educator'], taskRef: 'T5' },
-  { id: 't-attendance', label: 'Take Attendance', href: '/teacher/attendance', icon: ClipboardList, section: 'Quick Actions', keywords: ['roll', 'present', 'absent', 'check'], role: ['teacher', 'educator'], taskRef: 'D2' },
-  { id: 't-timetable', label: 'Timetable', href: '/teacher/scheduling/timetable', icon: Calendar, section: 'Scheduling', keywords: ['schedule', 'periods'], role: ['teacher', 'educator'], taskRef: 'D4' },
-  { id: 't-relief', label: 'Relief Teaching', href: '/teacher/scheduling/relief', icon: Clock, section: 'Scheduling', keywords: ['substitute', 'cover', 'absence'], role: ['teacher', 'educator'], taskRef: 'TEACHER_SCHED' },
-  { id: 't-challenges', label: 'Create Challenge', href: '/teacher/challenges/create', icon: PlusCircle, section: 'Quick Actions', keywords: ['new', 'assignment', 'task'], role: ['teacher', 'educator'], taskRef: 'T6' },
-  { id: 't-reports', label: 'Reports', href: '/teacher/reports', icon: BarChart3, section: 'Analytics', keywords: ['data', 'insights', 'analytics'], role: ['teacher', 'educator'], taskRef: 'T8' },
-  { id: 't-standards', label: 'Standards', href: '/teacher/standards', icon: Shield, section: 'Compliance', keywords: ['audit', 'curriculum'], role: ['teacher', 'educator'], taskRef: 'T7' },
-  { id: 't-voice-studio', label: 'Voice Studio', href: '/teacher/voice-studio', icon: Mic, section: 'Teaching', keywords: ['voice', 'tts', 'speech', 'synthesis', 'narration', 'phonics', 'audio'], role: ['teacher', 'educator'], taskRef: 'VOICE_STUDIO' },
+function buildSearchIndex(): CommandItem[] {
+  const items: CommandItem[] = [];
+  const seen = new Set<string>();
 
-  // Parent
-  { id: 'p-dashboard', label: 'Parent Dashboard', href: '/parent/dashboard', icon: LayoutDashboard, section: 'Navigation', keywords: ['home', 'family'], role: ['parent', 'guardian'], taskRef: 'D1-parent' },
-  { id: 'p-children', label: 'My Children', href: '/parent/children', icon: Users, section: 'Family', keywords: ['kids', 'students'], role: ['parent', 'guardian'], taskRef: 'F1' },
-  { id: 'p-early-years', label: 'Little Explorers', href: '/early-years', icon: Sparkles, section: 'Family', keywords: ['preschool', 'kindergarten', 'early'], role: ['parent', 'guardian'], taskRef: 'F8' },
-  { id: 'p-learning', label: 'Learning Progress', href: '/parent/progress/learning', icon: BookOpen, section: 'Progress', keywords: ['courses', 'study'], role: ['parent', 'guardian'], taskRef: 'F1_PROGRESS' },
-  { id: 'p-grades', label: 'Grades', href: '/parent/progress/grades', icon: FileText, section: 'Progress', keywords: ['marks', 'results', 'scores'], role: ['parent', 'guardian'], taskRef: 'F1_PROGRESS' },
-  { id: 'p-attendance', label: 'Attendance', href: '/parent/progress/attendance', icon: ClipboardCheck, section: 'Progress', keywords: ['absent', 'present'], role: ['parent', 'guardian'], taskRef: 'F1_PROGRESS' },
-  { id: 'p-messages', label: 'Messages', href: '/parent/messages', icon: MessageSquare, section: 'Communication', keywords: ['chat', 'contact', 'teacher'], role: ['parent', 'guardian'], taskRef: 'D3-parent' },
-  { id: 'p-calendar', label: 'Calendar', href: '/parent/calendar', icon: Calendar, section: 'Communication', keywords: ['events', 'schedule'], role: ['parent', 'guardian'], taskRef: 'F4' },
-  { id: 'p-find-tutors', label: 'Find Tutors', href: '/parent/tutoring/search', icon: Search, section: 'Support', keywords: ['help', 'book'], role: ['parent', 'guardian'], taskRef: 'F5' },
-  { id: 'p-payments', label: 'Payments', href: '/parent/payments', icon: CreditCard, section: 'Account', keywords: ['billing', 'subscription', 'invoice'], role: ['parent', 'guardian'], taskRef: 'F6' },
+  for (const [ref, task] of Object.entries(taskRegistry)) {
+    const section = clusterLabels[task.cluster] || task.cluster;
 
-  // Tutor
-  { id: 'tu-dashboard', label: 'Tutor Dashboard', href: '/dashboard', icon: LayoutDashboard, section: 'Navigation', keywords: ['home'], role: ['tutor', 'tutor_professional'], taskRef: 'D1' },
-  { id: 'tu-students', label: 'My Students', href: '/tutoring/students', icon: Users, section: 'Tutoring', keywords: ['learners', 'roster'], role: ['tutor', 'tutor_professional'], taskRef: 'TU5' },
-  { id: 'tu-upcoming', label: 'Upcoming Sessions', href: '/tutoring/sessions/upcoming', icon: Clock, section: 'Tutoring', keywords: ['next', 'schedule'], role: ['tutor', 'tutor_professional'], taskRef: 'TU2' },
-  { id: 'tu-availability', label: 'Availability', href: '/tutoring/availability', icon: Calendar, section: 'Tutoring', keywords: ['schedule', 'calendar', 'hours'], role: ['tutor', 'tutor_professional'], taskRef: 'TU1' },
-  { id: 'tu-earnings', label: 'Earnings', href: '/tutoring/earnings/overview', icon: CreditCard, section: 'Earnings', keywords: ['money', 'income', 'payout'], role: ['tutor', 'tutor_professional'], taskRef: 'TU7' },
+    items.push({
+      id: `reg-${ref}`,
+      label: task.name,
+      description: task.description || '',
+      href: task.href,
+      icon: task.icon,
+      section,
+      keywords: [task.cluster, task.type, ref.toLowerCase(), ...(task.description || '').toLowerCase().split(/\s+/)],
+      taskRef: ref,
+    });
+    seen.add(task.href);
 
-  // Admin
-  { id: 'a-dashboard', label: 'Admin Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, section: 'Navigation', keywords: ['home', 'overview'], role: ['admin', 'platform_admin'], taskRef: 'D1-admin' },
-  { id: 'a-users', label: 'Manage Users', href: '/admin/users', icon: Users, section: 'Administration', keywords: ['accounts', 'people', 'roles'], role: ['admin', 'platform_admin'], taskRef: 'A1' },
-  { id: 'a-timetable', label: 'School Timetable', href: '/admin/scheduling/timetable', icon: Calendar, section: 'Scheduling', keywords: ['schedule', 'periods'], role: ['admin', 'platform_admin'], taskRef: 'D4-admin' },
-  { id: 'a-reports', label: 'Reports', href: '/admin/reports', icon: BarChart3, section: 'Analytics', keywords: ['data', 'insights'], role: ['admin', 'platform_admin'], taskRef: 'T8-admin' },
-  { id: 'a-interop', label: 'Interoperability', href: '/admin/interoperability', icon: Network, section: 'Systems', keywords: ['lti', 'oneroster', 'integration'], role: ['admin', 'platform_admin'], taskRef: 'A4' },
-];
+    // Add children of compound tasks as separate searchable items
+    if (task.children) {
+      for (const child of task.children) {
+        if (seen.has(child.href)) continue;
+        seen.add(child.href);
+        items.push({
+          id: `reg-${ref}-${child.name.toLowerCase().replace(/\s+/g, '-')}`,
+          label: `${task.name} → ${child.name}`,
+          description: task.description || '',
+          href: child.href,
+          icon: child.icon,
+          section,
+          keywords: [task.cluster, ref.toLowerCase(), task.name.toLowerCase(), child.name.toLowerCase()],
+          taskRef: ref,
+        });
+      }
+    }
+  }
+
+  return items;
+}
+
+const searchIndex = buildSearchIndex();
 
 // ============================================================================
 // COMMAND PALETTE COMPONENT
@@ -158,7 +142,7 @@ export function CommandPalette() {
   const { user } = useAuthStore();
   const store = useComposingMenuStore();
   const menuToast = useMenuToast();
-  const role = user?.role || 'learner';
+  const role = user?.role || user?.roles?.[0] || 'learner';
 
   // Keyboard shortcut: Cmd+K / Ctrl+K
   useEffect(() => {
@@ -269,26 +253,52 @@ export function CommandPalette() {
     return item.state === 'anchor' || item.state === 'active' || item.state === 'pushed' || item.state === 'seed';
   }, [store, role]);
 
-  // Filter items by role and query, including API results
+  // Filter and score items from the full search index
   const filteredItems = useMemo(() => {
-    const userRole = user?.role || 'learner';
-    const roleFiltered = commandItems.filter(
-      item => !item.role || item.role.includes(userRole)
-    );
+    if (!query.trim()) {
+      // No query: show recent / role-relevant items as suggestions
+      return searchIndex.slice(0, 15);
+    }
 
-    if (!query.trim()) return roleFiltered.slice(0, 12);
+    const q = query.toLowerCase().trim();
+    const terms = q.split(/\s+/).filter(t => t.length > 1);
+    if (terms.length === 0) return searchIndex.slice(0, 15);
 
-    const q = query.toLowerCase();
-    const staticResults = roleFiltered
-      .filter(item =>
-        item.label.toLowerCase().includes(q) ||
-        item.description?.toLowerCase().includes(q) ||
-        item.section.toLowerCase().includes(q) ||
-        item.keywords.some(kw => kw.includes(q))
-      )
-      .slice(0, 10);
+    // Score every item in the full index (no role filtering — enterprise search)
+    const scored = searchIndex.map(item => {
+      let score = 0;
+      const label = item.label.toLowerCase();
+      const desc = (item.description || '').toLowerCase();
+      const section = item.section.toLowerCase();
 
-    // Merge API results as CommandItems (without taskRef, so they won't trigger menu actions)
+      for (const term of terms) {
+        // Label match (highest weight)
+        if (label.includes(term)) score += 10;
+        // Description match
+        if (desc.includes(term)) score += 6;
+        // Section / cluster match
+        if (section.includes(term)) score += 4;
+        // Keyword match
+        if (item.keywords.some(kw => kw.includes(term))) score += 5;
+        // Href path match (e.g. searching "arena" matches /arena/competitions)
+        if (item.href.toLowerCase().includes(term)) score += 3;
+      }
+
+      // Exact label match bonus
+      if (label === q) score += 20;
+      // Starts-with bonus
+      if (label.startsWith(q)) score += 8;
+
+      return { item, score };
+    });
+
+    const staticResults = scored
+      .filter(s => s.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(s => s.item)
+      .slice(0, 15);
+
+    // Merge API results (people, content from backend)
     const apiItems: CommandItem[] = apiResults.map(r => ({
       id: r.id,
       label: r.label,
@@ -300,7 +310,7 @@ export function CommandPalette() {
     }));
 
     return [...staticResults, ...apiItems];
-  }, [query, user?.role, apiResults]);
+  }, [query, apiResults]);
 
   // Group by section
   const groupedItems = useMemo(() => {
@@ -365,7 +375,7 @@ export function CommandPalette() {
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search pages, actions, and features..."
+            placeholder="Search everything on the platform..."
             className="flex-1 bg-transparent px-3 py-3 text-sm outline-none placeholder:text-muted-foreground"
             role="combobox"
             aria-expanded="true"
@@ -494,7 +504,7 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
       )}
     >
       <Search className="h-3.5 w-3.5" />
-      <span className="hidden sm:inline">Search or jump to...</span>
+      <span className="hidden sm:inline">Search...</span>
       <kbd className="hidden sm:inline-flex ml-auto items-center gap-0.5 rounded border bg-background px-1.5 py-0.5 text-[10px] font-medium">
         <Command className="h-2.5 w-2.5" />K
       </kbd>

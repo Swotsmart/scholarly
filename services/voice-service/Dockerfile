@@ -5,11 +5,22 @@
 #   Stage 1 (builder): Install Python dependencies in a clean layer
 #   Stage 2 (runtime): CUDA 12.1 runtime with only what's needed to run
 #
-# Models are baked into the image to ensure deterministic cold starts.
-# The alternative (downloading at runtime) adds 30-60s to pod startup
-# and creates a dependency on external model registries.
+# DEPENDENCY RESOLUTION NOTES (Feb 2026):
+#   chatterbox-tts pins numpy<1.26 in its metadata, but works at runtime
+#   with numpy 2.x. whisperx requires numpy>=2.1. These are irreconcilable
+#   via pip's resolver, so chatterbox-tts is installed with --no-deps.
+#   All its actual runtime dependencies (torch, numpy, torchaudio, etc.)
+#   are already installed by preceding steps.
 #
-# Total image size: ~5GB (models dominate; application code is ~50MB)
+#   whisperx is also installed with --no-deps because its deep dependency
+#   tree (pyannote-audio → pytorch-lightning → opentelemetry → ...) causes
+#   pip to backtrack for 50+ minutes. Its actual runtime deps (torch,
+#   faster-whisper, transformers, numpy) are already present.
+#
+# KNOWN GOOD CONFIGURATION (pinned versions):
+#   numpy    2.1.3    (>=2.1,<2.2 — satisfies whisperx, stable ABI)
+#   torch    2.5.1    (cu121 — matches CUDA 12.1 runtime base image)
+#   torchaudio 2.5.1  (must match torch version exactly)
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -19,28 +30,38 @@ FROM python:3.11-slim AS builder
 
 WORKDIR /build
 
-# System dependencies for audio processing libraries
+# System dependencies for audio processing libraries + git for whisperx
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libsndfile1-dev \
     libffi-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Build argument: set to "true" to include voice cloning support
-# Voice cloning adds ~2GB to the image (Chatterbox model weights)
 ARG ENABLE_CLONING=false
 
-# Install Python dependencies
 COPY pyproject.toml ./
+
 # Build argument: use CPU-only torch for non-GPU deployments
 ARG TORCH_INDEX=https://download.pytorch.org/whl/cu121
 
-# Install torch first from specified index, then everything else from PyPI
+# ---------------------------------------------------------------------------
+# Step 1: Pin numpy FIRST, then torch from CUDA index
+# ---------------------------------------------------------------------------
+# numpy must be pinned before torch to prevent torch from pulling in 2.4.x.
+# torch and torchaudio versions must match exactly.
 RUN pip install --no-cache-dir --prefix=/install \
-    torch --index-url ${TORCH_INDEX} \
+    "numpy>=2.1,<2.2" \
     && pip install --no-cache-dir --prefix=/install \
-    fastapi[standard] \
-    uvicorn[standard] \
+    "torch==2.5.1" "torchaudio==2.5.1" --index-url ${TORCH_INDEX}
+
+# ---------------------------------------------------------------------------
+# Step 2: Core application dependencies from PyPI
+# ---------------------------------------------------------------------------
+RUN pip install --no-cache-dir --prefix=/install \
+    "fastapi[standard]" \
+    "uvicorn[standard]" \
     pydantic \
     pydantic-settings \
     kokoro \
@@ -50,24 +71,44 @@ RUN pip install --no-cache-dir --prefix=/install \
     noisereduce \
     soundfile \
     scipy \
-    numpy \
     azure-storage-blob \
     redis \
     prometheus-client \
     httpx \
-    spacy
+    spacy \
+    faster-whisper
 
-# Download spaCy English model (required by Kokoro for text tokenisation).
-# spacy download installs to system site-packages; copy to /install prefix.
+# ---------------------------------------------------------------------------
+# Step 3: whisperx and its runtime dependencies
+# ---------------------------------------------------------------------------
+# whisperx depends on pyannote-audio which has a deep dependency tree.
+# Installing everything in one pip command causes 50+ minute resolver backtrack.
+# Solution: install pyannote-audio (the heavy dep) first in isolation, then
+# install whisperx with --no-deps (all runtime deps are now present).
+RUN pip install --no-cache-dir --prefix=/install \
+    "pyannote-audio>=4.0,<5.0"
+
+RUN pip install --no-cache-dir --prefix=/install --no-deps \
+    git+https://github.com/m-bain/whisperX.git
+
+# ---------------------------------------------------------------------------
+# Step 4: spaCy model (required by Kokoro for text tokenisation)
+# ---------------------------------------------------------------------------
 RUN PYTHONPATH=/install/lib/python3.11/site-packages \
     python3 -m spacy download en_core_web_sm \
     && cp -r /usr/local/lib/python3.11/site-packages/en_core_web_sm* /install/lib/python3.11/site-packages/
 
-# Conditionally install Chatterbox TTS for voice cloning
-# This is separated because the package adds significant weight and
-# requires GPU — TTS-only deployments can skip it entirely.
+# ---------------------------------------------------------------------------
+# Step 5: Chatterbox TTS (optional — voice cloning)
+# ---------------------------------------------------------------------------
+# chatterbox-tts metadata pins numpy<1.26, but it works fine with numpy 2.x
+# at runtime. Install with --no-deps to avoid downgrading numpy.
+# Its actual runtime imports (torch, numpy, torchaudio, transformers,
+# diffusers, safetensors) are already installed above.
+# We install diffusers + safetensors explicitly as they're not in Step 2.
 RUN if [ "$ENABLE_CLONING" = "true" ]; then \
-        pip install --no-cache-dir --prefix=/install chatterbox-tts; \
+        pip install --no-cache-dir --prefix=/install diffusers safetensors; \
+        pip install --no-cache-dir --prefix=/install --no-deps chatterbox-tts; \
         echo "Voice cloning: ENABLED (chatterbox-tts installed)"; \
     else \
         echo "Voice cloning: DISABLED (set ENABLE_CLONING=true to enable)"; \
@@ -106,22 +147,6 @@ COPY --chown=svs:svs . .
 
 # Create directories for local storage and model cache
 RUN mkdir -p /home/svs/data/voice-assets /home/svs/.cache
-
-# ---------------------------------------------------------------------------
-# Model download stage
-# ---------------------------------------------------------------------------
-# Kokoro model weights are downloaded during build so they're baked into
-# the image layer. This ensures deterministic cold starts — the pod
-# doesn't need network access to start serving.
-#
-# In production, you may want to use a separate model registry (Azure ACR
-# or a shared volume) and mount models at /models/kokoro. In that case,
-# comment out the download step and set SVS_TTS_KOKORO_MODEL_PATH to
-# the mount point.
-#
-# For now, we let Kokoro download its default model on first use,
-# which gets cached in the Docker layer.
-# ---------------------------------------------------------------------------
 
 # Environment configuration
 ENV SVS_ENVIRONMENT=production \
