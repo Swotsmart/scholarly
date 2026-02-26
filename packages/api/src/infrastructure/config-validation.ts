@@ -191,11 +191,6 @@ const AIProvidersConfigSchema = z.object({
     apiKey: z.string().min(1, 'MISTRAL_API_KEY is required for Mistral provider'),
     defaultModel: z.string().default('mistral-large-latest'),
   }).optional(),
-  elevenlabs: z.object({
-    apiKey: z.string().min(1, 'ELEVENLABS_API_KEY is required for speech services'),
-    defaultVoiceId: z.string().optional(),
-    maxConcurrentRequests: z.coerce.number().int().min(1).max(20).default(5),
-  }).optional(),
   selfHosted: z.object({
     llamaEndpoint: z.string().url().optional(),
     whisperEndpoint: z.string().url().optional(),
@@ -204,13 +199,12 @@ const AIProvidersConfigSchema = z.object({
 });
 
 /**
- * ElevenLabs voice intelligence configuration (separate from AI providers
- * because this covers the real-time WebSocket voice pipeline).
+ * Self-hosted voice service configuration (Kokoro TTS, Whisper STT, Chatterbox cloning).
+ * Deployed as `scholarly-voice` on GPU T4 workload.
  */
-const VoiceIntelligenceConfigSchema = z.object({
+const VoiceServiceConfigSchema = z.object({
   enabled: z.coerce.boolean().default(true),
-  apiKey: z.string().min(1).optional(),
-  agentId: z.string().optional(),
+  url: z.string().url('VOICE_SERVICE_URL must be a valid URL').optional(),
   maxConcurrentSessions: z.coerce.number().int().min(1).max(100).default(20),
   sessionTimeoutMs: z.coerce.number().int().min(30000).max(600000).default(300000),
 });
@@ -282,7 +276,7 @@ export const PlatformConfigSchema = z.object({
   stripe: StripeConfigSchema,
   xero: XeroConfigSchema.optional(),
   aiProviders: AIProvidersConfigSchema,
-  voiceIntelligence: VoiceIntelligenceConfigSchema,
+  voiceService: VoiceServiceConfigSchema,
   logging: LoggingConfigSchema,
   observability: ObservabilityConfigSchema,
 });
@@ -399,25 +393,17 @@ export function loadConfigFromEnvironment(env: Record<string, string | undefined
             defaultModel: env.MISTRAL_DEFAULT_MODEL,
           }
         : undefined,
-      elevenlabs: env.ELEVENLABS_API_KEY
-        ? {
-            apiKey: env.ELEVENLABS_API_KEY,
-            defaultVoiceId: env.ELEVENLABS_DEFAULT_VOICE_ID,
-            maxConcurrentRequests: env.ELEVENLABS_MAX_CONCURRENT_REQUESTS,
-          }
-        : undefined,
       selfHosted: {
         llamaEndpoint: env.LLAMA_ENDPOINT,
         whisperEndpoint: env.WHISPER_ENDPOINT,
         embeddingEndpoint: env.EMBEDDING_ENDPOINT,
       },
     },
-    voiceIntelligence: {
-      enabled: env.VOICE_INTELLIGENCE_ENABLED,
-      apiKey: env.ELEVENLABS_API_KEY,
-      agentId: env.VOICE_INTELLIGENCE_AGENT_ID,
-      maxConcurrentSessions: env.VOICE_INTELLIGENCE_MAX_SESSIONS,
-      sessionTimeoutMs: env.VOICE_INTELLIGENCE_SESSION_TIMEOUT_MS,
+    voiceService: {
+      enabled: env.VOICE_SERVICE_ENABLED,
+      url: env.VOICE_SERVICE_URL,
+      maxConcurrentSessions: env.VOICE_SERVICE_MAX_SESSIONS,
+      sessionTimeoutMs: env.VOICE_SERVICE_SESSION_TIMEOUT_MS,
     },
     logging: {
       level: env.LOG_LEVEL,
@@ -698,15 +684,6 @@ export async function validatePlatformConfig(options: {
       name: 'xero',
       error: 'Xero accounting integration is not configured',
       hint: 'Invoice synchronisation will be unavailable',
-    });
-  }
-
-  if (!config.aiProviders.elevenlabs) {
-    warnings.push({
-      ok: false,
-      name: 'aiProviders.elevenlabs',
-      error: 'ElevenLabs is not configured',
-      hint: 'Voice narration and pronunciation assessment will be unavailable',
     });
   }
 
