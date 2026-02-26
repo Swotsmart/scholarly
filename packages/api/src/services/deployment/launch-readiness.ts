@@ -48,7 +48,7 @@ export const LAUNCH_CHECKLIST: ReadinessCheck[] = [
 
   // === Security ===
   { id: 'LC-011', category: CheckCategory.SECURITY, name: 'JWT secrets rotated', description: 'Fresh JWT signing keys generated for production. Old dev/staging keys invalidated.', critical: true, automatable: false, status: CheckStatus.PENDING, details: '', verifiedBy: '', verifiedAt: null },
-  { id: 'LC-012', category: CheckCategory.SECURITY, name: 'API keys secured', description: 'AI provider API keys (Anthropic, OpenAI, ElevenLabs) stored in secrets manager, not environment files.', critical: true, automatable: false, status: CheckStatus.PENDING, details: '', verifiedBy: '', verifiedAt: null },
+  { id: 'LC-012', category: CheckCategory.SECURITY, name: 'API keys secured', description: 'AI provider API keys (Anthropic, OpenAI, Scholarly Voice Service) stored in secrets manager, not environment files.', critical: true, automatable: false, status: CheckStatus.PENDING, details: '', verifiedBy: '', verifiedAt: null },
   { id: 'LC-013', category: CheckCategory.SECURITY, name: 'Rate limiting active', description: 'API Gateway rate limits enforced: global (1000 RPM), per-tenant (500 RPM), generation endpoints (5 RPM).', critical: true, automatable: true, status: CheckStatus.PENDING, details: '', verifiedBy: '', verifiedAt: null },
   { id: 'LC-014', category: CheckCategory.SECURITY, name: 'Content safety pipeline active', description: 'Content safety screening enabled for all generated narratives and illustrations.', critical: true, automatable: true, status: CheckStatus.PENDING, details: '', verifiedBy: '', verifiedAt: null },
   { id: 'LC-015', category: CheckCategory.SECURITY, name: 'Parental gate implemented', description: 'Math-based parental gate tested on iOS, Android, and Web before purchases and external links.', critical: true, automatable: false, status: CheckStatus.PENDING, details: '', verifiedBy: '', verifiedAt: null },
@@ -130,7 +130,7 @@ export const INCIDENT_PROCEDURES: IncidentProcedure[] = [
     severity: 'SEV2',
     description: 'All AI providers unavailable — no generation, narration, or AI review possible',
     steps: [
-      '1. Check provider status pages: status.anthropic.com, status.openai.com, elevenlabs.io/status',
+      '1. Check provider status pages: status.anthropic.com, status.openai.com, check self-hosted voice service health endpoint',
       '2. Verify API key validity: test with minimal API call',
       '3. Check network egress: verify firewall rules haven\'t changed',
       '4. If provider outage: switch to degraded mode — serve cached/pre-generated content only',

@@ -169,7 +169,7 @@ export enum GenerationStage {
 export interface GenerationCost {
   readonly storyGeneration: number;      // Claude API cost in USD
   readonly illustrationGeneration: number; // GPT Image cost in USD
-  readonly narrationGeneration: number;  // ElevenLabs cost in USD
+  readonly narrationGeneration: number;  // Scholarly Voice Service (self-hosted Kokoro TTS) cost in USD
   readonly validationCost: number;       // Content safety + decodability check
   readonly totalCost: number;
 }
@@ -1381,7 +1381,7 @@ REQUIREMENTS:
 
 export class BatchNarrationPipeline extends ScholarlyBaseService {
   constructor(
-    private readonly elevenLabsApiKey: string,
+    private readonly voiceServiceUrl: string,
     private readonly maxConcurrent: number = 3,
   ) { super('BatchNarrationPipeline'); }
 
@@ -1452,16 +1452,15 @@ export class BatchNarrationPipeline extends ScholarlyBaseService {
       // Select voice based on story series / age group
       const voiceId = this.selectVoice(spec);
 
-      // ElevenLabs Text-to-Speech with timestamps
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`, {
+      // Self-hosted Kokoro TTS with timestamps via VOICE_SERVICE_URL
+      const response = await fetch(`${process.env.VOICE_SERVICE_URL || 'http://localhost:8880'}/tts/${voiceId}/with-timestamps`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'xi-api-key': this.elevenLabsApiKey,
         },
         body: JSON.stringify({
           text: page.text,
-          model_id: 'eleven_multilingual_v2',
+          model_id: 'kokoro-v1',
           voice_settings: {
             stability: 0.75,
             similarity_boost: 0.85,
@@ -1473,7 +1472,7 @@ export class BatchNarrationPipeline extends ScholarlyBaseService {
       });
 
       if (!response.ok) {
-        return fail(`ElevenLabs API error: ${response.status}`);
+        return fail(`Scholarly Voice Service API error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -1493,12 +1492,12 @@ export class BatchNarrationPipeline extends ScholarlyBaseService {
 
   /** Select an appropriate narrator voice for the story's target audience */
   private selectVoice(spec: SeedStorybookSpec): string {
-    // Voice IDs are ElevenLabs voice identifiers
+    // Voice IDs are Kokoro TTS persona identifiers (self-hosted)
     // In production, these would be configured per tenant
     const voiceBank: Record<string, string> = {
-      'soft-warm-female': 'EXAVITQu4vr4xnSDxMaL',    // Warm, gentle narrator
-      'friendly-male': 'VR6AewLTigWG4xSOukaG',        // Friendly, energetic
-      'calm-storyteller': 'pNInz6obpgDQGcFmaJgB',     // Calm, measured pace
+      'soft-warm-female': 'af_sarah',      // Warm, gentle narrator
+      'friendly-male': 'am_adam',           // Friendly, energetic
+      'calm-storyteller': 'af_bella',       // Calm, measured pace
     };
 
     if (spec.ageGroup.min <= 5) return voiceBank['soft-warm-female'];
@@ -1506,7 +1505,7 @@ export class BatchNarrationPipeline extends ScholarlyBaseService {
     return voiceBank['friendly-male'];
   }
 
-  /** Parse ElevenLabs response into word-level timestamps */
+  /** Parse Scholarly Voice Service (Kokoro TTS) response into word-level timestamps */
   private parseWordTimestamps(
     text: string,
     apiResponse: any,
@@ -1831,14 +1830,14 @@ export class SeedLibraryOrchestrator extends ScholarlyBaseService {
   constructor(config: {
     claudeApiKey: string;
     imageApiKey: string;
-    elevenLabsApiKey: string;
+    voiceServiceUrl: string;
     qualityThresholds?: QualityThresholds;
   }) {
     super('SeedLibraryOrchestrator');
     this.planner = new SeedCatalogPlanner();
     this.storyGenerator = new BatchStoryGenerator(config.claudeApiKey, 5);
     this.illustrator = new BatchIllustrationPipeline(config.imageApiKey, 3);
-    this.narrator = new BatchNarrationPipeline(config.elevenLabsApiKey, 3);
+    this.narrator = new BatchNarrationPipeline(config.voiceServiceUrl, 3);
     this.qa = new QualityAssuranceGate(config.qualityThresholds || {
       minDecodability: 0.85,
       minNarrativeCoherence: 0.70,

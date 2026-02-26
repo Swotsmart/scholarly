@@ -977,10 +977,11 @@ class MigrationOrchestrator extends ScholarlyBaseService {
 
   private async seedNarratorVoices(): Promise<void> {
     const voices = [
-      { id: 'voice_warm_female', name: 'Miss Story', elevenLabsId: 'pNInz6obpgDQGcFmaJgB', gender: 'female', accent: 'british', ageAppeal: '3-6', description: 'Warm, encouraging British female — like a favourite teacher reading aloud' },
-      { id: 'voice_adventure_male', name: 'Captain Tales', elevenLabsId: 'VR6AewLTigWG4xSOukaG', gender: 'male', accent: 'british', ageAppeal: '5-8', description: 'Energetic British male — brings adventure stories to life' },
-      { id: 'voice_gentle_female', name: 'Nana Whisper', elevenLabsId: 'MF3mGyEYCl7XYWbV9V6O', gender: 'female', accent: 'australian', ageAppeal: '3-5', description: 'Gentle Australian female — perfect for bedtime stories' },
-      { id: 'voice_fun_male', name: 'Silly Sam', elevenLabsId: 'TxGEqnHWrfWFTfGW9XjX', gender: 'male', accent: 'american', ageAppeal: '4-7', description: 'Playful American male — great for funny stories and silly voices' }
+      // Voice IDs now reference Kokoro TTS personas (self-hosted via VOICE_SERVICE_URL)
+      { id: 'voice_warm_female', name: 'Miss Story', kokoroVoiceId: 'af_sarah', gender: 'female', accent: 'british', ageAppeal: '3-6', description: 'Warm, encouraging British female — like a favourite teacher reading aloud' },
+      { id: 'voice_adventure_male', name: 'Captain Tales', kokoroVoiceId: 'am_adam', gender: 'male', accent: 'british', ageAppeal: '5-8', description: 'Energetic British male — brings adventure stories to life' },
+      { id: 'voice_gentle_female', name: 'Nana Whisper', kokoroVoiceId: 'af_bella', gender: 'female', accent: 'australian', ageAppeal: '3-5', description: 'Gentle Australian female — perfect for bedtime stories' },
+      { id: 'voice_fun_male', name: 'Silly Sam', kokoroVoiceId: 'am_michael', gender: 'male', accent: 'american', ageAppeal: '4-7', description: 'Playful American male — great for funny stories and silly voices' }
     ];
 
     for (const voice of voices) {

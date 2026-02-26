@@ -524,7 +524,7 @@ if (validation.data?.valid) {
       method: 'POST',
       path: '/stories/{id}/narrate',
       summary: 'Generate audio narration with word-level timestamps',
-      description: 'Produces professional narration using ElevenLabs voices with word-level timestamp data for karaoke-style read-along highlighting. Supports variable speed for different reading levels.',
+      description: 'Produces professional narration using Scholarly Voice Service with word-level timestamp data for karaoke-style read-along highlighting. Supports variable speed for different reading levels.',
       category: 'narration',
       authentication: 'required',
       rateLimit: { requests: 10, windowSeconds: 60 },
@@ -533,7 +533,7 @@ if (validation.data?.valid) {
         body: {
           type: 'object',
           properties: {
-            voiceId: { type: 'string', description: 'ElevenLabs voice ID' },
+            voiceId: { type: 'string', description: 'Scholarly Voice Service voice ID' },
             speed: { type: 'string', description: 'Narration speed', enum: ['slow', 'normal', 'fast'] },
             wordLevelTimestamps: { type: 'boolean', description: 'Generate word timestamps (default true)' },
           },

@@ -4,8 +4,8 @@
 // =============================================================================
 // Produces professional narration for every storybook page with word-level
 // timestamps that power karaoke-style highlighting in the interactive reader.
-// Integrates with ElevenLabs for TTS and the existing ASR pipeline for
-// read-aloud pronunciation assessment.
+// Integrates with self-hosted Kokoro TTS via VOICE_SERVICE_URL for speech
+// synthesis and the existing ASR pipeline for read-aloud pronunciation assessment.
 // =============================================================================
 
 // ---------------------------------------------------------------------------
@@ -65,7 +65,8 @@ export interface VoicePersona {
   personaId: string;
   name: string;
   description: string;
-  elevenLabsVoiceId: string;
+  /** Voice persona ID for self-hosted Kokoro TTS (e.g. af_bella, am_adam) */
+  kokoroVoiceId: string;
   characteristics: {
     gender: 'male' | 'female' | 'neutral';
     ageRange: 'child' | 'young_adult' | 'adult' | 'elderly';
@@ -76,7 +77,7 @@ export interface VoicePersona {
   };
   /** Optimal for age groups */
   targetAgeGroups: string[];
-  /** Settings overrides for ElevenLabs */
+  /** Voice settings for Kokoro TTS (self-hosted) */
   voiceSettings: {
     stability: number; // 0.0–1.0
     similarityBoost: number; // 0.0–1.0
@@ -91,7 +92,7 @@ export const DEFAULT_VOICE_PERSONAS: VoicePersona[] = [
     personaId: 'storytime_sarah',
     name: 'Storytime Sarah',
     description: 'Warm, nurturing narrator voice perfect for bedtime stories and early readers',
-    elevenLabsVoiceId: 'EXAVITQu4vr4xnSDxMaL', // Example — replace with actual
+    kokoroVoiceId: 'af_sarah', // Kokoro persona — warm female narrator
     characteristics: {
       gender: 'female', ageRange: 'adult', accent: 'neutral_english',
       tone: 'warm and encouraging', warmth: 0.9, clarity: 0.85,
@@ -103,7 +104,7 @@ export const DEFAULT_VOICE_PERSONAS: VoicePersona[] = [
     personaId: 'adventure_alex',
     name: 'Adventure Alex',
     description: 'Energetic, expressive narrator for adventure and action stories',
-    elevenLabsVoiceId: 'TX3LPaxmHKxFdv7VOQHJ', // Example
+    kokoroVoiceId: 'am_adam', // Kokoro persona — energetic male narrator
     characteristics: {
       gender: 'male', ageRange: 'young_adult', accent: 'neutral_english',
       tone: 'energetic and expressive', warmth: 0.7, clarity: 0.9,
@@ -115,7 +116,7 @@ export const DEFAULT_VOICE_PERSONAS: VoicePersona[] = [
     personaId: 'wise_willow',
     name: 'Wise Willow',
     description: 'Gentle, wise narrator for nature stories and information texts',
-    elevenLabsVoiceId: 'pNInz6obpgDQGcFmaJgB', // Example
+    kokoroVoiceId: 'af_bella', // Kokoro persona — gentle, measured narrator
     characteristics: {
       gender: 'neutral', ageRange: 'elderly', accent: 'neutral_english',
       tone: 'gentle and wise', warmth: 0.85, clarity: 0.8,
@@ -127,7 +128,7 @@ export const DEFAULT_VOICE_PERSONAS: VoicePersona[] = [
     personaId: 'playful_pip',
     name: 'Playful Pip',
     description: 'Bright, playful child-like narrator for phonics practice and rhyming stories',
-    elevenLabsVoiceId: 'jBpfAFnyjnqEE8Hn6TQn', // Example
+    kokoroVoiceId: 'am_michael', // Kokoro persona — bright, playful narrator
     characteristics: {
       gender: 'female', ageRange: 'child', accent: 'neutral_english',
       tone: 'playful and bright', warmth: 0.8, clarity: 0.95,
@@ -149,8 +150,9 @@ export const PACE_CONFIG: Record<number, { wordsPerMinute: number; pauseBetweenS
 
 /** Narration service configuration */
 export interface NarrationServiceConfig {
-  elevenLabsApiKey: string;
-  elevenLabsBaseUrl?: string;
+  /** VOICE_SERVICE_URL for self-hosted Kokoro TTS */
+  voiceServiceUrl: string;
+  voiceServiceBaseUrl?: string;
   defaultModel?: string;
   storageProvider: IStorageProvider;
   cacheProvider?: ICacheProvider;
@@ -182,47 +184,51 @@ export interface ILogger {
 }
 
 // ---------------------------------------------------------------------------
-// Section 2: ElevenLabs TTS Client
+// Section 2: TTS Client (Self-hosted Kokoro)
+// DEPRECATED: Replaced by self-hosted Kokoro TTS via VOICE_SERVICE_URL
+// Original implementation used external TTS API. Now routes through
+// Scholarly Voice Service (Kokoro TTS) for cost control and data sovereignty.
 // ---------------------------------------------------------------------------
 
 /**
- * Low-level client for the ElevenLabs Text-to-Speech API.
- * Handles authentication, model selection, voice settings, and
- * importantly, word-level timestamp extraction via the
- * "with_timestamps" endpoint.
+ * Low-level client for the Scholarly Voice Service (self-hosted Kokoro TTS).
+ * Handles voice selection, model settings, and word-level timestamp
+ * extraction via the self-hosted service's /tts/with-timestamps endpoint.
+ *
+ * DEPRECATED: Class name retained for blueprint compatibility.
+ * Replaced by self-hosted Kokoro TTS via VOICE_SERVICE_URL.
  */
 export class ElevenLabsTTSClient {
-  private readonly apiKey: string;
+  private readonly serviceUrl: string;
   private readonly baseUrl: string;
   private readonly defaultModel: string;
   private readonly logger: ILogger;
 
-  // ElevenLabs model pricing (per 1,000 characters)
+  // Self-hosted Kokoro TTS — no per-character pricing (infrastructure cost only)
   private readonly MODEL_PRICING: Record<string, number> = {
-    'eleven_multilingual_v2': 0.18,    // $0.18/1k chars
-    'eleven_turbo_v2_5': 0.075,        // $0.075/1k chars (faster, cheaper)
-    'eleven_monolingual_v1': 0.18,     // Legacy
-    'eleven_flash_v2_5': 0.0375,       // Lowest cost
+    'kokoro-v1': 0.0,                  // Self-hosted — no per-character cost
+    'kokoro_default': 0.0,             // Self-hosted — no per-character cost
+    'kokoro_fast': 0.0,                // Self-hosted — no per-character cost
   };
 
   constructor(config: {
-    apiKey: string;
+    serviceUrl: string;
     baseUrl?: string;
     defaultModel?: string;
     logger: ILogger;
   }) {
-    if (!config.apiKey) {
-      throw new Error('ElevenLabsTTSClient: API key is required');
+    if (!config.serviceUrl) {
+      throw new Error('VoiceServiceClient: VOICE_SERVICE_URL is required');
     }
-    this.apiKey = config.apiKey;
-    this.baseUrl = config.baseUrl ?? 'https://api.elevenlabs.io/v1';
-    this.defaultModel = config.defaultModel ?? 'eleven_turbo_v2_5';
+    this.serviceUrl = config.serviceUrl;
+    this.baseUrl = config.baseUrl ?? process.env.VOICE_SERVICE_URL ?? 'http://localhost:8880';
+    this.defaultModel = config.defaultModel ?? 'kokoro-v1';
     this.logger = config.logger;
   }
 
   /**
    * Generate speech with word-level timestamps.
-   * Uses the /text-to-speech/{voice_id}/with-timestamps endpoint
+   * Uses the self-hosted Kokoro TTS /tts/with-timestamps endpoint
    * which returns both audio and alignment data.
    */
   async generateWithTimestamps(
@@ -245,9 +251,9 @@ export class ElevenLabsTTSClient {
     const outputFormat = options?.outputFormat ?? 'mp3_44100_128';
     const startTime = Date.now();
 
-    // Apply pace multiplier via SSML-like speed control
-    // ElevenLabs doesn't support SSML directly, so we use the
-    // speech rate parameter in voice settings
+    // Apply pace multiplier via speed control
+    // Kokoro TTS supports direct speed parameter, so we adjust
+    // stability to approximate pace changes for compatibility
     const adjustedSettings = { ...settings };
     if (options?.paceMultiplier && options.paceMultiplier !== 1.0) {
       // Stability affects speech rate — lower stability = more varied/faster
@@ -269,13 +275,13 @@ export class ElevenLabsTTSClient {
     };
 
     try {
+      // Self-hosted Kokoro TTS endpoint
       const response = await fetch(
-        `${this.baseUrl}/text-to-speech/${voiceId}/with-timestamps`,
+        `${this.baseUrl}/tts/${voiceId}/with-timestamps`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'xi-api-key': this.apiKey,
           },
           body: JSON.stringify(requestBody),
         }
@@ -283,7 +289,7 @@ export class ElevenLabsTTSClient {
 
       if (!response.ok) {
         const errorBody = await response.text();
-        throw new Error(`ElevenLabs TTS error ${response.status}: ${errorBody}`);
+        throw new Error(`Scholarly Voice Service TTS error ${response.status}: ${errorBody}`);
       }
 
       const data = await response.json() as {
@@ -310,7 +316,7 @@ export class ElevenLabsTTSClient {
       const costUsd = (characterCount / 1000) * costPerThousand;
 
       const durationMs = Date.now() - startTime;
-      this.logger.info('ElevenLabs TTS complete', {
+      this.logger.info('Kokoro TTS complete', {
         voiceId,
         model,
         characterCount,
@@ -321,7 +327,7 @@ export class ElevenLabsTTSClient {
 
       return { audioBuffer, timestamps, characterCount, model, costUsd };
     } catch (error) {
-      this.logger.error('ElevenLabs TTS failed', {
+      this.logger.error('Kokoro TTS failed', {
         voiceId,
         model,
         error: error instanceof Error ? error.message : String(error),
@@ -341,13 +347,13 @@ export class ElevenLabsTTSClient {
   ): Promise<{ audioBuffer: Buffer; characterCount: number; costUsd: number }> {
     const usedModel = model ?? this.defaultModel;
 
+    // Self-hosted Kokoro TTS simple endpoint
     const response = await fetch(
-      `${this.baseUrl}/text-to-speech/${voiceId}`,
+      `${this.baseUrl}/tts/${voiceId}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'xi-api-key': this.apiKey,
           'Accept': 'audio/mpeg',
         },
         body: JSON.stringify({
@@ -364,7 +370,7 @@ export class ElevenLabsTTSClient {
     );
 
     if (!response.ok) {
-      throw new Error(`ElevenLabs TTS error: ${response.status}`);
+      throw new Error(`Scholarly Voice Service TTS error: ${response.status}`);
     }
 
     const arrayBuffer = await response.arrayBuffer();
@@ -377,15 +383,15 @@ export class ElevenLabsTTSClient {
   }
 
   /**
-   * Lists available voices from ElevenLabs account.
+   * Lists available voices from the self-hosted Kokoro TTS service.
    */
   async listVoices(): Promise<Array<{ voice_id: string; name: string; category: string }>> {
     const response = await fetch(`${this.baseUrl}/voices`, {
-      headers: { 'xi-api-key': this.apiKey },
+      headers: { 'Content-Type': 'application/json' },
     });
 
     if (!response.ok) {
-      throw new Error(`ElevenLabs voices list error: ${response.status}`);
+      throw new Error(`Scholarly Voice Service voices list error: ${response.status}`);
     }
 
     const data = await response.json() as {
@@ -396,13 +402,11 @@ export class ElevenLabsTTSClient {
   }
 
   /**
-   * Health check — verifies API key validity and service availability.
+   * Health check — verifies self-hosted Kokoro TTS service availability.
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/user/subscription`, {
-        headers: { 'xi-api-key': this.apiKey },
-      });
+      const response = await fetch(`${this.baseUrl}/health`);
       return response.ok;
     } catch {
       return false;
@@ -410,12 +414,12 @@ export class ElevenLabsTTSClient {
   }
 
   /**
-   * Converts ElevenLabs' character-level alignment to word-level timestamps.
+   * Converts character-level alignment to word-level timestamps.
    *
-   * ElevenLabs returns timing for each character. We need word-level timing
-   * for the karaoke highlighting. This method groups characters into words
-   * by walking through the original text and matching against the alignment
-   * characters, handling whitespace boundaries.
+   * The TTS service returns timing for each character. We need word-level
+   * timing for the karaoke highlighting. This method groups characters into
+   * words by walking through the original text and matching against the
+   * alignment characters, handling whitespace boundaries.
    */
   private alignCharactersToWords(
     originalText: string,
@@ -430,7 +434,7 @@ export class ElevenLabsTTSClient {
     let match: RegExpExecArray | null;
 
     // Build a character-to-time index from alignment data
-    // Characters array from ElevenLabs may not map 1:1 with input characters
+    // Characters array from TTS service may not map 1:1 with input characters
     // (punctuation, spaces may be handled differently)
     let alignIdx = 0;
 
@@ -502,8 +506,8 @@ export class NarrationService {
     this.config = config;
     this.logger = config.logger;
     this.ttsClient = new ElevenLabsTTSClient({
-      apiKey: config.elevenLabsApiKey,
-      baseUrl: config.elevenLabsBaseUrl,
+      serviceUrl: config.voiceServiceUrl,
+      baseUrl: config.voiceServiceBaseUrl,
       defaultModel: config.defaultModel,
       logger: config.logger,
     });
@@ -529,7 +533,7 @@ export class NarrationService {
 
     // Calculate pace multiplier from phase config and custom override
     const targetWPM = paceConfig.wordsPerMinute;
-    const baseWPM = 130; // ElevenLabs' default speaking rate is ~130 WPM
+    const baseWPM = 130; // Kokoro TTS default speaking rate is ~130 WPM
     const paceMultiplier = options.paceMultiplier ?? (targetWPM / baseWPM);
 
     this.logger.info('Starting storybook narration', {
@@ -546,7 +550,7 @@ export class NarrationService {
     let totalDuration = 0;
 
     // Process pages sequentially to maintain consistent voice state
-    // (ElevenLabs voice consistency is better with sequential requests)
+    // (Voice consistency is better with sequential requests)
     for (const page of pages) {
       if (!page.text.trim()) {
         this.logger.debug('Skipping empty page', { pageNumber: page.pageNumber });
@@ -584,12 +588,12 @@ export class NarrationService {
 
     const result: StorybookNarration = {
       storybookId,
-      voiceId: persona.elevenLabsVoiceId,
+      voiceId: persona.kokoroVoiceId,
       voiceName: persona.name,
       totalDurationMs: totalDuration,
       pages: pageNarrations,
       metadata: {
-        model: options.model ?? this.config.defaultModel ?? 'eleven_turbo_v2_5',
+        model: options.model ?? this.config.defaultModel ?? 'kokoro-v1',
         totalCostUsd: totalCost,
         generatedAt: new Date().toISOString(),
         paceMultiplier,
@@ -643,7 +647,7 @@ export class NarrationService {
     // Generate TTS with timestamps
     const result = await this.ttsClient.generateWithTimestamps(
       text,
-      persona.elevenLabsVoiceId,
+      persona.kokoroVoiceId,
       persona.voiceSettings,
       {
         model: options.model,
@@ -755,7 +759,7 @@ export class NarrationService {
   }
 
   /**
-   * Health check for the ElevenLabs service.
+   * Health check for the self-hosted Kokoro TTS service.
    */
   async healthCheck(): Promise<boolean> {
     return this.ttsClient.healthCheck();

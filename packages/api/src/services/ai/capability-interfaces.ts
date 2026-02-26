@@ -48,7 +48,7 @@ export type ProviderId =
   | 'llama-local'
   | 'whisper-local'
   | 'embedding-local'
-  | 'elevenlabs'
+  | 'scholarly-voice'
   | 'deepl'
   | 'google-translate';
 

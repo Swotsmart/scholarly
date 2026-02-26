@@ -25,14 +25,14 @@ const ttsRateLimiter = rateLimit({
 });
 
 // =============================================================================
-// PHONICS TTS (ElevenLabs)
+// PHONICS TTS (Self-hosted Kokoro TTS via Scholarly Voice Service)
 // =============================================================================
 
-const PHONICS_VOICES: Record<string, { voiceId: string; stability: number; similarityBoost: number; style: number; useSpeakerBoost: boolean }> = {
-  pip:    { voiceId: 'cgSgspJ2msm6clMCkdW9', stability: 0.6, similarityBoost: 0.7, style: 0.5, useSpeakerBoost: true },   // Jessica - Playful, Bright, Warm
-  sarah:  { voiceId: 'EXAVITQu4vr4xnSDxMaL', stability: 0.7, similarityBoost: 0.8, style: 0.4, useSpeakerBoost: true },   // Sarah - Mature, Reassuring, Confident
-  alex:   { voiceId: 'TX3LPaxmHKxFdv7VOQHJ', stability: 0.55, similarityBoost: 0.75, style: 0.6, useSpeakerBoost: true },  // Liam - Energetic, Social Media Creator
-  willow: { voiceId: 'Xb7hH8MSUJpSbSDYk0k2', stability: 0.75, similarityBoost: 0.85, style: 0.3, useSpeakerBoost: false }, // Alice - Clear, Engaging Educator
+const PHONICS_VOICES: Record<string, { voiceId: string }> = {
+  pip:    { voiceId: 'af_bella' },   // Playful, Bright, Warm
+  sarah:  { voiceId: 'af_sarah' },   // Mature, Reassuring, Confident
+  alex:   { voiceId: 'am_adam' },    // Energetic, Social
+  willow: { voiceId: 'am_michael' }, // Clear, Engaging Educator
 };
 
 const phonicsTtsSchema = z.object({
@@ -46,8 +46,8 @@ export const earlyYearsRouter: Router = Router();
 export const earlyYearsTtsRouter: Router = Router();
 
 earlyYearsTtsRouter.post('/tts', ttsRateLimiter, async (req, res) => {
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) {
+  const voiceServiceUrl = process.env.VOICE_SERVICE_URL;
+  if (!voiceServiceUrl) {
     return res.status(503).json({ error: 'TTS service unavailable' });
   }
 
@@ -55,25 +55,20 @@ earlyYearsTtsRouter.post('/tts', ttsRateLimiter, async (req, res) => {
   const voice = PHONICS_VOICES[data.voicePersona];
 
   try {
-    const { ElevenLabsClient } = await import('@elevenlabs/elevenlabs-js');
-    const client = new ElevenLabsClient({ apiKey });
-
-    const audioStream = await client.textToSpeech.convert(voice.voiceId, {
-      text: data.text,
-      modelId: 'eleven_turbo_v2_5',
-      voiceSettings: {
-        stability: voice.stability,
-        similarityBoost: voice.similarityBoost,
-        style: voice.style,
-        useSpeakerBoost: voice.useSpeakerBoost,
-      },
+    const response = await fetch(`${voiceServiceUrl}/tts/synthesise`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: data.text,
+        voice_id: voice.voiceId,
+      }),
     });
 
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of audioStream) {
-      chunks.push(chunk);
+    if (!response.ok) {
+      throw new Error(`Voice service returned ${response.status}`);
     }
-    const audioBuffer = Buffer.concat(chunks);
+
+    const audioBuffer = Buffer.from(await response.arrayBuffer());
 
     res.set('Content-Type', 'audio/mpeg');
     res.set('Cache-Control', 'public, max-age=86400');
@@ -438,18 +433,18 @@ earlyYearsRouter.get('/phonics-phases', async (_req, res) => {
 });
 
 // =============================================================================
-// TEXT-TO-SPEECH (ElevenLabs)
+// TEXT-TO-SPEECH (Self-hosted Kokoro TTS via Scholarly Voice Service)
 // =============================================================================
 
 /**
  * POST /api/v1/early-years/tts
  * Generate child-friendly speech for phonics activities.
  * Returns audio/mpeg binary. Defaults to "Playful Pip" voice.
- * Returns 503 if ELEVENLABS_API_KEY is not configured (frontend falls back to browser TTS).
+ * Returns 503 if VOICE_SERVICE_URL is not configured (frontend falls back to browser TTS).
  */
 earlyYearsRouter.post('/tts', async (req, res) => {
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) {
+  const voiceServiceUrl = process.env.VOICE_SERVICE_URL;
+  if (!voiceServiceUrl) {
     return res.status(503).json({ error: 'TTS service unavailable' });
   }
 
@@ -457,27 +452,20 @@ earlyYearsRouter.post('/tts', async (req, res) => {
   const voice = PHONICS_VOICES[data.voicePersona];
 
   try {
-    // Dynamic import to avoid issues if elevenlabs package isn't installed
-    const { ElevenLabsClient } = await import('@elevenlabs/elevenlabs-js');
-    const client = new ElevenLabsClient({ apiKey });
-
-    const audioStream = await client.textToSpeech.convert(voice.voiceId, {
-      text: data.text,
-      modelId: 'eleven_turbo_v2_5', // Lowest latency for instant feedback
-      voiceSettings: {
-        stability: voice.stability,
-        similarityBoost: voice.similarityBoost,
-        style: voice.style,
-        useSpeakerBoost: voice.useSpeakerBoost,
-      },
+    const response = await fetch(`${voiceServiceUrl}/tts/synthesise`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: data.text,
+        voice_id: voice.voiceId,
+      }),
     });
 
-    // Collect audio chunks
-    const chunks: Uint8Array[] = [];
-    for await (const chunk of audioStream) {
-      chunks.push(chunk);
+    if (!response.ok) {
+      throw new Error(`Voice service returned ${response.status}`);
     }
-    const audioBuffer = Buffer.concat(chunks);
+
+    const audioBuffer = Buffer.from(await response.arrayBuffer());
 
     res.set('Content-Type', 'audio/mpeg');
     res.set('Cache-Control', 'public, max-age=86400');

@@ -139,7 +139,7 @@ interface StorybookGenerationRequest {
   // Configuration
   decodabilityThreshold?: number; // Default 0.85
   maxRegenerationAttempts?: number; // Default 3
-  voiceId?: string;               // ElevenLabs voice for narration
+  voiceId?: string;               // Scholarly Voice Service voice for narration
   narrationSpeed?: number;        // 0.5–2.0
 }
 

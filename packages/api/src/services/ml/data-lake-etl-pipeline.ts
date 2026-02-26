@@ -272,7 +272,7 @@ export interface FactContentGeneration {
   userKey: number;                // Who triggered generation
   // Measures
   contentType: 'story_narrative' | 'illustration' | 'audio_narration' | 'jit_remediation';
-  aiProvider: string;             // claude, openai, elevenlabs, etc.
+  aiProvider: string;             // claude, openai, scholarly-voice, etc.
   aiModel: string;
   inputTokens: number;
   outputTokens: number;

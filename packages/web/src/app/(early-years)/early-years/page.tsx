@@ -298,7 +298,7 @@ export default function EarlyYearsPage() {
   const audioEnabled = storeAudioEnabled;
   const setAudioEnabled = storeSetAudioEnabled;
 
-  // Text-to-speech helper (now uses ElevenLabs with browser fallback)
+  // Text-to-speech helper (uses Voice Service with browser fallback)
   const speakMessage = useCallback(
     (message: string) => {
       if (!audioEnabled) return;

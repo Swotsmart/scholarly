@@ -65,7 +65,7 @@ export function buildSprint20Tests(): Sprint20TestRunner {
   // === GROUP 3: Secrets Management (7 tests) ===
   r.register('Anthropic secret has api_key field', 'secrets', async () => true);
   r.register('OpenAI secret has api_key and org_id', 'secrets', async () => true);
-  r.register('ElevenLabs secret has api_key', 'secrets', async () => true);
+  r.register('Voice service secret has connection URL', 'secrets', async () => true);
   r.register('All secrets have 90-day rotation', 'secrets', async () => {
     const rotationDays = [90, 90, 90];
     return rotationDays.every(d => d === 90);
@@ -83,7 +83,7 @@ export function buildSprint20Tests(): Sprint20TestRunner {
   r.register('CloudFront TF creates OAI resource', 'terraform-gen', async () => true);
   r.register('CloudFront TF has ordered cache behaviours', 'terraform-gen', async () => true);
   r.register('Secrets TF creates all 3 provider secrets', 'terraform-gen', async () => {
-    return ['anthropic', 'openai', 'elevenlabs'].length === 3;
+    return ['anthropic', 'openai', 'scholarly-voice'].length === 3;
   });
   r.register('Outputs expose bucket name and CDN domain', 'terraform-gen', async () => true);
   r.register('Outputs expose distribution ID for invalidation', 'terraform-gen', async () => true);

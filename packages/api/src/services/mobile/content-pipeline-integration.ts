@@ -79,7 +79,7 @@ export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
   generationProviders: {
     narrative: { primary: 'anthropic', fallback: 'openai', model: 'claude-sonnet-4-20250514' },
     illustration: { primary: 'openai', fallback: 'stability', model: 'gpt-image-1' },
-    narration: { primary: 'elevenlabs', fallback: 'azure-speech', voiceId: 'storyteller-warm' },
+    narration: { primary: 'scholarly-voice', fallback: 'azure-speech', voiceId: 'storyteller-warm' },
     safety: { provider: 'anthropic', model: 'claude-haiku-4-5-20251001' },
   },
 };
