@@ -115,7 +115,8 @@ export interface EnvironmentConfig {
   apiBaseUrl: string;
   wsBaseUrl: string;
   sentryDsn: string;
-  elevenLabsApiKey: string;
+  /** @deprecated Was ELEVENLABS_API_KEY. Now use VOICE_SERVICE_URL for self-hosted Kokoro TTS */
+  voiceServiceUrl: string;
   analyticsId: string;
   featureFlags: Record<string, boolean>;
 }
