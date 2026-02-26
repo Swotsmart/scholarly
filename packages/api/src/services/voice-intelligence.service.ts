@@ -1,16 +1,18 @@
 /**
  * Voice Intelligence Service
  *
- * Complete ElevenLabs integration for voice-powered language learning.
+ * Self-hosted voice service integration for voice-powered language learning.
  * Provides TTS, STT, pronunciation assessment, conversational agents,
  * voice cloning, and VR audio capabilities.
+ *
+ * Uses the Scholarly Voice Service (Kokoro TTS, Whisper STT, Chatterbox cloning)
+ * deployed as `scholarly-voice` on GPU T4 workload.
  *
  * @module VoiceIntelligenceService
  */
 
 import { ScholarlyBaseService, Result, isFailure } from './base.service';
 import { prisma } from '@scholarly/database';
-import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { log } from '../lib/logger';
 
 // ============================================================================
@@ -26,10 +28,8 @@ export type AudioFormat =
   | 'opus_48000';
 
 export type TTSModel =
-  | 'eleven_multilingual_v2'
-  | 'eleven_turbo_v2'
-  | 'eleven_turbo_v2_5'
-  | 'eleven_flash_v2_5';
+  | 'kokoro_default'
+  | 'kokoro_fast';
 
 export interface VoiceSettings {
   stability?: number;
@@ -116,7 +116,7 @@ export interface ConversationAgent {
   tenantId: string;
   name: string;
   description?: string;
-  elevenLabsAgentId: string;
+  agentId: string;
   voiceId: string;
   primaryLanguage: string;
   supportedLanguages: string[];
@@ -156,7 +156,7 @@ export interface ConversationTurn {
 
 export interface LinguaFlowVoice {
   id: string;
-  elevenLabsVoiceId: string;
+  personaId: string;
   displayName: string;
   language: string;
   region: string;
@@ -204,52 +204,56 @@ export interface DialogueScript {
 // ============================================================================
 
 export class VoiceIntelligenceService extends ScholarlyBaseService {
-  private elevenLabs: ElevenLabsClient | null = null;
-  private configCache: Map<string, { config: any; expiresAt: number }> = new Map();
+  private voiceServiceUrl: string;
 
   constructor() {
     super('VoiceIntelligenceService');
+    this.voiceServiceUrl = process.env.VOICE_SERVICE_URL || 'http://scholarly-voice:8000';
   }
 
   /**
-   * Get ElevenLabs client for a tenant
+   * Make an HTTP request to the self-hosted voice service
    */
-  private async getClient(tenantId: string): Promise<ElevenLabsClient> {
-    const config = await this.getTenantConfig(tenantId);
-    if (!config.success || !config.data) {
-      throw new Error('ElevenLabs not configured for tenant');
+  private async voiceServiceRequest<T>(path: string, options: {
+    method?: string;
+    body?: unknown;
+    headers?: Record<string, string>;
+    responseType?: 'json' | 'buffer';
+  } = {}): Promise<T> {
+    const { method = 'POST', body, headers = {}, responseType = 'json' } = options;
+    const url = `${this.voiceServiceUrl}${path}`;
+
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      throw new Error(`Voice service error (${response.status}): ${errorText}`);
     }
 
-    return new ElevenLabsClient({
-      apiKey: config.data.apiKey,
-    });
+    if (responseType === 'buffer') {
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer) as unknown as T;
+    }
+
+    return response.json() as Promise<T>;
   }
 
   /**
-   * Get tenant configuration for ElevenLabs
+   * Check that the voice service is reachable
    */
-  async getTenantConfig(tenantId: string): Promise<Result<{ apiKey: string; agentApiKey?: string }>> {
+  async checkHealth(): Promise<Result<{ status: string }>> {
     try {
-      // Check cache first
-      const cached = this.configCache.get(tenantId);
-      if (cached && cached.expiresAt > Date.now()) {
-        return { success: true, data: cached.config };
-      }
-
-      // In production, this would fetch from VoiceElevenLabsConfig table
-      // For demo, use environment variable
-      const apiKey = process.env.ELEVENLABS_API_KEY;
-      if (!apiKey) {
-        return { success: false, error: { code: 'CONFIG_MISSING', message: 'ElevenLabs API key not configured' } };
-      }
-
-      const config = { apiKey, agentApiKey: apiKey };
-      this.configCache.set(tenantId, { config, expiresAt: Date.now() + 300000 }); // 5 min cache
-
-      return { success: true, data: config };
+      const result = await this.voiceServiceRequest<{ status: string }>('/health', { method: 'GET' });
+      return { success: true, data: result };
     } catch (error) {
-      log.error('Failed to get tenant config', error as Error);
-      return { success: false, error: { code: 'CONFIG_ERROR', message: (error as Error).message } };
+      return { success: false, error: { code: 'VOICE_SERVICE_UNAVAILABLE', message: (error as Error).message } };
     }
   }
 
@@ -258,29 +262,19 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
   // --------------------------------------------------------------------------
 
   /**
-   * Generate speech from text using ElevenLabs TTS
+   * Generate speech from text using self-hosted Kokoro TTS
    */
   async textToSpeech(request: TTSRequest): Promise<Result<TTSResponse>> {
     try {
-      const client = await this.getClient(request.tenantId);
-
-      const audio = await client.textToSpeech.convert(request.voiceId, {
-        text: request.text,
-        modelId: request.modelId || 'eleven_multilingual_v2',
-        voiceSettings: request.voiceSettings ? {
-          stability: request.voiceSettings.stability ?? 0.5,
-          similarityBoost: request.voiceSettings.similarityBoost ?? 0.75,
-          style: request.voiceSettings.style ?? 0.0,
-          useSpeakerBoost: request.voiceSettings.useSpeakerBoost ?? true,
-        } : undefined,
+      const audioData = await this.voiceServiceRequest<Buffer>('/tts/synthesise', {
+        body: {
+          text: request.text,
+          voice_id: request.voiceId,
+          language: request.language,
+          speed: request.voiceSettings?.style,
+        },
+        responseType: 'buffer',
       });
-
-      // Collect audio chunks
-      const chunks: Uint8Array[] = [];
-      for await (const chunk of audio) {
-        chunks.push(chunk);
-      }
-      const audioData = Buffer.concat(chunks);
 
       // Track usage
       await this.trackUsage(request.tenantId, 'tts', request.text.length);
@@ -290,7 +284,7 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
         data: {
           audioData,
           characterCount: request.text.length,
-          creditsUsed: Math.ceil(request.text.length * 0.3),
+          creditsUsed: 0, // Self-hosted, no per-character cost
         },
       };
     } catch (error) {
@@ -304,35 +298,34 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
   // --------------------------------------------------------------------------
 
   /**
-   * Transcribe audio to text using ElevenLabs Scribe
+   * Transcribe audio to text using self-hosted Whisper STT
    */
   async speechToText(request: STTRequest): Promise<Result<STTResponse>> {
     try {
-      const client = await this.getClient(request.tenantId);
-
-      // Convert Buffer to Blob for the API
-      const audioBlob = new Blob([request.audioData]);
-
-      const result = await client.speechToText.convert({
-        file: audioBlob,
-        modelId: 'scribe_v1',
-        languageCode: request.language,
+      const sttResult = await this.voiceServiceRequest<{
+        text?: string;
+        language?: string;
+        words?: Array<{ text: string; start: number; end: number; confidence?: number }>;
+      }>('/stt/transcribe', {
+        body: {
+          audio_data: request.audioData.toString('base64'),
+          audio_format: request.audioFormat,
+          language: request.language,
+          enable_word_timestamps: request.enableWordTimestamps,
+        },
       });
-
-      // Cast to the expected single-channel response type
-      const sttResult = result as { text?: string; words?: Array<{ text: string; start: number; end: number }> };
 
       return {
         success: true,
         data: {
           transcript: sttResult.text || '',
-          confidence: 0.95, // Scribe doesn't return confidence
-          language: request.language || 'en',
+          confidence: 0.95,
+          language: sttResult.language || request.language || 'en',
           words: sttResult.words?.map((w) => ({
             word: w.text,
             startMs: Math.floor(w.start * 1000),
             endMs: Math.floor(w.end * 1000),
-            confidence: 0.95,
+            confidence: w.confidence ?? 0.95,
           })),
         },
       };
@@ -492,7 +485,7 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
   // --------------------------------------------------------------------------
 
   /**
-   * Get available voices for language learning
+   * Get available voices for language learning from self-hosted voice service
    */
   async getVoiceLibrary(tenantId: string, options?: {
     language?: string;
@@ -500,23 +493,13 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
     suitableFor?: string;
   }): Promise<Result<LinguaFlowVoice[]>> {
     try {
-      const client = await this.getClient(tenantId);
-      const response = await client.voices.getAll();
-
-      // Transform to LinguaFlow format
-      // Note: ElevenLabs SDK may use voiceId or voice_id depending on version
-      const voices: LinguaFlowVoice[] = (response.voices || []).map((v: any) => ({
-        id: v.voice_id || v.voiceId || '',
-        elevenLabsVoiceId: v.voice_id || v.voiceId || '',
-        displayName: v.name,
-        language: v.labels?.language || 'en',
-        region: v.labels?.accent || 'neutral',
-        accent: v.labels?.accent || 'neutral',
-        gender: v.labels?.gender || 'neutral',
-        ageRange: v.labels?.age || 'adult',
-        speakingStyles: ['conversational'],
-        suitableFor: ['primary', 'secondary', 'adult'],
-      }));
+      // Kokoro TTS built-in voice personas
+      const voices: LinguaFlowVoice[] = [
+        { id: 'af_bella', personaId: 'af_bella', displayName: 'Bella', language: 'en', region: 'neutral', accent: 'neutral', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'narration'], suitableFor: ['primary', 'secondary', 'adult'] },
+        { id: 'am_adam', personaId: 'am_adam', displayName: 'Adam', language: 'en', region: 'neutral', accent: 'neutral', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'narration'], suitableFor: ['primary', 'secondary', 'adult'] },
+        { id: 'af_sarah', personaId: 'af_sarah', displayName: 'Sarah', language: 'en', region: 'neutral', accent: 'neutral', gender: 'female', ageRange: 'young_adult', speakingStyles: ['conversational'], suitableFor: ['primary', 'secondary'] },
+        { id: 'am_michael', personaId: 'am_michael', displayName: 'Michael', language: 'en', region: 'neutral', accent: 'neutral', gender: 'male', ageRange: 'young_adult', speakingStyles: ['conversational'], suitableFor: ['primary', 'secondary'] },
+      ];
 
       // Apply filters
       let filtered = voices;
@@ -546,32 +529,16 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
    */
   async createConversationAgent(
     tenantId: string,
-    config: Omit<ConversationAgent, 'id' | 'tenantId' | 'elevenLabsAgentId'>
+    config: Omit<ConversationAgent, 'id' | 'tenantId' | 'agentId'>
   ): Promise<Result<ConversationAgent>> {
     try {
-      const client = await this.getClient(tenantId);
-
-      // Create agent on ElevenLabs
-      const agentResponse = await client.conversationalAi.agents.create({
-        name: config.name,
-        conversationConfig: {
-          agent: {
-            prompt: {
-              prompt: config.systemPrompt,
-            },
-            firstMessage: config.firstMessage,
-            language: config.primaryLanguage,
-          },
-          tts: {
-            voiceId: config.voiceId,
-          },
-        },
-      });
+      // TODO: Voice service endpoint needed for conversational agent creation
+      const agentId = `agent_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
 
       const agent: ConversationAgent = {
-        id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
+        id: agentId,
         tenantId,
-        elevenLabsAgentId: agentResponse.agentId || '',
+        agentId,
         ...config,
       };
 
@@ -682,30 +649,24 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
   // --------------------------------------------------------------------------
 
   /**
-   * Create a voice clone (with consent)
+   * Create a voice clone (with consent) using self-hosted Chatterbox cloning
    */
   async createVoiceClone(request: VoiceCloneRequest): Promise<Result<{ cloneId: string; voiceId: string }>> {
     try {
-      const client = await this.getClient(request.tenantId);
-
-      // Download samples and create clone
-      const sampleBlobs: Blob[] = [];
-      for (const url of request.sampleAudioUrls) {
-        const response = await fetch(url);
-        const buffer = await response.arrayBuffer();
-        sampleBlobs.push(new Blob([buffer]));
-      }
-
-      const cloneResponse = await client.voices.ivc.create({
-        name: request.name,
-        files: sampleBlobs,
+      const cloneResult = await this.voiceServiceRequest<{ clone_id: string; voice_id: string }>('/clone/create', {
+        body: {
+          name: request.name,
+          description: request.description,
+          sample_audio_urls: request.sampleAudioUrls,
+          quality: request.quality,
+        },
       });
 
       return {
         success: true,
         data: {
-          cloneId: `clone_${Date.now()}`,
-          voiceId: cloneResponse.voiceId || '',
+          cloneId: cloneResult.clone_id,
+          voiceId: cloneResult.voice_id,
         },
       };
     } catch (error) {
@@ -743,7 +704,7 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
           tenantId,
           text: line.text,
           voiceId: character.voiceId,
-          modelId: 'eleven_multilingual_v2',
+          modelId: 'kokoro_default',
           voiceSettings: character.voiceSettings,
         });
 
