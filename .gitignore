@@ -47,3 +47,6 @@ docs/api-keys/
 # Misc
 *.tsbuildinfo
 .turbo/
+.claude/worktrees/cranky-fermat/
+docs/erudits-migration/erudits-content-protection-handoff-v2.6.0.docx
+docs/erudits-migration/erudits-platform-v2.6.0.zip
