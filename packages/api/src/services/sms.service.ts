@@ -29,13 +29,38 @@ interface SmsServiceConfig {
 // Simple in-memory rate limiter (per tenant)
 const rateLimitState = new Map<string, { count: number; resetAt: number }>();
 
+const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const IDEMPOTENCY_CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
+
 export class SmsService {
   private providerCache = new Map<string, ISmsProvider>();
-  private sentKeys = new Set<string>();
+  /** Maps idempotency key → expiry timestamp (ms since epoch) */
+  private sentKeys = new Map<string, number>();
+  private cleanupTimer: ReturnType<typeof setInterval>;
   private config: SmsServiceConfig;
 
   constructor(config: SmsServiceConfig = {}) {
     this.config = config;
+    this.cleanupTimer = setInterval(() => this.pruneExpiredKeys(), IDEMPOTENCY_CLEANUP_INTERVAL_MS);
+    // Allow the process to exit even if this timer is still active
+    if (this.cleanupTimer.unref) {
+      this.cleanupTimer.unref();
+    }
+  }
+
+  /** Stop the background cleanup timer (call on service shutdown / in tests). */
+  destroy(): void {
+    clearInterval(this.cleanupTimer);
+  }
+
+  /** Remove idempotency entries whose TTL has elapsed. */
+  private pruneExpiredKeys(): void {
+    const now = Date.now();
+    for (const [key, expiresAt] of this.sentKeys) {
+      if (now >= expiresAt) {
+        this.sentKeys.delete(key);
+      }
+    }
   }
 
   /**
@@ -45,7 +70,8 @@ export class SmsService {
     const { tenantId, to, body, from, idempotencyKey } = request;
 
     // Idempotency check
-    if (idempotencyKey && this.sentKeys.has(idempotencyKey)) {
+    const now = Date.now();
+    if (idempotencyKey && (this.sentKeys.get(idempotencyKey) ?? 0) > now) {
       return {
         success: true,
         messageId: `dedup_${idempotencyKey}`,
@@ -104,9 +130,7 @@ export class SmsService {
 
     // Track idempotency
     if (result.success && idempotencyKey) {
-      this.sentKeys.add(idempotencyKey);
-      // Clean up after 24h
-      setTimeout(() => this.sentKeys.delete(idempotencyKey), 24 * 60 * 60 * 1000);
+      this.sentKeys.set(idempotencyKey, now + IDEMPOTENCY_TTL_MS);
     }
 
     logger.info(`SMS ${result.success ? 'sent' : 'failed'} via ${provider.name} to ${to.substring(0, 6)}***`);
