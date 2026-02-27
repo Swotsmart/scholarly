@@ -74,7 +74,7 @@ export class ContentCreatorStudio extends ScholarlyBaseService {
   }
 
   async generateNarration(projectId: string, pageId: string): Promise<Result<{ audioUrl: string; timestamps: { word: string; startMs: number; endMs: number }[] }>> {
-    // Production: ElevenLabs with word-level timestamps
+    // Production: Scholarly Voice Service (Kokoro TTS) with word-level timestamps
     return this.ok({ audioUrl: `https://scholarly-cdn.example.com/audio/${Date.now()}.mp3`, timestamps: [] });
   }
 

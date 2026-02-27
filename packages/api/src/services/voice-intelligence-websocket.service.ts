@@ -2,7 +2,7 @@
  * Voice Intelligence WebSocket Service
  *
  * Real-time bidirectional voice communication for conversational agents.
- * Handles WebSocket connections between learners and ElevenLabs agents.
+ * Handles WebSocket connections between learners and self-hosted voice agents.
  *
  * @module VoiceWebSocketService
  */
@@ -71,7 +71,8 @@ interface ActiveSession {
   learnerId: string;
   agentId: string;
   clientWs: WebSocket;
-  elevenLabsWs: WebSocket | null;
+  /** WebSocket connection to self-hosted voice service */
+  voiceServiceWs: WebSocket | null;
   state: 'connecting' | 'ready' | 'learner_speaking' | 'agent_speaking' | 'paused' | 'ending' | 'closed';
   turns: TurnData[];
   currentTurn: TurnData | null;
@@ -385,7 +386,7 @@ export class VoiceWebSocketServer {
       learnerId: auth.learnerId,
       agentId: session.agentId,
       clientWs: ws,
-      elevenLabsWs: null,
+      voiceServiceWs: null,
       state: 'ready',
       turns: [],
       currentTurn: null,

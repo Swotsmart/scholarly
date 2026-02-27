@@ -808,7 +808,7 @@ export class ScholarlyContentSDK {
 
   /**
    * Generate audio narration for a story with word-level timestamps.
-   * Produces professional narration using ElevenLabs voices with
+   * Produces professional narration using Scholarly Voice Service with
    * karaoke-style timestamp data for read-along highlighting.
    */
   async narrateStory(storyId: string, request: NarrationRequest): Promise<Result<Storybook>> {

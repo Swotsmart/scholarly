@@ -1324,7 +1324,7 @@ export class ComplianceEngine extends ScholarlyBaseService {
       },
       // Voice recording flows — highly sensitive for children
       {
-        source: 'ASR Read-Aloud (Sprint 6)', destination: 'ElevenLabs API (External)',
+        source: 'ASR Read-Aloud (Sprint 6)', destination: 'Scholarly Voice Service (Self-hosted)',
         dataTypes: ['voice_recording', 'learner_id'],
         encrypted: true, hasConsent: true, retentionCompliant: true,
       },
@@ -1472,7 +1472,7 @@ class COPPAChecker extends FrameworkChecker {
       },
       {
         controlId: 'COPPA-8', description: 'Third-party data sharing restrictions',
-        status: 'COMPLIANT', evidence: 'Only ElevenLabs (DPA signed) and AI providers receive child-adjacent data', notes: '',
+        status: 'COMPLIANT', evidence: 'Only Scholarly Voice Service (self-hosted) and AI providers receive child-adjacent data', notes: '',
       },
     ];
 
@@ -1484,7 +1484,7 @@ class COPPAChecker extends FrameworkChecker {
       overallScore: score,
       controls,
       gaps,
-      evidence: ['Privacy Policy v2.1', 'DPA with ElevenLabs', 'Consent Flow Audit Log'],
+      evidence: ['Privacy Policy v2.1', 'Self-hosted Scholarly Voice Service', 'Consent Flow Audit Log'],
     });
   }
 }
@@ -1503,7 +1503,7 @@ class GDPRChecker extends FrameworkChecker {
       { controlId: 'GDPR-32', description: 'Security of processing', status: 'COMPLIANT', evidence: 'AES-256, TLS 1.3, RBAC, audit logging', notes: '' },
       { controlId: 'GDPR-33', description: 'Breach notification (72 hours)', status: 'PARTIALLY_COMPLIANT', evidence: 'Incident response plan exists but automated notification pipeline not yet implemented', notes: 'Recommend Sprint 17' },
       { controlId: 'GDPR-35', description: 'Data Protection Impact Assessment', status: 'COMPLIANT', evidence: 'DPIA completed for AI tutoring, voice processing, and ML personalisation', notes: '' },
-      { controlId: 'GDPR-44', description: 'Transfer restrictions (cross-border)', status: 'COMPLIANT', evidence: 'SCCs with ElevenLabs, DPF with US cloud providers', notes: '' },
+      { controlId: 'GDPR-44', description: 'Transfer restrictions (cross-border)', status: 'COMPLIANT', evidence: 'Self-hosted Scholarly Voice Service, DPF with US cloud providers', notes: '' },
     ];
 
     const gaps: ComplianceGap[] = [
@@ -1669,7 +1669,7 @@ export class PenetrationTestEngine extends ScholarlyBaseService {
       exposedServices: ['API Gateway', 'WebSocket Server', 'PWA Static Assets'],
       apiVersions: { 'scholarly-api': 'v1', 'storybook-engine': 'v1', 'arena': 'v1' },
       thirdPartyIntegrations: [
-        'Anthropic Claude API', 'OpenAI GPT Image API', 'ElevenLabs TTS/STT API',
+        'Anthropic Claude API', 'OpenAI GPT Image API', 'Scholarly Voice Service TTS/STT',
         'Stripe Payment API', 'Apple StoreKit', 'Google Play Billing',
         'Clever SIS API', 'ClassLink API', 'PowerSchool API',
       ],

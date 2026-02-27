@@ -172,7 +172,7 @@ const demoSlides = [
     id: 'voice-intelligence',
     title: 'Voice Intelligence',
     category: 'AI Features',
-    description: 'ElevenLabs-powered text-to-speech, pronunciation assessment, and AI conversation agents',
+    description: 'Text-to-speech, pronunciation assessment, and AI conversation agents',
     href: '/demo/voice-intelligence',
     highlights: ['Text-to-Speech', 'Pronunciation', 'Voice Cloning', 'AI Agents'],
     component: VoiceIntelligencePreview,
@@ -953,7 +953,7 @@ function VoiceIntelligencePreview() {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-lg font-bold">Voice Intelligence</div>
-            <div className="text-sm text-muted-foreground">Powered by ElevenLabs</div>
+            <div className="text-sm text-muted-foreground">Scholarly Voice Service</div>
           </div>
           <Badge className="bg-purple-500">AI</Badge>
         </div>

@@ -221,7 +221,7 @@ export const COPPA_CONFIG = {
 
   /** Third-party services that process child data */
   thirdPartyProcessors: [
-    { name: 'ElevenLabs', purpose: 'Audio narration generation (no child data sent)', childDataAccess: false },
+    { name: 'Scholarly Voice Service', purpose: 'Audio narration generation (no child data sent)', childDataAccess: false },
     { name: 'Anthropic', purpose: 'Story generation (no child data sent)', childDataAccess: false },
     { name: 'OpenAI', purpose: 'Illustration generation (no child data sent)', childDataAccess: false },
   ],

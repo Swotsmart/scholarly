@@ -230,12 +230,12 @@ const audioBlob = await response.blob();`;
             Voice Intelligence Demo
           </h1>
           <p className="text-muted-foreground mt-1">
-            Explore ElevenLabs-powered voice features for language learning
+            Explore voice features for language learning
           </p>
         </div>
         <Badge variant="secondary" className="text-sm">
           <Sparkles className="h-3 w-3 mr-1" />
-          Powered by ElevenLabs
+          Scholarly Voice Service
         </Badge>
       </div>
 
@@ -487,7 +487,7 @@ const audioBlob = await response.blob();`;
               <div>
                 <CardTitle>Available Voices</CardTitle>
                 <CardDescription>
-                  {voices.length} voices available from ElevenLabs
+                  {voices.length} voices available
                 </CardDescription>
               </div>
               <Button variant="outline" onClick={fetchVoices} disabled={loadingVoices}>

@@ -372,7 +372,7 @@ export class SeedLibraryOrchestrator extends ScholarlyBaseService {
 
   /**
    * Simulate generating a single book through the complete pipeline.
-   * In production, this calls real Claude, GPT Image, and ElevenLabs APIs.
+   * In production, this calls real Claude, GPT Image, and Scholarly Voice Service (Kokoro TTS) APIs.
    */
   async generateSingleBook(spec: SeedBookSpec): Promise<Result<GenerationResult>> {
     const startTime = Date.now();
@@ -400,7 +400,7 @@ export class SeedLibraryOrchestrator extends ScholarlyBaseService {
       // Step 3: Generate illustrations via GPT Image
       const illustrationCost = spec.pageCount * GENERATION_COSTS.illustration.avgPerPage;
 
-      // Step 4: Generate audio via ElevenLabs
+      // Step 4: Generate audio via Scholarly Voice Service (self-hosted Kokoro TTS)
       const narrationCost = GENERATION_COSTS.narration.avgPerBook;
 
       // Step 5: Safety validation

@@ -184,7 +184,9 @@ const prismaClientSingleton = () => {
             'LanguageExchangeSession', 'HostingProvider', 'HostingDomain', 'HostingOffering',
             'HostingEnquiry', 'HostingTourBooking', 'HostingReview', 'HostingQualityEvent',
             'IdentityVerification', 'WWCCVerification', 'BusinessVerification',
-            'VerificationDocument', 'VerificationAuditLog', 'VoiceElevenLabsConfig',
+            'VerificationDocument', 'VerificationAuditLog',
+            // DEPRECATED: VoiceElevenLabsConfig retained for migration compatibility — replaced by self-hosted Kokoro TTS config
+            'VoiceElevenLabsConfig',
             'VoiceLinguaFlowVoice', 'VoiceConversationAgent', 'VoiceConversationSession',
             'VoiceConversationTurn', 'VoicePronunciationAssessment', 'VoiceLearnerProgress',
             'VoiceSessionReview', 'VoiceTurnAnnotation', 'VoiceSessionFlag',

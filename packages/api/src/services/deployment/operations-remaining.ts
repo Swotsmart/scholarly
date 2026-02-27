@@ -748,7 +748,7 @@ export class IncidentResponseService extends ScholarlyBaseService {
       },
       {
         id: 'INC-002', name: 'AI Provider Outage', severity: 'P2-high',
-        description: 'One or more AI providers (Claude, GPT Image, ElevenLabs) are unavailable',
+        description: 'One or more AI providers (Claude, GPT Image, Scholarly Voice Service) are unavailable',
         detectionMethod: 'AIPAL circuit breaker tripped for provider; alert: ai_provider_error_rate > 50% in 5m',
         impactDescription: 'Story generation, illustration, or narration degraded. Existing content still accessible.',
         slaResponseMinutes: 15, slaResolutionMinutes: 120,
