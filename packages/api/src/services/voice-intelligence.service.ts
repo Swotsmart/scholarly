@@ -208,7 +208,11 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
 
   constructor() {
     super('VoiceIntelligenceService');
-    this.voiceServiceUrl = process.env.VOICE_SERVICE_URL || 'http://scholarly-voice:8000';
+    const url = process.env.VOICE_SERVICE_URL;
+    if (!url) {
+      log.warn('VOICE_SERVICE_URL not set — voice intelligence features will fail at runtime');
+    }
+    this.voiceServiceUrl = url || '';
   }
 
   /**
@@ -219,30 +223,43 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
     body?: unknown;
     headers?: Record<string, string>;
     responseType?: 'json' | 'buffer';
+    timeoutMs?: number;
   } = {}): Promise<T> {
-    const { method = 'POST', body, headers = {}, responseType = 'json' } = options;
+    if (!this.voiceServiceUrl) {
+      throw new Error('VOICE_SERVICE_URL is not configured');
+    }
+
+    const { method = 'POST', body, headers = {}, responseType = 'json', timeoutMs = 30_000 } = options;
     const url = `${this.voiceServiceUrl}${path}`;
 
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unknown error');
-      throw new Error(`Voice service error (${response.status}): ${errorText}`);
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`Voice service error (${response.status}): ${errorText}`);
+      }
+
+      if (responseType === 'buffer') {
+        const arrayBuffer = await response.arrayBuffer();
+        return Buffer.from(arrayBuffer) as unknown as T;
+      }
+
+      return response.json() as Promise<T>;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    if (responseType === 'buffer') {
-      const arrayBuffer = await response.arrayBuffer();
-      return Buffer.from(arrayBuffer) as unknown as T;
-    }
-
-    return response.json() as Promise<T>;
   }
 
   /**

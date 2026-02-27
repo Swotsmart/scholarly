@@ -203,11 +203,14 @@ const AIProvidersConfigSchema = z.object({
  * Deployed as `scholarly-voice` on GPU T4 workload.
  */
 const VoiceServiceConfigSchema = z.object({
-  enabled: z.coerce.boolean().default(true),
+  enabled: z.coerce.boolean().default(false),
   url: z.string().url('VOICE_SERVICE_URL must be a valid URL').optional(),
   maxConcurrentSessions: z.coerce.number().int().min(1).max(100).default(20),
   sessionTimeoutMs: z.coerce.number().int().min(30000).max(600000).default(300000),
-});
+}).refine(
+  (data) => !data.enabled || !!data.url,
+  { message: 'VOICE_SERVICE_URL is required when voice service is enabled', path: ['url'] },
+);
 
 /**
  * Logging configuration.

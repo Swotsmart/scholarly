@@ -169,7 +169,7 @@ export interface NarrationConfig {
 }
 
 export const DEFAULT_NARRATION_CONFIG: NarrationConfig = {
-  voiceServiceUrl: process.env.VOICE_SERVICE_URL || 'http://localhost:8880',
+  voiceServiceUrl: process.env.VOICE_SERVICE_URL || '',
   model: 'kokoro-v1',
   defaultFormat: { codec: 'mp3', sampleRate: 24000, bitrate: 128, channels: 1 },
   s3Bucket: process.env.S3_BUCKET || 'scholarly-content-dev',
@@ -407,7 +407,7 @@ export class AudioStorageClient extends ScholarlyBaseService {
 // ==========================================================================
 
 export interface DualModeConfig { readonly defaultMode: 'passive' | 'active'; readonly activeMode: ActiveModeConfig; readonly passiveMode: PassiveModeConfig; }
-export interface ActiveModeConfig { readonly enableASR: boolean; readonly asrProvider: 'kokoro' | 'whisper' | 'browser'; readonly comparisonStrategy: 'exact' | 'phonemic' | 'fuzzy'; readonly accuracyThreshold: number; readonly feedbackDelay: 'immediate' | 'end-of-page' | 'end-of-book'; readonly enableEncouragement: boolean; readonly maxAttempts: number; }
+export interface ActiveModeConfig { readonly enableASR: boolean; readonly asrProvider: 'scholarly-voice' | 'whisper' | 'browser'; readonly comparisonStrategy: 'exact' | 'phonemic' | 'fuzzy'; readonly accuracyThreshold: number; readonly feedbackDelay: 'immediate' | 'end-of-page' | 'end-of-book'; readonly enableEncouragement: boolean; readonly maxAttempts: number; }
 export interface PassiveModeConfig { readonly autoAdvancePage: boolean; readonly autoAdvanceDelayMs: number; readonly enableRepeat: boolean; readonly showWordHighlighting: boolean; readonly allowManualPagination: boolean; }
 
 export interface ReadingPageSession { readonly pageNumber: number; readonly mode: 'passive' | 'active'; readonly audioUrl: string; readonly durationMs: number; readonly wordTimestamps: WordTimestamp[]; readonly sentenceTimestamps: SentenceTimestamp[]; readonly expectedText: string; readonly targetGPCWords: string[]; readonly passiveConfig?: PassiveModeConfig; readonly activeConfig?: ActiveModeConfig; }

@@ -221,7 +221,7 @@ export class ElevenLabsTTSClient {
       throw new Error('VoiceServiceClient: VOICE_SERVICE_URL is required');
     }
     this.serviceUrl = config.serviceUrl;
-    this.baseUrl = config.baseUrl ?? process.env.VOICE_SERVICE_URL ?? 'http://localhost:8880';
+    this.baseUrl = config.baseUrl ?? config.serviceUrl;
     this.defaultModel = config.defaultModel ?? 'kokoro-v1';
     this.logger = config.logger;
   }

@@ -1453,7 +1453,7 @@ export class BatchNarrationPipeline extends ScholarlyBaseService {
       const voiceId = this.selectVoice(spec);
 
       // Self-hosted Kokoro TTS with timestamps via VOICE_SERVICE_URL
-      const response = await fetch(`${process.env.VOICE_SERVICE_URL || 'http://localhost:8880'}/tts/${voiceId}/with-timestamps`, {
+      const response = await fetch(`${this.voiceServiceUrl}/tts/${voiceId}/with-timestamps`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
