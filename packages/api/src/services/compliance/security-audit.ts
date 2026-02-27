@@ -310,7 +310,7 @@ class SecurityAuditOrchestrator extends ScholarlyBaseService {
         { id:'g3', requirement:'Right to erasure (Art 17)', status:'partial', evidence:'Deletion API; cascade check needed', notes:'' },
         { id:'g4', requirement:'Privacy by design (Art 25)', status:'pass', evidence:'RLS, encryption, PIA', notes:'' },
         { id:'g5', requirement:'Breach notification (Art 33)', status:'pass', evidence:'Incident plan + alerting', notes:'' },
-        { id:'g6', requirement:'Sub-processor DPAs (Art 28)', status:'partial', evidence:'Anthropic/OpenAI/ElevenLabs/Stripe', notes:'' },
+        { id:'g6', requirement:'Sub-processor DPAs (Art 28)', status:'partial', evidence:'Anthropic/OpenAI/Scholarly Voice Service/Stripe', notes:'' },
         { id:'g7', requirement:'Cross-border (Ch V)', status:'partial', evidence:'SCCs for US providers', notes:'' }
       ]));
     }

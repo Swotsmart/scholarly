@@ -701,7 +701,7 @@ export class StorybookCLI {
       '    --style <style>                   Art style (watercolour, flat_vector, etc.)',
       '    --no-decompose                    Skip scene decomposition',
       '  scholarly narrate <id>              Generate audio narration',
-      '    --voice <voice-id>                ElevenLabs voice ID',
+      '    --voice <voice-id>                Scholarly Voice Service voice ID',
       '    --speed <slow|normal|fast>        Narration speed',
       '  scholarly publish <id>              Submit to review pipeline',
       '  scholarly search <query>            Search the storybook library',

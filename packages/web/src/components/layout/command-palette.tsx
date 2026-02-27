@@ -79,7 +79,7 @@ const commandItems: CommandItem[] = [
   { id: 'portfolio', label: 'My Portfolio', href: '/portfolio', icon: Briefcase, section: 'Create', keywords: ['work', 'showcase'], role: ['learner', 'student'], taskRef: 'L8' },
   { id: 'showcase', label: 'Showcase', href: '/portfolio/showcase', icon: Eye, section: 'Create', keywords: ['public', 'gallery'], role: ['learner', 'student'], taskRef: 'L8' },
   { id: 'linguaflow', label: 'LinguaFlow', href: '/linguaflow', icon: Languages, section: 'Languages', keywords: ['language', 'learn', 'speak'], role: ['learner', 'student'], taskRef: 'LF' },
-  { id: 'voice-practice', label: 'Voice Practice', href: '/linguaflow/voice', icon: Mic, section: 'Languages', keywords: ['speaking', 'pronunciation', 'elevenlabs'], role: ['learner', 'student'], taskRef: 'LF' },
+  { id: 'voice-practice', label: 'Voice Practice', href: '/linguaflow/voice', icon: Mic, section: 'Languages', keywords: ['speaking', 'pronunciation', 'voice'], role: ['learner', 'student'], taskRef: 'LF' },
   { id: 'vocabulary', label: 'Vocabulary', href: '/linguaflow/vocabulary', icon: FileText, section: 'Languages', keywords: ['words', 'flashcards'], role: ['learner', 'student'], taskRef: 'LF' },
   { id: 'conversation', label: 'Conversation Practice', href: '/linguaflow/conversation', icon: MessageSquare, section: 'Languages', keywords: ['speaking', 'chat'], role: ['learner', 'student'], taskRef: 'LF' },
   { id: 'golden-path', label: 'Golden Path', href: '/golden-path', icon: Compass, section: 'Adaptive', keywords: ['personalized', 'pathway'], role: ['learner', 'student'], taskRef: 'L4L5' },

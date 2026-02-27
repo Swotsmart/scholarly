@@ -38,10 +38,10 @@ const PROVIDER_DEFINITIONS = [
     envVar: 'GOOGLE_AI_API_KEY',
   },
   {
-    id: 'elevenlabs',
-    name: 'ElevenLabs',
-    capabilities: ['voice_synthesis'],
-    envVar: 'ELEVENLABS_API_KEY',
+    id: 'scholarly-voice',
+    name: 'Scholarly Voice Service',
+    capabilities: ['voice_synthesis', 'speech_recognition', 'voice_cloning'],
+    envVar: 'VOICE_SERVICE_URL',
   },
 ] as const;
 

@@ -287,7 +287,7 @@ export class StorybookCLI {
         if (args.options['dry-run']) {
           const costs: Record<string, number> = { 'Story (Claude API)': 0.20, 'Validation': 0.02 };
           if (args.options.illustrate) costs['Illustrations (12 pages)'] = 0.48;
-          if (args.options.narrate) costs['Narration (ElevenLabs)'] = 0.15;
+          if (args.options.narrate) costs['Narration (Scholarly Voice Service)'] = 0.15;
           return { success: true, message: [this.fmt.header('Dry Run'), this.fmt.costEstimate(costs)].join('\n'), exitCode: 0 };
         }
 

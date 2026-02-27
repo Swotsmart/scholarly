@@ -467,7 +467,7 @@ export class APIExplorerService extends ScholarlyBaseService {
       {
         path: '/api/v1/stories/{id}/narrate', method: 'POST',
         summary: 'Generate audio narration with word-level timestamps',
-        description: 'Produces ElevenLabs narration with per-word timing for karaoke-style read-along highlighting.',
+        description: 'Produces Scholarly Voice Service narration with per-word timing for karaoke-style read-along highlighting.',
         category: 'Audio', authentication: 'api_key', parameters: [
           { name: 'id', in: 'path', required: true, type: 'string', description: 'Story ID', example: 'story_abc123' },
         ],

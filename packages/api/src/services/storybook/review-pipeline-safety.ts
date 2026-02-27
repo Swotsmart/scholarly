@@ -117,7 +117,7 @@ export interface StageTransition {
 // The automated stage wraps Sprint 23's ContentValidator (decodability,
 // vocabulary, safety text screening) and adds three new checks:
 //   - Image moderation (AWS Rekognition)
-//   - Audio quality verification (ElevenLabs metadata check)
+//   - Audio quality verification (Scholarly Voice Service metadata check)
 //   - Structural completeness (page count, illustration coverage, audio sync)
 
 export interface AutomatedValidationResult {

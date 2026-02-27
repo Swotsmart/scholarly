@@ -63,7 +63,7 @@ export function MentorSelector({
   };
 
   const speakCatchphrase = (_mentor: MentorInfo) => {
-    // Disabled — browser SpeechSynthesis replaced by ElevenLabs TTS
+    // Disabled — browser SpeechSynthesis replaced by Voice Service TTS
     // Mentor catchphrases will be handled by usePhonicsAudio when integrated
   };
 

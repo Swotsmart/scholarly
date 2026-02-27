@@ -93,9 +93,6 @@ importers:
 
   packages/api:
     dependencies:
-      '@elevenlabs/elevenlabs-js':
-        specifier: ^2.33.0
-        version: 2.33.0
       '@prisma/client':
         specifier: ^5.8.0
         version: 5.22.0(prisma@5.22.0)
@@ -1957,7 +1954,7 @@ packages:
     dependencies:
       '@babel/core': 7.29.0
       '@babel/helper-plugin-utils': 7.28.6
-      '@babel/types': 7.28.6
+      '@babel/types': 7.29.0
       esutils: 2.0.3
     dev: false
 
@@ -2076,19 +2073,6 @@ packages:
     engines: {node: '>=0.8.0'}
     dependencies:
       '@types/hammerjs': 2.0.46
-    dev: false
-
-  /@elevenlabs/elevenlabs-js@2.33.0:
-    resolution: {integrity: sha512-cWUkm39kLW+Nbl+NZ51/0GUfqGvSTbzR0zFRq5Asvu7Dm9eFfMVjkRXGezgNo7gzxhX3WbqTAfP9X3BL5vgUqA==}
-    engines: {node: '>=18.0.0'}
-    dependencies:
-      command-exists: 1.2.9
-      node-fetch: 2.7.0
-      ws: 8.19.0
-    transitivePeerDependencies:
-      - bufferutil
-      - encoding
-      - utf-8-validate
     dev: false
 
   /@emnapi/core@1.8.1:
@@ -2954,7 +2938,7 @@ packages:
 
   /@expo/bunyan@4.0.1:
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
     dependencies:
       uuid: 8.3.2
     dev: false
@@ -8289,6 +8273,7 @@ packages:
 
   /command-exists@1.2.9:
     resolution: {integrity: sha512-LTQ/SGc+s0Xc0Fu5WaKnR0YiygZkm9eKFvyS+fRsU7/ZWFF8ykFM6Pc9aCVf1+xasOOZpO3BAVgVrKvsqKHV7w==}
+    dev: true
 
   /command-line-args@5.2.1:
     resolution: {integrity: sha512-H4UfQhZyakIjC74I9d34fGYDwk3XpSr17QhEd0Q3I9Xq1CETHo4Hcuo87WyWHpAF1aSLjLRf5lD9ZGX2qStUvg==}

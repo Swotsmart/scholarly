@@ -1,6 +1,6 @@
 // ============================================================================
 // SCHOLARLY PLATFORM — Sprint 21, Deliverable S21-002
-// Audio Narration Pipeline (ElevenLabs)
+// Audio Narration Pipeline (Self-hosted Kokoro TTS)
 // ============================================================================
 //
 // Sprint 19 wrote the screenplay (narrative generator). Sprint 20 shot the
@@ -21,7 +21,7 @@
 //   - Audio (Sprint 21): the Z axis — what the voice brings alive
 //
 // Infrastructure dependencies:
-//   - ElevenLabs API key from Sprint 20 Secrets Manager (S20-003)
+//   - Self-hosted Kokoro TTS via VOICE_SERVICE_URL
 //   - S3 bucket from Sprint 20 (S20-001) for audio storage
 //   - CloudFront CDN from Sprint 20 (S20-002) for audio delivery
 //   - Storage path: tenants/{tenantId}/storybooks/{bookId}/audio/page-{n}.mp3
@@ -37,7 +37,8 @@ export interface VoicePersona {
   readonly id: string;
   readonly name: string;
   readonly description: string;
-  readonly elevenLabsVoiceId: string;
+  /** Voice persona ID for self-hosted Kokoro TTS (e.g. af_bella, am_adam) */
+  readonly kokoroVoiceId: string;
   readonly voiceSettings: VoiceSettings;
   readonly suitableAgeGroups: string[];
   readonly suitableThemes: string[];
@@ -154,7 +155,8 @@ export interface NarrationReport {
 }
 
 export interface NarrationConfig {
-  readonly elevenLabsApiKey: string;
+  /** VOICE_SERVICE_URL for self-hosted Kokoro TTS */
+  readonly voiceServiceUrl: string;
   readonly model: string;
   readonly defaultFormat: AudioFormat;
   readonly s3Bucket: string;
@@ -167,8 +169,8 @@ export interface NarrationConfig {
 }
 
 export const DEFAULT_NARRATION_CONFIG: NarrationConfig = {
-  elevenLabsApiKey: process.env.ELEVENLABS_API_KEY || '',
-  model: 'eleven_turbo_v2_5',
+  voiceServiceUrl: process.env.VOICE_SERVICE_URL || '',
+  model: 'kokoro-v1',
   defaultFormat: { codec: 'mp3', sampleRate: 24000, bitrate: 128, channels: 1 },
   s3Bucket: process.env.S3_BUCKET || 'scholarly-content-dev',
   s3Region: process.env.AWS_REGION || 'ap-southeast-2',
@@ -191,12 +193,12 @@ const PACE_PROFILES: PaceProfile[] = [
 ];
 
 export const VOICE_PERSONA_LIBRARY: VoicePersona[] = [
-  { id: 'vp-warm-storyteller', name: 'Warm Storyteller', description: 'Gentle, warm voice for early readers. The voice of bedtime stories and first adventures.', elevenLabsVoiceId: 'EXAVITQu4vr4xnSDxMaL', voiceSettings: { stability: 0.70, similarityBoost: 0.80, style: 0.30, useSpeakerBoost: true }, suitableAgeGroups: ['3-4','4-5','5-6'], suitableThemes: ['animals','family','friendship','garden','seasons'], seriesAssignments: ['finn-the-fox'], paceProfiles: [PACE_PROFILES[0], PACE_PROFILES[1]], ssmlDefaults: { prosodyRate: '85%', prosodyPitch: '+5%', emphasisLevel: 'moderate', breakStrengthDefault: 'medium' } },
-  { id: 'vp-wonder-guide', name: 'Wonder Guide', description: 'Awe-inspired voice making every discovery magical. For science, space, and exploration stories.', elevenLabsVoiceId: 'pNInz6obpgDQGcFmaJgB', voiceSettings: { stability: 0.65, similarityBoost: 0.75, style: 0.40, useSpeakerBoost: true }, suitableAgeGroups: ['5-6','6-7','7-8'], suitableThemes: ['space','ocean','dinosaurs','bugs','weather','rainforest'], seriesAssignments: ['starlight-academy'], paceProfiles: [PACE_PROFILES[1], PACE_PROFILES[2]], ssmlDefaults: { prosodyRate: '90%', prosodyPitch: 'medium', emphasisLevel: 'moderate', breakStrengthDefault: 'medium' } },
-  { id: 'vp-cheerful-chef', name: 'Cheerful Chef', description: 'Upbeat, enthusiastic voice with playful comedy. Excels at cumulative tales and silly situations.', elevenLabsVoiceId: 'TxGEqnHWrfWFTfGW9XjX', voiceSettings: { stability: 0.55, similarityBoost: 0.85, style: 0.50, useSpeakerBoost: true }, suitableAgeGroups: ['4-5','5-6','6-7','7-8'], suitableThemes: ['food','adventure','circus','sports','transport','superheroes'], seriesAssignments: ['chef-platypus'], paceProfiles: [PACE_PROFILES[1], PACE_PROFILES[2]], ssmlDefaults: { prosodyRate: '95%', prosodyPitch: '+8%', emphasisLevel: 'strong', breakStrengthDefault: 'weak' } },
-  { id: 'vp-adventure-narrator', name: 'Adventure Narrator', description: 'Confident voice for older readers. Handles dramatic tension, mystery, and complex narratives.', elevenLabsVoiceId: 'VR6AewLTigWG4xSOukaG', voiceSettings: { stability: 0.60, similarityBoost: 0.80, style: 0.45, useSpeakerBoost: true }, suitableAgeGroups: ['6-7','7-8','8-9'], suitableThemes: ['adventure','mystery','pirates','robots','fairy-tales','camping'], seriesAssignments: ['robot-ralph'], paceProfiles: [PACE_PROFILES[2], PACE_PROFILES[3]], ssmlDefaults: { prosodyRate: 'medium', prosodyPitch: '-3%', emphasisLevel: 'moderate', breakStrengthDefault: 'medium' } },
-  { id: 'vp-aussie-mate', name: 'Aussie Mate', description: 'Friendly Australian voice for local stories. Natural, conversational tone for Australian contexts.', elevenLabsVoiceId: 'SOYHLrjzK2X1ezoPC6cr', voiceSettings: { stability: 0.65, similarityBoost: 0.75, style: 0.35, useSpeakerBoost: true }, suitableAgeGroups: ['4-5','5-6','6-7','7-8','8-9'], suitableThemes: ['australian-animals','australian-outback'], seriesAssignments: [], paceProfiles: PACE_PROFILES, ssmlDefaults: { prosodyRate: '90%', prosodyPitch: 'medium', emphasisLevel: 'moderate', breakStrengthDefault: 'medium' } },
-  { id: 'vp-calm-teacher', name: 'Calm Teacher', description: 'Patient, clear voice for information texts and phonics-heavy content where clarity matters most.', elevenLabsVoiceId: 'jBpfAIoJLzRDGnqrqeaQ', voiceSettings: { stability: 0.80, similarityBoost: 0.85, style: 0.20, useSpeakerBoost: true }, suitableAgeGroups: ['3-4','4-5','5-6','6-7'], suitableThemes: ['family','friendship','seasons','weather','garden'], seriesAssignments: [], paceProfiles: [PACE_PROFILES[0], PACE_PROFILES[1]], ssmlDefaults: { prosodyRate: '80%', prosodyPitch: 'medium', emphasisLevel: 'moderate', breakStrengthDefault: 'strong' } },
+  { id: 'vp-warm-storyteller', name: 'Warm Storyteller', description: 'Gentle, warm voice for early readers. The voice of bedtime stories and first adventures.', kokoroVoiceId: 'af_sarah', voiceSettings: { stability: 0.70, similarityBoost: 0.80, style: 0.30, useSpeakerBoost: true }, suitableAgeGroups: ['3-4','4-5','5-6'], suitableThemes: ['animals','family','friendship','garden','seasons'], seriesAssignments: ['finn-the-fox'], paceProfiles: [PACE_PROFILES[0], PACE_PROFILES[1]], ssmlDefaults: { prosodyRate: '85%', prosodyPitch: '+5%', emphasisLevel: 'moderate', breakStrengthDefault: 'medium' } },
+  { id: 'vp-wonder-guide', name: 'Wonder Guide', description: 'Awe-inspired voice making every discovery magical. For science, space, and exploration stories.', kokoroVoiceId: 'af_bella', voiceSettings: { stability: 0.65, similarityBoost: 0.75, style: 0.40, useSpeakerBoost: true }, suitableAgeGroups: ['5-6','6-7','7-8'], suitableThemes: ['space','ocean','dinosaurs','bugs','weather','rainforest'], seriesAssignments: ['starlight-academy'], paceProfiles: [PACE_PROFILES[1], PACE_PROFILES[2]], ssmlDefaults: { prosodyRate: '90%', prosodyPitch: 'medium', emphasisLevel: 'moderate', breakStrengthDefault: 'medium' } },
+  { id: 'vp-cheerful-chef', name: 'Cheerful Chef', description: 'Upbeat, enthusiastic voice with playful comedy. Excels at cumulative tales and silly situations.', kokoroVoiceId: 'am_michael', voiceSettings: { stability: 0.55, similarityBoost: 0.85, style: 0.50, useSpeakerBoost: true }, suitableAgeGroups: ['4-5','5-6','6-7','7-8'], suitableThemes: ['food','adventure','circus','sports','transport','superheroes'], seriesAssignments: ['chef-platypus'], paceProfiles: [PACE_PROFILES[1], PACE_PROFILES[2]], ssmlDefaults: { prosodyRate: '95%', prosodyPitch: '+8%', emphasisLevel: 'strong', breakStrengthDefault: 'weak' } },
+  { id: 'vp-adventure-narrator', name: 'Adventure Narrator', description: 'Confident voice for older readers. Handles dramatic tension, mystery, and complex narratives.', kokoroVoiceId: 'am_adam', voiceSettings: { stability: 0.60, similarityBoost: 0.80, style: 0.45, useSpeakerBoost: true }, suitableAgeGroups: ['6-7','7-8','8-9'], suitableThemes: ['adventure','mystery','pirates','robots','fairy-tales','camping'], seriesAssignments: ['robot-ralph'], paceProfiles: [PACE_PROFILES[2], PACE_PROFILES[3]], ssmlDefaults: { prosodyRate: 'medium', prosodyPitch: '-3%', emphasisLevel: 'moderate', breakStrengthDefault: 'medium' } },
+  { id: 'vp-aussie-mate', name: 'Aussie Mate', description: 'Friendly Australian voice for local stories. Natural, conversational tone for Australian contexts.', kokoroVoiceId: 'am_adam', voiceSettings: { stability: 0.65, similarityBoost: 0.75, style: 0.35, useSpeakerBoost: true }, suitableAgeGroups: ['4-5','5-6','6-7','7-8','8-9'], suitableThemes: ['australian-animals','australian-outback'], seriesAssignments: [], paceProfiles: PACE_PROFILES, ssmlDefaults: { prosodyRate: '90%', prosodyPitch: 'medium', emphasisLevel: 'moderate', breakStrengthDefault: 'medium' } },
+  { id: 'vp-calm-teacher', name: 'Calm Teacher', description: 'Patient, clear voice for information texts and phonics-heavy content where clarity matters most.', kokoroVoiceId: 'af_bella', voiceSettings: { stability: 0.80, similarityBoost: 0.85, style: 0.20, useSpeakerBoost: true }, suitableAgeGroups: ['3-4','4-5','5-6','6-7'], suitableThemes: ['family','friendship','seasons','weather','garden'], seriesAssignments: [], paceProfiles: [PACE_PROFILES[0], PACE_PROFILES[1]], ssmlDefaults: { prosodyRate: '80%', prosodyPitch: 'medium', emphasisLevel: 'moderate', breakStrengthDefault: 'strong' } },
 ];
 
 // ==========================================================================
@@ -273,9 +275,11 @@ export class SSMLBuilder extends ScholarlyBaseService {
 }
 
 // ==========================================================================
-// Section 5: ElevenLabs API Client
+// Section 5: Voice Service API Client (Self-hosted Kokoro TTS)
+// DEPRECATED: Replaced by self-hosted Kokoro TTS via VOICE_SERVICE_URL
 // ==========================================================================
 
+/** @deprecated Type name retained for blueprint compatibility. Now represents Kokoro TTS response. */
 interface ElevenLabsResponse {
   readonly audioBase64: string;
   readonly audioSizeBytes: number;
@@ -292,6 +296,10 @@ interface CharacterAlignment {
   readonly endTimesSeconds: number[];
 }
 
+/**
+ * DEPRECATED: Class name retained for blueprint compatibility.
+ * Replaced by self-hosted Kokoro TTS via VOICE_SERVICE_URL.
+ */
 export class ElevenLabsClient extends ScholarlyBaseService {
   private config: NarrationConfig;
   constructor(config: Partial<NarrationConfig> = {}) {
@@ -302,14 +310,14 @@ export class ElevenLabsClient extends ScholarlyBaseService {
   async generateWithTimestamps(text: string, voiceId: string, settings: VoiceSettings, ssml: string): Promise<Result<ElevenLabsResponse>> {
     const start = Date.now();
     try {
-      // Production: POST https://api.elevenlabs.io/v1/text-to-speech/{voiceId}/with-timestamps
-      // Headers: { 'xi-api-key': this.config.elevenLabsApiKey, 'Content-Type': 'application/json' }
+      // Production: POST ${VOICE_SERVICE_URL}/tts/{voiceId}/with-timestamps (self-hosted Kokoro TTS)
+      // Headers: { 'Content-Type': 'application/json' }
       // Body: { text: ssml, model_id: this.config.model, voice_settings: { stability, similarity_boost, style, use_speaker_boost }, output_format: 'mp3_24000_128' }
       // Response: { audio_base64: string, alignment: { characters[], character_start_times_seconds[], character_end_times_seconds[] } }
       const dur = (text.split(/\s+/).length / 2) * 1000;
       const cost = (text.length / 1000) * this.config.costPerThousandChars;
       return ok({ audioBase64: '', audioSizeBytes: 0, durationMs: dur, characterAlignment: { characters: [], startTimesSeconds: [], endTimesSeconds: [] }, generationTimeMs: Date.now() - start, estimatedCostUsd: cost, modelUsed: this.config.model });
-    } catch (error) { return fail(`ElevenLabs TTS failed: ${error}`); }
+    } catch (error) { return fail(`Kokoro TTS failed: ${error}`); }
   }
 }
 
@@ -399,7 +407,7 @@ export class AudioStorageClient extends ScholarlyBaseService {
 // ==========================================================================
 
 export interface DualModeConfig { readonly defaultMode: 'passive' | 'active'; readonly activeMode: ActiveModeConfig; readonly passiveMode: PassiveModeConfig; }
-export interface ActiveModeConfig { readonly enableASR: boolean; readonly asrProvider: 'elevenlabs' | 'whisper' | 'browser'; readonly comparisonStrategy: 'exact' | 'phonemic' | 'fuzzy'; readonly accuracyThreshold: number; readonly feedbackDelay: 'immediate' | 'end-of-page' | 'end-of-book'; readonly enableEncouragement: boolean; readonly maxAttempts: number; }
+export interface ActiveModeConfig { readonly enableASR: boolean; readonly asrProvider: 'scholarly-voice' | 'whisper' | 'browser'; readonly comparisonStrategy: 'exact' | 'phonemic' | 'fuzzy'; readonly accuracyThreshold: number; readonly feedbackDelay: 'immediate' | 'end-of-page' | 'end-of-book'; readonly enableEncouragement: boolean; readonly maxAttempts: number; }
 export interface PassiveModeConfig { readonly autoAdvancePage: boolean; readonly autoAdvanceDelayMs: number; readonly enableRepeat: boolean; readonly showWordHighlighting: boolean; readonly allowManualPagination: boolean; }
 
 export interface ReadingPageSession { readonly pageNumber: number; readonly mode: 'passive' | 'active'; readonly audioUrl: string; readonly durationMs: number; readonly wordTimestamps: WordTimestamp[]; readonly sentenceTimestamps: SentenceTimestamp[]; readonly expectedText: string; readonly targetGPCWords: string[]; readonly passiveConfig?: PassiveModeConfig; readonly activeConfig?: ActiveModeConfig; }
@@ -494,7 +502,7 @@ export class NarrationPipeline extends ScholarlyBaseService {
         const ssml = this.ssmlBuilder.buildPageSSML(page, pace, persona.ssmlDefaults, page.targetGPCWords);
         let audioResult: Result<ElevenLabsResponse> | null = null;
         for (let a = 0; a <= this.config.maxRetries; a++) {
-          audioResult = await this.client.generateWithTimestamps(page.text, persona.elevenLabsVoiceId, persona.voiceSettings, ssml);
+          audioResult = await this.client.generateWithTimestamps(page.text, persona.kokoroVoiceId, persona.voiceSettings, ssml);
           if (audioResult.success) break;
           this.log('warn', `Narration retry ${a + 1}`, { page: page.pageNumber });
         }

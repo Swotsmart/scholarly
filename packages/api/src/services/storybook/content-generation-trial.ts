@@ -1,6 +1,6 @@
 // ============================================================================
 // SCHOLARLY PLATFORM — S12-002: Content Generation Trial
-// Sprint 12: 100-book seed library with Claude + GPT Image + ElevenLabs
+// Sprint 12: 100-book seed library with Claude + GPT Image + Scholarly Voice Service (Kokoro TTS)
 // ============================================================================
 // The "grand opening inventory" — populating the Enchanted Library's first 100
 // storybooks across all 6 phonics phases, multiple themes, and diverse cultures.
@@ -33,7 +33,7 @@ interface GeneratedPage { pageNumber: number; text: string; illustrationUrl?: st
 interface BookMetadata { vocabularyTier: string; morphemeFocus: string[]; comprehensionStrand: string; wcpmBand: { min: number; max: number }; seriesId?: string; culturalContext: string; curriculumAlignments: { framework: string; code: string }[]; }
 interface GenerationCost { narrative: number; safety: number; illustrations: number; narration: number; validation: number; total: number; }
 interface QualityScores { decodability: number; narrativeCoherence: number; illustrationQuality: number; audioClarity: number; contentSafety: number; culturalSensitivity: number; overallScore: number; }
-interface CostTracking { budgetTotal: number; budgetUsed: number; budgetRemaining: number; costPerBook: { min: number; max: number; average: number }; projectedTotal: number; byProvider: { claude: number; gptImage: number; elevenLabs: number }; }
+interface CostTracking { budgetTotal: number; budgetUsed: number; budgetRemaining: number; costPerBook: { min: number; max: number; average: number }; projectedTotal: number; byProvider: { claude: number; gptImage: number; scholarlyVoice: number }; }
 
 // Section 2: Theme Library (21 themes across 5 categories)
 const THEME_LIBRARY: ThemeDefinition[] = [
@@ -253,8 +253,8 @@ class NarrationService {
 
     for (const page of book.pages) {
       const result = await this.aipal.speechSynthesis({
-        provider: 'elevenlabs', voiceId,
-        text: page.text, modelId: 'eleven_multilingual_v2',
+        provider: 'scholarly-voice', voiceId,
+        text: page.text, modelId: 'kokoro-v1',
         outputFormat: 'mp3_44100_128',
         settings: { stability: 0.65, similarityBoost: 0.75, style: 0.3 }
       });
@@ -333,7 +333,7 @@ class ContentGenerationOrchestrator extends ScholarlyBaseService {
       id: `cg_${Date.now()}`, name: 'Seed Library v1.0', targetBookCount: 100,
       status: 'planning', distribution: { phase2:25, phase3:25, phase4:15, phase5:20, phase6:15 },
       themePool: THEME_LIBRARY, qualityThresholds: { minDecodabilityScore:0.85, minNarrativeCoherence:7, minIllustrationQuality:7, minAudioClarity:0.8, maxUnsafeContentScore:0.1, minCulturalSensitivity:8 },
-      costTracking: { budgetTotal:2000, budgetUsed:0, budgetRemaining:2000, costPerBook:{min:Infinity,max:0,average:0}, projectedTotal:0, byProvider:{claude:0,gptImage:0,elevenLabs:0} },
+      costTracking: { budgetTotal:2000, budgetUsed:0, budgetRemaining:2000, costPerBook:{min:Infinity,max:0,average:0}, projectedTotal:0, byProvider:{claude:0,gptImage:0,scholarlyVoice:0} },
       generatedBooks: [], startedAt: new Date()
     };
   }
@@ -402,7 +402,7 @@ class ContentGenerationOrchestrator extends ScholarlyBaseService {
           this.campaign.costTracking.budgetRemaining -= book.generationCost.total;
           this.campaign.costTracking.byProvider.claude += book.generationCost.narrative;
           this.campaign.costTracking.byProvider.gptImage += book.generationCost.illustrations;
-          this.campaign.costTracking.byProvider.elevenLabs += book.generationCost.narration;
+          this.campaign.costTracking.byProvider.scholarlyVoice += book.generationCost.narration;
 
           return book;
         })

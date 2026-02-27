@@ -46,7 +46,7 @@ pnpm run build                                            # Build all (Turbo)
 
 ## API (`packages/api`)
 
-**Stack**: Express 4.18, Prisma, JWT + bcrypt, Zod, Pino, Helmet/CORS/rate-limit, SendGrid, ElevenLabs, Stripe, ws, Redis, Vitest.
+**Stack**: Express 4.18, Prisma, JWT + bcrypt, Zod, Pino, Helmet/CORS/rate-limit, SendGrid, Scholarly Voice Service (self-hosted Kokoro TTS), Stripe, ws, Redis, Vitest.
 
 **Sprint services** (`src/services/`, `src/infrastructure/`): 90+ TypeScript blueprints from Sprints 1-18. **Excluded from tsconfig.json compilation** due to unresolved external references. When integrating a service, remove from the exclude list and resolve dependencies.
 
@@ -93,7 +93,7 @@ az containerapp update --name scholarly --resource-group scholarly-rg --image sc
 
 ## Environment Variables
 
-`NEXT_PUBLIC_API_URL` (web), `DATABASE_URL` (database + web server-side routes), `CRON_SECRET` (web cron routes), `REDIS_URL` / `JWT_SECRET` / `SENDGRID_API_KEY` / `STRIPE_SECRET_KEY` / `ELEVENLABS_API_KEY` (api).
+`NEXT_PUBLIC_API_URL` (web), `DATABASE_URL` (database + web server-side routes), `CRON_SECRET` (web cron routes), `REDIS_URL` / `JWT_SECRET` / `SENDGRID_API_KEY` / `STRIPE_SECRET_KEY` / `VOICE_SERVICE_URL` (api).
 
 ## Mobile App (`apps/mobile`)
 
@@ -104,6 +104,16 @@ az containerapp update --name scholarly --resource-group scholarly-rg --image sc
 **COPPA**: No ads/tracking/social. Parental gate (math question, 30s timeout, 3 attempts, valid 15 min). COPPA consent on onboarding.
 
 **Blocked items**: EAS Project ID (`YOUR_EAS_PROJECT_ID` in `app.config.ts`), Montserrat fonts (`assets/fonts/` empty), Apple credentials (placeholders in `eas.json`), Google Play service account JSON.
+
+## Voice Service (`services/voice-service`)
+
+**Stack**: Python 3.11, FastAPI, Kokoro TTS, Whisper STT, Chatterbox voice cloning, PyTorch.
+
+Self-hosted TTS/STT/voice cloning microservice. Deployed as `scholarly-voice` on GPU T4 workload.
+
+**Endpoints**: `/tts/synthesise`, `/stt/transcribe`, `/clone/create`, `/studio/*`, `/health`
+
+**Config**: `VOICE_SERVICE_URL` env var in API server points to this service.
 
 ## Conventions
 

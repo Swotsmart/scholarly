@@ -77,7 +77,7 @@ export interface SharedChunkConfig {
 
 export const SHARED_CHUNKS: SharedChunkConfig[] = [
   { name: 'vendor_react', modules: ['react', 'react-native', 'react-native-reanimated'], minSharedBy: 2 },
-  { name: 'vendor_audio', modules: ['expo-av', 'elevenlabs-client'], minSharedBy: 2 },
+  { name: 'vendor_audio', modules: ['expo-av', 'scholarly-voice-client'], minSharedBy: 2 },
   { name: 'scholarly_bkt', modules: ['./src/bkt', './src/mastery'], minSharedBy: 3 },
   { name: 'scholarly_ui', modules: ['./src/components', 'nativewind'], minSharedBy: 4 },
   { name: 'vendor_charts', modules: ['recharts', 'd3'], minSharedBy: 1 },

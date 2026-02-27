@@ -613,7 +613,7 @@ export class ReadAloudPipeline {
   }
 
   private async processAsr(audioUri: string): Promise<Result<AsrResult>> {
-    // POST to /api/phonics/asr — ElevenLabs or Whisper backend
+    // POST to /api/phonics/asr — Scholarly Voice Service or Whisper backend
     return {
       success: true,
       data: { transcript: '', confidence: 0, alternatives: [], durationMs: 0, phonemes: [] },
