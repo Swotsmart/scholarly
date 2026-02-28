@@ -24,7 +24,10 @@
     "curriculum:stats": "pnpm --filter @scholarly/curriculum-processor -- ts-node src/cli.ts stats"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.11.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
     "turbo": "^2.0.0",
     "typescript": "^5.3.3"
   },
