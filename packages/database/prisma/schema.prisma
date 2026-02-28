@@ -167,6 +167,9 @@ model Tenant {
   microSchools MicroSchool[]
   reliefPools  ReliefPool[]
 
+  // Tutor Onboarding
+  onboardingSessions OnboardingSession[]
+
   @@index([slug])
   @@index([status])
   @@index([deletedAt])
@@ -252,6 +255,9 @@ model User {
   treasuryVotesCast        ArenaTreasuryVoteCast[] @relation("TreasuryVoteCaster")
   contentBountiesCreated   ContentBounty[]         @relation("BountyCreator")
   bountySubmissions        BountySubmission[]      @relation("BountySubmitter")
+
+  // Tutor Onboarding
+  onboardingSessions       OnboardingSession[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -345,6 +351,9 @@ model TutorProfile {
   teachingStyle Json      @default("{}")
   metrics       Json      @default("{}")
   deletedAt     DateTime?
+
+  // Stripe Connect (tutor onboarding Step 5)
+  stripeConnectedAccountId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -6817,4 +6826,190 @@ model MenuSyncLog {
 
   @@index([userId, tenantId])
   @@index([deviceId])
+}
+
+// ============================================================================
+// § Tutor Onboarding (Sprint 1)
+// ============================================================================
+
+enum OnboardingStepEnum {
+  NOT_STARTED
+  IDENTITY
+  BRANDING
+  CALENDAR
+  DOMAIN
+  PAYMENTS
+  PROFILE
+  GO_LIVE
+  COMPLETED
+  ABANDONED
+}
+
+enum PersonaTypeEnum {
+  TUTOR_SOLO
+  TUTOR_CENTRE
+}
+
+enum DomainChoiceEnum {
+  subdomain_only
+  purchase_new
+  transfer_existing
+  point_existing
+}
+
+enum DomainStatusEnum {
+  not_configured
+  subdomain_active
+  purchase_pending
+  transfer_pending
+  dns_verification_pending
+  ssl_provisioning
+  active
+  failed
+}
+
+enum StripeOnboardingStatusEnum {
+  not_started
+  link_generated
+  pending
+  active
+  restricted
+  skipped
+}
+
+/// Tracks a tutor's journey through the 7-step onboarding flow.
+/// Each row is a complete snapshot of the onboarding state — think of it
+/// as a boarding pass that accumulates stamps at each checkpoint.
+///
+/// The session is resumable: if the browser closes mid-step, the tutor
+/// picks up exactly where they left off. The `currentStep` tracks where
+/// they are now; `furthestStep` is the high-water mark showing the
+/// farthest they've ever reached (allowing them to revisit earlier steps).
+model OnboardingSession {
+  id              String              @id @default(cuid())
+  personaType     PersonaTypeEnum     @default(TUTOR_SOLO)
+  currentStep     OnboardingStepEnum  @default(NOT_STARTED)
+  furthestStep    OnboardingStepEnum  @default(NOT_STARTED)
+  createdAt       DateTime            @default(now())
+  lastActivityAt  DateTime            @default(now())
+  completedAt     DateTime?
+
+  // ── Step 1: Identity ──
+  userId          String?
+  tenantId        String?
+  tutorProfileId  String?
+
+  // ── Step 2: Branding ──
+  providerId      String?
+  subdomain       String?
+  businessName    String?
+  theme           Json?           // OnboardingTheme: { primaryColour, accentColour, logoUrl? }
+
+  // ── Step 3: Calendar ──
+  availabilitySlots Json  @default("[]")   // OnboardingAvailabilitySlot[]
+  timezone          String?
+
+  // ── Step 4: Domain ──
+  domainType      DomainChoiceEnum?
+  domainName      String?
+  domainStatus    DomainStatusEnum?
+
+  // ── Step 5: Payments ──
+  stripeAccountId String?
+  stripeStatus    StripeOnboardingStatusEnum?
+
+  // ── Step 6: Profile ──
+  suggestedBio    String?
+  bio             String?
+  socialPosts     Json    @default("[]")   // SocialPost[]
+  profilePhotoUrl String?
+
+  // ── Step 7: Go Live ──
+  publishedUrl    String?
+
+  // ── Metadata ──
+  lastError       Json?           // OnboardingError: { step, code, message, timestamp, retryable }
+  resumeCount     Int     @default(0)
+
+  // Relations
+  user            User?           @relation(fields: [userId], references: [id])
+  tenant          Tenant?         @relation(fields: [tenantId], references: [id])
+
+  // Indices
+  @@index([userId])
+  @@index([tenantId])
+  @@index([currentStep, lastActivityAt])
+}
+
+// ============================================================================
+// § Platform Migration (Squarespace → Scholarly)
+// ============================================================================
+
+/// Tracks a 6-stage platform migration from an external provider (e.g., Squarespace)
+/// to Scholarly. Stages: Extract → Transform → Review → Import → Parallel Run → Cutover.
+model PlatformMigration {
+  id                    String    @id @default(cuid())
+  tenantId              String
+  source                String    @default("squarespace")
+  sourceUrl             String
+  ownerId               String
+  ownerEmail            String
+  status                String    @default("created")
+  currentStep           String?
+  progressPercent       Int       @default(0)
+  pagesFound            Int       @default(0)
+  productsFound         Int       @default(0)
+  membersFound          Int       @default(0)
+  imagesFound           Int       @default(0)
+  postsFound            Int       @default(0)
+  pagesImported         Int       @default(0)
+  productsImported      Int       @default(0)
+  membersImported       Int       @default(0)
+  imagesImported        Int       @default(0)
+  postsImported         Int       @default(0)
+  customDomain          String?
+  dnsVerified           Boolean   @default(false)
+  sslProvisioned        Boolean   @default(false)
+  urlMappings           Json?
+  errors                Json      @default("[]")
+  warnings              Json      @default("[]")
+  extractionStartedAt   DateTime?
+  extractionCompletedAt DateTime?
+  importStartedAt       DateTime?
+  importCompletedAt     DateTime?
+  cutoverAt             DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @default(now())
+
+  contentItems          MigrationContentItem[]
+
+  @@index([tenantId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+/// Individual content items being migrated from source to Scholarly.
+model MigrationContentItem {
+  id             String   @id @default(cuid())
+  tenantId       String
+  migrationId    String
+  migration      PlatformMigration @relation(fields: [migrationId], references: [id], onDelete: Cascade)
+  sourceType     String
+  sourceId       String?
+  sourceUrl      String?
+  sourceTitle    String?
+  sourceData     Json     @default("{}")
+  targetType     String?
+  targetId       String?
+  targetUrl      String?
+  status         String   @default("pending")
+  requiresReview Boolean  @default(false)
+  reviewNotes    String?
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+
+  @@index([migrationId])
+  @@index([migrationId, status])
+  @@index([migrationId, sourceType])
 }

@@ -1,0 +1,121 @@
+{
+  "name": "@scholarly/unified-communications",
+  "version": "5.0.0",
+  "description": "Pluggable, event-driven unified communications platform — video conferencing, team chat, telephony, whiteboard, cloud files, approval workflows, contact centre, CRM integration, omnichannel inbox, AI meeting intelligence, real-time translation, and agentic AI",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./plugins/video": "./dist/plugins/video/index.js",
+    "./plugins/chat": "./dist/plugins/chat/index.js",
+    "./plugins/telephony": "./dist/plugins/telephony/index.js",
+    "./plugins/whiteboard": "./dist/plugins/whiteboard/index.js",
+    "./plugins/cloud-files": "./dist/plugins/cloud-files/index.js",
+    "./plugins/ai-transcription": "./dist/plugins/ai-transcription/index.js",
+    "./plugins/notifications": "./dist/plugins/notifications/index.js",
+    "./plugins/scheduling": "./dist/plugins/scheduling/index.js",
+    "./plugins/search-archive": "./dist/plugins/search-archive/index.js",
+    "./plugins/analytics": "./dist/plugins/analytics/index.js",
+    "./plugins/compliance": "./dist/plugins/compliance/index.js",
+    "./plugins/webinar": "./dist/plugins/webinar/index.js",
+    "./plugins/webinar/services/write-behind": "./dist/plugins/webinar/services/write-behind-manager.js",
+    "./plugins/webinar/services/hls-streaming": "./dist/plugins/webinar/services/hls-streaming.js",
+    "./plugins/webinar/services/email-pipeline": "./dist/plugins/webinar/services/registration-email-pipeline.js",
+    "./plugins/webinar/services/landing-page": "./dist/plugins/webinar/services/landing-page-generator.js",
+    "./plugins/webinar/providers/openai": "./dist/plugins/webinar/providers/openai-provider.js",
+    "./plugins/approval-workflow": "./dist/plugins/approval-workflow/index.js",
+    "./plugins/approval-workflow/types": "./dist/plugins/approval-workflow/types.js",
+    "./plugins/crm-connector": "./dist/plugins/crm-connector/index.js",
+    "./plugins/omnichannel-inbox": "./dist/plugins/omnichannel-inbox/index.js",
+    "./enhancements": "./dist/enhancements.js",
+    "./plugins": "./dist/plugins/index.js",
+    "./bus": "./dist/bus/event-bus.js",
+    "./bus/events": "./dist/bus/event-types.js",
+    "./adapters/prisma": "./dist/adapters/prisma-storage-adapter.js",
+    "./adapters/nats": "./dist/adapters/nats-event-bridge.js",
+    "./adapters/auth": "./dist/adapters/scholarly-auth-middleware.js"
+  },
+  "scripts": {
+    "dev": "ts-node-dev --respawn src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1",
+    "ws": "^8.16.0"
+  },
+  "peerDependencies": {
+    "mediasoup": "^3.13.0",
+    "@prisma/client": "^5.9.0",
+    "nats": "^2.18.0"
+  },
+  "peerDependenciesMeta": {
+    "mediasoup": {
+      "optional": true
+    },
+    "@prisma/client": {
+      "optional": true
+    },
+    "nats": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.10.6",
+    "@types/supertest": "^6.0.3",
+    "@types/uuid": "^9.0.7",
+    "@types/ws": "^8.5.10",
+    "supertest": "^7.2.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "author": "Scholarly Pty Ltd",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Swotsmart/scholarly.git"
+  },
+  "keywords": [
+    "unified-communications",
+    "video-conferencing",
+    "webrtc",
+    "mediasoup",
+    "team-chat",
+    "twilio",
+    "whiteboard",
+    "ai-transcription",
+    "compliance",
+    "analytics",
+    "scheduling",
+    "search",
+    "webinar",
+    "hls-streaming",
+    "openai",
+    "education",
+    "phonics",
+    "approval-workflow",
+    "virtual-classroom",
+    "contact-centre",
+    "crm-integration",
+    "salesforce",
+    "hubspot",
+    "omnichannel",
+    "whatsapp-business",
+    "meeting-intelligence",
+    "real-time-translation",
+    "agentic-ai"
+  ]
+}

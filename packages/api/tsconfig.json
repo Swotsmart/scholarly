@@ -31,6 +31,7 @@
     "src/services/collaboration",
     "src/services/parent",
     "src/services/storage",
-    "src/infrastructure"
+    "src/infrastructure",
+    "src/migrations"
   ]
 }
