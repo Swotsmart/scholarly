@@ -48,3 +48,4 @@ docs/api-keys/
 *.tsbuildinfo
 .turbo/
 .claude/worktrees/cranky-fermat/
+.claude/worktrees/friendly-taussig/
