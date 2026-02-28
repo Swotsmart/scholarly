@@ -325,11 +325,16 @@ export class TutorOnboardingService implements ITutorOnboardingService {
         sessionTypes: blueprint.defaultSessionTypes,
       });
 
-      // Update session with created IDs
+      // Update session with created IDs and denormalised context for Steps 4–7
       const updatedSession = await this.advanceStep(sessionId, Step.IDENTITY, {
         userId,
         tenantId,
         tutorProfileId,
+        userEmail: input.email,
+        displayName: input.displayName,
+        subjects: input.subjects,
+        location: input.location,
+        jurisdiction,
       });
 
       // Publish event

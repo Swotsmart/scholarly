@@ -528,12 +528,6 @@ describe('TutorOnboardingService — Steps 1–3', () => {
       ).rejects.toThrow(/Invalid step transition/);
     });
 
-    it('rejects completing Steps 4-7 in Sprint 1', async () => {
-      const session = await service.createSession('TUTOR_SOLO');
-      await expect(
-        service.completeDomain(session.id, { choice: 'subdomain_only' }),
-      ).rejects.toThrow(/Sprint 2/);
-    });
   });
 
   // ── Error Handling ────────────────────────────────────────────────
