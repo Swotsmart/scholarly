@@ -56,10 +56,7 @@
 
 import type { PlatformConfig, NatsBridgeConfig, ScholarlyAuthConfig } from './config';
 import { mergeConfig } from './config';
-import { EventBus } from './bus/event-bus';
-import { NatsEventBridge } from './adapters/nats-event-bridge';
 import { PrismaStorageAdapter } from './adapters/prisma-storage-adapter';
-import { createScholarlyAuthMiddleware } from './adapters/scholarly-auth-middleware';
 
 // ============================================================================
 // §1 — CONFIGURATION
@@ -142,7 +139,9 @@ export function loadScholarlyUCConfig(): ScholarlyUCConfig {
 
     // Auth
     jwtSecret: process.env.JWT_PUBLIC_KEY || process.env.JWT_SECRET || 'dev-secret-change-in-production',
-    jwtAlgorithm: (process.env.JWT_ALGORITHM as 'HS256' | 'RS256' | 'ES256') || 'RS256',
+    jwtAlgorithm:
+      (process.env.JWT_ALGORITHM as 'HS256' | 'RS256' | 'ES256') ||
+      (process.env.JWT_PUBLIC_KEY ? 'RS256' as const : 'HS256' as const),
     jwtIssuer: process.env.JWT_ISSUER || 'scholarly-auth',
     jwtAudience: process.env.JWT_AUDIENCE || 'scholarly-api',
     publicPaths: [
@@ -189,23 +188,25 @@ export function loadScholarlyUCConfig(): ScholarlyUCConfig {
  *
  * This function:
  * 1. Loads configuration from environment
- * 2. Creates the Prisma storage adapter
- * 3. Configures JWT auth middleware
- * 4. Initialises the NATS event bridge
- * 5. Returns the configured platform config ready for UnifiedCommsPlatform
+ * 2. Creates the Prisma storage adapter and verifies DB connectivity
+ * 3. Assembles auth + NATS config for the platform
+ * 4. Returns a PlatformConfig that UnifiedCommsPlatform can use directly
+ *
+ * EventBus and NatsEventBridge are NOT created here — the platform manages
+ * its own internal bus and NATS connection from the supplied config. This
+ * avoids duplicate NATS connections and ensures event bridging goes through
+ * the platform's own lifecycle.
  *
  * The caller (Scholarly's server.ts) uses the returned config to instantiate
  * and start the UC platform:
  *
- *   const { config, natsBridge, storage } = await bootScholarlyUC(prisma);
+ *   const { config, storage } = await bootScholarlyUC(prisma);
  *   const platform = new UnifiedCommsPlatform(config);
  *   // ... register plugins ...
  *   await platform.start();
  */
 export async function bootScholarlyUC(prismaClient: unknown): Promise<{
   config: PlatformConfig;
-  eventBus: EventBus;
-  natsBridge: NatsEventBridge;
   storage: PrismaStorageAdapter;
   ucConfig: ScholarlyUCConfig;
 }> {
@@ -216,10 +217,7 @@ export async function bootScholarlyUC(prismaClient: unknown): Promise<{
   console.log(`[UC v5.0] Tenant Isolation: ${ucConfig.tenantIsolation}`);
   console.log(`[UC v5.0] Enabled Plugins: ${ucConfig.enabledPlugins.join(', ')}`);
 
-  // ── 1. Create Event Bus ──
-  const eventBus = new EventBus({ maxHistory: 5000 });
-
-  // ── 2. Create Prisma Storage Adapter ──
+  // ── 1. Create Prisma Storage Adapter ──
   const storage = new PrismaStorageAdapter({
     prisma: prismaClient,
     tenantIsolation: ucConfig.tenantIsolation,
@@ -234,7 +232,7 @@ export async function bootScholarlyUC(prismaClient: unknown): Promise<{
   }
   console.log('[UC v5.0] Database connection verified ✓');
 
-  // ── 3. Configure Auth ──
+  // ── 2. Configure Auth ──
   const authConfig: ScholarlyAuthConfig = {
     jwtSecret: ucConfig.jwtSecret,
     jwtAlgorithm: ucConfig.jwtAlgorithm,
@@ -243,7 +241,9 @@ export async function bootScholarlyUC(prismaClient: unknown): Promise<{
     publicPaths: ucConfig.publicPaths,
   };
 
-  // ── 4. Configure NATS Bridge ──
+  // ── 3. Configure NATS Bridge ──
+  // The platform itself creates the NatsEventBridge from this config
+  // and manages its lifecycle (connect on start, disconnect on stop).
   const natsConfig: NatsBridgeConfig = {
     url: ucConfig.natsUrl,
     subjectPrefix: ucConfig.natsSubjectPrefix,
@@ -254,19 +254,7 @@ export async function bootScholarlyUC(prismaClient: unknown): Promise<{
       : undefined,
   };
 
-  const natsBridge = new NatsEventBridge(eventBus, natsConfig);
-
-  // Connect to NATS (non-blocking — platform works without NATS)
-  await natsBridge.connect();
-
-  const natsHealth = await natsBridge.healthCheck();
-  if (natsHealth.status === 'healthy') {
-    console.log(`[UC v5.0] NATS bridge connected: ${natsHealth.message} ✓`);
-  } else {
-    console.warn(`[UC v5.0] NATS bridge: ${natsHealth.message} (operating without NATS)`);
-  }
-
-  // ── 5. Build Platform Config ──
+  // ── 4. Build Platform Config ──
   const config = mergeConfig({
     port: ucConfig.port,
     wsPort: ucConfig.wsPort,
@@ -284,7 +272,7 @@ export async function bootScholarlyUC(prismaClient: unknown): Promise<{
   console.log('[UC v5.0] Platform configuration assembled ✓');
   console.log('[UC v5.0] Boot complete. Ready for plugin registration.');
 
-  return { config, eventBus, natsBridge, storage, ucConfig };
+  return { config, storage, ucConfig };
 }
 
 // ============================================================================
@@ -399,18 +387,17 @@ export const COMPETITION_PLATFORM_UC_DEPS = {
  */
 export async function getEnabledPluginImports(enabledPlugins: string[]): Promise<Record<string, string>> {
   /**
-   * Maps plugin IDs to their import paths within the UC v5.0 package.
+   * This map defines the canonical set of known plugin IDs and the locations
+   * of their implementations under the local `./plugins/` directory.
+   * Only plugin IDs present in this map will be considered; any unknown
+   * plugin ID in `enabledPlugins` is ignored and logged as a warning so the
+   * platform can still boot successfully even if configuration is stale.
    *
-   * IMPORTANT: The 16 plugins are NOT yet included in this package. They will
-   * be added to the ./plugins/ directory as they are ported from the original
-   * UC codebase and adapted for v5.0. Until a plugin directory exists, any
-   * attempt to load it will be caught by the guard below (line ~434) and
-   * logged as a warning — the platform boots successfully without plugins.
-   *
-   * When plugins are deployed, they go into:
-   *   uc-v5/plugins/video/index.ts
-   *   uc-v5/plugins/chat/index.ts
-   *   etc.
+   * By convention, plugin modules live under:
+   *   ./plugins/video
+   *   ./plugins/chat
+   *   ./plugins/telephony
+   *   ...etc.
    */
   const pluginImportMap: Record<string, string> = {
     'video':             './plugins/video',
@@ -421,8 +408,6 @@ export async function getEnabledPluginImports(enabledPlugins: string[]): Promise
     'crm':               './plugins/crm-connector',
     'omnichannel':       './plugins/omnichannel-inbox',
     'ai-transcription':  './plugins/ai-transcription',
-    'translation':       './plugins/translation',
-    'agentic-ai':        './plugins/agentic-ai',
     'notifications':     './plugins/notifications',
     'scheduling':        './plugins/scheduling',
     'search':            './plugins/search-archive',
@@ -452,13 +437,20 @@ export async function getEnabledPluginImports(enabledPlugins: string[]): Promise
 /**
  * Shutdown handler for the UC platform. Should be called from Scholarly's
  * process signal handlers (SIGTERM, SIGINT).
+ *
+ * The platform itself manages its own NATS connection and EventBus lifecycle.
+ * Call `platform.stop()` from your signal handler to trigger graceful cleanup.
+ * This function is a convenience wrapper for any additional Scholarly-specific
+ * teardown (e.g., flushing analytics, closing storage connections).
  */
 export async function shutdownScholarlyUC(
-  natsBridge: NatsEventBridge,
+  storage?: PrismaStorageAdapter,
 ): Promise<void> {
-  console.log('[UC v5.0] Shutting down...');
+  console.log('[UC v5.0] Shutting down Scholarly integration...');
 
-  await natsBridge.shutdown();
+  if (storage) {
+    await storage.disconnect();
+  }
 
   console.log('[UC v5.0] Shutdown complete.');
 }
