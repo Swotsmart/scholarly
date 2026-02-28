@@ -1,0 +1,77 @@
+# ============================================================================
+# Érudits Platform — Local Development
+# ============================================================================
+#
+# Starts the API server alongside PostgreSQL and Redis.
+#
+# Usage:
+#   docker compose up -d          # Start everything
+#   docker compose logs -f api    # Watch API logs
+#   docker compose down           # Stop everything
+#   docker compose down -v        # Stop and delete data
+#
+# The API auto-reloads on file changes via tsx watch (mounted volume).
+# ============================================================================
+
+services:
+  # ── API Server ──
+  api:
+    build:
+      context: .
+      target: builder  # Use the builder stage for dev (has all deps)
+    command: npx tsx watch src/server.ts
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://erudits:erudits_dev@postgres:5432/erudits_dev
+      REDIS_URL: redis://redis:6379
+      PORT: "3000"
+    volumes:
+      - ./src:/app/src:ro            # Mount source for hot reload
+      - ./prisma:/app/prisma:ro      # Mount schema for migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── PostgreSQL ──
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5433:5432"  # Host port 5433 to avoid conflicts with local Postgres
+    environment:
+      POSTGRES_DB: erudits_dev
+      POSTGRES_USER: erudits
+      POSTGRES_PASSWORD: erudits_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U erudits -d erudits_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Redis ──
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"  # Host port 6380 to avoid conflicts
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

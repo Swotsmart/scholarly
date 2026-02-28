@@ -61,6 +61,7 @@ import { aiEngineRouter } from './routes/ai-engine';
 import { complianceRouter } from './routes/compliance';
 import { parentPortalRouter } from './routes/parent-portal';
 import { collaborationRouter } from './routes/collaboration';
+import { tutorOnboardingRouter } from './routes/tutor-onboarding';
 
 // Middleware
 import { errorHandler } from './middleware/error-handler';
@@ -68,6 +69,7 @@ import { authMiddleware } from './middleware/auth';
 
 // Service initialization
 import { initializeHostingServices } from './lib/hosting-init';
+import { initializeTutorOnboarding } from './services/tutor-onboarding/bootstrap';
 import { initializeKeys } from './config/keys';
 
 const app: Application = express();
@@ -176,6 +178,7 @@ api.use('/ai-engine', authMiddleware, aiEngineRouter);         // AI providers, 
 api.use('/compliance', authMiddleware, complianceRouter);      // Data retention, experiments, security, monitoring
 api.use('/parent', authMiddleware, parentPortalRouter);        // Parent mobile app, child progress, family
 api.use('/collaboration', authMiddleware, collaborationRouter); // Collaborative stories, lesson plans, resources
+api.use('/onboarding', authMiddleware, tutorOnboardingRouter);  // 7-step tutor onboarding pipeline
 
 app.use('/api/v1', api);
 
@@ -202,6 +205,9 @@ async function start() {
 
     // Initialize hosting services
     initializeHostingServices();
+
+    // Initialize tutor onboarding service
+    initializeTutorOnboarding();
 
     server = app.listen(PORT, () => {
       logger.info({ port: PORT }, `Scholarly API Server running on port ${PORT}`);
