@@ -408,6 +408,7 @@ export async function getEnabledPluginImports(enabledPlugins: string[]): Promise
     'crm':               './plugins/crm-connector',
     'omnichannel':       './plugins/omnichannel-inbox',
     'ai-transcription':  './plugins/ai-transcription',
+    'resource-access':   './plugins/resource-access',
     'notifications':     './plugins/notifications',
     'scheduling':        './plugins/scheduling',
     'search':            './plugins/search-archive',
