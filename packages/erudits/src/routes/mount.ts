@@ -99,7 +99,7 @@ export function mountPublishingRoutes(service: PublishingEngineService): Router 
   // Version management
   router.post('/manuscripts/:id/versions', adapt(handlers.saveVersion));
   router.get('/manuscripts/:id/versions', adapt(handlers.listVersions));
-  router.post('/manuscripts/:id/versions/:versionId/restore', adapt(handlers.restoreVersion));
+  router.post('/manuscripts/:id/versions/:vid/restore', adapt(handlers.restoreVersion));
 
   // Chapters
   router.post('/manuscripts/:id/chapters', adapt(handlers.addChapter));
@@ -110,7 +110,7 @@ export function mountPublishingRoutes(service: PublishingEngineService): Router 
   // Cover design
   router.post('/manuscripts/:id/covers/generate', adapt(handlers.generateCover));
   router.post('/manuscripts/:id/covers/upload', adapt(handlers.uploadCover));
-  router.post('/manuscripts/:id/covers/:coverId/select', adapt(handlers.selectCover));
+  router.post('/manuscripts/:id/covers/:cid/select', adapt(handlers.selectCover));
 
   // Publishing
   router.post('/manuscripts/:id/publish', adapt(handlers.publish));
@@ -161,7 +161,7 @@ export function mountBookClubRoutes(service: BookClubService): Router {
 
   // Sessions
   router.post('/clubs/:id/sessions', adapt(handlers.scheduleSession));
-  router.post('/sessions/:id/complete', adapt(handlers.completeSession));
+  router.post('/sessions/:sid/complete', adapt(handlers.completeSession));
   router.get('/clubs/:id/sessions/upcoming', adapt(handlers.getUpcomingSessions));
 
   // Membership
@@ -170,11 +170,11 @@ export function mountBookClubRoutes(service: BookClubService): Router {
   router.get('/clubs/:id/members', adapt(handlers.getMembers));
 
   // AI features
-  router.post('/clubs/:clubId/readings/:readingId/questions', adapt(handlers.generateDiscussionQuestions));
+  router.post('/clubs/:id/readings/:rid/questions', adapt(handlers.generateDiscussionQuestions));
   router.post('/sessions/:id/guide', adapt(handlers.generateFacilitatorGuide));
 
   // Progress & Analytics
-  router.post('/clubs/:clubId/readings/:readingId/progress', adapt(handlers.markReadingComplete));
+  router.post('/clubs/:id/readings/:rid/progress', adapt(handlers.markReadingComplete));
   router.get('/clubs/:id/analytics', adapt(handlers.getAnalytics));
 
   return router;

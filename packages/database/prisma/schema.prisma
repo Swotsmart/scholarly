@@ -6979,7 +6979,7 @@ model PlatformMigration {
   importCompletedAt     DateTime?
   cutoverAt             DateTime?
   createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   contentItems          MigrationContentItem[]
 

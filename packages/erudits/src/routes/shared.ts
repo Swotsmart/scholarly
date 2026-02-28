@@ -104,7 +104,11 @@ export class HttpError extends Error {
  */
 export function sendResult<T>(res: RouteResponse, result: Result<T>, successCode = 200): void {
   if (result.success) {
-    res.status(successCode).json({ data: result.data });
+    if (successCode === 204) {
+      res.status(204).send();
+    } else {
+      res.status(successCode).json({ data: result.data });
+    }
   } else {
     const statusCode = mapErrorToStatus(result.error.code);
     res.status(statusCode).json({

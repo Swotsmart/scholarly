@@ -165,16 +165,11 @@ export class PrismaResourceRepository implements ResourceRepository {
   }
 
   async incrementPurchaseCount(_tenantId: string, id: string, amountCents: number): Promise<void> {
-    // Prisma doesn't support atomic increment in the basic API without raw SQL.
-    // Use a read-then-write within a short transaction window.
-    const current = await this.prisma.digitalResource.findUnique({ where: { id } });
-    if (!current) return;
-
     await this.prisma.digitalResource.update({
       where: { id },
       data: {
-        totalPurchases: (current.totalPurchases as number) + 1,
-        totalRevenueCents: (current.totalRevenueCents as number) + amountCents,
+        totalPurchases: { increment: 1 },
+        totalRevenueCents: { increment: amountCents },
       },
     });
   }
@@ -323,11 +318,9 @@ export class PrismaPurchaseRepository implements PurchaseRepository {
   }
 
   async incrementDownloadCount(_tenantId: string, id: string): Promise<void> {
-    const current = await this.prisma.resourcePurchase.findUnique({ where: { id } });
-    if (!current) return;
     await this.prisma.resourcePurchase.update({
       where: { id },
-      data: { downloadCount: (current.downloadCount as number) + 1 },
+      data: { downloadCount: { increment: 1 } },
     });
   }
 

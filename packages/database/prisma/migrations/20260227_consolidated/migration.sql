@@ -207,41 +207,17 @@ ON "TutorProfile" ("stripeConnectedAccountId")
 WHERE "stripeConnectedAccountId" IS NOT NULL;
 
 -- ============================================================================
--- Sprint 2: Add domain and profile fields to OnboardingSession
+-- Sprint 2: Add supplementary context fields to OnboardingSession
 -- ============================================================================
+-- Only adds columns not already present in the CREATE TABLE above.
 
--- Domain configuration (Step 4)
 ALTER TABLE "OnboardingSession"
-ADD COLUMN IF NOT EXISTS "domainName" TEXT,
-ADD COLUMN IF NOT EXISTS "domainType" TEXT,
-ADD COLUMN IF NOT EXISTS "domainStatus" TEXT;
-
--- Stripe Connect (Step 5)
-ALTER TABLE "OnboardingSession"
-ADD COLUMN IF NOT EXISTS "stripeAccountId" TEXT,
-ADD COLUMN IF NOT EXISTS "stripeOnboardingStatus" TEXT DEFAULT 'not_started';
-
--- Profile (Step 6)
-ALTER TABLE "OnboardingSession"
-ADD COLUMN IF NOT EXISTS "bio" TEXT,
-ADD COLUMN IF NOT EXISTS "profilePhotoUrl" TEXT,
-ADD COLUMN IF NOT EXISTS "profileCompleteness" INTEGER DEFAULT 0;
-
--- Go Live (Step 7)
-ALTER TABLE "OnboardingSession"
-ADD COLUMN IF NOT EXISTS "completedAt" TIMESTAMPTZ;
-
--- Additional session context needed for Steps 4-7
-ALTER TABLE "OnboardingSession"
+ADD COLUMN IF NOT EXISTS "profileCompleteness" INTEGER DEFAULT 0,
 ADD COLUMN IF NOT EXISTS "userEmail" TEXT,
 ADD COLUMN IF NOT EXISTS "displayName" TEXT,
 ADD COLUMN IF NOT EXISTS "subjects" TEXT[],
 ADD COLUMN IF NOT EXISTS "location" TEXT,
-ADD COLUMN IF NOT EXISTS "jurisdiction" TEXT,
-ADD COLUMN IF NOT EXISTS "businessName" TEXT,
-ADD COLUMN IF NOT EXISTS "subdomain" TEXT,
-ADD COLUMN IF NOT EXISTS "tutorProfileId" TEXT,
-ADD COLUMN IF NOT EXISTS "socialPosts" JSONB;
+ADD COLUMN IF NOT EXISTS "jurisdiction" TEXT;
 
 -- ============================================================================
 -- Sprint 2: Platform Migrations table (for Squarespace migration)

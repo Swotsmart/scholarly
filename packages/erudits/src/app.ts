@@ -210,7 +210,7 @@ function createAuthMiddleware(
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({
         error: {
-          code: 'UNAUTHORISED',
+          code: 'UNAUTHORIZED',
           message: 'Missing or invalid Authorization header',
         },
       });
@@ -224,7 +224,7 @@ function createAuthMiddleware(
       if (!user) {
         res.status(401).json({
           error: {
-            code: 'UNAUTHORISED',
+            code: 'UNAUTHORIZED',
             message: 'Invalid or expired token',
           },
         });
@@ -244,7 +244,7 @@ function createAuthMiddleware(
       console.error('[Auth] Token verification error:', (err as Error).message);
       res.status(401).json({
         error: {
-          code: 'UNAUTHORISED',
+          code: 'UNAUTHORIZED',
           message: 'Token verification failed',
         },
       });

@@ -38,14 +38,14 @@ function skipTake(filter: ListFilter): { skip: number; take: number } {
 export class PrismaContentProtectionPolicyRepository implements ContentProtectionPolicyRepository {
   constructor(private readonly delegate: PrismaDelegate<ContentProtectionPolicy>) {}
 
-  async save(_tenantId: string, policy: ContentProtectionPolicy): Promise<ContentProtectionPolicy> {
-    return this.delegate.create({ data: policy });
+  async save(tenantId: string, policy: ContentProtectionPolicy): Promise<ContentProtectionPolicy> {
+    return this.delegate.create({ data: { ...policy, tenantId } });
   }
-  async findByResource(_tenantId: string, resourceId: string): Promise<ContentProtectionPolicy | null> {
-    return this.delegate.findFirst({ where: { resourceId } });
+  async findByResource(tenantId: string, resourceId: string): Promise<ContentProtectionPolicy | null> {
+    return this.delegate.findFirst({ where: { tenantId, resourceId } });
   }
-  async update(_tenantId: string, resourceId: string, updates: StrictPartial<ContentProtectionPolicy>): Promise<ContentProtectionPolicy> {
-    const existing = await this.delegate.findFirst({ where: { resourceId } });
+  async update(tenantId: string, resourceId: string, updates: StrictPartial<ContentProtectionPolicy>): Promise<ContentProtectionPolicy> {
+    const existing = await this.delegate.findFirst({ where: { tenantId, resourceId } });
     if (!existing) throw new Error(`Policy not found for resource ${resourceId}`);
     return this.delegate.update({ where: { id: existing.id }, data: { ...updates, updatedAt: new Date() } });
   }
@@ -76,13 +76,13 @@ export class PrismaDeviceRegistrationRepository implements DeviceRegistrationRep
   async findByFingerprint(tenantId: string, licenceId: string, fingerprint: string): Promise<DeviceRegistration | null> {
     return this.delegate.findFirst({ where: { tenantId, licenceId, fingerprint } });
   }
-  async countActiveByLicence(_tenantId: string, licenceId: string): Promise<number> {
-    return this.delegate.count({ where: { licenceId, status: 'active' } });
+  async countActiveByLicence(tenantId: string, licenceId: string): Promise<number> {
+    return this.delegate.count({ where: { tenantId, licenceId, status: 'active' } });
   }
-  async update(_tenantId: string, id: string, updates: StrictPartial<DeviceRegistration>): Promise<DeviceRegistration> {
-    return this.delegate.update({ where: { id }, data: { ...updates, updatedAt: new Date() } });
+  async update(tenantId: string, id: string, updates: StrictPartial<DeviceRegistration>): Promise<DeviceRegistration> {
+    return this.delegate.update({ where: { id }, data: { ...updates, tenantId, updatedAt: new Date() } });
   }
-  async deactivate(_tenantId: string, id: string, reason: string, deregisteredBy: string): Promise<void> {
+  async deactivate(tenantId: string, id: string, reason: string, deregisteredBy: string): Promise<void> {
     await this.delegate.update({
       where: { id },
       data: { status: 'deregistered', deregisteredAt: new Date(), deregisteredBy, deregistrationReason: reason, updatedAt: new Date() },
@@ -95,8 +95,8 @@ export class PrismaDeviceRegistrationRepository implements DeviceRegistrationRep
 export class PrismaContentSessionRepository implements ContentSessionRepository {
   constructor(private readonly delegate: PrismaDelegate<ContentSession>) {}
 
-  async save(_tenantId: string, session: ContentSession): Promise<ContentSession> {
-    return this.delegate.create({ data: session });
+  async save(tenantId: string, session: ContentSession): Promise<ContentSession> {
+    return this.delegate.create({ data: { ...session, tenantId } });
   }
   async findById(tenantId: string, id: string): Promise<ContentSession | null> {
     return this.delegate.findFirst({ where: { id, tenantId } });
@@ -107,10 +107,10 @@ export class PrismaContentSessionRepository implements ContentSessionRepository 
   async findActiveByResource(tenantId: string, resourceId: string): Promise<ContentSession[]> {
     return this.delegate.findMany({ where: { tenantId, resourceId, status: 'active' }, orderBy: { startedAt: 'desc' } });
   }
-  async countActiveByLicence(_tenantId: string, licenceId: string): Promise<number> {
-    return this.delegate.count({ where: { licenceId, status: 'active' } });
+  async countActiveByLicence(tenantId: string, licenceId: string): Promise<number> {
+    return this.delegate.count({ where: { tenantId, licenceId, status: 'active' } });
   }
-  async update(_tenantId: string, id: string, updates: StrictPartial<ContentSession>): Promise<ContentSession> {
+  async update(tenantId: string, id: string, updates: StrictPartial<ContentSession>): Promise<ContentSession> {
     return this.delegate.update({ where: { id }, data: { ...updates, updatedAt: new Date() } });
   }
   async terminateExpired(_tenantId: string): Promise<number> {
@@ -124,8 +124,8 @@ export class PrismaContentSessionRepository implements ContentSessionRepository 
 export class PrismaDownloadRecordRepository implements DownloadRecordRepository {
   constructor(private readonly delegate: PrismaDelegate<DownloadRecord>) {}
 
-  async save(_tenantId: string, record: DownloadRecord): Promise<DownloadRecord> {
-    return this.delegate.create({ data: record });
+  async save(tenantId: string, record: DownloadRecord): Promise<DownloadRecord> {
+    return this.delegate.create({ data: { ...record, tenantId } });
   }
   async findById(tenantId: string, id: string): Promise<DownloadRecord | null> {
     return this.delegate.findFirst({ where: { id, tenantId } });
@@ -149,8 +149,8 @@ export class PrismaDownloadRecordRepository implements DownloadRecordRepository 
     ]);
     return paginate(items, total, filter);
   }
-  async countByDeviceAndResource(_tenantId: string, deviceId: string, resourceId: string): Promise<number> {
-    return this.delegate.count({ where: { deviceRegistrationId: deviceId, resourceId } });
+  async countByDeviceAndResource(tenantId: string, deviceId: string, resourceId: string): Promise<number> {
+    return this.delegate.count({ where: { tenantId, deviceRegistrationId: deviceId, resourceId } });
   }
 }
 
@@ -159,8 +159,8 @@ export class PrismaDownloadRecordRepository implements DownloadRecordRepository 
 export class PrismaEncryptionKeyRepository implements EncryptionKeyRepository {
   constructor(private readonly delegate: PrismaDelegate<EncryptionKeyRecord>) {}
 
-  async save(_tenantId: string, key: EncryptionKeyRecord): Promise<EncryptionKeyRecord> {
-    return this.delegate.create({ data: key });
+  async save(tenantId: string, key: EncryptionKeyRecord): Promise<EncryptionKeyRecord> {
+    return this.delegate.create({ data: { ...key, tenantId } });
   }
   async findActiveByResource(tenantId: string, resourceId: string): Promise<EncryptionKeyRecord | null> {
     return this.delegate.findFirst({ where: { tenantId, resourceId, isActive: true }, orderBy: { keyVersion: 'desc' } });
@@ -168,8 +168,8 @@ export class PrismaEncryptionKeyRepository implements EncryptionKeyRepository {
   async findByVersion(tenantId: string, resourceId: string, version: number): Promise<EncryptionKeyRecord | null> {
     return this.delegate.findFirst({ where: { tenantId, resourceId, keyVersion: version } });
   }
-  async deactivate(_tenantId: string, resourceId: string, version: number): Promise<void> {
-    const key = await this.delegate.findFirst({ where: { resourceId, keyVersion: version } });
+  async deactivate(tenantId: string, resourceId: string, version: number): Promise<void> {
+    const key = await this.delegate.findFirst({ where: { tenantId, resourceId, keyVersion: version } });
     if (key) await this.delegate.update({ where: { id: key.id }, data: { isActive: false, updatedAt: new Date() } });
   }
 }
@@ -179,8 +179,8 @@ export class PrismaEncryptionKeyRepository implements EncryptionKeyRepository {
 export class PrismaContentViolationRepository implements ContentViolationRepository {
   constructor(private readonly delegate: PrismaDelegate<ContentViolation>) {}
 
-  async save(_tenantId: string, violation: ContentViolation): Promise<ContentViolation> {
-    return this.delegate.create({ data: violation });
+  async save(tenantId: string, violation: ContentViolation): Promise<ContentViolation> {
+    return this.delegate.create({ data: { ...violation, tenantId } });
   }
   async findById(tenantId: string, id: string): Promise<ContentViolation | null> {
     return this.delegate.findFirst({ where: { id, tenantId } });
