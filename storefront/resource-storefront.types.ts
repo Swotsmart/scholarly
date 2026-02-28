@@ -53,22 +53,23 @@ export function failure<T>(error: ServiceError): Result<T> {
 export interface ServiceError {
   code: string;
   message: string;
+  httpStatus: number;
   details?: Record<string, unknown>;
 }
 
 export const Errors = {
   validation: (message: string, details?: Record<string, unknown>): ServiceError =>
-    ({ code: 'VALIDATION_ERROR', message, details }),
+    ({ code: 'VALIDATION_ERROR', message, httpStatus: 400, details }),
   notFound: (entity: string, id: string): ServiceError =>
-    ({ code: 'NOT_FOUND', message: `${entity} not found: ${id}` }),
+    ({ code: 'NOT_FOUND', message: `${entity} not found: ${id}`, httpStatus: 404 }),
   forbidden: (message: string): ServiceError =>
-    ({ code: 'FORBIDDEN', message }),
+    ({ code: 'FORBIDDEN', message, httpStatus: 403 }),
   conflict: (message: string): ServiceError =>
-    ({ code: 'CONFLICT', message }),
+    ({ code: 'CONFLICT', message, httpStatus: 409 }),
   internal: (message: string): ServiceError =>
-    ({ code: 'INTERNAL_ERROR', message }),
+    ({ code: 'INTERNAL_ERROR', message, httpStatus: 500 }),
   external: (service: string, message: string): ServiceError =>
-    ({ code: 'EXTERNAL_ERROR', message: `${service}: ${message}` }),
+    ({ code: 'EXTERNAL_ERROR', message: `${service}: ${message}`, httpStatus: 502 }),
 };
 
 /**
@@ -240,6 +241,8 @@ export interface ResourcePurchase {
   stripePaymentIntentId?: string | undefined;
   stripeChargeId?: string | undefined;
   licenceScope: LicenceScope;
+  institutionId?: string | undefined;
+  institutionName?: string | undefined;
   status: string; // 'pending' | 'completed' | 'refunded' | 'failed'
   downloadCount: number;
   lastDownloadedAt?: Date | undefined;

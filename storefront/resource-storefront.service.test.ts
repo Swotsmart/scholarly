@@ -947,6 +947,7 @@ describe('ResourceStorefrontService', () => {
       const r2 = await seedResource(service, deps, { title: 'Resource Two' });
 
       const resourceRepo = deps.resourceRepo as ReturnType<typeof createMockResourceRepo>;
+      const purchaseRepo = deps.purchaseRepo as ReturnType<typeof createMockPurchaseRepo>;
       const r1Data = resourceRepo._store.get(r1.id)!;
       r1Data.totalPurchases = 10; r1Data.totalRevenueCents = 15000; r1Data.averageRating = 4.5;
       resourceRepo._store.set(r1.id, r1Data);
@@ -955,7 +956,30 @@ describe('ResourceStorefrontService', () => {
       r2Data.totalPurchases = 5; r2Data.totalRevenueCents = 25000; r2Data.averageRating = 4.0;
       resourceRepo._store.set(r2.id, r2Data);
 
-      const result = await service.getAuthorAnalytics(TENANT_ID, AUTHOR_ID, new Date(), new Date());
+      // Seed actual purchase records within the date range for period-scoped analytics
+      const now = new Date();
+      for (let i = 0; i < 10; i++) {
+        purchaseRepo._store.set(`pur_r1_${i}`, {
+          id: `pur_r1_${i}`, tenantId: TENANT_ID, createdAt: now,
+          resourceId: r1.id, buyerId: `buyer_${i}`, buyerEmail: `b${i}@test.com`,
+          buyerName: `Buyer ${i}`, amountCents: 1500, currency: 'AUD',
+          platformFeeCents: 225, authorEarningsCents: 1275,
+          licenceScope: 'individual', status: 'completed', downloadCount: 0,
+        });
+      }
+      for (let i = 0; i < 5; i++) {
+        purchaseRepo._store.set(`pur_r2_${i}`, {
+          id: `pur_r2_${i}`, tenantId: TENANT_ID, createdAt: now,
+          resourceId: r2.id, buyerId: `buyer_r2_${i}`, buyerEmail: `b2_${i}@test.com`,
+          buyerName: `Buyer R2 ${i}`, amountCents: 5000, currency: 'AUD',
+          platformFeeCents: 750, authorEarningsCents: 4250,
+          licenceScope: 'individual', status: 'completed', downloadCount: 0,
+        });
+      }
+
+      const fromDate = new Date(now.getTime() - 86400000); // 1 day ago
+      const toDate = new Date(now.getTime() + 86400000); // 1 day from now
+      const result = await service.getAuthorAnalytics(TENANT_ID, AUTHOR_ID, fromDate, toDate);
       expect(result.success).toBe(true);
       if (!result.success) return;
       expect(result.data.totalResources).toBe(2);

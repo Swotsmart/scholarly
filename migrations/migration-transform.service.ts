@@ -279,7 +279,7 @@ export class MigrationTransformService implements IMigrationTransformService {
     // redirected to the new one.
     const urlMappings: Record<string, string> = {};
     const allMapped = await this.deps.contentRepo.findByMigration(
-      tenantId, migrationId, { status: 'mapped' as 'pending' },
+      tenantId, migrationId, { status: 'mapped' },
     );
     for (const item of allMapped) {
       if (item.sourceUrl && item.targetUrl) {
