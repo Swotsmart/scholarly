@@ -47,3 +47,4 @@ docs/api-keys/
 # Misc
 *.tsbuildinfo
 .turbo/
+.claude/worktrees/cranky-fermat/

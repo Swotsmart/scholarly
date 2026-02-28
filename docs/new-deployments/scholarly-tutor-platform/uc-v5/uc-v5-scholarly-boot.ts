@@ -54,12 +54,12 @@
 // In production, these come from '@scholarly/unified-communications'.
 // During Sprint 1, we reference the extracted package directly.
 
-import type { PlatformConfig, NatsBridgeConfig, ScholarlyAuthConfig } from '../uc-v4/src/config';
-import { mergeConfig } from '../uc-v4/src/config';
-import { EventBus } from '../uc-v4/src/bus/event-bus';
-import { NatsEventBridge } from '../uc-v4/src/adapters/nats-event-bridge';
-import { PrismaStorageAdapter } from '../uc-v4/src/adapters/prisma-storage-adapter';
-import { createScholarlyAuthMiddleware } from '../uc-v4/src/adapters/scholarly-auth-middleware';
+import type { PlatformConfig, NatsBridgeConfig, ScholarlyAuthConfig } from './config';
+import { mergeConfig } from './config';
+import { EventBus } from './bus/event-bus';
+import { NatsEventBridge } from './adapters/nats-event-bridge';
+import { PrismaStorageAdapter } from './adapters/prisma-storage-adapter';
+import { createScholarlyAuthMiddleware } from './adapters/scholarly-auth-middleware';
 
 // ============================================================================
 // §1 — CONFIGURATION
@@ -399,28 +399,37 @@ export const COMPETITION_PLATFORM_UC_DEPS = {
  */
 export async function getEnabledPluginImports(enabledPlugins: string[]): Promise<Record<string, string>> {
   /**
-   * Maps plugin IDs to their import paths within the UC package.
-   * In production, these resolve from '@scholarly/unified-communications/plugins/*'.
-   * During Sprint 1, they resolve from the extracted uc-v4 directory.
+   * Maps plugin IDs to their import paths within the UC v5.0 package.
+   *
+   * IMPORTANT: The 16 plugins are NOT yet included in this package. They will
+   * be added to the ./plugins/ directory as they are ported from the original
+   * UC codebase and adapted for v5.0. Until a plugin directory exists, any
+   * attempt to load it will be caught by the guard below (line ~434) and
+   * logged as a warning — the platform boots successfully without plugins.
+   *
+   * When plugins are deployed, they go into:
+   *   uc-v5/plugins/video/index.ts
+   *   uc-v5/plugins/chat/index.ts
+   *   etc.
    */
   const pluginImportMap: Record<string, string> = {
-    'video':             '../uc-v4/src/plugins/video',
-    'chat':              '../uc-v4/src/plugins/chat',
-    'telephony':         '../uc-v4/src/plugins/telephony',
-    'cloud-files':       '../uc-v4/src/plugins/cloud-files',
-    'whiteboard':        '../uc-v4/src/plugins/whiteboard',
-    'crm':               '../uc-v4/src/plugins/crm-connector',
-    'omnichannel':       '../uc-v4/src/plugins/omnichannel-inbox',
-    'ai-transcription':  '../uc-v4/src/plugins/ai-transcription',
-    'translation':       '../uc-v4/src/plugins/translation',
-    'agentic-ai':        '../uc-v4/src/plugins/agentic-ai',
-    'notifications':     '../uc-v4/src/plugins/notifications',
-    'scheduling':        '../uc-v4/src/plugins/scheduling',
-    'search':            '../uc-v4/src/plugins/search-archive',
-    'analytics':         '../uc-v4/src/plugins/analytics',
-    'compliance':        '../uc-v4/src/plugins/compliance',
-    'webinar':           '../uc-v4/src/plugins/webinar',
-    'approval-workflow': '../uc-v4/src/plugins/approval-workflow',
+    'video':             './plugins/video',
+    'chat':              './plugins/chat',
+    'telephony':         './plugins/telephony',
+    'cloud-files':       './plugins/cloud-files',
+    'whiteboard':        './plugins/whiteboard',
+    'crm':               './plugins/crm-connector',
+    'omnichannel':       './plugins/omnichannel-inbox',
+    'ai-transcription':  './plugins/ai-transcription',
+    'translation':       './plugins/translation',
+    'agentic-ai':        './plugins/agentic-ai',
+    'notifications':     './plugins/notifications',
+    'scheduling':        './plugins/scheduling',
+    'search':            './plugins/search-archive',
+    'analytics':         './plugins/analytics',
+    'compliance':        './plugins/compliance',
+    'webinar':           './plugins/webinar',
+    'approval-workflow': './plugins/approval-workflow',
   };
 
   const result: Record<string, string> = {};

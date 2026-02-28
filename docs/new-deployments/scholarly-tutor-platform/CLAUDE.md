@@ -38,12 +38,19 @@ scholarly-tutor-platform/
 │   ├── erudits-provisioning.ts        ← Provisions Érudits tenant with French curriculum config
 │   └── parallel-run-monitor.ts        ← Manages parallel-run period + cutover readiness
 │
-├── uc-v5/                             ← Unified Communications boot layer (585 lines)
+├── uc-v5/                             ← Unified Communications v5.0 — self-contained (2,266 lines)
 │   ├── uc-v5-scholarly-boot.ts        ← Boots UC v5.0 with Scholarly auth + NATS bridge
+│   ├── config/index.ts                ← Platform configuration types + merge utility
+│   ├── bus/event-bus.ts               ← In-process event bus
+│   ├── bus/event-types.ts             ← All UC event definitions
+│   ├── core/plugin-interface.ts       ← IUCPlugin contract + capability interfaces
+│   ├── adapters/nats-event-bridge.ts  ← NATS ↔ UC event bridge
+│   ├── adapters/prisma-storage-adapter.ts ← Prisma KV store adapter
+│   ├── adapters/scholarly-auth-middleware.ts ← JWT auth for Scholarly tenants
+│   ├── utils/logger.ts                ← Logging utility
 │   └── schema-additions.prisma        ← Prisma schema for UC + onboarding models
 │
-├── erudits-platform-v2_10_0.zip       ← Érudits source (27,025 lines, 60 TS files)
-└── unified-communications-5_0_0_tar.gz ← UC v5.0 source (30,513 lines, 62 TS files)
+└── erudits-platform-v2_10_0.zip       ← Érudits source (27,025 lines, 60 TS files)
 ```
 
 ## Architecture & Conventions
@@ -107,15 +114,14 @@ Every database query includes `tenantId`. Every service method receives
 - Redis 7+
 - NATS 2.10+
 
-### Step 1: Extract Source Archives
+### Step 1: Extract Érudits Source Archive
 
 ```bash
 # Extract Érudits platform
 unzip erudits-platform-v2_10_0.zip -d ./erudits
-
-# Extract UC v5.0
-tar xzf unified-communications-5_0_0_tar.gz -C ./uc-v5
 ```
+
+The UC v5.0 foundation is already self-contained in `uc-v5/` — no archive extraction needed.
 
 ### Step 2: Run Database Migration
 
@@ -185,10 +191,8 @@ Place files according to this mapping:
 | `integrations/` | `packages/api/src/integrations/` |
 | `migrations/*.ts` | `packages/api/src/migrations/` |
 | `migrations/*.sql` | `prisma/migrations/20260227_consolidated/` |
-| `uc-v5/uc-v5-scholarly-boot.ts` | `packages/uc-v5/src/boot.ts` |
-| `uc-v5/schema-additions.prisma` | `prisma/schema.prisma` (Section 7) |
+| `uc-v5/` | `packages/uc-v5/src/` |
 | `erudits/` | `packages/erudits/` |
-| `uc-v5/uc-v4/` | `packages/uc-v5/` |
 
 ### Step 7: Construct Services
 
@@ -278,11 +282,11 @@ if (assessment.ready) {
 | GoDaddy Domain client | 559 | Full API v1 coverage, OTE sandbox support |
 | Érudits provisioning | 553 | 7 subjects, Melbourne config, Squarespace extraction |
 | Parallel run monitor | 741 | 11-check readiness, 10-step cutover runbook |
-| UC v5.0 boot | 457 | JWT auth, NATS bridge, Prisma storage, 16 plugins |
-| Prisma schema additions | 128 | UC KV store + onboarding models |
+| UC v5.0 boot + foundation | 2,266 | Self-contained: boot, config, event bus, adapters, plugin interface |
+| Prisma schema additions | 128 | UC KV store + onboarding models (included in uc-v5/) |
 | Database migration | 323 | All DDL, idempotent |
 | Test suite | 684 | Steps 1–3 flow, 10 mock factories |
-| **Subtotal** | **6,835** | |
+| **Subtotal (new code)** | **8,644** | |
 
 ### 🔲 Sprint 3 (Next)
 
@@ -332,6 +336,11 @@ auth and event bridging.
 - **Never use placeholder implementations** — every method must be complete
 - **Never commit `.env` files** — only `.env.template` with empty values
 - **Never modify the source archives** — they are reference copies; port what you need
+- **Never reference UC v3 or v4** — Previous versions of Unified Communications
+  (v3.0/3.2) were developed but never actually deployed into the Scholarly monorepo.
+  The `uc-v5/` directory in this package is the first and only UC deployment. There is
+  nothing to migrate from or remove — this is a clean install. The 16 plugins are
+  loaded dynamically at runtime and will be added to this package as needed.
 
 ## Érudits-Specific Context
 
