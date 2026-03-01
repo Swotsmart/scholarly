@@ -993,7 +993,7 @@ export {
   // Scales
   scaleLinear, scaleBand, scaleOrdinal, scaleSequential, scaleTime, scaleLog, scalePow, scalePoint,
   // Shapes
-  line, area, arc, pie, stack, curve, curveMonotoneX, curveBasis, curveStep, curveCardinal,
+  line, area, arc, pie, stack, curveMonotoneX, curveBasis, curveStep, curveCardinal,
   // Layouts
   bin, histogram, treemap, pack, partition, tree, cluster,
   // Axes
