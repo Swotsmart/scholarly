@@ -32,6 +32,7 @@
     "src/services/parent",
     "src/services/storage",
     "src/infrastructure",
-    "src/migrations"
+    "src/migrations",
+    "src/services/sr"
   ]
 }

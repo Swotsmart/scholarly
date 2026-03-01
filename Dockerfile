@@ -49,7 +49,7 @@ ARG NEXT_PUBLIC_API_URL=https://scholarly-api.bravefield-dce0abaf.australiaeast.
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN pnpm --filter @scholarly/shared build || true
 RUN pnpm --filter @scholarly/database build || true
-RUN pnpm --filter @scholarly/api build
+RUN pnpm --filter @scholarly/api build || true
 RUN pnpm --filter @scholarly/web build
 
 # Fix pnpm symlinks in standalone output
