@@ -1,11 +1,7 @@
-import { Suspense } from 'react';
-import { Metadata } from 'next';
-import { SRCanvasClient } from '@/components/canvas/sr-canvas-client';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'S&R Canvas | Scholarly',
-  description: 'Visual workflow designer for Sense & Respond automation pipelines.',
-};
+import { Suspense } from 'react';
+import { SRCanvasClient } from '@/components/canvas/sr-canvas-client';
 
 // Canvas loading skeleton — gives immediate visual feedback while the
 // heavy canvas component hydrates. The skeleton mirrors the canvas
