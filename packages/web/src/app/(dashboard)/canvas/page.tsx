@@ -1,11 +1,16 @@
 'use client';
 
-import { Suspense } from 'react';
-import { SRCanvasClient } from '@/components/canvas/sr-canvas-client';
+import React, { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 
-// Canvas loading skeleton — gives immediate visual feedback while the
-// heavy canvas component hydrates. The skeleton mirrors the canvas
-// layout: a left palette panel, centre canvas area, right inspector.
+// Dynamically import the canvas client with SSR disabled — the canvas
+// uses browser-only APIs (mouse events, getBoundingClientRect, etc.)
+// and is 3800+ lines that must not crash the dashboard layout.
+const SRCanvasClient = dynamic(
+  () => import('@/components/canvas/sr-canvas-client'),
+  { ssr: false, loading: () => <CanvasLoadingSkeleton /> }
+);
+
 function CanvasLoadingSkeleton() {
   return (
     <div className="flex h-[calc(100vh-64px)] bg-[#0F1923]">
@@ -38,10 +43,47 @@ function CanvasLoadingSkeleton() {
   );
 }
 
+class CanvasErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: string }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: '' };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error.message };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex h-[calc(100vh-64px)] items-center justify-center bg-[#0F1923]">
+          <div className="text-center space-y-4 max-w-md">
+            <div className="text-4xl">&#x26A0;&#xFE0F;</div>
+            <h2 className="text-lg font-semibold text-[#E8ECF0]">Canvas failed to load</h2>
+            <p className="text-sm text-[#8BA4B8]">{this.state.error}</p>
+            <button
+              onClick={() => this.setState({ hasError: false, error: '' })}
+              className="px-4 py-2 bg-[#4DA6FF] text-white rounded text-sm hover:bg-[#3D96EF] transition-colors"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function CanvasPage() {
   return (
-    <Suspense fallback={<CanvasLoadingSkeleton />}>
-      <SRCanvasClient />
-    </Suspense>
+    <CanvasErrorBoundary>
+      <Suspense fallback={<CanvasLoadingSkeleton />}>
+        <SRCanvasClient />
+      </Suspense>
+    </CanvasErrorBoundary>
   );
 }
