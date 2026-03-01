@@ -251,7 +251,10 @@ class SquarespaceTransport {
    * Returns the parsed JSON body on success, or a failure Result on error.
    */
   async get<T>(path: string, params?: Record<string, string>): Promise<Result<T>> {
-    const url = new URL(path, this.config.baseUrl);
+    const url = new URL(this.config.baseUrl);
+    const basePath = url.pathname.replace(/\/+$/, '');
+    const relPath = path.replace(/^\/+/, '');
+    url.pathname = relPath ? `${basePath}/${relPath}` : basePath || '/';
     if (params) {
       for (const [k, v] of Object.entries(params)) {
         if (v !== undefined && v !== '') url.searchParams.set(k, v);
@@ -428,12 +431,17 @@ export class SquarespaceClient implements PlatformSourceClient {
   async exportSite(_siteUrl: string): Promise<Result<PlatformExportData>> {
     this.config.log('info', 'Starting site export', { siteId: this.config.siteId });
 
-    // Fire all collection fetches concurrently
+    // Fetch raw pages first — reused by fetchPages, fetchBlogPosts, and fetchNavigation
+    const rawPagesRes = await this.fetchRawPages();
+    if (!rawPagesRes.ok) return rawPagesRes;
+    const rawPages = rawPagesRes.value;
+
+    // Fire remaining collection fetches concurrently, passing raw pages where needed
     const [pagesRes, productsRes, postsRes, membersRes, navRes, settingsRes] =
       await Promise.all([
-        this.fetchPages(),
+        this.fetchPages(rawPages),
         this.fetchProducts(),
-        this.fetchBlogPosts(),
+        this.fetchBlogPosts(rawPages),
         this.fetchMembers(),
         this.fetchNavigation(),
         this.fetchSiteSettings(),
@@ -499,13 +507,14 @@ export class SquarespaceClient implements PlatformSourceClient {
   // Private: Collection fetchers
   // ──────────────────────────────────────────────────────────────────────
 
-  private async fetchPages(): Promise<Result<PlatformExportData['pages']>> {
-    const result = await drainCollection<SqspPage>(
+  private async fetchRawPages(): Promise<Result<SqspPage[]>> {
+    return drainCollection<SqspPage>(
       this.transport, '/pages', 'items', this.config,
     );
-    if (!result.ok) return result;
+  }
 
-    return success(result.value.map(p => ({
+  private async fetchPages(rawPages: SqspPage[]): Promise<Result<PlatformExportData['pages']>> {
+    return success(rawPages.map(p => ({
       id: p.id,
       url: `/${p.urlId}`,
       title: p.title || 'Untitled',
@@ -543,20 +552,17 @@ export class SquarespaceClient implements PlatformSourceClient {
     })));
   }
 
-  private async fetchBlogPosts(): Promise<Result<PlatformExportData['posts']>> {
+  private async fetchBlogPosts(rawPages: SqspPage[]): Promise<Result<PlatformExportData['posts']>> {
     // Squarespace blog posts are nested under blog collections.
-    // First, find blog-type pages; then pull posts from each.
-    const pagesRes = await drainCollection<SqspPage>(
-      this.transport, '/pages', 'items', this.config,
-    );
-    if (!pagesRes.ok) return pagesRes;
+    // We reuse the pre-fetched raw pages to discover blog collections,
+    // avoiding a duplicate request to the /pages endpoint.
 
     // Blog pages are identified by having a collection with a blog type.
     // In Commerce API v1, we use the /blog/{collectionId}/posts endpoint.
     // As a heuristic, pages whose body is empty but have a collection ID
     // are blog index pages. For safety, we also try the standard /blog endpoint.
     const blogCollectionIds: string[] = [];
-    for (const page of pagesRes.value) {
+    for (const page of rawPages) {
       if (page.collection?.id) {
         blogCollectionIds.push(page.collection.id);
       }

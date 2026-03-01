@@ -55,6 +55,20 @@ import type { HealthProber, HealthProbeConfig } from './sr-health-prober';
 
 
 // ============================================================================
+// §0 — DOMAIN VALIDATION
+// ============================================================================
+
+/**
+ * Validates a domain string against a strict regex to prevent command injection
+ * in shell commands (dig, openssl, terraform). Only allows alphanumeric
+ * characters, hyphens, and dots in standard domain name format.
+ */
+function validateDomain(domain: string): boolean {
+  return /^[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}$/.test(domain) && domain.length <= 253;
+}
+
+
+// ============================================================================
 // §1 — CONFIGURATION
 // ============================================================================
 
@@ -193,10 +207,18 @@ export class MigrationCutoverService implements CutoverService {
     const record = await this.config.cutoverStore.findByMigration(tenantId, migrationId);
     if (!record) return failure(Errors.notFound('CutoverRecord', migrationId));
 
+    if (!validateDomain(record.domain)) {
+      return failure(Errors.validation(`Invalid domain name: ${record.domain}`));
+    }
+
     if (this.config.provider === 'mock') {
       this.log('info', '[DRY RUN] Would provision SSL for domain', { domain: record.domain });
       await this.config.cutoverStore.update(tenantId, migrationId, { sslProvisioned: true });
       return success({ dryRun: true, domain: record.domain });
+    }
+
+    if (this.config.provider === 'azure') {
+      return failure(Errors.internal('Azure cutover provider is not yet implemented'));
     }
 
     if (this.config.provider === 'terraform') {
@@ -208,9 +230,6 @@ export class MigrationCutoverService implements CutoverService {
         return failure(Errors.internal(`SSL provisioning failed: ${result.stderr.slice(0, 500)}`));
       }
     }
-
-    // For Azure: managed certificate is provisioned automatically with custom domain binding
-    // The executeCutover step handles the actual domain binding
 
     await this.config.cutoverStore.update(tenantId, migrationId, { sslProvisioned: true });
     this.log('info', 'SSL provisioned', { domain: record.domain });
@@ -227,6 +246,10 @@ export class MigrationCutoverService implements CutoverService {
 
     const record = await this.config.cutoverStore.findByMigration(tenantId, migrationId);
     if (!record) return failure(Errors.notFound('CutoverRecord', migrationId));
+
+    if (!validateDomain(record.domain)) {
+      return failure(Errors.validation(`Invalid domain name: ${record.domain}`));
+    }
 
     if (this.config.provider === 'mock') {
       this.log('info', '[DRY RUN] Would execute cutover', {
@@ -246,6 +269,10 @@ export class MigrationCutoverService implements CutoverService {
         proxyActivated: true,
       });
       return success(mockResult);
+    }
+
+    if (this.config.provider === 'azure') {
+      return failure(Errors.internal('Azure cutover provider is not yet implemented'));
     }
 
     // Execute DNS changes via the configured provider
@@ -301,6 +328,10 @@ export class MigrationCutoverService implements CutoverService {
       return failure(Errors.validation(`Cannot rollback: cutover is in '${record.status}' state, expected 'active'`));
     }
 
+    if (!validateDomain(record.domain)) {
+      return failure(Errors.validation(`Invalid domain name: ${record.domain}`));
+    }
+
     if (this.config.provider === 'mock') {
       this.log('info', '[DRY RUN] Would rollback DNS to previous records', {
         domain: record.domain,
@@ -311,6 +342,10 @@ export class MigrationCutoverService implements CutoverService {
         rolledBackAt: new Date().toISOString(),
       });
       return success({ rolledBack: true, reason, dryRun: true });
+    }
+
+    if (this.config.provider === 'azure') {
+      return failure(Errors.internal('Azure cutover provider is not yet implemented'));
     }
 
     if (this.config.provider === 'terraform') {
@@ -377,6 +412,9 @@ export class MigrationCutoverService implements CutoverService {
   }
 
   private async checkCurrentDns(domain: string): Promise<PreflightResult['checks'][0]> {
+    if (!validateDomain(domain)) {
+      return { name: 'current_dns', status: 'fail', detail: `Invalid domain name: ${domain}` };
+    }
     try {
       const result = await this.exec(`dig +short ${domain}`);
       const resolved = result.stdout.trim();
@@ -393,6 +431,11 @@ export class MigrationCutoverService implements CutoverService {
   }
 
   private async pollDnsVerification(domain: string, maxWaitMs: number): Promise<boolean> {
+    if (!validateDomain(domain)) {
+      this.log('error', 'Invalid domain name in DNS verification', { domain });
+      return false;
+    }
+
     const startTime = Date.now();
     const intervals = [2000, 5000, 10000, 15000, 30000]; // Escalating poll intervals
 

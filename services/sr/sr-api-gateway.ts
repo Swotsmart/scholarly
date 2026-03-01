@@ -84,7 +84,7 @@ export interface RequestContext {
 export interface ApiResponse<T = unknown> {
   ok: boolean;
   data?: T;
-  error?: { code: string; message: string };
+  error?: { code: string; message: string; statusCode?: number };
   meta?: { timestamp: string; requestId: string };
 }
 
@@ -1031,6 +1031,16 @@ export function createRouteHandlers(deps: GatewayDeps): {
     next();
   };
 
+  // Compose middleware with a route handler
+  const withRateCheck = (handler: RouteHandler): RouteHandler => {
+    return (req, res, next) => {
+      rateCheck(req, res, (err?: unknown) => {
+        if (err) { next(err); return; }
+        handler(req, res, next);
+      });
+    };
+  };
+
   const routes: Array<{ method: string; path: string; handler: RouteHandler }> = [
     // ── Workflow CRUD ─────────────────────────────────────────────
     {
@@ -1088,19 +1098,19 @@ export function createRouteHandlers(deps: GatewayDeps): {
     {
       method: 'POST',
       path: '/api/v1/workflows/:id/execute',
-      handler: async (req, res) => {
+      handler: withRateCheck(async (req, res) => {
         const ctx = extractContext(req);
         const result = await handleExecuteWorkflow(req.params['id']!, req.body as { userId?: string }, ctx, {
           workflowStore: deps.workflowStore,
           runner: deps.runner,
         });
         res.status(result.ok ? 200 : 400).json(result);
-      },
+      }),
     },
     {
       method: 'POST',
       path: '/api/v1/runs/:id/resume',
-      handler: async (req, res) => {
+      handler: withRateCheck(async (req, res) => {
         const ctx = extractContext(req);
         const result = await handleResumeRun(req.params['id']!, req.body as { data?: Record<string, unknown> }, ctx, {
           runner: deps.runner,
@@ -1108,18 +1118,18 @@ export function createRouteHandlers(deps: GatewayDeps): {
           runStore: deps.runStore,
         });
         res.status(result.ok ? 200 : 400).json(result);
-      },
+      }),
     },
     {
       method: 'POST',
       path: '/api/v1/runs/:id/cancel',
-      handler: async (req, res) => {
+      handler: withRateCheck(async (req, res) => {
         const ctx = extractContext(req);
         const result = await handleCancelRun(req.params['id']!, req.body as { reason?: string }, ctx, {
           runner: deps.runner,
         });
         res.status(result.ok ? 200 : 400).json(result);
-      },
+      }),
     },
     {
       method: 'GET',
@@ -1191,15 +1201,15 @@ function apiSuccess<T>(data: T): ApiResponse<T> {
   };
 }
 
-function apiError(code: string, message: string, _statusCode: number): ApiResponse<never> {
+function apiError(code: string, message: string, statusCode: number): ApiResponse<never> {
   return {
     ok: false,
-    error: { code, message },
+    error: { code, message, statusCode },
     meta: {
       timestamp: new Date().toISOString(),
       requestId: generateGatewayId('req'),
     },
-  };
+  } as ApiResponse<never>;
 }
 
 

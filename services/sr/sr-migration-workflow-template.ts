@@ -389,9 +389,25 @@ export function createPlatformSourceNode(): NodeTypeDefinition {
       for (const url of imageUrls) {
         const dlResult = await sourceClient.downloadAsset(url);
         if (dlResult.ok) {
-          const fileName = url.split('/').pop() || `img_${Date.now()}`;
+          let fileName: string;
+          let mimeHintUrl: string;
+          try {
+            const parsed = new URL(url);
+            const pathname = parsed.pathname || '';
+            const baseName = pathname.split('/').pop() || '';
+            fileName = baseName || `img_${Date.now()}`;
+            mimeHintUrl = pathname || url;
+          } catch {
+            const withoutQuery = url.split('?')[0].split('#')[0];
+            const baseName = withoutQuery.split('/').pop() || '';
+            fileName = baseName || `img_${Date.now()}`;
+            mimeHintUrl = withoutQuery || url;
+          }
           const key = `migrations/${migrationId}/images/${fileName}`;
-          await fileStorage.upload(key, dlResult.value, guessMimeType(url));
+          const uploadResult = await fileStorage.upload(key, dlResult.value, guessMimeType(mimeHintUrl));
+          if (!uploadResult.ok) {
+            continue;
+          }
           items.push({
             id: `ci_${migrationId}_img_${fileName}`, migrationId, tenantId: ctx.tenantId,
             sourceType: 'image', sourceId: url, sourceUrl: url,
@@ -465,6 +481,10 @@ export function createCDCExtractNode(): NodeTypeDefinition {
       if (!adapterRes.ok) return adapterRes;
 
       const migrationId = getConfig<string>(ctx, 'migrationId', '');
+      if (!migrationId || migrationId.trim().length === 0) {
+        return failure(Errors.validation('migrationId is required and must be a non-empty string'));
+      }
+
       const items = ctx.inputs['items'] as ContentItem[] | undefined;
 
       if (!items || items.length === 0) {
@@ -649,6 +669,11 @@ export function createServiceImportNode(): NodeTypeDefinition {
 
       const migrationId = getConfig<string>(ctx, 'migrationId', '');
 
+      const approved = ctx.inputs['approved'];
+      if ('approved' in ctx.inputs && !approved) {
+        return failure(Errors.validation('Import cannot proceed: approved items input is falsy — review may have rejected all items'));
+      }
+
       ctx.log('info', 'Starting service import via Data Lake', { migrationId });
 
       // The adapter handles per-item delegation to CMS/Storefront/Auth,
@@ -709,8 +734,18 @@ export function createInfrastructureCutoverNode(): NodeTypeDefinition {
     executionHint: 'long_running',
 
     execute: async (ctx: NodeExecutionContext): Promise<Result<NodeOutput>> => {
-      // Cutover pauses for explicit human trigger — the operator reviews
-      // the import results and decides when to go live.
+      // LIMITATION: The workflow engine's pause/resume mechanism does not re-invoke
+      // execute() on resume. When resume() is called, the runner takes the provided
+      // nodeOutputData, places it on this node's output ports (e.g. cutoverResult),
+      // marks the node as completed, and continues to the next layer. This means
+      // the actual cutover work (pre-flight checks, SSL provisioning, DNS
+      // verification, proxy activation) must be performed EXTERNALLY before calling
+      // resume(). The resume caller must provide { cutoverResult: CutoverResult }
+      // containing the results of the externally-executed cutover sequence.
+      //
+      // To add in-engine cutover execution, the engine would need an onResume()
+      // handler or the resume() method would need to re-invoke execute() with a
+      // 'resumed' flag in context.
       const migrationId = getConfig<string>(ctx, 'migrationId', '');
 
       ctx.log('info', 'Cutover stage reached — awaiting operator confirmation', { migrationId });
@@ -721,7 +756,7 @@ export function createInfrastructureCutoverNode(): NodeTypeDefinition {
 
       return success({
         __paused: true,
-        __pauseReason: 'Import complete. Review results and confirm cutover when ready.',
+        __pauseReason: 'Import complete. Perform cutover externally (pre-flight, SSL, DNS, proxy) then resume with { cutoverResult: CutoverResult }.',
       });
     },
   };
@@ -748,7 +783,7 @@ export function createHealthMonitorNode(): NodeTypeDefinition {
       { portId: 'healthResult', label: 'Health Check Result', dataType: 'record', required: true },
     ],
     configSchema: {
-      migrationId: 'string?',
+      migrationId: 'string',
       targetUrl: 'string?',
       checkInterval: 'number?',
     },
@@ -810,6 +845,9 @@ export function createQualityAuditNode(): NodeTypeDefinition {
       if (!adapterRes.ok) return adapterRes;
 
       const migrationId = getConfig<string>(ctx, 'migrationId', '');
+      if (!migrationId || migrationId.trim().length === 0) {
+        return failure(Errors.validation('migrationId is required and must be a non-empty string'));
+      }
 
       ctx.log('info', 'Running Data Lake quality audit');
 

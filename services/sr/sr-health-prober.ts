@@ -38,6 +38,20 @@ import type { HealthCheckResult } from './sr-migration-workflow-template';
 
 
 // ============================================================================
+// §0 — DOMAIN VALIDATION
+// ============================================================================
+
+/**
+ * Validates a domain string against a strict regex to prevent command injection
+ * in shell commands (dig, openssl). Only allows alphanumeric characters,
+ * hyphens, and dots in standard domain name format.
+ */
+function validateDomain(domain: string): boolean {
+  return /^[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}$/.test(domain) && domain.length <= 253;
+}
+
+
+// ============================================================================
 // §1 — CONFIGURATION & TYPES
 // ============================================================================
 
@@ -156,6 +170,9 @@ export class HealthProber {
     domain: string,
     exec: (cmd: string) => Promise<{ stdout: string; stderr: string; exitCode: number }>,
   ): Promise<CheckResult> {
+    if (!validateDomain(domain)) {
+      return { name: 'dns_resolution', status: 'fail', responseTimeMs: 0, detail: `Invalid domain name: ${domain}` };
+    }
     const start = Date.now();
     try {
       const result = await exec(`dig +short +time=5 ${domain}`);
@@ -181,6 +198,9 @@ export class HealthProber {
     domain: string,
     exec: (cmd: string) => Promise<{ stdout: string; stderr: string; exitCode: number }>,
   ): Promise<CheckResult> {
+    if (!validateDomain(domain)) {
+      return { name: 'ssl_certificate', status: 'fail', responseTimeMs: 0, detail: `Invalid domain name: ${domain}` };
+    }
     const start = Date.now();
     try {
       // Use openssl to check certificate expiry

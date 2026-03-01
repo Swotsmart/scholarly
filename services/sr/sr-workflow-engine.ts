@@ -819,10 +819,19 @@ export function topologicalSort(
     for (const neighbor of adjacency.get(nodeId) || []) {
       const newDegree = (inDegree.get(neighbor) || 0) - 1;
       inDegree.set(neighbor, newDegree);
+
+      // Compute candidate layer for neighbor based on this parent.
+      const parentLayer = layerOf.get(nodeId) ?? layer;
+      const candidateLayer = parentLayer + 1;
+      const existingNeighborLayer = layerOf.get(neighbor);
+      const updatedNeighborLayer =
+        existingNeighborLayer === undefined
+          ? candidateLayer
+          : Math.max(existingNeighborLayer, candidateLayer);
+      layerOf.set(neighbor, updatedNeighborLayer);
+
       if (newDegree === 0) {
-        const neighborLayer = layer + 1;
-        queue.push({ nodeId: neighbor, layer: neighborLayer });
-        layerOf.set(neighbor, neighborLayer);
+        queue.push({ nodeId: neighbor, layer: updatedNeighborLayer });
       }
     }
   }
@@ -1145,19 +1154,28 @@ export class WorkflowRunner {
     const layers = layersResult.value;
     const nodeMap = new Map(definition.nodes.map(n => [n.nodeId, n]));
 
-    // Find the layer after the paused node and continue from there
+    // Find the paused node's layer and continue from there, executing
+    // any nodes in that layer that are still pending (not yet completed).
     let foundPausedLayer = false;
 
     for (const layer of layers) {
       if (!foundPausedLayer) {
         if (layer.nodeIds.includes(pausedNodeId)) {
           foundPausedLayer = true;
+          // Fall through to execute remaining pending nodes in this layer
+        } else {
+          continue; // Skip layers before the paused node's layer
         }
-        continue; // Skip layers up to and including the paused node's layer
       }
 
-      // Execute remaining layers
+      // Execute remaining layers (including pending nodes in the paused layer)
       for (const nodeId of layer.nodeIds) {
+        // Skip nodes that have already completed (or are the paused node itself,
+        // which was marked completed above when we stored its output data)
+        const existingNodeRun = run.nodeRuns.find(nr => nr.nodeId === nodeId);
+        if (existingNodeRun && existingNodeRun.status === 'completed') {
+          continue;
+        }
         const node = nodeMap.get(nodeId)!;
         const nodeType = this.deps.registry.get(node.typeId);
         if (!nodeType) {
