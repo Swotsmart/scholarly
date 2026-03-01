@@ -1,15 +1,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
-import dynamic from 'next/dynamic';
-
-// Dynamically import the canvas client with SSR disabled — the canvas
-// uses browser-only APIs (mouse events, getBoundingClientRect, etc.)
-// and is 3800+ lines that must not crash the dashboard layout.
-const SRCanvasClient = dynamic(
-  () => import('@/components/canvas/sr-canvas-client'),
-  { ssr: false, loading: () => <CanvasLoadingSkeleton /> }
-);
+import { SRCanvasClient } from '@/components/canvas/sr-canvas-client';
 
 function CanvasLoadingSkeleton() {
   return (

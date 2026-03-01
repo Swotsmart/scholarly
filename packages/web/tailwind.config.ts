@@ -193,8 +193,8 @@ const config: Config = {
       },
       // Design System v2.0 - Typography
       fontFamily: {
-        sans: ['var(--font-inter)', 'SF Pro Display', 'system-ui', 'sans-serif'],
-        display: ['var(--font-inter)', 'SF Pro Display', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-sans)', 'Open Sans', 'system-ui', 'sans-serif'],
+        display: ['var(--font-sans)', 'Open Sans', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         // Design System v2.0 - Text scale

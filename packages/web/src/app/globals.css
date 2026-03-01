@@ -3,140 +3,140 @@
 @tailwind utilities;
 
 /* ============================================
-   Scholarly UI Theme - Catppuccin-inspired
-   Purple Primary + Cyan Accent
+   Scholarly UI Theme
+   Primary Blue #1e9df1 + Dark Ink #0f1419
    ============================================ */
 
 @layer base {
   :root {
     /* Primary Theme Colors */
-    --background: 228 33% 97%;              /* #eff1f5 */
-    --foreground: 234 16% 35%;              /* #4c4f69 */
+    --background: 0 0% 100%;               /* #ffffff */
+    --foreground: 210 25% 8%;              /* #0f1419 */
 
     /* Card & Popover */
-    --card: 0 0% 100%;                      /* #ffffff */
-    --card-foreground: 234 16% 35%;         /* #4c4f69 */
-    --popover: 230 21% 80%;                 /* #ccd0da */
-    --popover-foreground: 234 16% 35%;      /* #4c4f69 */
+    --card: 180 7% 97%;                    /* #f7f8f8 */
+    --card-foreground: 210 25% 8%;         /* #0f1419 */
+    --popover: 0 0% 100%;                  /* #ffffff */
+    --popover-foreground: 210 25% 8%;      /* #0f1419 */
 
-    /* Primary Purple: #8839ef */
-    --primary: 270 85% 58%;
-    --primary-foreground: 0 0% 100%;        /* #ffffff */
+    /* Primary Blue: #1e9df1 */
+    --primary: 204 88% 53%;
+    --primary-foreground: 0 0% 100%;       /* #ffffff */
 
-    /* Secondary: #ccd0da */
-    --secondary: 230 21% 80%;
-    --secondary-foreground: 234 16% 35%;    /* #4c4f69 */
+    /* Secondary: #0f1419 */
+    --secondary: 210 25% 8%;
+    --secondary-foreground: 0 0% 100%;     /* #ffffff */
 
-    /* Muted: #dce0e8 */
-    --muted: 228 33% 89%;
-    --muted-foreground: 233 10% 47%;        /* #6c6f85 */
+    /* Muted: #e5e5e6 */
+    --muted: 240 2% 90%;
+    --muted-foreground: 210 25% 8%;        /* #0f1419 */
 
-    /* Accent Cyan: #04a5e5 */
-    --accent: 193 97% 46%;
-    --accent-foreground: 0 0% 100%;         /* #ffffff */
+    /* Accent: #e3ecf6 */
+    --accent: 212 51% 93%;
+    --accent-foreground: 204 88% 53%;      /* #1e9df1 */
 
-    /* Destructive Red: #d20f39 */
-    --destructive: 351 89% 44%;
+    /* Destructive Red: #f4212e */
+    --destructive: 356 91% 54%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Success Green: #40a02b */
-    --success: 109 57% 40%;
+    /* Success Green: #00b87a */
+    --success: 160 100% 36%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning Orange: #fe640b */
-    --warning: 23 99% 52%;
+    /* Warning Yellow: #f7b928 */
+    --warning: 42 93% 56%;
     --warning-foreground: 0 0% 100%;
 
-    /* Border & Input: #bcc0cc */
-    --border: 227 18% 77%;
-    --input: 230 21% 80%;                   /* #ccd0da */
-    --ring: 270 85% 58%;                    /* matches primary */
+    /* Border & Input */
+    --border: 201 30% 91%;                 /* #e1eaef */
+    --input: 200 23% 97%;                  /* #f7f9fa */
+    --ring: 203 89% 53%;                   /* #1da1f2 */
 
     /* Chart Colors */
-    --chart-1: 270 85% 58%;                 /* #8839ef purple */
-    --chart-2: 193 97% 46%;                 /* #04a5e5 cyan */
-    --chart-3: 109 57% 40%;                 /* #40a02b green */
-    --chart-4: 23 99% 52%;                  /* #fe640b orange */
-    --chart-5: 19 41% 67%;                  /* #dc8a78 peach */
+    --chart-1: 204 88% 53%;               /* #1e9df1 blue */
+    --chart-2: 160 100% 36%;              /* #00b87a green */
+    --chart-3: 42 93% 56%;                /* #f7b928 yellow */
+    --chart-4: 147 79% 42%;               /* #17bf63 green */
+    --chart-5: 341 75% 51%;               /* #e0245e pink */
 
     /* Sidebar Colors */
-    --sidebar: 228 25% 92%;                 /* #e6e9ef */
-    --sidebar-foreground: 234 16% 35%;      /* #4c4f69 */
-    --sidebar-primary: 270 85% 58%;         /* #8839ef */
+    --sidebar: 180 7% 97%;                /* #f7f8f8 */
+    --sidebar-foreground: 210 25% 8%;     /* #0f1419 */
+    --sidebar-primary: 204 88% 53%;       /* #1e9df1 */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 193 97% 46%;          /* #04a5e5 */
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 227 18% 77%;          /* #bcc0cc */
-    --sidebar-ring: 270 85% 58%;
+    --sidebar-accent: 212 51% 93%;        /* #e3ecf6 */
+    --sidebar-accent-foreground: 204 88% 53%;
+    --sidebar-border: 205 25% 91%;        /* #e1e8ed */
+    --sidebar-ring: 203 89% 53%;
 
     /* Border Radius */
-    --radius: 0.35rem;
+    --radius: 1.3rem;
 
     /* Font families */
-    --font-sans: 'Montserrat', system-ui, sans-serif;
+    --font-sans: 'Open Sans', system-ui, sans-serif;
     --font-serif: Georgia, serif;
-    --font-mono: 'Fira Code', monospace;
+    --font-mono: Menlo, monospace;
   }
 
   .dark {
-    /* Dark Mode - Catppuccin Mocha inspired */
-    --background: 240 21% 12%;              /* #181825 */
-    --foreground: 226 64% 88%;              /* #cdd6f4 */
+    /* Dark Mode */
+    --background: 0 0% 0%;                /* #000000 */
+    --foreground: 200 7% 91%;             /* #e7e9ea */
 
-    --card: 240 21% 15%;                    /* #1e1e2e */
-    --card-foreground: 226 64% 88%;
-    --popover: 231 16% 34%;                 /* #45475a */
-    --popover-foreground: 226 64% 88%;
+    --card: 228 10% 10%;                  /* #17181c */
+    --card-foreground: 0 0% 85%;          /* #d9d9d9 */
+    --popover: 0 0% 0%;                   /* #000000 */
+    --popover-foreground: 200 7% 91%;     /* #e7e9ea */
 
-    /* Primary Purple - lighter for dark mode */
-    --primary: 267 84% 81%;                 /* #cba6f7 */
-    --primary-foreground: 240 21% 15%;      /* #1e1e2e */
+    /* Primary Blue */
+    --primary: 204 88% 53%;               /* #1c9cf0 */
+    --primary-foreground: 0 0% 100%;      /* #ffffff */
 
     /* Secondary */
-    --secondary: 233 12% 39%;               /* #585b70 */
-    --secondary-foreground: 226 64% 88%;
+    --secondary: 195 15% 95%;             /* #f0f3f4 */
+    --secondary-foreground: 210 25% 8%;   /* #0f1419 */
 
     /* Muted */
-    --muted: 236 23% 20%;                   /* #292c3c */
-    --muted-foreground: 228 24% 72%;        /* #a6adc8 */
+    --muted: 0 0% 9%;                     /* #181818 */
+    --muted-foreground: 210 3% 46%;       /* #72767a */
 
-    /* Accent Cyan - lighter for dark mode */
-    --accent: 189 71% 73%;                  /* #89dceb */
-    --accent-foreground: 240 21% 15%;
+    /* Accent */
+    --accent: 206 70% 8%;                 /* #061622 */
+    --accent-foreground: 204 88% 53%;     /* #1c9cf0 */
 
-    /* Destructive Pink */
-    --destructive: 343 81% 75%;             /* #f38ba8 */
-    --destructive-foreground: 240 21% 15%;
+    /* Destructive Red */
+    --destructive: 356 91% 54%;           /* #f4212e */
+    --destructive-foreground: 0 0% 100%;
 
     /* Success Green */
-    --success: 115 54% 76%;                 /* #a6e3a1 */
-    --success-foreground: 240 21% 15%;
+    --success: 160 100% 36%;
+    --success-foreground: 0 0% 0%;
 
-    /* Warning Peach */
-    --warning: 23 92% 75%;                  /* #fab387 */
-    --warning-foreground: 240 21% 15%;
+    /* Warning Yellow */
+    --warning: 42 93% 56%;
+    --warning-foreground: 0 0% 0%;
 
     /* Border & Input */
-    --border: 240 17% 23%;                  /* #313244 */
-    --input: 240 17% 23%;
-    --ring: 267 84% 81%;
+    --border: 210 5% 15%;                 /* #242628 */
+    --input: 208 28% 18%;                 /* #22303c */
+    --ring: 203 89% 53%;                  /* #1da1f2 */
 
-    /* Chart Colors - Dark mode */
-    --chart-1: 267 84% 81%;                 /* #cba6f7 */
-    --chart-2: 189 71% 73%;                 /* #89dceb */
-    --chart-3: 115 54% 76%;                 /* #a6e3a1 */
-    --chart-4: 23 92% 75%;                  /* #fab387 */
-    --chart-5: 10 56% 91%;                  /* #f5e0dc */
+    /* Chart Colors - same in dark */
+    --chart-1: 204 88% 53%;              /* #1e9df1 */
+    --chart-2: 160 100% 36%;             /* #00b87a */
+    --chart-3: 42 93% 56%;               /* #f7b928 */
+    --chart-4: 147 79% 42%;              /* #17bf63 */
+    --chart-5: 341 75% 51%;              /* #e0245e */
 
     /* Sidebar - Dark mode */
-    --sidebar: 240 21% 9%;                  /* #11111b */
-    --sidebar-foreground: 226 64% 88%;
-    --sidebar-primary: 267 84% 81%;
-    --sidebar-primary-foreground: 240 21% 15%;
-    --sidebar-accent: 189 71% 73%;
-    --sidebar-accent-foreground: 240 21% 15%;
-    --sidebar-border: 231 16% 34%;          /* #45475a */
-    --sidebar-ring: 267 84% 81%;
+    --sidebar: 228 10% 10%;              /* #17181c */
+    --sidebar-foreground: 0 0% 85%;      /* #d9d9d9 */
+    --sidebar-primary: 203 89% 53%;      /* #1da1f2 */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 206 70% 8%;        /* #061622 */
+    --sidebar-accent-foreground: 204 88% 53%;
+    --sidebar-border: 206 16% 26%;       /* #38444d */
+    --sidebar-ring: 203 89% 53%;
   }
 }
 
@@ -337,51 +337,51 @@
    Brand Color Utilities
    ============================================ */
 @layer utilities {
-  /* Primary Purple */
+  /* Primary Blue */
   .bg-scholarly-primary {
-    background-color: #8839ef;
+    background-color: #1e9df1;
   }
   .text-scholarly-primary {
-    color: #8839ef;
+    color: #1e9df1;
   }
 
-  /* Accent Cyan */
+  /* Accent */
   .bg-scholarly-accent {
-    background-color: #04a5e5;
+    background-color: #e3ecf6;
   }
   .text-scholarly-accent {
-    color: #04a5e5;
+    color: #1e9df1;
   }
 
   /* Success Green */
   .bg-scholarly-success {
-    background-color: #40a02b;
+    background-color: #00b87a;
   }
   .text-scholarly-success {
-    color: #40a02b;
+    color: #00b87a;
   }
 
-  /* Warning Orange */
+  /* Warning Yellow */
   .bg-scholarly-warning {
-    background-color: #fe640b;
+    background-color: #f7b928;
   }
   .text-scholarly-warning {
-    color: #fe640b;
+    color: #f7b928;
   }
 
   /* Error Red */
   .bg-scholarly-error {
-    background-color: #d20f39;
+    background-color: #f4212e;
   }
   .text-scholarly-error {
-    color: #d20f39;
+    color: #f4212e;
   }
 
-  /* Peach */
-  .bg-scholarly-peach {
-    background-color: #dc8a78;
+  /* Chart Pink */
+  .bg-scholarly-pink {
+    background-color: #e0245e;
   }
-  .text-scholarly-peach {
-    color: #dc8a78;
+  .text-scholarly-pink {
+    color: #e0245e;
   }
 }
