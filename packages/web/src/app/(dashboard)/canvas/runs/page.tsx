@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuthStore } from '@/stores/auth-store';
 
 const SR_API_BASE = process.env.NEXT_PUBLIC_SR_API_URL ?? '/api/v1/sr';
 
@@ -23,12 +23,12 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
 };
 
 export default function RunsPage() {
-  const session = useSession();
+  const { user, accessToken } = useAuthStore();
   const [runs, setRuns] = useState<WorkflowRun[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const token = (session?.data as any)?.accessToken ?? '';
-  const tenantId = (session?.data as any)?.user?.tenantId ?? 'default';
+  const token = accessToken ?? '';
+  const tenantId = (user as any)?.tenantId ?? 'default';
 
   const fetchRuns = useCallback(async () => {
     try {

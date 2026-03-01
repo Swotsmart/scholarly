@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuthStore } from '@/stores/auth-store';
 import { useComposingMenuStore } from '@/stores/composing-menu-store';
 
 // The production canvas component — does its own API calls internally
@@ -17,13 +17,13 @@ const SR_WS_BASE = process.env.NEXT_PUBLIC_SR_WS_URL ??
     : '');
 
 export function SRCanvasClient() {
-  const session = useSession();
+  const { user, accessToken } = useAuthStore();
   const recordUse = useComposingMenuStore(s => s.recordUse);
 
-  const tenantId = (session?.data as any)?.user?.tenantId ?? 'default';
-  const userId = (session?.data as any)?.user?.id ?? '';
-  const token = (session?.data as any)?.accessToken ?? '';
-  const role = (session?.data as any)?.user?.role ?? 'admin';
+  const tenantId = (user as any)?.tenantId ?? 'default';
+  const userId = user?.id ?? '';
+  const token = accessToken ?? '';
+  const role = (user as any)?.role ?? 'admin';
 
   // Build the apiConfig that the canvas component expects.
   const apiConfig: WorkflowAPIConfig = useMemo(() => ({
