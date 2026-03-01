@@ -63,6 +63,20 @@ import { parentPortalRouter } from './routes/parent-portal';
 import { collaborationRouter } from './routes/collaboration';
 import { tutorOnboardingRouter } from './routes/tutor-onboarding';
 
+// S&R Canvas
+import { mountSRRoutes } from './routes/sr.routes';
+import {
+  NodeTypeRegistry,
+  WorkflowRunner,
+} from './services/sr/sr-workflow-engine';
+import {
+  InMemoryWorkflowStore,
+  InMemoryRunStore,
+  InMemoryEventBus,
+} from './services/sr/sr-api-gateway';
+import { registerMigrationNodes } from './services/sr/sr-migration-workflow-template';
+import { registerCompetitionNodes } from './services/sr/sr-competition-workflow-template';
+
 // Middleware
 import { errorHandler } from './middleware/error-handler';
 import { authMiddleware } from './middleware/auth';
@@ -208,6 +222,32 @@ async function start() {
 
     // Initialize tutor onboarding service
     initializeTutorOnboarding();
+
+    // ── S&R Canvas ─────────────────────────────────────────────
+    const srRegistry = new NodeTypeRegistry();
+    registerMigrationNodes(srRegistry);
+    registerCompetitionNodes(srRegistry);
+
+    const srEventBus = new InMemoryEventBus();
+    const srWorkflowStore = new InMemoryWorkflowStore();
+    const srRunStore = new InMemoryRunStore();
+
+    const srRunner = new WorkflowRunner({
+      registry: srRegistry,
+      services: {},  // Wire real services as available
+      eventBus: srEventBus,
+      runStore: srRunStore,
+    });
+
+    const { wsManager: srWsManager } = mountSRRoutes(app, {
+      registry: srRegistry,
+      runner: srRunner,
+      workflowStore: srWorkflowStore,
+      runStore: srRunStore,
+      eventBus: srEventBus,
+    });
+
+    logger.info('S&R Canvas routes mounted at /api/v1/sr/*');
 
     server = app.listen(PORT, () => {
       logger.info({ port: PORT }, `Scholarly API Server running on port ${PORT}`);

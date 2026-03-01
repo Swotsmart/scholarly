@@ -28,7 +28,7 @@ import {
   Trophy, FolderOpen, Crosshair, Rocket, Award,
   Network, Shield, Cpu,
   Building, Landmark, Store, BarChart3, Map,
-  Swords, Coins, PenSquare, Palette, Workflow,
+  Swords, Coins, PenSquare, Palette, Workflow, Play,
   Home, Bell, HelpCircle, Fingerprint,
   Vote, Database,
 } from 'lucide-react';
@@ -182,6 +182,22 @@ export const taskRegistry: Record<string, RegisteredTask> = {
   CR4: { ref: 'CR4', name: 'Marketplace', href: '/marketplace', icon: Store, type: 'atomic', cluster: 'creator', description: 'Discover apps and content' },
   CR_DEV: { ref: 'CR_DEV', name: 'My Content', href: '/marketplace/developer', icon: PenSquare, type: 'atomic', cluster: 'creator', description: 'Manage your published content' },
   CR_EARNINGS: { ref: 'CR_EARNINGS', name: 'Earnings', href: '/marketplace/developer', icon: CreditCard, type: 'atomic', cluster: 'creator', description: 'Content revenue and analytics' },
+
+  // ── CLUSTER 11: AUTOMATION ──
+  SR1: {
+    ref: 'SR1',
+    name: 'S&R Canvas',
+    href: '/dashboard/canvas',
+    icon: Workflow,
+    type: 'compound',
+    children: [
+      { name: 'Designer', href: '/dashboard/canvas', icon: Workflow },
+      { name: 'Active Runs', href: '/dashboard/canvas/runs', icon: Play },
+    ],
+    description: 'Visual workflow designer for automation pipelines',
+    cluster: 'automation',
+    badge: 'Beta',
+  },
 
   // ── CROSS-CLUSTER ──
   X1: { ref: 'X1', name: 'Settings', href: '/settings', icon: Settings, type: 'atomic', cluster: 'cross', description: 'Account and preferences' },
