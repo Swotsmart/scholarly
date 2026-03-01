@@ -251,7 +251,10 @@ class SquarespaceTransport {
    * Returns the parsed JSON body on success, or a failure Result on error.
    */
   async get<T>(path: string, params?: Record<string, string>): Promise<Result<T>> {
-    const url = new URL(path, this.config.baseUrl);
+    // Build URL preserving any path segment in baseUrl (e.g. "/1.0").
+    const base = this.config.baseUrl.replace(/\/$/, '');
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    const url = new URL(base + normalizedPath);
     if (params) {
       for (const [k, v] of Object.entries(params)) {
         if (v !== undefined && v !== '') url.searchParams.set(k, v);

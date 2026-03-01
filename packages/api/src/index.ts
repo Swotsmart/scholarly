@@ -232,9 +232,23 @@ async function start() {
     const srWorkflowStore = new InMemoryWorkflowStore();
     const srRunStore = new InMemoryRunStore();
 
+    const srServices: import('./services/sr/sr-workflow-engine').WorkflowServices = {
+      eventBus: srEventBus,
+      dataLake: {
+        writeToStaging: async () => ({ ok: true as const, value: { written: 0 } }),
+        readFromStaging: async () => ({ ok: true as const, value: [] }),
+        runQualityChecks: async () => [],
+      },
+      cache: {
+        get: async () => null,
+        set: async () => {},
+      },
+      getService: () => null,
+    };
+
     const srRunner = new WorkflowRunner({
       registry: srRegistry,
-      services: {},  // Wire real services as available
+      services: srServices,
       eventBus: srEventBus,
       runStore: srRunStore,
     });

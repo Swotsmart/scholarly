@@ -27,7 +27,7 @@ import {
   failure,
   Errors,
   type Result,
-} from './sr-workflow-engine';
+} from '../sr-workflow-engine';
 
 import type {
   PlatformExportData,
@@ -35,7 +35,7 @@ import type {
   CutoverService,
   PreflightResult,
   CutoverResult,
-} from './sr-migration-workflow-template';
+} from '../sr-migration-workflow-template';
 
 
 // ============================================================================

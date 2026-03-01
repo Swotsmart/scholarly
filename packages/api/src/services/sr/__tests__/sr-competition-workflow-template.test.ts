@@ -24,9 +24,9 @@ import {
   failure,
   Errors,
   NodeTypeRegistry,
-} from './sr-workflow-engine';
+} from '../sr-workflow-engine';
 
-import type { NodeExecutionContext, NodeOutput, Result } from './sr-workflow-engine';
+import type { NodeExecutionContext, NodeOutput, Result } from '../sr-workflow-engine';
 
 import {
   createRegistrationManagementNode,
@@ -38,7 +38,7 @@ import {
   registerCompetitionNodes,
   createDictaDorWorkflowTemplate,
   DEFAULT_DICTATION_RUBRIC,
-} from './sr-competition-workflow-template';
+} from '../sr-competition-workflow-template';
 
 import type {
   CompetitionService,
@@ -51,7 +51,7 @@ import type {
   AutoScore,
   FinalScoreSet,
   Participant,
-} from './sr-competition-workflow-template';
+} from '../sr-competition-workflow-template';
 
 
 // ============================================================================

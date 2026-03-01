@@ -391,13 +391,17 @@ export function createPlatformSourceNode(): NodeTypeDefinition {
         if (dlResult.ok) {
           const fileName = url.split('/').pop() || `img_${Date.now()}`;
           const key = `migrations/${migrationId}/images/${fileName}`;
-          await fileStorage.upload(key, dlResult.value, guessMimeType(url));
-          items.push({
-            id: `ci_${migrationId}_img_${fileName}`, migrationId, tenantId: ctx.tenantId,
-            sourceType: 'image', sourceId: url, sourceUrl: url,
-            sourceTitle: fileName, sourceData: { originalUrl: url, storagePath: key },
-            status: 'pending', requiresReview: false,
-          });
+          const uploadResult = await fileStorage.upload(key, dlResult.value, guessMimeType(url));
+          if (uploadResult.ok) {
+            items.push({
+              id: `ci_${migrationId}_img_${fileName}`, migrationId, tenantId: ctx.tenantId,
+              sourceType: 'image', sourceId: url, sourceUrl: url,
+              sourceTitle: fileName, sourceData: { originalUrl: url, storagePath: key },
+              status: 'pending', requiresReview: false,
+            });
+          } else {
+            ctx.log('warn', `Image upload failed for ${url}: ${uploadResult.error.message}`);
+          }
         }
       }
 
@@ -465,6 +469,10 @@ export function createCDCExtractNode(): NodeTypeDefinition {
       if (!adapterRes.ok) return adapterRes;
 
       const migrationId = getConfig<string>(ctx, 'migrationId', '');
+      if (typeof migrationId !== 'string' || migrationId.trim() === '') {
+        return failure(Errors.validation('migrationId configuration is required and must be a non-empty string'));
+      }
+
       const items = ctx.inputs['items'] as ContentItem[] | undefined;
 
       if (!items || items.length === 0) {
@@ -799,7 +807,7 @@ export function createQualityAuditNode(): NodeTypeDefinition {
       { portId: 'qualityReport', label: 'Quality Report', dataType: 'record', required: true },
     ],
     configSchema: {
-      migrationId: 'string?',
+      migrationId: 'string',
       threshold: 'number?',
     },
     executionHint: 'fast',
@@ -810,6 +818,9 @@ export function createQualityAuditNode(): NodeTypeDefinition {
       if (!adapterRes.ok) return adapterRes;
 
       const migrationId = getConfig<string>(ctx, 'migrationId', '');
+      if (typeof migrationId !== 'string' || migrationId.trim() === '') {
+        return failure(Errors.validation('migrationId configuration is required for quality audit'));
+      }
 
       ctx.log('info', 'Running Data Lake quality audit');
 

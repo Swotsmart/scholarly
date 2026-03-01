@@ -152,11 +152,19 @@ export class HealthProber {
   // Individual checks
   // ──────────────────────────────────────────────────────────────────────
 
+  /** Validate domain string to prevent command injection. */
+  private static isValidDomain(domain: string): boolean {
+    return /^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$/.test(domain) && domain.length <= 253;
+  }
+
   private async checkDns(
     domain: string,
     exec: (cmd: string) => Promise<{ stdout: string; stderr: string; exitCode: number }>,
   ): Promise<CheckResult> {
     const start = Date.now();
+    if (!HealthProber.isValidDomain(domain)) {
+      return { name: 'dns_resolution', status: 'fail', responseTimeMs: 0, detail: 'Invalid domain name' };
+    }
     try {
       const result = await exec(`dig +short +time=5 ${domain}`);
       const elapsed = Date.now() - start;
@@ -182,6 +190,9 @@ export class HealthProber {
     exec: (cmd: string) => Promise<{ stdout: string; stderr: string; exitCode: number }>,
   ): Promise<CheckResult> {
     const start = Date.now();
+    if (!HealthProber.isValidDomain(domain)) {
+      return { name: 'ssl_certificate', status: 'fail', responseTimeMs: 0, detail: 'Invalid domain name' };
+    }
     try {
       // Use openssl to check certificate expiry
       const result = await exec(

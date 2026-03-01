@@ -130,6 +130,11 @@ export class MigrationCutoverService implements CutoverService {
     this.exec = config.shellExec ?? defaultShellExec;
   }
 
+  /** Validate domain string to prevent command injection in shell commands. */
+  private static isValidDomain(domain: string): boolean {
+    return /^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$/.test(domain) && domain.length <= 253;
+  }
+
   // ──────────────────────────────────────────────────────────────────────
   // Pre-flight: verify everything is ready before touching infrastructure
   // ──────────────────────────────────────────────────────────────────────
@@ -193,6 +198,11 @@ export class MigrationCutoverService implements CutoverService {
     const record = await this.config.cutoverStore.findByMigration(tenantId, migrationId);
     if (!record) return failure(Errors.notFound('CutoverRecord', migrationId));
 
+    // Validate domain before using in any shell command
+    if (!MigrationCutoverService.isValidDomain(record.domain ?? '')) {
+      return failure(Errors.internal('Invalid domain name stored for cutover record; refusing to execute'));
+    }
+
     if (this.config.provider === 'mock') {
       this.log('info', '[DRY RUN] Would provision SSL for domain', { domain: record.domain });
       await this.config.cutoverStore.update(tenantId, migrationId, { sslProvisioned: true });
@@ -227,6 +237,11 @@ export class MigrationCutoverService implements CutoverService {
 
     const record = await this.config.cutoverStore.findByMigration(tenantId, migrationId);
     if (!record) return failure(Errors.notFound('CutoverRecord', migrationId));
+
+    // Validate domain before using in any shell command
+    if (!MigrationCutoverService.isValidDomain(record.domain ?? '')) {
+      return failure(Errors.internal('Invalid domain name stored for cutover record; refusing to execute'));
+    }
 
     if (this.config.provider === 'mock') {
       this.log('info', '[DRY RUN] Would execute cutover', {
@@ -299,6 +314,11 @@ export class MigrationCutoverService implements CutoverService {
 
     if (record.status !== 'active') {
       return failure(Errors.validation(`Cannot rollback: cutover is in '${record.status}' state, expected 'active'`));
+    }
+
+    // Validate domain before using in any shell command
+    if (!MigrationCutoverService.isValidDomain(record.domain ?? '')) {
+      return failure(Errors.internal('Invalid domain name stored for cutover record; refusing to execute'));
     }
 
     if (this.config.provider === 'mock') {
@@ -377,6 +397,9 @@ export class MigrationCutoverService implements CutoverService {
   }
 
   private async checkCurrentDns(domain: string): Promise<PreflightResult['checks'][0]> {
+    if (!MigrationCutoverService.isValidDomain(domain)) {
+      return { name: 'current_dns', status: 'fail', detail: 'Invalid domain name' };
+    }
     try {
       const result = await this.exec(`dig +short ${domain}`);
       const resolved = result.stdout.trim();
@@ -393,6 +416,7 @@ export class MigrationCutoverService implements CutoverService {
   }
 
   private async pollDnsVerification(domain: string, maxWaitMs: number): Promise<boolean> {
+    if (!MigrationCutoverService.isValidDomain(domain)) return false;
     const startTime = Date.now();
     const intervals = [2000, 5000, 10000, 15000, 30000]; // Escalating poll intervals
 
