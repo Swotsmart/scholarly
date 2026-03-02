@@ -49,3 +49,5 @@ docs/api-keys/
 .turbo/
 .claude/worktrees/cranky-fermat/
 .claude/worktrees/friendly-taussig/
+docs/ui-ux-palette-css/scholarly-palette.png
+docs/ui-ux-palette-css/scholarly-ui.css
