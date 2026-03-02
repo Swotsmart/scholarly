@@ -13,37 +13,29 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { PageHeader, StatsCard, StatusBadge } from '@/components/shared';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ReorderablePanels } from '@/components/dashboard/draggable-panel';
+import { useAdminDashboardLayout, type AdminPanelId } from '@/stores/dashboard-layout-store';
 import {
   Users,
-  Activity,
   GraduationCap,
   Clock,
-  UserPlus,
   FileBarChart,
   Settings,
   ScrollText,
   Cpu,
-  Database,
-  MemoryStick,
   ArrowRight,
   AlertTriangle,
   CheckCircle2,
   XCircle,
   TrendingUp,
   TrendingDown,
-  Calendar,
   Shield,
   UserCheck,
   AlertCircle,
   RefreshCw,
-  Zap,
-  Server,
-  Wifi,
   HardDrive,
-  BookOpen,
   Target,
-  Percent,
   ChevronRight,
   Bell,
   ExternalLink,
@@ -264,11 +256,483 @@ function getReliefStatusBadge(status: 'covered' | 'partial' | 'pending') {
   }
 }
 
-export default function AdminDashboardPage() {
+// =============================================================================
+// Panel sub-components
+// =============================================================================
+
+function KpiStatsPanel() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {kpiStats.map((stat) => (
+        <StatsCard
+          key={stat.label}
+          label={stat.label}
+          value={stat.value}
+          icon={stat.icon}
+          variant={stat.variant}
+          change={stat.change}
+          subtitle={stat.subtitle}
+        />
+      ))}
+    </div>
+  );
+}
+
+function AlertsPanel() {
+  if (criticalAlerts.length === 0) return <></>;
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Bell className="h-5 w-5 text-amber-500" />
+            <CardTitle>Alerts Requiring Attention</CardTitle>
+          </div>
+          <Badge variant="secondary">{criticalAlerts.length} active</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {criticalAlerts.map((alert) => (
+          <div
+            key={alert.id}
+            className={`flex items-start gap-4 rounded-lg border border-l-4 p-4 ${getAlertBorderColor(alert.type)}`}
+          >
+            {getAlertIcon(alert.type)}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="font-medium">{alert.title}</p>
+                <span className="text-xs text-muted-foreground">{alert.timestamp}</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">{alert.description}</p>
+            </div>
+            <Button size="sm" variant="outline" asChild>
+              <Link href={alert.actionHref}>
+                {alert.actionLabel}
+                <ExternalLink className="ml-2 h-3 w-3" />
+              </Link>
+            </Button>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function TrendsStaffPanel() {
   const [trendMetric, setTrendMetric] = useState<'enrollment' | 'attendance' | 'engagement'>('enrollment');
 
   return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      {/* Trend Charts */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-blue-500" />
+                Week-over-Week Trends
+              </CardTitle>
+              <CardDescription>Compare current vs previous period</CardDescription>
+            </div>
+          </div>
+          <Tabs value={trendMetric} onValueChange={(v) => setTrendMetric(v as typeof trendMetric)} className="mt-2">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="enrollment">Enrollment</TabsTrigger>
+              <TabsTrigger value="attendance">Attendance</TabsTrigger>
+              <TabsTrigger value="engagement">Engagement</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {trendData[trendMetric].map((week) => {
+              const change = ((week.current - week.previous) / week.previous) * 100;
+              const isPositive = change >= 0;
+              return (
+                <div key={week.week} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{week.week}</span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-muted-foreground">
+                        {trendMetric === 'enrollment' ? week.current.toLocaleString() : `${week.current}%`}
+                      </span>
+                      <span className={`flex items-center text-xs ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                        {isPositive ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                        {isPositive ? '+' : ''}{change.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 h-2">
+                    <div
+                      className="bg-blue-500 rounded-l"
+                      style={{ width: `${(week.current / Math.max(...trendData[trendMetric].map(w => w.current))) * 100}%` }}
+                    />
+                    <div
+                      className="bg-gray-300 dark:bg-gray-700 rounded-r"
+                      style={{ width: `${((Math.max(...trendData[trendMetric].map(w => w.current)) - week.current) / Math.max(...trendData[trendMetric].map(w => w.current))) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-4 mt-4 pt-4 border-t text-xs">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-4 bg-blue-500 rounded" />
+              <span>Current Period</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-4 bg-gray-300 dark:bg-gray-700 rounded" />
+              <span>Previous Period</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Staff Overview */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-purple-500" />
+                Staff Overview
+              </CardTitle>
+              <CardDescription>Attendance, relief needs, and workload</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/admin/scheduling/relief">Manage Relief</Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-4 gap-4">
+            <div className="text-center p-3 rounded-lg bg-muted/50">
+              <p className="text-2xl font-bold text-green-600">{staffMetrics.presentToday}</p>
+              <p className="text-xs text-muted-foreground">Present</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-muted/50">
+              <p className="text-2xl font-bold text-amber-600">{staffMetrics.onLeave}</p>
+              <p className="text-xs text-muted-foreground">On Leave</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-muted/50">
+              <p className="text-2xl font-bold text-red-600">{staffMetrics.reliefNeeded}</p>
+              <p className="text-xs text-muted-foreground">Relief Needed</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-muted/50">
+              <p className="text-2xl font-bold">{staffMetrics.totalTeachers}</p>
+              <p className="text-xs text-muted-foreground">Total Staff</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Relief Requests</p>
+            {reliefRequests.map((request) => (
+              <div key={request.id} className="flex items-center justify-between rounded-lg border p-3">
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-sm font-medium">{request.teacher}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {request.date} - Periods {request.periods.join(', ')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{request.reason}</span>
+                  {getReliefStatusBadge(request.status)}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Department Coverage</p>
+            <div className="grid grid-cols-2 gap-2">
+              {staffMetrics.departments.slice(0, 4).map((dept) => (
+                <div key={dept.name} className="flex items-center justify-between text-sm p-2 rounded-lg bg-muted/30">
+                  <span>{dept.name}</span>
+                  <span className={dept.coverage === 100 ? 'text-green-600' : 'text-amber-600'}>
+                    {dept.coverage}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function StudentsCompliancePanel() {
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      {/* Student Metrics */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-blue-500" />
+                Student Metrics
+              </CardTitle>
+              <CardDescription>Performance distribution and at-risk students</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/teacher/students/at-risk">View At-Risk</Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-8 w-8 text-red-500" />
+              <div>
+                <p className="text-2xl font-bold">{studentMetrics.atRiskCount}</p>
+                <p className="text-sm text-muted-foreground">At-risk students</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 text-green-600">
+              <TrendingDown className="h-4 w-4" />
+              <span className="text-sm font-medium">{studentMetrics.atRiskChange} this week</span>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <p className="text-sm font-medium">Performance Distribution</p>
+            <div className="flex h-4 rounded-full overflow-hidden">
+              {studentMetrics.performanceDistribution.map((level) => (
+                <div
+                  key={level.level}
+                  className={level.color}
+                  style={{ width: `${level.percentage}%` }}
+                  title={`${level.level}: ${level.count} students (${level.percentage}%)`}
+                />
+              ))}
+            </div>
+            <div className="grid grid-cols-4 gap-2 text-xs">
+              {studentMetrics.performanceDistribution.map((level) => (
+                <div key={level.level} className="text-center">
+                  <div className={`h-2 w-2 rounded-full ${level.color} mx-auto mb-1`} />
+                  <p className="font-medium">{level.count}</p>
+                  <p className="text-muted-foreground">{level.level}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Recent Flags</p>
+            {studentMetrics.recentFlags.map((flag, idx) => (
+              <div key={idx} className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <p className="text-sm font-medium">{flag.student}</p>
+                  <p className="text-xs text-muted-foreground">{flag.issue}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{flag.class}</span>
+                  <Badge variant={flag.severity === 'high' ? 'destructive' : 'secondary'}>
+                    {flag.severity}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Compliance Status */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-green-500" />
+                Compliance Status
+              </CardTitle>
+              <CardDescription>Framework compliance across all standards</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/admin/reports">Full Report</Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {complianceStatus.map((item) => (
+            <div
+              key={item.framework}
+              className="flex items-center justify-between rounded-lg border p-3"
+            >
+              <div className="flex items-center gap-3">
+                <div className={`h-3 w-3 rounded-full ${getComplianceColor(item.status)}`} />
+                <div>
+                  <p className="text-sm font-medium">{item.framework}</p>
+                  <p className="text-xs text-muted-foreground">Last audit: {item.lastAudit}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-sm font-medium ${
+                  item.score >= 95 ? 'text-green-600' : item.score >= 80 ? 'text-amber-600' : 'text-red-600'
+                }`}>
+                  {item.score}%
+                </span>
+                {item.status === 'green' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                {item.status === 'amber' && <AlertTriangle className="h-4 w-4 text-amber-500" />}
+                {item.status === 'red' && <XCircle className="h-4 w-4 text-red-500" />}
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function QuickActionsPanel() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Quick Actions</CardTitle>
+        <CardDescription>Common administration tasks</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link key={action.label} href={action.href}>
+                <div className="flex flex-col items-center gap-3 rounded-lg border p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer">
+                  <div className="rounded-lg bg-primary/10 p-3">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{action.label}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{action.description}</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SystemHealthPanel() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Cpu className="h-5 w-5 text-green-500" />
+              System Health
+            </CardTitle>
+            <CardDescription>Integration status and platform performance</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <StatusBadge status="active" label="All Systems Operational" showDot />
+            <Button variant="ghost" size="sm">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-4">
+            <p className="text-sm font-medium">Performance Metrics</p>
+            {systemHealth.metrics.map((metric) => (
+              <div key={metric.label} className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>{metric.label}</span>
+                  <span className="text-muted-foreground">
+                    {metric.value}{metric.unit || '%'}
+                  </span>
+                </div>
+                <Progress
+                  value={metric.unit ? Math.min((metric.value / 500) * 100, 100) : metric.value}
+                  className="h-2"
+                />
+              </div>
+            ))}
+            <div className="flex items-center justify-between rounded-lg border p-3 mt-4">
+              <div className="flex items-center gap-3">
+                <HardDrive className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Storage</p>
+                  <p className="text-xs text-muted-foreground">
+                    {systemHealth.storage.used} GB / {systemHealth.storage.total} GB
+                  </p>
+                </div>
+              </div>
+              <Badge variant="secondary">{systemHealth.storage.percentage}%</Badge>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Uptime</p>
+                  <p className="text-xs text-muted-foreground">Last 30 days</p>
+                </div>
+              </div>
+              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                {systemHealth.uptime}
+              </Badge>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <p className="text-sm font-medium">Integration Status</p>
+            {systemHealth.integrations.map((integration) => (
+              <div key={integration.name} className="flex items-center justify-between rounded-lg border p-3">
+                <div className="flex items-center gap-3">
+                  <div className={`h-2 w-2 rounded-full ${
+                    integration.status === 'connected' ? 'bg-green-500' :
+                    integration.status === 'syncing' ? 'bg-blue-500 animate-pulse' :
+                    'bg-red-500'
+                  }`} />
+                  <div>
+                    <p className="text-sm font-medium">{integration.name}</p>
+                    <p className="text-xs text-muted-foreground">Last sync: {integration.lastSync}</p>
+                  </div>
+                </div>
+                <StatusBadge status={integration.status} />
+              </div>
+            ))}
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/admin/settings">
+                Manage Integrations
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// =============================================================================
+// Panel registry
+// =============================================================================
+
+const PANEL_MAP: Record<AdminPanelId, () => JSX.Element> = {
+  'kpi-stats': KpiStatsPanel,
+  'alerts': AlertsPanel,
+  'trends-staff': TrendsStaffPanel,
+  'students-compliance': StudentsCompliancePanel,
+  'quick-actions': QuickActionsPanel,
+  'system-health': SystemHealthPanel,
+};
+
+// =============================================================================
+// Main page
+// =============================================================================
+
+export default function AdminDashboardPage() {
+  const { panelOrder, setPanelOrder } = useAdminDashboardLayout();
+
+  return (
     <div className="space-y-6">
+      {/* PageHeader stays fixed at top */}
       <PageHeader
         title="Admin Dashboard"
         description="Platform overview and system health for Scholarly Australia"
@@ -290,449 +754,12 @@ export default function AdminDashboardPage() {
         }
       />
 
-      {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {kpiStats.map((stat) => (
-          <StatsCard
-            key={stat.label}
-            label={stat.label}
-            value={stat.value}
-            icon={stat.icon}
-            variant={stat.variant}
-            change={stat.change}
-            subtitle={stat.subtitle}
-          />
-        ))}
-      </div>
-
-      {/* Critical Alerts */}
-      {criticalAlerts.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-amber-500" />
-                <CardTitle>Alerts Requiring Attention</CardTitle>
-              </div>
-              <Badge variant="secondary">{criticalAlerts.length} active</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {criticalAlerts.map((alert) => (
-              <div
-                key={alert.id}
-                className={`flex items-start gap-4 rounded-lg border border-l-4 p-4 ${getAlertBorderColor(alert.type)}`}
-              >
-                {getAlertIcon(alert.type)}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{alert.title}</p>
-                    <span className="text-xs text-muted-foreground">{alert.timestamp}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">{alert.description}</p>
-                </div>
-                <Button size="sm" variant="outline" asChild>
-                  <Link href={alert.actionHref}>
-                    {alert.actionLabel}
-                    <ExternalLink className="ml-2 h-3 w-3" />
-                  </Link>
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Trend Charts & Staff Overview */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Trend Charts */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-blue-500" />
-                  Week-over-Week Trends
-                </CardTitle>
-                <CardDescription>Compare current vs previous period</CardDescription>
-              </div>
-            </div>
-            <Tabs value={trendMetric} onValueChange={(v) => setTrendMetric(v as typeof trendMetric)} className="mt-2">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="enrollment">Enrollment</TabsTrigger>
-                <TabsTrigger value="attendance">Attendance</TabsTrigger>
-                <TabsTrigger value="engagement">Engagement</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {trendData[trendMetric].map((week, idx) => {
-                const change = ((week.current - week.previous) / week.previous) * 100;
-                const isPositive = change >= 0;
-                return (
-                  <div key={week.week} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{week.week}</span>
-                      <div className="flex items-center gap-4">
-                        <span className="text-muted-foreground">
-                          {trendMetric === 'enrollment' ? week.current.toLocaleString() : `${week.current}%`}
-                        </span>
-                        <span className={`flex items-center text-xs ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                          {isPositive ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-                          {isPositive ? '+' : ''}{change.toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-1 h-2">
-                      <div
-                        className="bg-blue-500 rounded-l"
-                        style={{ width: `${(week.current / Math.max(...trendData[trendMetric].map(w => w.current))) * 100}%` }}
-                      />
-                      <div
-                        className="bg-gray-300 dark:bg-gray-700 rounded-r"
-                        style={{ width: `${((Math.max(...trendData[trendMetric].map(w => w.current)) - week.current) / Math.max(...trendData[trendMetric].map(w => w.current))) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex items-center gap-4 mt-4 pt-4 border-t text-xs">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-4 bg-blue-500 rounded" />
-                <span>Current Period</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-4 bg-gray-300 dark:bg-gray-700 rounded" />
-                <span>Previous Period</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Staff Overview */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-purple-500" />
-                  Staff Overview
-                </CardTitle>
-                <CardDescription>Attendance, relief needs, and workload</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/admin/scheduling/relief">Manage Relief</Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Staff attendance summary */}
-            <div className="grid grid-cols-4 gap-4">
-              <div className="text-center p-3 rounded-lg bg-muted/50">
-                <p className="text-2xl font-bold text-green-600">{staffMetrics.presentToday}</p>
-                <p className="text-xs text-muted-foreground">Present</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-muted/50">
-                <p className="text-2xl font-bold text-amber-600">{staffMetrics.onLeave}</p>
-                <p className="text-xs text-muted-foreground">On Leave</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-muted/50">
-                <p className="text-2xl font-bold text-red-600">{staffMetrics.reliefNeeded}</p>
-                <p className="text-xs text-muted-foreground">Relief Needed</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-muted/50">
-                <p className="text-2xl font-bold">{staffMetrics.totalTeachers}</p>
-                <p className="text-xs text-muted-foreground">Total Staff</p>
-              </div>
-            </div>
-
-            {/* Relief requests */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Relief Requests</p>
-              {reliefRequests.map((request) => (
-                <div key={request.id} className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <p className="text-sm font-medium">{request.teacher}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {request.date} - Periods {request.periods.join(', ')}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{request.reason}</span>
-                    {getReliefStatusBadge(request.status)}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Department coverage */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Department Coverage</p>
-              <div className="grid grid-cols-2 gap-2">
-                {staffMetrics.departments.slice(0, 4).map((dept) => (
-                  <div key={dept.name} className="flex items-center justify-between text-sm p-2 rounded-lg bg-muted/30">
-                    <span>{dept.name}</span>
-                    <span className={dept.coverage === 100 ? 'text-green-600' : 'text-amber-600'}>
-                      {dept.coverage}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Student Metrics & Compliance */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Student Metrics */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5 text-blue-500" />
-                  Student Metrics
-                </CardTitle>
-                <CardDescription>Performance distribution and at-risk students</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/teacher/students/at-risk">View At-Risk</Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* At-risk summary */}
-            <div className="flex items-center justify-between p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-8 w-8 text-red-500" />
-                <div>
-                  <p className="text-2xl font-bold">{studentMetrics.atRiskCount}</p>
-                  <p className="text-sm text-muted-foreground">At-risk students</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-green-600">
-                <TrendingDown className="h-4 w-4" />
-                <span className="text-sm font-medium">{studentMetrics.atRiskChange} this week</span>
-              </div>
-            </div>
-
-            {/* Performance distribution */}
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Performance Distribution</p>
-              <div className="flex h-4 rounded-full overflow-hidden">
-                {studentMetrics.performanceDistribution.map((level) => (
-                  <div
-                    key={level.level}
-                    className={level.color}
-                    style={{ width: `${level.percentage}%` }}
-                    title={`${level.level}: ${level.count} students (${level.percentage}%)`}
-                  />
-                ))}
-              </div>
-              <div className="grid grid-cols-4 gap-2 text-xs">
-                {studentMetrics.performanceDistribution.map((level) => (
-                  <div key={level.level} className="text-center">
-                    <div className={`h-2 w-2 rounded-full ${level.color} mx-auto mb-1`} />
-                    <p className="font-medium">{level.count}</p>
-                    <p className="text-muted-foreground">{level.level}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent flags */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Recent Flags</p>
-              {studentMetrics.recentFlags.map((flag, idx) => (
-                <div key={idx} className="flex items-center justify-between rounded-lg border p-3">
-                  <div>
-                    <p className="text-sm font-medium">{flag.student}</p>
-                    <p className="text-xs text-muted-foreground">{flag.issue}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{flag.class}</span>
-                    <Badge variant={flag.severity === 'high' ? 'destructive' : 'secondary'}>
-                      {flag.severity}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Compliance Status */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-green-500" />
-                  Compliance Status
-                </CardTitle>
-                <CardDescription>Framework compliance across all standards</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/admin/reports">Full Report</Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {complianceStatus.map((item) => (
-              <div
-                key={item.framework}
-                className="flex items-center justify-between rounded-lg border p-3"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`h-3 w-3 rounded-full ${getComplianceColor(item.status)}`} />
-                  <div>
-                    <p className="text-sm font-medium">{item.framework}</p>
-                    <p className="text-xs text-muted-foreground">Last audit: {item.lastAudit}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-sm font-medium ${
-                    item.score >= 95 ? 'text-green-600' : item.score >= 80 ? 'text-amber-600' : 'text-red-600'
-                  }`}>
-                    {item.score}%
-                  </span>
-                  {item.status === 'green' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                  {item.status === 'amber' && <AlertTriangle className="h-4 w-4 text-amber-500" />}
-                  {item.status === 'red' && <XCircle className="h-4 w-4 text-red-500" />}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common administration tasks</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <Link key={action.label} href={action.href}>
-                  <div className="flex flex-col items-center gap-3 rounded-lg border p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer">
-                    <div className="rounded-lg bg-primary/10 p-3">
-                      <Icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{action.label}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{action.description}</p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* System Health */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Cpu className="h-5 w-5 text-green-500" />
-                System Health
-              </CardTitle>
-              <CardDescription>Integration status and platform performance</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <StatusBadge status="active" label="All Systems Operational" showDot />
-              <Button variant="ghost" size="sm">
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Performance metrics */}
-            <div className="space-y-4">
-              <p className="text-sm font-medium">Performance Metrics</p>
-              {systemHealth.metrics.map((metric) => (
-                <div key={metric.label} className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>{metric.label}</span>
-                    <span className="text-muted-foreground">
-                      {metric.value}{metric.unit || '%'}
-                    </span>
-                  </div>
-                  <Progress
-                    value={metric.unit ? Math.min((metric.value / 500) * 100, 100) : metric.value}
-                    className="h-2"
-                  />
-                </div>
-              ))}
-              <div className="flex items-center justify-between rounded-lg border p-3 mt-4">
-                <div className="flex items-center gap-3">
-                  <HardDrive className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Storage</p>
-                    <p className="text-xs text-muted-foreground">
-                      {systemHealth.storage.used} GB / {systemHealth.storage.total} GB
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="secondary">{systemHealth.storage.percentage}%</Badge>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Uptime</p>
-                    <p className="text-xs text-muted-foreground">Last 30 days</p>
-                  </div>
-                </div>
-                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  {systemHealth.uptime}
-                </Badge>
-              </div>
-            </div>
-
-            {/* Integration status */}
-            <div className="space-y-4">
-              <p className="text-sm font-medium">Integration Status</p>
-              {systemHealth.integrations.map((integration) => (
-                <div key={integration.name} className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`h-2 w-2 rounded-full ${
-                      integration.status === 'connected' ? 'bg-green-500' :
-                      integration.status === 'syncing' ? 'bg-blue-500 animate-pulse' :
-                      'bg-red-500'
-                    }`} />
-                    <div>
-                      <p className="text-sm font-medium">{integration.name}</p>
-                      <p className="text-xs text-muted-foreground">Last sync: {integration.lastSync}</p>
-                    </div>
-                  </div>
-                  <StatusBadge status={integration.status} />
-                </div>
-              ))}
-              <Button variant="outline" className="w-full" asChild>
-                <Link href="/admin/settings">
-                  Manage Integrations
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <ReorderablePanels
+        panelOrder={panelOrder}
+        onReorder={setPanelOrder}
+        panelMap={PANEL_MAP}
+        className="space-y-6"
+      />
     </div>
   );
 }

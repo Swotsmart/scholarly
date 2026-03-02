@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { StatsCard } from '@/components/shared';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ReorderablePanels } from '@/components/dashboard/draggable-panel';
+import { useTeacherDashboardLayout, type TeacherPanelId } from '@/stores/dashboard-layout-store';
 import {
   Users,
   Clock,
@@ -157,14 +159,414 @@ const aiInsights = [
   },
 ];
 
+// =============================================================================
+// Panel sub-components
+// =============================================================================
+
+function QuickActionsPanel() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Quick Actions</CardTitle>
+        <CardDescription>Common tasks at your fingertips</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+            <Link href="/teacher/attendance">
+              <ClipboardList className="h-6 w-6 text-blue-500" />
+              <span>Take Attendance</span>
+            </Link>
+          </Button>
+          <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+            <Link href="/teacher/lessons/new">
+              <PlusCircle className="h-6 w-6 text-green-500" />
+              <span>Create Lesson Plan</span>
+            </Link>
+          </Button>
+          <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+            <Link href="/teacher/grading">
+              <PenLine className="h-6 w-6 text-orange-500" />
+              <span>Grade Work</span>
+            </Link>
+          </Button>
+          <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
+            <Link href="/teacher/challenges/create">
+              <Lightbulb className="h-6 w-6 text-purple-500" />
+              <span>New Challenge</span>
+            </Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function StatsGridPanel() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <StatsCard
+        label="Active Students"
+        value={127}
+        icon={Users}
+        variant="primary"
+        change={12}
+      />
+      <StatsCard
+        label="Pending Reviews"
+        value={23}
+        icon={ClipboardCheck}
+        variant="warning"
+        subtitle="8 urgent"
+      />
+      <StatsCard
+        label="Help Requests"
+        value={pendingHelpRequests.length}
+        icon={MessageCircle}
+        variant="error"
+        subtitle="1 urgent"
+      />
+      <StatsCard
+        label="Assessments Due"
+        value={12}
+        icon={FileText}
+        variant="primary"
+        subtitle="This week"
+      />
+    </div>
+  );
+}
+
+function MainContentPanel() {
+  return (
+    <div className="grid gap-6 lg:grid-cols-3">
+      {/* Class Overview - Takes 2 columns */}
+      <div className="lg:col-span-2 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">My Classes</h2>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/teacher/classes">
+              View All <ChevronRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {classCards.map((cls) => (
+            <Card key={cls.id} hover className="group">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
+                    <GraduationCap className="h-5 w-5 text-blue-500" />
+                  </div>
+                  {cls.nextClass === 'Now' && (
+                    <Badge className="bg-green-500 text-white">Live</Badge>
+                  )}
+                </div>
+
+                <h3 className="mt-3 font-semibold">{cls.name}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {cls.students} students - {cls.activeAssignments} active assignments
+                </p>
+
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Class Progress</span>
+                    <span className="font-medium">{cls.avgProgress}%</span>
+                  </div>
+                  <Progress value={cls.avgProgress} className="h-2" />
+                </div>
+
+                <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  <span>{cls.nextClass}</span>
+                </div>
+
+                <div className="mt-4 flex gap-2">
+                  <Button size="sm" variant="outline" className="flex-1" asChild>
+                    <Link href={`/teacher/classes/${cls.id}`}>View Class</Link>
+                  </Button>
+                  <Button size="sm" variant="ghost" asChild>
+                    <Link href={`/teacher/attendance/${cls.id}`}>
+                      <ClipboardList className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Today's Schedule */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Today&apos;s Schedule</CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/teacher/scheduling/timetable">Full View</Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {todaySchedule.map((item) => (
+            <div
+              key={item.id}
+              className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
+                item.isCurrent
+                  ? 'border-blue-500 bg-blue-500/5'
+                  : item.isPast
+                    ? 'opacity-60'
+                    : 'hover:bg-muted/50'
+              }`}
+            >
+              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                item.isCurrent ? 'bg-blue-500 text-white' : 'bg-muted'
+              }`}>
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{item.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {item.time} - {item.room}
+                </p>
+              </div>
+              {item.isCurrent && (
+                <Badge className="bg-blue-500 text-white shrink-0">Now</Badge>
+              )}
+              {item.isPast && (
+                <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function AtRiskHelpPanel() {
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      {/* At-Risk Students */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              <CardTitle>At-Risk Students</CardTitle>
+            </div>
+            <Badge variant="destructive">{atRiskStudents.length} flagged</Badge>
+          </div>
+          <CardDescription>AI-identified students who may need support</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {atRiskStudents.map((student) => (
+            <div
+              key={student.id}
+              className="flex items-center gap-4 rounded-lg border p-4 transition-all hover:shadow-sm"
+            >
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={student.avatar || undefined} />
+                <AvatarFallback>{student.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">{student.name}</p>
+                  <Badge
+                    variant="outline"
+                    className={
+                      student.riskLevel === 'high'
+                        ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'
+                        : 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-900/20 dark:text-orange-400'
+                    }
+                  >
+                    {student.riskLevel} risk
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">{student.class}</p>
+                <div className="flex items-center gap-1 mt-1 text-sm">
+                  {student.trend === 'down' ? (
+                    <TrendingDown className="h-3 w-3 text-red-500" />
+                  ) : (
+                    <TrendingUp className="h-3 w-3 text-gray-400" />
+                  )}
+                  <span className="text-muted-foreground">{student.issue}</span>
+                </div>
+              </div>
+              <Button size="sm" variant="outline">
+                View Profile
+              </Button>
+            </div>
+          ))}
+          <Button variant="outline" className="w-full" asChild>
+            <Link href="/teacher/students/at-risk">
+              View All At-Risk Students
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Pending Help Requests */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-blue-500" />
+              <CardTitle>Help Requests</CardTitle>
+            </div>
+            <Badge variant="secondary">{pendingHelpRequests.length} pending</Badge>
+          </div>
+          <CardDescription>Students waiting for your assistance</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {pendingHelpRequests.map((request) => (
+            <div
+              key={request.id}
+              className={`flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50 ${
+                request.urgent ? 'border-orange-200 dark:border-orange-800' : ''
+              }`}
+            >
+              {request.urgent && (
+                <AlertCircle className="h-5 w-5 text-orange-500 shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-medium">{request.student}</p>
+                <p className="text-sm text-muted-foreground truncate">{request.topic}</p>
+                <p className="text-xs text-muted-foreground">{request.time}</p>
+              </div>
+              <Button size="sm">Respond</Button>
+            </div>
+          ))}
+          <Button variant="outline" className="w-full" asChild>
+            <Link href="/teacher/help-requests">View All Requests</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function UpcomingAiPanel() {
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      {/* Upcoming */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Upcoming
+          </CardTitle>
+          <CardDescription>Lessons, assessments, and meetings</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {upcomingItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.id}
+                className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
+              >
+                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                  item.type === 'lesson'
+                    ? 'bg-blue-500/10 text-blue-500'
+                    : item.type === 'grading'
+                      ? 'bg-orange-500/10 text-orange-500'
+                      : 'bg-purple-500/10 text-purple-500'
+                }`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{item.title}</p>
+                  <p className="text-xs text-muted-foreground">{item.time}</p>
+                </div>
+                <Button size="sm" variant="ghost">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      {/* AI Insights */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-purple-500" />
+            AI Insights
+          </CardTitle>
+          <CardDescription>Suggested interventions and opportunities</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {aiInsights.map((insight) => (
+            <div
+              key={insight.id}
+              className="group rounded-lg border p-4 transition-all hover:border-purple-500/30 hover:shadow-sm"
+            >
+              <div className="flex items-start gap-3">
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                  insight.priority === 'high'
+                    ? 'bg-red-500/10 text-red-500'
+                    : insight.priority === 'medium'
+                      ? 'bg-orange-500/10 text-orange-500'
+                      : 'bg-green-500/10 text-green-500'
+                }`}>
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium">{insight.title}</h4>
+                    <Badge variant="outline" className="text-xs capitalize">
+                      {insight.type}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">{insight.description}</p>
+                </div>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" variant="outline" className="flex-1">
+                  Take Action
+                </Button>
+                <Button size="sm" variant="ghost">
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// =============================================================================
+// Panel registry — maps IDs to components
+// =============================================================================
+
+const PANEL_MAP: Record<TeacherPanelId, () => JSX.Element> = {
+  'quick-actions': QuickActionsPanel,
+  'stats-grid': StatsGridPanel,
+  'main-content': MainContentPanel,
+  'at-risk-help': AtRiskHelpPanel,
+  'upcoming-ai': UpcomingAiPanel,
+};
+
+// =============================================================================
+// Main page
+// =============================================================================
+
 export default function TeacherDashboardPage() {
   const currentPeriod = useMemo(() => getCurrentPeriod(), []);
   const currentTime = useMemo(() => formatCurrentTime(), []);
   const currentClass = todaySchedule.find(c => c.isCurrent);
 
+  const { panelOrder, setPanelOrder } = useTeacherDashboardLayout();
+
   return (
     <div className="space-y-8">
-      {/* Hero Section - Today's Overview */}
+      {/* Hero Section - Today's Overview (fixed, not draggable) */}
       <div className="rounded-2xl bg-gradient-to-r from-blue-600/10 via-indigo-500/5 to-transparent p-6 md:p-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div>
@@ -210,371 +612,12 @@ export default function TeacherDashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          label="Active Students"
-          value={127}
-          icon={Users}
-          variant="primary"
-          change={12}
-        />
-
-        <StatsCard
-          label="Pending Reviews"
-          value={23}
-          icon={ClipboardCheck}
-          variant="warning"
-          subtitle="8 urgent"
-        />
-
-        <StatsCard
-          label="Help Requests"
-          value={pendingHelpRequests.length}
-          icon={MessageCircle}
-          variant="error"
-          subtitle="1 urgent"
-        />
-
-        <StatsCard
-          label="Assessments Due"
-          value={12}
-          icon={FileText}
-          variant="primary"
-          subtitle="This week"
-        />
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Class Overview - Takes 2 columns */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">My Classes</h2>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/teacher/classes">
-                View All <ChevronRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {classCards.map((cls) => (
-              <Card key={cls.id} hover className="group">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
-                      <GraduationCap className="h-5 w-5 text-blue-500" />
-                    </div>
-                    {cls.nextClass === 'Now' && (
-                      <Badge className="bg-green-500 text-white">Live</Badge>
-                    )}
-                  </div>
-
-                  <h3 className="mt-3 font-semibold">{cls.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {cls.students} students - {cls.activeAssignments} active assignments
-                  </p>
-
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Class Progress</span>
-                      <span className="font-medium">{cls.avgProgress}%</span>
-                    </div>
-                    <Progress value={cls.avgProgress} className="h-2" />
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>{cls.nextClass}</span>
-                  </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1" asChild>
-                      <Link href={`/teacher/classes/${cls.id}`}>View Class</Link>
-                    </Button>
-                    <Button size="sm" variant="ghost" asChild>
-                      <Link href={`/teacher/attendance/${cls.id}`}>
-                        <ClipboardList className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Today's Schedule */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Today&apos;s Schedule</CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/teacher/scheduling/timetable">Full View</Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {todaySchedule.map((item) => (
-              <div
-                key={item.id}
-                className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
-                  item.isCurrent
-                    ? 'border-blue-500 bg-blue-500/5'
-                    : item.isPast
-                      ? 'opacity-60'
-                      : 'hover:bg-muted/50'
-                }`}
-              >
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                  item.isCurrent ? 'bg-blue-500 text-white' : 'bg-muted'
-                }`}>
-                  <BookOpen className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.time} - {item.room}
-                  </p>
-                </div>
-                {item.isCurrent && (
-                  <Badge className="bg-blue-500 text-white shrink-0">Now</Badge>
-                )}
-                {item.isPast && (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-                )}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* At-Risk Students & Help Requests */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* At-Risk Students */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-orange-500" />
-                <CardTitle>At-Risk Students</CardTitle>
-              </div>
-              <Badge variant="destructive">{atRiskStudents.length} flagged</Badge>
-            </div>
-            <CardDescription>AI-identified students who may need support</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {atRiskStudents.map((student) => (
-              <div
-                key={student.id}
-                className="flex items-center gap-4 rounded-lg border p-4 transition-all hover:shadow-sm"
-              >
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={student.avatar || undefined} />
-                  <AvatarFallback>{student.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{student.name}</p>
-                    <Badge
-                      variant="outline"
-                      className={
-                        student.riskLevel === 'high'
-                          ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'
-                          : 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-900/20 dark:text-orange-400'
-                      }
-                    >
-                      {student.riskLevel} risk
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{student.class}</p>
-                  <div className="flex items-center gap-1 mt-1 text-sm">
-                    {student.trend === 'down' ? (
-                      <TrendingDown className="h-3 w-3 text-red-500" />
-                    ) : (
-                      <TrendingUp className="h-3 w-3 text-gray-400" />
-                    )}
-                    <span className="text-muted-foreground">{student.issue}</span>
-                  </div>
-                </div>
-                <Button size="sm" variant="outline">
-                  View Profile
-                </Button>
-              </div>
-            ))}
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/teacher/students/at-risk">
-                View All At-Risk Students
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Pending Help Requests */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-blue-500" />
-                <CardTitle>Help Requests</CardTitle>
-              </div>
-              <Badge variant="secondary">{pendingHelpRequests.length} pending</Badge>
-            </div>
-            <CardDescription>Students waiting for your assistance</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {pendingHelpRequests.map((request) => (
-              <div
-                key={request.id}
-                className={`flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50 ${
-                  request.urgent ? 'border-orange-200 dark:border-orange-800' : ''
-                }`}
-              >
-                {request.urgent && (
-                  <AlertCircle className="h-5 w-5 text-orange-500 shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium">{request.student}</p>
-                  <p className="text-sm text-muted-foreground truncate">{request.topic}</p>
-                  <p className="text-xs text-muted-foreground">{request.time}</p>
-                </div>
-                <Button size="sm">Respond</Button>
-              </div>
-            ))}
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/teacher/help-requests">View All Requests</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Upcoming & AI Insights */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Upcoming */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Upcoming
-            </CardTitle>
-            <CardDescription>Lessons, assessments, and meetings</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {upcomingItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                >
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                    item.type === 'lesson'
-                      ? 'bg-blue-500/10 text-blue-500'
-                      : item.type === 'grading'
-                        ? 'bg-orange-500/10 text-orange-500'
-                        : 'bg-purple-500/10 text-purple-500'
-                  }`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.time}</p>
-                  </div>
-                  <Button size="sm" variant="ghost">
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-
-        {/* AI Insights */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-purple-500" />
-              AI Insights
-            </CardTitle>
-            <CardDescription>Suggested interventions and opportunities</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {aiInsights.map((insight) => (
-              <div
-                key={insight.id}
-                className="group rounded-lg border p-4 transition-all hover:border-purple-500/30 hover:shadow-sm"
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                    insight.priority === 'high'
-                      ? 'bg-red-500/10 text-red-500'
-                      : insight.priority === 'medium'
-                        ? 'bg-orange-500/10 text-orange-500'
-                        : 'bg-green-500/10 text-green-500'
-                  }`}>
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium">{insight.title}</h4>
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {insight.type}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">{insight.description}</p>
-                  </div>
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <Button size="sm" variant="outline" className="flex-1">
-                    Take Action
-                  </Button>
-                  <Button size="sm" variant="ghost">
-                    Dismiss
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common tasks at your fingertips</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
-              <Link href="/teacher/attendance">
-                <ClipboardList className="h-6 w-6 text-blue-500" />
-                <span>Take Attendance</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
-              <Link href="/teacher/lessons/new">
-                <PlusCircle className="h-6 w-6 text-green-500" />
-                <span>Create Lesson Plan</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
-              <Link href="/teacher/grading">
-                <PenLine className="h-6 w-6 text-orange-500" />
-                <span>Grade Work</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
-              <Link href="/teacher/challenges/create">
-                <Lightbulb className="h-6 w-6 text-purple-500" />
-                <span>New Challenge</span>
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Reorderable panels */}
+      <ReorderablePanels
+        panelOrder={panelOrder}
+        onReorder={setPanelOrder}
+        panelMap={PANEL_MAP}
+      />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Select,
@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { ReorderablePanels } from '@/components/dashboard/draggable-panel';
+import { useParentDashboardLayout, type ParentPanelId } from '@/stores/dashboard-layout-store';
 import {
   Users,
   TrendingUp,
@@ -41,7 +43,6 @@ import {
   Download,
   Eye,
   Heart,
-  ThumbsUp,
   MoreHorizontal,
   Image as ImageIcon,
   Play,
@@ -358,90 +359,12 @@ export default function ParentDashboardPage() {
   const pendingPayments = PAYMENTS.filter((p) => p.status === 'pending');
   const pendingPaymentTotal = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
 
-  return (
-    <div className="space-y-6">
-      {/* Header with Language Selector */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Parent Dashboard</h1>
-          <p className="text-muted-foreground">
-            Track your children&apos;s progress and stay connected with their education
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger className="w-[180px]">
-              <Globe className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Select language" />
-            </SelectTrigger>
-            <SelectContent>
-              {LANGUAGES.map((lang) => (
-                <SelectItem key={lang.code} value={lang.code}>
-                  {lang.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="icon" className="relative">
-            <Bell className="h-4 w-4" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
-                {unreadCount}
-              </span>
-            )}
-          </Button>
-        </div>
-      </div>
+  const { panelOrder, setPanelOrder } = useParentDashboardLayout();
 
-      {/* Little Explorers Launch Pad */}
-      <Link href="/early-years">
-        <Card className="overflow-hidden border-0 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 text-white shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5 cursor-pointer">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
-              <Sparkles className="h-7 w-7 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold">Little Explorers</h3>
-              <p className="text-sm text-white/80">Launch the Early Years learning hub for ages 3-7</p>
-            </div>
-            <Button variant="secondary" size="sm" className="shrink-0 bg-white/20 text-white border-0 hover:bg-white/30">
-              Open <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-      </Link>
-
-      {/* Children Selector Tabs */}
-      <Card>
-        <CardContent className="p-4">
-          <Tabs value={selectedChildId} onValueChange={setSelectedChildId}>
-            <TabsList className="w-full justify-start gap-2 bg-transparent h-auto flex-wrap">
-              {CHILDREN.map((child) => (
-                <TabsTrigger
-                  key={child.id}
-                  value={child.id}
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex items-center gap-3 px-4 py-3 rounded-lg border data-[state=active]:border-primary"
-                >
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={child.avatarUrl} alt={child.firstName} />
-                    <AvatarFallback>
-                      {child.firstName[0]}{child.lastName[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="text-left">
-                    <p className="font-medium">{child.firstName}</p>
-                    <p className="text-xs opacity-70">{child.grade}</p>
-                  </div>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </CardContent>
-      </Card>
-
-      {/* Progress Summary Section */}
+  // Panel map uses closures to access component state
+  const panelMap = useMemo<Record<ParentPanelId, () => JSX.Element>>(() => ({
+    'progress-summary': () => (
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Overall Progress Card */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -471,7 +394,6 @@ export default function ParentDashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Overall Progress */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Overall Progress</span>
@@ -479,8 +401,6 @@ export default function ParentDashboardPage() {
               </div>
               <Progress value={selectedChild.overallProgress} className="h-3" />
             </div>
-
-            {/* Subject Progress */}
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-muted-foreground">Progress by Subject</h4>
               <div className="grid gap-3 md:grid-cols-2">
@@ -504,8 +424,6 @@ export default function ParentDashboardPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Recent Achievements Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -517,10 +435,7 @@ export default function ParentDashboardPage() {
             {childAchievements.slice(0, 4).map((achievement) => {
               const Icon = achievement.icon;
               return (
-                <div
-                  key={achievement.id}
-                  className="flex items-center gap-3 rounded-lg border p-3"
-                >
+                <div key={achievement.id} className="flex items-center gap-3 rounded-lg border p-3">
                   <div className="rounded-full bg-yellow-500/10 p-2">
                     <Icon className="h-4 w-4 text-yellow-500" />
                   </div>
@@ -539,8 +454,8 @@ export default function ParentDashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Class Story Feed */}
+    ),
+    'class-story': () => (
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -569,15 +484,10 @@ export default function ParentDashboardPage() {
                       <p className="text-xs text-muted-foreground">{post.timestamp}</p>
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground">{post.content}</p>
-
-                    {/* Media Preview */}
                     {post.type === 'photo' && post.images && (
                       <div className="mt-3 flex gap-2">
                         {post.images.slice(0, 2).map((img, idx) => (
-                          <div
-                            key={idx}
-                            className="relative h-24 w-24 rounded-lg bg-muted flex items-center justify-center overflow-hidden"
-                          >
+                          <div key={idx} className="relative h-24 w-24 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
                             <ImageIcon className="h-8 w-8 text-muted-foreground" />
                           </div>
                         ))}
@@ -588,7 +498,6 @@ export default function ParentDashboardPage() {
                         )}
                       </div>
                     )}
-
                     {post.type === 'video' && (
                       <div className="mt-3 relative h-32 w-full max-w-xs rounded-lg bg-muted flex items-center justify-center">
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -598,8 +507,6 @@ export default function ParentDashboardPage() {
                         </div>
                       </div>
                     )}
-
-                    {/* Tagged Children */}
                     {post.childrenTagged.length > 0 && (
                       <div className="mt-2">
                         <Badge variant="secondary" className="text-xs">
@@ -608,8 +515,6 @@ export default function ParentDashboardPage() {
                         </Badge>
                       </div>
                     )}
-
-                    {/* Actions */}
                     <div className="mt-3 flex items-center gap-4 pt-2 border-t">
                       <button className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
                         <Heart className="h-4 w-4" />
@@ -630,10 +535,9 @@ export default function ParentDashboardPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Three Column Layout: Upcoming, Messages, Payments */}
+    ),
+    'upcoming-messages-payments': () => (
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Upcoming */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -666,8 +570,6 @@ export default function ParentDashboardPage() {
             </Button>
           </CardContent>
         </Card>
-
-        {/* Messages */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -706,8 +608,6 @@ export default function ParentDashboardPage() {
                 </div>
               </div>
             ))}
-
-            {/* Quick Reply */}
             <div className="pt-3 border-t">
               <div className="flex items-center gap-2">
                 <Input
@@ -721,14 +621,11 @@ export default function ParentDashboardPage() {
                 </Button>
               </div>
             </div>
-
             <Button variant="outline" className="w-full" asChild>
               <Link href="/messages">View All Messages</Link>
             </Button>
           </CardContent>
         </Card>
-
-        {/* Payments */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -744,7 +641,6 @@ export default function ParentDashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            {/* Outstanding Balance */}
             {pendingPaymentTotal > 0 && (
               <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3">
                 <div className="flex items-center justify-between">
@@ -756,8 +652,6 @@ export default function ParentDashboardPage() {
                 </div>
               </div>
             )}
-
-            {/* Payment List */}
             {PAYMENTS.slice(0, 3).map((payment) => (
               <div key={payment.id} className="flex items-center justify-between rounded-lg border p-3">
                 <div>
@@ -782,15 +676,14 @@ export default function ParentDashboardPage() {
                 </div>
               </div>
             ))}
-
             <Button variant="outline" className="w-full" asChild>
               <Link href="/payments">Payment History</Link>
             </Button>
           </CardContent>
         </Card>
       </div>
-
-      {/* Reports Section */}
+    ),
+    'reports': () => (
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -840,6 +733,96 @@ export default function ParentDashboardPage() {
           </div>
         </CardContent>
       </Card>
+    ),
+  }), [selectedChild, childAchievements, childUpcoming, unreadCount, pendingPayments, pendingPaymentTotal, quickReply, selectedChildId]);
+
+  return (
+    <div className="space-y-6">
+      {/* Header with Language Selector (fixed) */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Parent Dashboard</h1>
+          <p className="text-muted-foreground">
+            Track your children&apos;s progress and stay connected with their education
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Select value={language} onValueChange={setLanguage}>
+            <SelectTrigger className="w-[180px]">
+              <Globe className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Select language" />
+            </SelectTrigger>
+            <SelectContent>
+              {LANGUAGES.map((lang) => (
+                <SelectItem key={lang.code} value={lang.code}>
+                  {lang.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="icon" className="relative">
+            <Bell className="h-4 w-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Little Explorers Launch Pad (fixed) */}
+      <Link href="/early-years">
+        <Card className="overflow-hidden border-0 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 text-white shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5 cursor-pointer">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+              <Sparkles className="h-7 w-7 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold">Little Explorers</h3>
+              <p className="text-sm text-white/80">Launch the Early Years learning hub for ages 3-7</p>
+            </div>
+            <Button variant="secondary" size="sm" className="shrink-0 bg-white/20 text-white border-0 hover:bg-white/30">
+              Open <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Children Selector Tabs (fixed) */}
+      <Card>
+        <CardContent className="p-4">
+          <Tabs value={selectedChildId} onValueChange={setSelectedChildId}>
+            <TabsList className="w-full justify-start gap-2 bg-transparent h-auto flex-wrap">
+              {CHILDREN.map((child) => (
+                <TabsTrigger
+                  key={child.id}
+                  value={child.id}
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex items-center gap-3 px-4 py-3 rounded-lg border data-[state=active]:border-primary"
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={child.avatarUrl} alt={child.firstName} />
+                    <AvatarFallback>
+                      {child.firstName[0]}{child.lastName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-left">
+                    <p className="font-medium">{child.firstName}</p>
+                    <p className="text-xs opacity-70">{child.grade}</p>
+                  </div>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Reorderable panels */}
+      <ReorderablePanels
+        panelOrder={panelOrder}
+        onReorder={setPanelOrder}
+        panelMap={panelMap}
+      />
     </div>
   );
 }
