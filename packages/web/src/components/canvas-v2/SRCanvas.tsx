@@ -2977,23 +2977,26 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-// ── Brand design tokens (from scholarly-ui.css) ─────────────────────────
+// ── Brand design tokens — reads CSS variables so dark/light mode works ───
+// globals.css defines --primary, --background, etc. as HSL triplets for
+// both :root (light) and .dark. Wrapping in hsl() makes them valid CSS
+// color values that automatically switch when the theme class toggles.
 const BRAND = {
-  primary:    '#1e9df1',
-  background: '#ffffff',
-  foreground: '#0f1419',
-  card:       '#f7f8f8',
-  border:     '#e1eaef',
-  input:      '#f7f9fa',
-  muted:      '#E5E5E6',
-  mutedFg:    '#6b7280',
-  accent:     '#E3ECF6',
-  accentFg:   '#1e9df1',
-  ring:       '#1da1f2',
-  destructive:'#f4212e',
-  sidebar:    '#f7f8f8',
-  sidebarBdr: '#e1e8ed',
-  font:       "'Open Sans', sans-serif",
+  primary:     'hsl(var(--primary))',
+  background:  'hsl(var(--background))',
+  foreground:  'hsl(var(--foreground))',
+  card:        'hsl(var(--card))',
+  border:      'hsl(var(--border))',
+  input:       'hsl(var(--input))',
+  muted:       'hsl(var(--muted))',
+  mutedFg:     'hsl(var(--muted-foreground))',
+  accent:      'hsl(var(--accent))',
+  accentFg:    'hsl(var(--accent-foreground))',
+  ring:        'hsl(var(--ring))',
+  destructive: 'hsl(var(--destructive))',
+  sidebar:     'hsl(var(--sidebar))',
+  sidebarBdr:  'hsl(var(--sidebar-border))',
+  font:        "'Open Sans', sans-serif",
 } as const;
 
 // ── Category icon map ───────────────────────────────────────────────────
@@ -3039,44 +3042,44 @@ function ConfigField({ fieldKey, fieldDef, value, onChange }: {
   onChange: (key: string, val: unknown) => void;
 }) {
   const inputStyle: React.CSSProperties = {
-    width: '100%', background: '#f7f9fa', border: '1px solid #e1eaef',
-    borderRadius: 6, padding: '6px 10px', color: '#0f1419',
-    fontSize: 12, fontFamily: "'Open Sans', sans-serif", outline: 'none',
+    width: '100%', background: BRAND.input, border: `1px solid ${BRAND.border}`,
+    borderRadius: 6, padding: '6px 10px', color: BRAND.foreground,
+    fontSize: 12, fontFamily: BRAND.font, outline: 'none',
   };
 
   switch (fieldDef.type) {
     case 'string': return (
       <div style={{ marginBottom: 12 }}>
-        <label style={{ fontSize: 11, fontWeight: 600, color: '#4b5563', display: 'block', marginBottom: 4, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>
+        <label style={{ fontSize: 11, fontWeight: 600, color: BRAND.mutedFg, display: 'block', marginBottom: 4, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>
           {fieldDef.label}{fieldDef.required ? ' *' : ''}
         </label>
         <input type="text" value={(value as string) ?? fieldDef.defaultValue ?? ''}
           placeholder={fieldDef.placeholder} onChange={e => onChange(fieldKey, e.target.value)}
           style={inputStyle} />
-        {fieldDef.helpText && <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>{fieldDef.helpText}</div>}
+        {fieldDef.helpText && <div style={{ fontSize: 10, color: BRAND.mutedFg, marginTop: 2 }}>{fieldDef.helpText}</div>}
       </div>
     );
     case 'number': return (
       <div style={{ marginBottom: 12 }}>
-        <label style={{ fontSize: 11, fontWeight: 600, color: '#4b5563', display: 'block', marginBottom: 4, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>
+        <label style={{ fontSize: 11, fontWeight: 600, color: BRAND.mutedFg, display: 'block', marginBottom: 4, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>
           {fieldDef.label}
         </label>
         <input type="number" value={(value as number) ?? fieldDef.defaultValue ?? 0}
           onChange={e => onChange(fieldKey, parseFloat(e.target.value) || 0)}
           style={inputStyle} step="any" />
-        {fieldDef.helpText && <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>{fieldDef.helpText}</div>}
+        {fieldDef.helpText && <div style={{ fontSize: 10, color: BRAND.mutedFg, marginTop: 2 }}>{fieldDef.helpText}</div>}
       </div>
     );
     case 'boolean': return (
       <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
         <input type="checkbox" checked={(value as boolean) ?? (fieldDef.defaultValue as boolean) ?? false}
-          onChange={e => onChange(fieldKey, e.target.checked)} style={{ accentColor: '#1e9df1' }} />
-        <label style={{ fontSize: 12, color: '#6b7280' }}>{fieldDef.label}</label>
+          onChange={e => onChange(fieldKey, e.target.checked)} style={{ accentColor: BRAND.primary }} />
+        <label style={{ fontSize: 12, color: BRAND.mutedFg }}>{fieldDef.label}</label>
       </div>
     );
     case 'select': return (
       <div style={{ marginBottom: 12 }}>
-        <label style={{ fontSize: 11, fontWeight: 600, color: '#4b5563', display: 'block', marginBottom: 4, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>
+        <label style={{ fontSize: 11, fontWeight: 600, color: BRAND.mutedFg, display: 'block', marginBottom: 4, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>
           {fieldDef.label}
         </label>
         <select value={(value as string) ?? (fieldDef.defaultValue as string) ?? ''}
@@ -3085,32 +3088,32 @@ function ConfigField({ fieldKey, fieldDef, value, onChange }: {
           {!value && !fieldDef.defaultValue && <option value="">Select...</option>}
           {fieldDef.options?.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
-        {fieldDef.helpText && <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>{fieldDef.helpText}</div>}
+        {fieldDef.helpText && <div style={{ fontSize: 10, color: BRAND.mutedFg, marginTop: 2 }}>{fieldDef.helpText}</div>}
       </div>
     );
     case 'text': return (
       <div style={{ marginBottom: 12 }}>
-        <label style={{ fontSize: 11, fontWeight: 600, color: '#4b5563', display: 'block', marginBottom: 4, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>
+        <label style={{ fontSize: 11, fontWeight: 600, color: BRAND.mutedFg, display: 'block', marginBottom: 4, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>
           {fieldDef.label}
         </label>
         <textarea value={(value as string) ?? fieldDef.defaultValue ?? ''}
           placeholder={fieldDef.placeholder} onChange={e => onChange(fieldKey, e.target.value)}
           rows={3} style={{ ...inputStyle, resize: 'vertical' as const }} />
-        {fieldDef.helpText && <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>{fieldDef.helpText}</div>}
+        {fieldDef.helpText && <div style={{ fontSize: 10, color: BRAND.mutedFg, marginTop: 2 }}>{fieldDef.helpText}</div>}
       </div>
     );
     case 'json': return (
       <div style={{ marginBottom: 12 }}>
-        <label style={{ fontSize: 11, fontWeight: 600, color: '#4b5563', display: 'block', marginBottom: 4, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>
+        <label style={{ fontSize: 11, fontWeight: 600, color: BRAND.mutedFg, display: 'block', marginBottom: 4, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>
           {fieldDef.label}
         </label>
         <textarea value={typeof value === 'string' ? value : JSON.stringify(value ?? fieldDef.defaultValue ?? {}, null, 2)}
           onChange={e => { try { onChange(fieldKey, JSON.parse(e.target.value)); } catch { onChange(fieldKey, e.target.value); } }}
           rows={4} style={{ ...inputStyle, fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, resize: 'vertical' as const }} />
-        {fieldDef.helpText && <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>{fieldDef.helpText}</div>}
+        {fieldDef.helpText && <div style={{ fontSize: 10, color: BRAND.mutedFg, marginTop: 2 }}>{fieldDef.helpText}</div>}
       </div>
     );
-    default: return <div style={{ fontSize: 11, color: '#9ca3af' }}>Unsupported: {fieldDef.type}</div>;
+    default: return <div style={{ fontSize: 11, color: BRAND.mutedFg }}>Unsupported: {fieldDef.type}</div>;
   }
 }
 
@@ -3126,11 +3129,11 @@ function AIInsightPanel({ insight, knowledge, isExpanded, onToggle }: {
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, #0D2137 0%, #132B3F 100%)',
-      border: '1px solid #1B4B6B', borderRadius: 8, padding: 12, marginBottom: 12,
+      background: BRAND.accent, borderRadius: 8, padding: 12, marginBottom: 12,
+      border: `1px solid ${BRAND.border}`,
     }}>
       <button onClick={onToggle} style={{
-        background: 'none', border: 'none', color: '#5BA3D9', cursor: 'pointer',
+        background: 'none', border: 'none', color: BRAND.accentFg, cursor: 'pointer',
         fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 1,
         display: 'flex', alignItems: 'center', gap: 6, padding: 0, marginBottom: 8,
         width: '100%',
@@ -3140,7 +3143,7 @@ function AIInsightPanel({ insight, knowledge, isExpanded, onToggle }: {
       </button>
 
       {/* Always show contextual role */}
-      <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.5, marginBottom: 8 }}>
+      <div style={{ fontSize: 12, color: BRAND.foreground, lineHeight: 1.5, marginBottom: 8 }}>
         {insight.contextualRole}
       </div>
 
@@ -3148,8 +3151,8 @@ function AIInsightPanel({ insight, knowledge, isExpanded, onToggle }: {
         <>
           {/* Data flow narrative */}
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 600, color: '#4b5563', marginBottom: 3, textTransform: 'uppercase' as const }}>Data Flow</div>
-            <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.4 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: BRAND.mutedFg, marginBottom: 3, textTransform: 'uppercase' as const }}>Data Flow</div>
+            <div style={{ fontSize: 11, color: BRAND.mutedFg, lineHeight: 1.4 }}>
               {insight.inputNarrative}<br />{insight.outputNarrative}
             </div>
           </div>
@@ -3157,11 +3160,11 @@ function AIInsightPanel({ insight, knowledge, isExpanded, onToggle }: {
           {/* Pedagogical context */}
           {insight.pedagogicalContext && (
             <div style={{
-              background: '#0A2A1A', border: '1px solid #1B6B3A', borderRadius: 6,
+              background: BRAND.card, border: `1px solid ${BRAND.border}`, borderRadius: 6,
               padding: '8px 10px', marginBottom: 8,
             }}>
-              <div style={{ fontSize: 10, fontWeight: 600, color: '#3DB86A', marginBottom: 3 }}>EDUCATIONAL SIGNIFICANCE</div>
-              <div style={{ fontSize: 11, color: '#8BC8A0', lineHeight: 1.5 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: '#00b87a', marginBottom: 3 }}>EDUCATIONAL SIGNIFICANCE</div>
+              <div style={{ fontSize: 11, color: BRAND.mutedFg, lineHeight: 1.5 }}>
                 {insight.pedagogicalContext}
               </div>
             </div>
@@ -3170,9 +3173,9 @@ function AIInsightPanel({ insight, knowledge, isExpanded, onToggle }: {
           {/* Config notes */}
           {insight.configNotes.length > 0 && (
             <div style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: 10, fontWeight: 600, color: '#4b5563', marginBottom: 3, textTransform: 'uppercase' as const }}>Configuration Notes</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: BRAND.mutedFg, marginBottom: 3, textTransform: 'uppercase' as const }}>Configuration Notes</div>
               {insight.configNotes.map((note, i) => (
-                <div key={i} style={{ fontSize: 11, color: '#B0A870', lineHeight: 1.4, marginBottom: 3, paddingLeft: 8, borderLeft: '2px solid #4A6235' }}>
+                <div key={i} style={{ fontSize: 11, color: BRAND.mutedFg, lineHeight: 1.4, marginBottom: 3, paddingLeft: 8, borderLeft: `2px solid ${BRAND.border}` }}>
                   {note}
                 </div>
               ))}
@@ -3181,8 +3184,8 @@ function AIInsightPanel({ insight, knowledge, isExpanded, onToggle }: {
 
           {/* Deep knowledge — analogy */}
           {knowledge?.analogy && (
-            <div style={{ fontSize: 11, color: '#6b7280', fontStyle: 'italic', lineHeight: 1.5, marginBottom: 8,
-              paddingLeft: 10, borderLeft: '2px solid #2A4A5A' }}>
+            <div style={{ fontSize: 11, color: BRAND.mutedFg, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 8,
+              paddingLeft: 10, borderLeft: `2px solid ${BRAND.border}` }}>
               💡 {knowledge.analogy}
             </div>
           )}
@@ -3190,8 +3193,8 @@ function AIInsightPanel({ insight, knowledge, isExpanded, onToggle }: {
           {/* Execution note */}
           {insight.executionNote && (
             <div style={{
-              background: '#1A2510', border: '1px solid #3A5530', borderRadius: 6,
-              padding: '6px 10px', fontSize: 11, color: '#A0C890',
+              background: BRAND.card, border: `1px solid ${BRAND.border}`, borderRadius: 6,
+              padding: '6px 10px', fontSize: 11, color: BRAND.mutedFg,
             }}>
               → {insight.executionNote}
             </div>
@@ -3212,7 +3215,7 @@ function SuggestionBanner({ suggestions, onDismiss }: {
   const visible = suggestions.filter(s => !dismissed.has(s.id));
   if (visible.length === 0) return null;
 
-  const levelColors = { info: '#1e9df1', tip: '#D4790E', warning: '#f4212e' };
+  const levelColors = { info: BRAND.primary, tip: '#D4790E', warning: BRAND.destructive };
   const levelGlyphs = { info: 'ℹ', tip: '💡', warning: '⚠' };
 
   return (
@@ -3226,15 +3229,15 @@ function SuggestionBanner({ suggestions, onDismiss }: {
           <span style={{ color: levelColors[s.level], flexShrink: 0, marginTop: 1 }}>
             {levelGlyphs[s.level]}
           </span>
-          <div style={{ color: '#374151', lineHeight: 1.4, flex: 1 }}>{s.message}</div>
+          <div style={{ color: BRAND.foreground, lineHeight: 1.4, flex: 1 }}>{s.message}</div>
           <button onClick={() => { setDismissed(prev => new Set([...prev, s.id])); onDismiss(s.id); }}
-            style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: 12, padding: 0, flexShrink: 0 }}>
+            style={{ background: 'none', border: 'none', color: BRAND.mutedFg, cursor: 'pointer', fontSize: 12, padding: 0, flexShrink: 0 }}>
             ✕
           </button>
         </div>
       ))}
       {visible.length > 3 && (
-        <div style={{ fontSize: 10, color: '#9ca3af', textAlign: 'center' as const }}>
+        <div style={{ fontSize: 10, color: BRAND.mutedFg, textAlign: 'center' as const }}>
           +{visible.length - 3} more suggestion{visible.length - 3 > 1 ? 's' : ''}
         </div>
       )}
@@ -3625,7 +3628,7 @@ export default function SRCanvasProduction({
             <defs>
               <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"
                 patternTransform={`translate(${viewport.offsetX % (24 * viewport.scale)},${viewport.offsetY % (24 * viewport.scale)}) scale(${viewport.scale})`}>
-                <circle cx="12" cy="12" r="0.8" fill="#1E3040" />
+                <circle cx="12" cy="12" r="0.8" fill={BRAND.foreground} />
               </pattern>
             </defs>
             <rect data-bg="1" width="100%" height="100%" fill="url(#grid)" />
@@ -3684,8 +3687,8 @@ export default function SRCanvasProduction({
                       </rect>
                     )}
                     {/* Body */}
-                    <rect x={node.x} y={node.y} width={NODE_WIDTH} height={h} rx={8} fill="#ffffff"
-                      stroke={isSelected ? '#5BA3D9' : ns ? (STATUS_COLORS[ns] ?? '#2A3F52') : '#2A3F52'} strokeWidth={isSelected ? 2 : 1.5} />
+                    <rect x={node.x} y={node.y} width={NODE_WIDTH} height={h} rx={8} fill={BRAND.background}
+                      stroke={isSelected ? BRAND.primary : ns ? (STATUS_COLORS[ns] ?? BRAND.border) : BRAND.border} strokeWidth={isSelected ? 2 : 1.5} />
                     {/* Header */}
                     <rect x={node.x} y={node.y} width={NODE_WIDTH} height={NODE_HEADER_HEIGHT} rx={8} fill={cat.color} />
                     <rect x={node.x} y={node.y + NODE_HEADER_HEIGHT - 8} width={NODE_WIDTH} height={8} fill={cat.color} />
@@ -3695,15 +3698,15 @@ export default function SRCanvasProduction({
                     {type.pauses && !ns && <text x={node.x + NODE_WIDTH - 18} y={node.y + 22} fontSize={10} fill="rgba(255,255,255,0.5)">⏸</text>}
                     {/* Validation error badge */}
                     {validationIssues.some(v => v.nodeId === node.id && v.severity === 'error') && !ns && (
-                      <circle cx={node.x + NODE_WIDTH - 4} cy={node.y - 4} r={6} fill="#f4212e" stroke="#f7f9fa" strokeWidth={2} />
+                      <circle cx={node.x + NODE_WIDTH - 4} cy={node.y - 4} r={6} fill={BRAND.destructive} stroke={BRAND.background} strokeWidth={2} />
                     )}
                     {/* Input ports */}
                     {type.inputs.map((port, pi) => {
                       const py = node.y + NODE_HEADER_HEIGHT + (pi + 0.5) * PORT_ROW_HEIGHT;
                       return (
                         <g key={`in-${port.portId}`} onMouseUp={e => onInPortUp(e, node.id, port.portId, port.dataType)} style={{ cursor: 'crosshair' }}>
-                          <circle cx={node.x} cy={py} r={PORT_RADIUS} fill="#ffffff" stroke={PORT_COLORS[port.dataType] ?? '#888'} strokeWidth={2} />
-                          <text x={node.x + 14} y={py + 4} fontSize={10} fill="#6b7280" fontFamily="'Open Sans', sans-serif">{port.label}</text>
+                          <circle cx={node.x} cy={py} r={PORT_RADIUS} fill={BRAND.background} stroke={PORT_COLORS[port.dataType] ?? '#888'} strokeWidth={2} />
+                          <text x={node.x + 14} y={py + 4} fontSize={10} fill={BRAND.mutedFg} fontFamily={BRAND.font}>{port.label}</text>
                         </g>
                       );
                     })}
@@ -3712,8 +3715,8 @@ export default function SRCanvasProduction({
                       const py = node.y + NODE_HEADER_HEIGHT + (pi + 0.5) * PORT_ROW_HEIGHT;
                       return (
                         <g key={`out-${port.portId}`} onMouseDown={e => onOutPortDown(e, node.id, port.portId, port.dataType)} style={{ cursor: 'crosshair' }}>
-                          <circle cx={node.x + NODE_WIDTH} cy={py} r={PORT_RADIUS} fill={PORT_COLORS[port.dataType] ?? '#888'} stroke="#ffffff" strokeWidth={2} />
-                          <text x={node.x + NODE_WIDTH - 14} y={py + 4} fontSize={10} fill="#6b7280" textAnchor="end" fontFamily="'Open Sans', sans-serif">{port.label}</text>
+                          <circle cx={node.x + NODE_WIDTH} cy={py} r={PORT_RADIUS} fill={PORT_COLORS[port.dataType] ?? '#888'} stroke={BRAND.background} strokeWidth={2} />
+                          <text x={node.x + NODE_WIDTH - 14} y={py + 4} fontSize={10} fill={BRAND.mutedFg} textAnchor="end" fontFamily={BRAND.font}>{port.label}</text>
                         </g>
                       );
                     })}
@@ -3725,7 +3728,7 @@ export default function SRCanvasProduction({
 
           {/* Empty state */}
           {nodes.length === 0 && (
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' as const, color: '#9ca3af', pointerEvents: 'none' }}>
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' as const, color: BRAND.mutedFg, pointerEvents: 'none' }}>
               <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.4 }}>
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /></svg>
               </div>
@@ -3735,15 +3738,15 @@ export default function SRCanvasProduction({
           )}
 
           {/* Bottom bar: AI narrative + minimap info */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(22,34,48,0.92)', backdropFilter: 'blur(8px)', borderTop: '1px solid #e1eaef' }}>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: BRAND.card, backdropFilter: 'blur(8px)', borderTop: `1px solid ${BRAND.border}` }}>
             {/* AI Workflow Narrative */}
             {nodes.length > 0 && (
               <div style={{ padding: '8px 12px', borderBottom: '1px solid #1B3045' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                   <Brain size={12} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#5BA3D9', textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>{insights.workflowPurpose}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: BRAND.accentFg, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>{insights.workflowPurpose}</span>
                 </div>
-                <div style={{ fontSize: 12, color: '#A0B8CA', lineHeight: 1.5 }}>
+                <div style={{ fontSize: 12, color: BRAND.mutedFg, lineHeight: 1.5 }}>
                   {insights.workflowNarrative}
                 </div>
               </div>
@@ -3751,16 +3754,16 @@ export default function SRCanvasProduction({
             {/* Suggestions */}
             <SuggestionBanner suggestions={insights.suggestions} onDismiss={() => {}} />
             {/* Status bar */}
-            <div style={{ padding: '6px 12px', fontSize: 11, color: '#9ca3af', display: 'flex', gap: 12 }}>
+            <div style={{ padding: '6px 12px', fontSize: 11, color: BRAND.mutedFg, display: 'flex', gap: 12 }}>
               <span>{nodes.length} nodes</span>
               <span>{edges.length} edges</span>
               <span>Zoom: {Math.round(viewport.scale * 100)}%</span>
               {validationIssues.length > 0 && (
-                <span style={{ color: hasErrors ? '#f4212e' : '#D4790E' }}>
+                <span style={{ color: hasErrors ? BRAND.destructive : '#D4790E' }}>
                   {validationIssues.filter(i => i.severity === 'error').length} error(s), {validationIssues.filter(i => i.severity === 'warning').length} warning(s)
                 </span>
               )}
-              <span style={{ marginLeft: 'auto', color: '#3A5565' }}>Pan: drag bg · Connect: drag output→input · Zoom: scroll · Undo: Ctrl+Z</span>
+              <span style={{ marginLeft: 'auto', color: BRAND.mutedFg }}>Pan: drag bg · Connect: drag output→input · Zoom: scroll · Undo: Ctrl+Z</span>
             </div>
           </div>
         </div>
@@ -3768,13 +3771,13 @@ export default function SRCanvasProduction({
 
       {/* ── Right Panel (Inspector + AI Context) ──────────────────── */}
       {selectedNode && selectedType && selectedCat && (
-        <div style={{ width: 300, background: '#f7f8f8', borderLeft: '1px solid #e1eaef', display: 'flex', flexDirection: 'column', flexShrink: 0, overflowY: 'auto' }}>
+        <div style={{ width: 300, background: BRAND.card, borderLeft: `1px solid ${BRAND.border}`, display: 'flex', flexDirection: 'column', flexShrink: 0, overflowY: 'auto' }}>
           {/* Header */}
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #e1eaef', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${BRAND.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontWeight: 600, fontSize: 13, color: selectedCat.color }}>
               {(() => { const CI = CATEGORY_ICONS[selectedType.category]; return CI ? <CI size={16} style={{ display: 'inline' }} /> : null; })()} {selectedType.label}
             </span>
-            <button onClick={() => setSelectedNodes(new Set())} style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: 16 }}>✕</button>
+            <button onClick={() => setSelectedNodes(new Set())} style={{ background: 'none', border: 'none', color: BRAND.mutedFg, cursor: 'pointer', fontSize: 16 }}>✕</button>
           </div>
 
           <div style={{ padding: 16, flex: 1 }}>
@@ -3784,9 +3787,9 @@ export default function SRCanvasProduction({
 
             {/* Deep knowledge — full explanation */}
             {selectedKnowledge && (
-              <div style={{ marginBottom: 16, padding: '10px 12px', background: '#f7f9fa', borderRadius: 8, border: '1px solid #e1eaef' }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: '#4b5563', marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>What This Node Does</div>
-                <div style={{ fontSize: 12, color: '#A0B8CA', lineHeight: 1.5 }}>
+              <div style={{ marginBottom: 16, padding: '10px 12px', background: BRAND.input, borderRadius: 8, border: `1px solid ${BRAND.border}` }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: BRAND.mutedFg, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>What This Node Does</div>
+                <div style={{ fontSize: 12, color: BRAND.mutedFg, lineHeight: 1.5 }}>
                   {selectedKnowledge.explanation}
                 </div>
               </div>
@@ -3808,22 +3811,22 @@ export default function SRCanvasProduction({
             {/* Ports */}
             {selectedType.inputs.length > 0 && (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#4b5563', marginBottom: 6, textTransform: 'uppercase' as const }}>Inputs</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: BRAND.mutedFg, marginBottom: 6, textTransform: 'uppercase' as const }}>Inputs</div>
                 {selectedType.inputs.map(p => (
-                  <div key={p.portId} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, fontSize: 12, color: '#6b7280' }}>
+                  <div key={p.portId} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, fontSize: 12, color: BRAND.mutedFg }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: PORT_COLORS[p.dataType] ?? '#888' }} />
-                    {p.label} <span style={{ fontSize: 10, color: '#4b5563' }}>({p.dataType})</span>
+                    {p.label} <span style={{ fontSize: 10, color: BRAND.mutedFg }}>({p.dataType})</span>
                   </div>
                 ))}
               </div>
             )}
             {selectedType.outputs.length > 0 && (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#4b5563', marginBottom: 6, textTransform: 'uppercase' as const }}>Outputs</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: BRAND.mutedFg, marginBottom: 6, textTransform: 'uppercase' as const }}>Outputs</div>
                 {selectedType.outputs.map(p => (
-                  <div key={p.portId} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, fontSize: 12, color: '#6b7280' }}>
+                  <div key={p.portId} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, fontSize: 12, color: BRAND.mutedFg }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: PORT_COLORS[p.dataType] ?? '#888' }} />
-                    {p.label} <span style={{ fontSize: 10, color: '#4b5563' }}>({p.dataType})</span>
+                    {p.label} <span style={{ fontSize: 10, color: BRAND.mutedFg }}>({p.dataType})</span>
                   </div>
                 ))}
               </div>
@@ -3831,14 +3834,14 @@ export default function SRCanvasProduction({
 
             {/* Pause indicator */}
             {selectedType.pauses && (
-              <div style={{ marginBottom: 12, padding: '8px 12px', borderRadius: 8, background: 'rgba(155,89,182,0.1)', border: '1px solid rgba(155,89,182,0.3)', fontSize: 12, color: '#BB86D6' }}>
+              <div style={{ marginBottom: 12, padding: '8px 12px', borderRadius: 8, background: 'rgba(155,89,182,0.1)', border: '1px solid rgba(155,89,182,0.3)', fontSize: 12, color: '#9B59B6' }}>
                 This node pauses the workflow for human input
               </div>
             )}
 
             {/* Config Form */}
-            <div style={{ borderTop: '1px solid #e1eaef', paddingTop: 12, marginTop: 4 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#4b5563', marginBottom: 8, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>Configuration</div>
+            <div style={{ borderTop: `1px solid ${BRAND.border}`, paddingTop: 12, marginTop: 4 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: BRAND.mutedFg, marginBottom: 8, textTransform: 'uppercase' as const, letterSpacing: 0.5 }}>Configuration</div>
               {Object.entries(selectedType.configSchema).map(([key, def]) => (
                 <ConfigField key={key} fieldKey={key} fieldDef={def}
                   value={selectedNode.config[key]} onChange={(k, v) => updateConfig(selectedNode.id, k, v)} />
@@ -3847,8 +3850,8 @@ export default function SRCanvasProduction({
 
             {/* Type ID */}
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#4b5563', marginBottom: 4, textTransform: 'uppercase' as const }}>Type ID</div>
-              <div style={{ fontSize: 11, fontFamily: "'IBM Plex Mono', monospace", color: '#9ca3af', background: '#f7f9fa', padding: '6px 10px', borderRadius: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: BRAND.mutedFg, marginBottom: 4, textTransform: 'uppercase' as const }}>Type ID</div>
+              <div style={{ fontSize: 11, fontFamily: "'IBM Plex Mono', monospace", color: BRAND.mutedFg, background: BRAND.input, padding: '6px 10px', borderRadius: 6 }}>
                 {selectedType.typeId}
               </div>
             </div>
