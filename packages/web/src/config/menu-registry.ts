@@ -80,7 +80,7 @@ export const taskRegistry: Record<string, RegisteredTask> = {
 
   // ── CLUSTER 3: LEARNING & GROWTH ──
   L1: { ref: 'L1', name: 'Courses', href: '/learning/courses', icon: BookOpen, type: 'atomic', cluster: 'learning', description: 'Browse and enrol in courses' },
-  L3: { ref: 'L3', name: 'AI Buddy', href: '/ai-buddy', icon: Bot, type: 'atomic', cluster: 'learning', description: 'Your personal learning assistant' },
+  L3: { ref: 'L3', name: 'Ask Issy', href: '/ask-issy', icon: Bot, type: 'atomic', cluster: 'learning', description: 'Your personal learning assistant' },
   L4L5: { ref: 'L4L5', name: 'Golden Path', href: '/golden-path', icon: Compass, type: 'compound', cluster: 'learning', description: 'Adaptive learning pathway', children: [
     { name: 'Adaptation', href: '/golden-path/adaptation', icon: Brain },
     { name: 'Curiosity', href: '/golden-path/curiosity', icon: Sparkles },
@@ -186,15 +186,15 @@ export const taskRegistry: Record<string, RegisteredTask> = {
   // ── CLUSTER 11: AUTOMATION ──
   SR1: {
     ref: 'SR1',
-    name: 'S&R Canvas',
-    href: '/dashboard/canvas',
+    name: 'Visual Workflow Designer',
+    href: '/canvas',
     icon: Workflow,
     type: 'compound',
     children: [
-      { name: 'Designer', href: '/dashboard/canvas', icon: Workflow },
-      { name: 'Active Runs', href: '/dashboard/canvas/runs', icon: Play },
+      { name: 'Designer', href: '/canvas', icon: Workflow },
+      { name: 'Active Runs', href: '/canvas/runs', icon: Play },
     ],
-    description: 'Visual workflow designer for automation pipelines',
+    description: 'Visual workflow designer canvas for automation pipelines',
     cluster: 'automation',
     badge: 'Beta',
   },

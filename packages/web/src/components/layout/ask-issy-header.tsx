@@ -258,35 +258,38 @@ export function AskIssyHeader({ open, onOpenChange }: AskIssyHeaderProps) {
     setInput('');
     setIsLoading(true);
 
-    try {
-      const response = await api.askIssy.chat(query, {
-        persona: 'discovery',
-        // Pass platform context for intelligent routing
-      });
+    // In demo mode, use local search directly — the API only returns a
+    // generic canned response that doesn't help with discovery.
+    const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
-      if (response.success) {
-        const content = response.data.message.content;
+    if (isDemoMode) {
+      const result = localSearch(query, roleKey);
+      setMessages(prev => [...prev, result]);
+    } else {
+      try {
+        const response = await api.askIssy.chat(query, {
+          persona: 'discovery',
+        });
 
-        // Extract navigation suggestions from the response
-        // Match module names to registry entries for deep-linking
-        const navigations = extractNavigations(content, roleKey);
+        if (response.success) {
+          const content = response.data.message.content;
+          const navigations = extractNavigations(content, roleKey);
 
-        const aiMsg: IsssyMessage = {
-          id: response.data.message.id,
-          role: 'assistant',
-          content,
-          navigations,
-        };
-        setMessages(prev => [...prev, aiMsg]);
-      } else {
-        // Fallback: local intelligent search when API unavailable
+          const aiMsg: IsssyMessage = {
+            id: response.data.message.id,
+            role: 'assistant',
+            content,
+            navigations,
+          };
+          setMessages(prev => [...prev, aiMsg]);
+        } else {
+          const result = localSearch(query, roleKey);
+          setMessages(prev => [...prev, result]);
+        }
+      } catch {
         const result = localSearch(query, roleKey);
         setMessages(prev => [...prev, result]);
       }
-    } catch {
-      // Fallback to local search
-      const result = localSearch(query, roleKey);
-      setMessages(prev => [...prev, result]);
     }
 
     setIsLoading(false);
