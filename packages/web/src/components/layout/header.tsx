@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Bell,
+  Bot,
   Moon,
   Sun,
   LogOut,
@@ -34,6 +35,7 @@ import { cn } from '@/lib/utils';
 import { MobileNav } from './mobile-nav';
 import { Breadcrumbs } from './breadcrumbs';
 import { CommandPaletteTrigger } from './command-palette';
+import { AskIssyHeader, IssyOnboardingOverlay, useIssyOnboarding } from './ask-issy-header';
 
 // ============================================================================
 // NOTIFICATION TYPES & MOCK DATA
@@ -84,6 +86,8 @@ export function Header() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [notifications, setNotifications] = useState(mockNotifications);
+  const [issyOpen, setIssyOpen] = useState(false);
+  const { showOnboarding, dismissOnboarding } = useIssyOnboarding();
 
   const unreadCount = useMemo(
     () => notifications.filter(n => !n.read).length,
@@ -106,17 +110,37 @@ export function Header() {
   };
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-card px-4 lg:px-6">
-      {/* Left: Mobile nav + Breadcrumbs */}
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+    <header className="flex h-14 items-center border-b bg-card px-4 lg:px-6 gap-2">
+      {/* Left: Mobile nav + Breadcrumbs + Search */}
+      <div className="flex items-center gap-3 min-w-0">
         <MobileNav />
         <Breadcrumbs className="hidden md:flex" />
+        <div className="hidden lg:flex flex-shrink-0">
+          <CommandPaletteTrigger className="w-48" />
+        </div>
       </div>
 
-      {/* Center: Command Palette Trigger */}
-      <div className="hidden lg:flex flex-shrink-0 mx-4">
-        <CommandPaletteTrigger className="w-64" />
-      </div>
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Ask Issy — prominent CTA with pulse glow */}
+      <Button
+        onClick={() => setIssyOpen(true)}
+        className="hidden sm:flex h-9 gap-2 px-5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md font-semibold text-sm animate-issy-pulse"
+      >
+        <Bot className="h-4 w-4" />
+        Ask Issy
+      </Button>
+
+      {/* Mobile: Icon-only Ask Issy */}
+      <Button
+        variant="default"
+        size="icon"
+        className="sm:hidden h-8 w-8"
+        onClick={() => setIssyOpen(true)}
+      >
+        <Bot className="h-4 w-4" />
+      </Button>
 
       {/* Right: Actions */}
       <div className="flex items-center gap-1">
@@ -248,6 +272,16 @@ export function Header() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Ask Issy Dialog */}
+      <AskIssyHeader open={issyOpen} onOpenChange={setIssyOpen} />
+
+      {/* Onboarding Overlay — shown once per user */}
+      <IssyOnboardingOverlay
+        open={showOnboarding}
+        onDismiss={dismissOnboarding}
+        onAskIssy={() => setIssyOpen(true)}
+      />
     </header>
   );
 }

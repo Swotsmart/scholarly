@@ -493,6 +493,42 @@ class ApiClient {
     getRecommendations: (studentId: string) =>
       this.get<LearningPathRecommendation[]>(`/ml/recommendations/${studentId}`),
   };
+
+  // ==========================================================================
+  // ASK ISSY
+  // ==========================================================================
+
+  askIssy = {
+    chat: async (message: string, context?: { conversationId?: string; yearLevel?: string; subjects?: string[]; currentTopic?: string; persona?: string }): Promise<ApiResponse<AskIssyChatResponse>> => {
+      if (DEMO_MODE) {
+        return {
+          success: true,
+          data: {
+            conversationId: 'demo_conv_1',
+            message: {
+              id: `msg_${Date.now()}`,
+              role: 'assistant',
+              content: 'I\'m your AI learning buddy! In demo mode, I can\'t provide real AI responses, but in a live environment I\'d help you with your studies using personalised, curriculum-aligned guidance. Try logging in with a real account to chat with me!',
+              timestamp: new Date().toISOString(),
+            },
+          },
+        };
+      }
+      return this.post<AskIssyChatResponse>('/ask-issy/chat', { message, context });
+    },
+    getConversations: async (): Promise<ApiResponse<AskIssyConversation[]>> => {
+      if (DEMO_MODE) {
+        return { success: true, data: [] };
+      }
+      return this.get<AskIssyConversation[]>('/ask-issy/conversations');
+    },
+    getConversation: async (id: string): Promise<ApiResponse<AskIssyConversation>> => {
+      if (DEMO_MODE) {
+        return { success: false, error: 'Not available in demo mode' };
+      }
+      return this.get<AskIssyConversation>(`/ask-issy/conversations/${id}`);
+    },
+  };
 }
 
 export const api = new ApiClient(API_BASE_URL);
@@ -804,6 +840,28 @@ export interface LearningPathRecommendation {
   pathId: string;
   title: string;
   relevance: number;
+}
+
+// ==========================================================================
+// ASK ISSY TYPES
+// ==========================================================================
+
+export interface AskIssyChatResponse {
+  conversationId: string;
+  message: {
+    id: string;
+    role: string;
+    content: string;
+    timestamp: string;
+  };
+}
+
+export interface AskIssyConversation {
+  id: string;
+  title: string;
+  status: string;
+  messages: Array<{ id: string; role: string; content: string; timestamp: string }>;
+  createdAt: string;
 }
 
 export default api;
