@@ -33,7 +33,7 @@ pnpm run build                                            # Build all (Turbo)
 
 **Icons**: lucide-react ONLY. No emoji except: Early Years module (child-friendliness) and country flags. `Bear` icon doesn't exist — use `PawPrint`.
 
-**Theme**: Catppuccin-inspired HSL variables in `globals.css`. Primary purple `#8839ef`/`#cba6f7`. Fonts: Montserrat (sans), Fira Code (mono). Dark mode via class + next-themes.
+**Theme**: Brand HSL variables in `globals.css`. Primary blue `#1e9df1`. Font: Open Sans (sans), Fira Code (mono). Dark mode via class + next-themes. Canvas (`SRCanvas.tsx`) uses `hsl(var(--...))` CSS variable tokens (the `BRAND` object) so it respects dark/light mode automatically.
 
 **Config**: `output: 'standalone'`, `transpilePackages: ['@scholarly/shared', '@scholarly/database']`, API URL from `NEXT_PUBLIC_API_URL` (default `http://localhost:3001`).
 
@@ -43,6 +43,8 @@ pnpm run build                                            # Build all (Turbo)
 - `/api/v1/menu/sync` — GET/PUT menu state (uses `PrismaMenuStateRepository`)
 - `/api/cron/push-expiry` — expires stale institutional pushes (uses `PrismaMenuPushRepository`)
 - `/api/cron/menu-analytics` — daily event aggregation (uses `PrismaMenuAnalyticsRepository`)
+
+**Ask Issy** (`src/components/layout/ask-issy-header.tsx`): Intelligent discovery layer in the header. Triggered by the "Ask Issy" button (Bot icon + pulse animation). Uses a Dialog with chat UI, role-aware suggested questions, local search fallback via `menu-registry.ts`, and navigation deep-links. Integrates with `composing-menu-store` — every query feeds the adaptive menu system. API methods in `api.ts` under `api.askIssy`. Onboarding overlay shown once per user via `localStorage`.
 
 ## API (`packages/api`)
 
@@ -123,3 +125,14 @@ Self-hosted TTS/STT/voice cloning microservice. Deployed as `scholarly-voice` on
 - **Icons**: lucide-react only (except Early Years + flags)
 - **Repositories**: API uses `prisma` singleton from `@scholarly/database` (no constructor injection). Web server-side routes follow the same pattern via `packages/web/src/repositories/`. All queries must include `tenantId`.
 - **Workspace deps**: `workspace:*` for internal refs
+
+### CRITICAL: Feature Preservation Rules
+
+**NEVER delete or regress existing features when making theme, style, or layout changes.** Before overwriting any shared component (header, sidebar, layout), you MUST:
+
+1. **Diff against the current version** — run `git diff` on the file to verify no features are lost
+2. **Check imports and integrations** — if the current file imports other components (e.g., Ask Issy, command palette), the updated version must preserve those imports
+3. **Audit the rendered UI** — verify buttons, dialogs, overlays, and interactive elements are all present after the change
+4. **When applying patches or restoring files** — never blindly replace a file from an older commit or external patch without comparing it against the current version on the deployed branch
+
+This rule exists because a theme update once accidentally removed the Ask Issy feature from the header by overwriting `header.tsx` with an older version that predated the feature. Applying a new theme or brand update must NEVER result in features being deleted.
