@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,379 +9,315 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { teacherApi } from '@/lib/teacher-api';
+import type { LearnerMasteryProfile, LearnerFeatureVector, LearnerPredictions, WellbeingCheck, AIInsight } from '@/types/teacher';
 import {
-  ArrowLeft,
-  Mail,
-  Phone,
-  Calendar,
-  BookOpen,
-  TrendingUp,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  MessageCircle,
-  FileText,
-  Award,
+  ArrowLeft, Mail, Calendar, BookOpen, TrendingUp, Clock, CheckCircle2,
+  AlertTriangle, MessageCircle, FileText, Award, Brain, Sparkles, Shield,
+  Heart, Activity, Zap, Bot, Send,
 } from 'lucide-react';
 
-// Mock student data - in real app this would come from API
-const studentData: Record<string, {
+interface StudentDetail {
   id: string;
-  name: string;
+  displayName: string;
   email: string;
-  yearLevel: string;
-  class: string;
-  avatar: string | null;
-  attendance: number;
-  averageGrade: string;
-  assignments: { completed: number; total: number };
-  parentName: string;
-  parentEmail: string;
-  parentPhone: string;
-  notes: string[];
-  recentActivity: { date: string; action: string; detail: string }[];
-  grades: { subject: string; grade: string; trend: 'up' | 'down' | 'stable' }[];
-}> = {
-  s1: {
-    id: 's1',
-    name: 'Emma Thompson',
-    email: 'emma.t@student.scholarly.edu',
-    yearLevel: 'Year 10',
-    class: 'Design & Technology',
-    avatar: null,
-    attendance: 96,
-    averageGrade: 'A-',
-    assignments: { completed: 12, total: 14 },
-    parentName: 'Sarah Thompson',
-    parentEmail: 'sarah.thompson@email.com',
-    parentPhone: '+61 4XX XXX XXX',
-    notes: ['Shows excellent initiative in group projects', 'Could benefit from additional challenge work'],
-    recentActivity: [
-      { date: '2024-01-15', action: 'Submitted', detail: 'Design Thinking Quiz' },
-      { date: '2024-01-14', action: 'Attended', detail: 'Innovation Lab Workshop' },
-      { date: '2024-01-12', action: 'Completed', detail: 'Prototyping Module' },
-    ],
-    grades: [
-      { subject: 'Design & Technology', grade: 'A', trend: 'stable' },
-      { subject: 'Mathematics', grade: 'B+', trend: 'up' },
-      { subject: 'English', grade: 'A-', trend: 'stable' },
-      { subject: 'Science', grade: 'B', trend: 'up' },
-    ],
-  },
-  s3: {
-    id: 's3',
-    name: 'Sophie Williams',
-    email: 'sophie.w@student.scholarly.edu',
-    yearLevel: 'Year 10',
-    class: 'Design & Technology',
-    avatar: null,
-    attendance: 78,
-    averageGrade: 'C+',
-    assignments: { completed: 8, total: 14 },
-    parentName: 'Mark Williams',
-    parentEmail: 'mark.williams@email.com',
-    parentPhone: '+61 4XX XXX XXX',
-    notes: ['Recent attendance concerns - follow up scheduled', 'Struggling with project timelines'],
-    recentActivity: [
-      { date: '2024-01-15', action: 'Absent', detail: 'Design & Technology class' },
-      { date: '2024-01-10', action: 'Late submission', detail: 'Design Thinking Quiz' },
-      { date: '2024-01-08', action: 'Attended', detail: 'Support session' },
-    ],
-    grades: [
-      { subject: 'Design & Technology', grade: 'C', trend: 'down' },
-      { subject: 'Mathematics', grade: 'C+', trend: 'stable' },
-      { subject: 'English', grade: 'B-', trend: 'down' },
-      { subject: 'Science', grade: 'C', trend: 'stable' },
-    ],
-  },
-};
-
-// Default student for unknown IDs
-const defaultStudent = {
-  id: 'unknown',
-  name: 'Unknown Student',
-  email: 'unknown@student.scholarly.edu',
-  yearLevel: 'Unknown',
-  class: 'Unknown',
-  avatar: null,
-  attendance: 0,
-  averageGrade: 'N/A',
-  assignments: { completed: 0, total: 0 },
-  parentName: 'Unknown',
-  parentEmail: 'unknown@email.com',
-  parentPhone: 'N/A',
-  notes: [],
-  recentActivity: [],
-  grades: [],
-};
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+  roles: string[];
+  trustScore: number;
+  status: string;
+  createdAt: string;
+  learnerProfile?: {
+    id: string;
+    gradeLevel: string;
+    subjects: { name: string }[];
+  };
+}
 
 export default function StudentDetailPage() {
-  const params = useParams();
-  const studentId = params.id as string;
-  const student = studentData[studentId] || defaultStudent;
+  const { id } = useParams<{ id: string }>();
 
-  const isAtRisk = student.attendance < 85 || student.assignments.completed / student.assignments.total < 0.7;
+  const [student, setStudent] = useState<StudentDetail | null>(null);
+  const [mastery, setMastery] = useState<LearnerMasteryProfile | null>(null);
+  const [features, setFeatures] = useState<LearnerFeatureVector | null>(null);
+  const [predictions, setPredictions] = useState<LearnerPredictions | null>(null);
+  const [wellbeing, setWellbeing] = useState<WellbeingCheck | null>(null);
+  const [insights, setInsights] = useState<AIInsight[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Ask Issy state
+  const [issyMessage, setIssyMessage] = useState('');
+  const [issyResponse, setIssyResponse] = useState<string | null>(null);
+  const [issyThinking, setIssyThinking] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    setIsLoading(true);
+
+    // Fetch student profile + all AI data in parallel
+    Promise.allSettled([
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}/api/v1/users/${id}`, { credentials: 'include' }).then(r => r.json()),
+      teacherApi.ai.getLearnerMastery(id),
+      teacherApi.ai.getLearnerFeatures(id),
+      teacherApi.ai.getLearnerPredictions(id),
+      teacherApi.ai.checkWellbeing(id),
+      teacherApi.ai.generatePageInsights({ page: 'student-detail', studentIds: [id] }),
+    ]).then(([studentRes, masteryRes, featuresRes, predictionsRes, wellbeingRes, insightsRes]) => {
+      if (studentRes.status === 'fulfilled') setStudent(studentRes.value.user);
+      else setError('Unable to load student profile');
+      if (masteryRes.status === 'fulfilled' && masteryRes.value.success) setMastery(masteryRes.value.data);
+      if (featuresRes.status === 'fulfilled' && featuresRes.value.success) setFeatures(featuresRes.value.data);
+      if (predictionsRes.status === 'fulfilled' && predictionsRes.value.success) setPredictions(predictionsRes.value.data);
+      if (wellbeingRes.status === 'fulfilled' && wellbeingRes.value.success) setWellbeing(wellbeingRes.value.data);
+      if (insightsRes.status === 'fulfilled') setInsights(insightsRes.value);
+    }).finally(() => setIsLoading(false));
+  }, [id]);
+
+  async function handleAskIssy() {
+    if (!issyMessage.trim()) return;
+    setIssyThinking(true);
+    setIssyResponse(null);
+    try {
+      const result = await teacherApi.ai.askIssy(issyMessage, { learnerId: id });
+      setIssyResponse(result.data.message.content);
+    } catch { setIssyResponse('Unable to reach AI assistant.'); }
+    finally { setIssyThinking(false); setIssyMessage(''); }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-1"><CardContent className="p-6"><Skeleton className="h-48 w-full" /></CardContent></Card>
+          <Card className="lg:col-span-2"><CardContent className="p-6"><Skeleton className="h-48 w-full" /></CardContent></Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !student) {
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" asChild><Link href="/teacher/students"><ArrowLeft className="mr-2 h-4 w-4" />Back to Students</Link></Button>
+        <Card className="border-red-200 dark:border-red-800"><CardContent className="p-8 text-center text-red-600 dark:text-red-400">{error || 'Student not found'}</CardContent></Card>
+      </div>
+    );
+  }
+
+  const struggling = mastery?.skills.filter(s => s.pKnown < 0.6) ?? [];
+  const mastered = mastery?.skills.filter(s => s.pKnown >= 0.85) ?? [];
+  const inProgress = mastery?.skills.filter(s => s.pKnown >= 0.6 && s.pKnown < 0.85) ?? [];
+  const overallMastery = mastery?.skills.length ? Math.round(mastery.skills.reduce((sum, s) => sum + s.pKnown, 0) / mastery.skills.length * 100) : null;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/teacher/dashboard">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
+      <Button variant="ghost" asChild><Link href="/teacher/students"><ArrowLeft className="mr-2 h-4 w-4" />Back to Students</Link></Button>
+
+      {/* Profile Header */}
+      <div className="flex items-start gap-6">
+        <Avatar className="h-16 w-16">
+          <AvatarImage src={student.avatarUrl || undefined} />
+          <AvatarFallback className="text-lg">{student.displayName?.charAt(0)}</AvatarFallback>
+        </Avatar>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight">Student Profile</h1>
-          <p className="text-muted-foreground">
-            View and manage student information
-          </p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">{student.displayName}</h1>
+            <Badge variant="secondary" className="capitalize">{student.status}</Badge>
+            {wellbeing && !wellbeing.needsBreak && <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"><Heart className="mr-1 h-3 w-3" />Well</Badge>}
+            {wellbeing?.needsBreak && <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"><AlertTriangle className="mr-1 h-3 w-3" />Needs Break</Badge>}
+          </div>
+          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{student.email}</span>
+            <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />Joined {new Date(student.createdAt).toLocaleDateString()}</span>
+            {student.learnerProfile?.gradeLevel && <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" />{student.learnerProfile.gradeLevel}</span>}
+          </div>
         </div>
-        <Button variant="outline">
-          <MessageCircle className="mr-2 h-4 w-4" />
-          Message
-        </Button>
-        <Button>
-          <FileText className="mr-2 h-4 w-4" />
-          Generate Report
-        </Button>
+        {overallMastery !== null && (
+          <div className="text-right">
+            <p className="text-3xl font-bold">{overallMastery}%</p>
+            <p className="text-sm text-muted-foreground">Overall Mastery</p>
+          </div>
+        )}
       </div>
 
-      {/* Student Overview */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col gap-6 md:flex-row md:items-start">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={student.avatar || undefined} />
-              <AvatarFallback className="text-xl">
-                {student.name.split(' ').map(n => n[0]).join('')}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 space-y-4">
-              <div>
+      {/* AI Insights Banner */}
+      {insights.length > 0 && (
+        <div className="space-y-2">
+          {insights.map(insight => (
+            <Card key={insight.id} className={`border-l-4 ${insight.severity === 'critical' ? 'border-l-red-500' : insight.severity === 'positive' ? 'border-l-green-500' : insight.severity === 'warning' ? 'border-l-orange-500' : 'border-l-blue-500'}`}>
+              <CardContent className="py-3">
                 <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-semibold">{student.name}</h2>
-                  {isAtRisk && (
-                    <Badge variant="destructive" className="gap-1">
-                      <AlertTriangle className="h-3 w-3" />
-                      At Risk
-                    </Badge>
+                  <Brain className="h-4 w-4 text-purple-500 shrink-0" />
+                  <div className="flex-1">
+                    <span className="text-sm font-medium">{insight.title}</span>
+                    <span className="text-sm text-muted-foreground ml-2">{insight.description}</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs shrink-0"><Shield className="h-2.5 w-2.5 mr-1" />{Math.round(insight.confidence * 100)}%</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Tabs defaultValue="mastery">
+        <TabsList>
+          <TabsTrigger value="mastery"><Brain className="mr-1 h-4 w-4" />BKT Mastery</TabsTrigger>
+          <TabsTrigger value="features"><Activity className="mr-1 h-4 w-4" />ML Features</TabsTrigger>
+          <TabsTrigger value="predictions"><Zap className="mr-1 h-4 w-4" />Predictions</TabsTrigger>
+          <TabsTrigger value="wellbeing"><Heart className="mr-1 h-4 w-4" />Wellbeing</TabsTrigger>
+        </TabsList>
+
+        {/* BKT Mastery Tab */}
+        <TabsContent value="mastery" className="space-y-4">
+          {mastery ? (
+            <>
+              <div className="grid gap-4 md:grid-cols-3">
+                <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-600">{mastered.length}</p><p className="text-sm text-muted-foreground">Mastered Skills (≥85%)</p></CardContent></Card>
+                <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">{inProgress.length}</p><p className="text-sm text-muted-foreground">In Progress (60-84%)</p></CardContent></Card>
+                <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-orange-600">{struggling.length}</p><p className="text-sm text-muted-foreground">Struggling (&lt;60%)</p></CardContent></Card>
+              </div>
+
+              <Card>
+                <CardHeader><CardTitle>Skill Mastery Breakdown</CardTitle><CardDescription>BKT probability of knowledge (pKnown) per competency</CardDescription></CardHeader>
+                <CardContent className="space-y-3">
+                  {mastery.skills.map(skill => (
+                    <div key={skill.competencyId} className="flex items-center gap-4">
+                      <span className="text-sm font-medium w-40 truncate">{skill.competencyId}</span>
+                      <Progress value={skill.pKnown * 100} className="flex-1" />
+                      <span className={`text-sm font-medium w-12 text-right ${skill.pKnown >= 0.85 ? 'text-green-600' : skill.pKnown >= 0.6 ? 'text-blue-600' : 'text-orange-600'}`}>
+                        {Math.round(skill.pKnown * 100)}%
+                      </span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <Card><CardContent className="p-8 text-center text-muted-foreground">No BKT mastery data available for this student. Mastery tracking begins once the student interacts with learning content.</CardContent></Card>
+          )}
+        </TabsContent>
+
+        {/* ML Features Tab */}
+        <TabsContent value="features" className="space-y-4">
+          {features ? (
+            <Card>
+              <CardHeader><CardTitle>18-Dimensional Learner Feature Vector</CardTitle><CardDescription>ML feature extraction for personalisation engine</CardDescription></CardHeader>
+              <CardContent>
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {Object.entries(features.features).map(([key, value]) => (
+                    <div key={key} className="rounded-lg border p-3">
+                      <p className="text-xs text-muted-foreground">{key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}</p>
+                      <p className="text-lg font-semibold">{typeof value === 'number' ? (value > 1 ? Math.round(value) : `${Math.round(value * 100)}%`) : String(value)}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card><CardContent className="p-8 text-center text-muted-foreground">No ML feature data available. Features are extracted as the student accumulates learning interactions.</CardContent></Card>
+          )}
+        </TabsContent>
+
+        {/* Predictions Tab */}
+        <TabsContent value="predictions" className="space-y-4">
+          {predictions ? (
+            <>
+              <Card>
+                <CardHeader><CardTitle>BKT Predictions</CardTitle><CardDescription>Predicted mastery progression based on current learning trajectory</CardDescription></CardHeader>
+                <CardContent className="space-y-3">
+                  {predictions.predictions.map((pred, i) => (
+                    <div key={i} className="flex items-center justify-between rounded-lg border p-3">
+                      <span className="text-sm font-medium">{pred.competencyId}</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm text-muted-foreground">Current: {Math.round(pred.currentPKnown * 100)}%</span>
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                        <span className="text-sm font-medium text-green-600">Predicted: {Math.round(pred.predictedPKnown * 100)}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {predictions.spacedRepetition && predictions.spacedRepetition.length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle>Spaced Repetition Schedule</CardTitle><CardDescription>Optimal review timing for long-term retention</CardDescription></CardHeader>
+                  <CardContent className="space-y-2">
+                    {predictions.spacedRepetition.map((item, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-lg border p-3">
+                        <span className="text-sm">{item.competencyId}</span>
+                        <Badge variant="outline"><Clock className="mr-1 h-3 w-3" />Review: {new Date(item.nextReviewDate).toLocaleDateString()}</Badge>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          ) : (
+            <Card><CardContent className="p-8 text-center text-muted-foreground">No predictions available yet. The BKT engine requires sufficient interaction data to generate accurate predictions.</CardContent></Card>
+          )}
+        </TabsContent>
+
+        {/* Wellbeing Tab */}
+        <TabsContent value="wellbeing" className="space-y-4">
+          {wellbeing ? (
+            <Card>
+              <CardHeader><CardTitle>Wellbeing Check</CardTitle><CardDescription>Real-time wellbeing monitoring for this learner</CardDescription></CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-lg border p-4">
+                    <p className="text-sm text-muted-foreground">Session Duration</p>
+                    <p className="text-lg font-semibold">{wellbeing.sessionDuration} minutes</p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <p className="text-sm text-muted-foreground">Engagement Level</p>
+                    <div className="flex items-center gap-2 mt-1"><Progress value={wellbeing.engagementLevel * 100} className="flex-1" /><span className="text-sm font-medium">{Math.round(wellbeing.engagementLevel * 100)}%</span></div>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <p className="text-sm text-muted-foreground">Needs Break?</p>
+                    <p className={`text-lg font-semibold ${wellbeing.needsBreak ? 'text-orange-600' : 'text-green-600'}`}>{wellbeing.needsBreak ? 'Yes — suggest a break' : 'No — engaged and comfortable'}</p>
+                  </div>
+                  {wellbeing.recommendation && (
+                    <div className="rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/10 p-4">
+                      <p className="text-sm text-muted-foreground">AI Recommendation</p>
+                      <p className="text-sm font-medium mt-1">{wellbeing.recommendation}</p>
+                    </div>
                   )}
                 </div>
-                <p className="text-muted-foreground">{student.yearLevel} • {student.class}</p>
-              </div>
-              <div className="flex flex-wrap gap-4 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="h-4 w-4" />
-                  {student.email}
-                </div>
-              </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card><CardContent className="p-8 text-center text-muted-foreground">No wellbeing data available. Wellbeing checks are performed during active learning sessions.</CardContent></Card>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Ask Issy about this student */}
+      <Card className="border-purple-200 dark:border-purple-800/50 bg-gradient-to-br from-purple-50/50 to-transparent dark:from-purple-900/10">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-purple-500" />Ask Issy about {student.firstName || student.displayName}</CardTitle>
+          <CardDescription>Get AI insights about this student's progress, mastery gaps, or next steps</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {issyResponse && (
+            <div className="mb-4 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/20 p-4">
+              <p className="text-sm">{issyResponse}</p>
             </div>
-            <div className="grid grid-cols-3 gap-6 text-center">
-              <div>
-                <p className="text-2xl font-bold">{student.attendance}%</p>
-                <p className="text-xs text-muted-foreground">Attendance</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{student.averageGrade}</p>
-                <p className="text-xs text-muted-foreground">Avg Grade</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{student.assignments.completed}/{student.assignments.total}</p>
-                <p className="text-xs text-muted-foreground">Assignments</p>
-              </div>
-            </div>
+          )}
+          <div className="flex gap-2">
+            <input type="text" value={issyMessage} onChange={(e) => setIssyMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAskIssy()}
+              placeholder={`e.g. What should ${student.firstName || 'this student'} work on next?`}
+              className="flex-1 rounded-lg border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" disabled={issyThinking} />
+            <Button size="sm" onClick={handleAskIssy} disabled={issyThinking || !issyMessage.trim()} className="bg-purple-600 hover:bg-purple-700">
+              {issyThinking ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Send className="h-4 w-4" />}
+            </Button>
           </div>
         </CardContent>
       </Card>
-
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="grades">Grades</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-          <TabsTrigger value="contact">Contact</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Quick Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Performance Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Attendance Rate</span>
-                    <span className={student.attendance < 85 ? 'text-red-500' : 'text-green-500'}>
-                      {student.attendance}%
-                    </span>
-                  </div>
-                  <Progress value={student.attendance} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Assignments Completed</span>
-                    <span>{Math.round((student.assignments.completed / student.assignments.total) * 100)}%</span>
-                  </div>
-                  <Progress
-                    value={(student.assignments.completed / student.assignments.total) * 100}
-                    className="h-2"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Teacher Notes */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Teacher Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {student.notes.map((note, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                      <span>{note}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button variant="outline" size="sm" className="mt-4">
-                  Add Note
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {student.recentActivity.map((activity, i) => (
-                  <div key={i} className="flex items-center gap-4 rounded-lg border p-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                      <Clock className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">{activity.detail}</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{activity.date}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="grades" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Current Grades</CardTitle>
-              <CardDescription>Grades across all subjects</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {student.grades.map((grade, i) => (
-                  <div key={i} className="flex items-center gap-4 rounded-lg border p-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                      <BookOpen className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{grade.subject}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={
-                        grade.grade.startsWith('A') ? 'default' :
-                        grade.grade.startsWith('B') ? 'secondary' :
-                        'outline'
-                      }>
-                        {grade.grade}
-                      </Badge>
-                      <TrendingUp className={`h-4 w-4 ${
-                        grade.trend === 'up' ? 'text-green-500' :
-                        grade.trend === 'down' ? 'text-red-500 rotate-180' :
-                        'text-muted-foreground'
-                      }`} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="activity" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Full Activity Log</CardTitle>
-              <CardDescription>All student activity in your classes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {student.recentActivity.map((activity, i) => (
-                  <div key={i} className="flex items-center gap-4 rounded-lg border p-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                      <Clock className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">{activity.detail}</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{activity.date}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="contact" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Parent/Guardian Contact</CardTitle>
-              <CardDescription>Primary contact for {student.name}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4 rounded-lg border p-4">
-                <Avatar className="h-12 w-12">
-                  <AvatarFallback>
-                    {student.parentName.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="font-medium">{student.parentName}</p>
-                  <p className="text-sm text-muted-foreground">Parent/Guardian</p>
-                </div>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="flex items-center gap-3 rounded-lg border p-3">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Email</p>
-                    <p className="text-sm">{student.parentEmail}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-lg border p-3">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Phone</p>
-                    <p className="text-sm">{student.parentPhone}</p>
-                  </div>
-                </div>
-              </div>
-              <Button className="w-full">
-                <MessageCircle className="mr-2 h-4 w-4" />
-                Send Message to Parent
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

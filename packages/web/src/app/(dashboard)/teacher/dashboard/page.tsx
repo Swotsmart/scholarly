@@ -1,41 +1,30 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { StatsCard } from '@/components/shared';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ReorderablePanels } from '@/components/dashboard/draggable-panel';
 import { useTeacherDashboardLayout, type TeacherPanelId } from '@/stores/dashboard-layout-store';
+import { useTeacher } from '@/hooks/use-teacher';
+import { teacherApi } from '@/lib/teacher-api';
+import type { AIInsight, Session, ActivityItem, Notification } from '@/types/teacher';
 import {
-  Users,
-  Clock,
-  Calendar,
-  BookOpen,
-  AlertTriangle,
-  CheckCircle2,
-  ArrowRight,
-  ChevronRight,
-  ClipboardCheck,
-  FileText,
-  Lightbulb,
-  MessageCircle,
-  TrendingUp,
-  TrendingDown,
-  AlertCircle,
-  Play,
-  GraduationCap,
-  Brain,
-  Sparkles,
-  PlusCircle,
-  ClipboardList,
-  PenLine,
+  Users, Clock, Calendar, BookOpen, AlertTriangle, CheckCircle2, ArrowRight,
+  ChevronRight, ClipboardCheck, FileText, Lightbulb, MessageCircle, TrendingUp,
+  TrendingDown, AlertCircle, Play, GraduationCap, Brain, Sparkles, PlusCircle,
+  ClipboardList, PenLine, Bot, Send, Heart, Shield,
 } from 'lucide-react';
 
-// Helper function to get current period
+// =============================================================================
+// Helpers (pure functions, no data)
+// =============================================================================
+
 function getCurrentPeriod(): { period: string; remaining: string } {
   const hour = new Date().getHours();
   if (hour < 9) return { period: 'Before School', remaining: '' };
@@ -48,119 +37,31 @@ function getCurrentPeriod(): { period: string; remaining: string } {
   return { period: 'After School', remaining: '' };
 }
 
-// Helper function to format time
 function formatCurrentTime(): string {
-  return new Date().toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
-// Mock data
-const todaySchedule = [
-  { id: 's1', name: 'Year 10 Design & Tech', time: '9:00 AM', room: 'Room 204', students: 28, isCurrent: false, isPast: true },
-  { id: 's2', name: 'Year 11 Innovation Lab', time: '10:30 AM', room: 'Lab 3', students: 24, isCurrent: true, isPast: false },
-  { id: 's3', name: 'Year 12 Project Based Learning', time: '1:00 PM', room: 'Room 312', students: 18, isCurrent: false, isPast: false },
-  { id: 's4', name: 'Year 9 Introduction to Design', time: '2:30 PM', room: 'Room 204', students: 30, isCurrent: false, isPast: false },
-];
+function insightIcon(insight: AIInsight) {
+  switch (insight.type) {
+    case 'alert': return AlertTriangle;
+    case 'celebration': return Heart;
+    case 'recommendation': return Lightbulb;
+    case 'suggestion': return Sparkles;
+    default: return Brain;
+  }
+}
 
-const classCards = [
-  {
-    id: 'c1',
-    name: 'Year 10 Design & Tech',
-    students: 28,
-    activeAssignments: 3,
-    avgProgress: 72,
-    nextClass: 'Tomorrow, 9:00 AM',
-  },
-  {
-    id: 'c2',
-    name: 'Year 11 Innovation Lab',
-    students: 24,
-    activeAssignments: 2,
-    avgProgress: 85,
-    nextClass: 'Now',
-  },
-  {
-    id: 'c3',
-    name: 'Year 12 Project Based Learning',
-    students: 18,
-    activeAssignments: 4,
-    avgProgress: 68,
-    nextClass: 'Today, 1:00 PM',
-  },
-];
-
-const atRiskStudents = [
-  {
-    id: 'ar1',
-    name: 'James Chen',
-    avatar: null,
-    class: 'Year 10 Design & Tech',
-    issue: 'Missed 3 assignments',
-    riskLevel: 'high',
-    trend: 'down',
-  },
-  {
-    id: 'ar2',
-    name: 'Sophie Williams',
-    avatar: null,
-    class: 'Year 11 Innovation',
-    issue: 'Engagement dropped 40%',
-    riskLevel: 'medium',
-    trend: 'down',
-  },
-  {
-    id: 'ar3',
-    name: 'Michael Brown',
-    avatar: null,
-    class: 'Year 12 PBL',
-    issue: 'Behind on project milestones',
-    riskLevel: 'medium',
-    trend: 'stable',
-  },
-];
-
-const pendingHelpRequests = [
-  { id: 'hr1', student: 'Emma Thompson', topic: 'Prototype feedback needed', time: '15 min ago', urgent: true },
-  { id: 'hr2', student: 'Liam Davis', topic: 'Question about pitch deck', time: '1 hour ago', urgent: false },
-  { id: 'hr3', student: 'Olivia Martinez', topic: 'Review my design brief', time: '2 hours ago', urgent: false },
-];
-
-const upcomingItems = [
-  { id: 'u1', type: 'lesson', title: 'Year 12 PBL - Iteration Phase', time: '1:00 PM', icon: BookOpen },
-  { id: 'u2', type: 'grading', title: '12 pitch decks to grade', time: 'Today', icon: ClipboardCheck },
-  { id: 'u3', type: 'meeting', title: 'Parent-Teacher Conference', time: '4:30 PM', icon: Users },
-  { id: 'u4', type: 'lesson', title: 'Year 9 Design Introduction', time: '2:30 PM', icon: BookOpen },
-];
-
-const aiInsights = [
-  {
-    id: 'ai1',
-    title: 'Year 10 struggling with prototyping',
-    description: 'Consider a mini-workshop on low-fidelity prototyping techniques',
-    type: 'intervention',
-    priority: 'high',
-  },
-  {
-    id: 'ai2',
-    title: 'High engagement in peer review',
-    description: "Students are 40% more engaged when doing collaborative reviews. Consider more group activities.",
-    type: 'insight',
-    priority: 'medium',
-  },
-  {
-    id: 'ai3',
-    title: 'Differentiation opportunity',
-    description: '5 students in Year 11 are ready for advanced challenges',
-    type: 'opportunity',
-    priority: 'low',
-  },
-];
+function insightColors(insight: AIInsight) {
+  switch (insight.severity) {
+    case 'critical': return 'bg-red-500/10 text-red-500';
+    case 'warning': return 'bg-orange-500/10 text-orange-500';
+    case 'positive': return 'bg-green-500/10 text-green-500';
+    default: return 'bg-blue-500/10 text-blue-500';
+  }
+}
 
 // =============================================================================
-// Panel sub-components
+// Panel sub-components — all powered by live API data, zero hardcoded content
 // =============================================================================
 
 function QuickActionsPanel() {
@@ -173,28 +74,16 @@ function QuickActionsPanel() {
       <CardContent>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
-            <Link href="/teacher/attendance">
-              <ClipboardList className="h-6 w-6 text-blue-500" />
-              <span>Take Attendance</span>
-            </Link>
+            <Link href="/teacher/attendance"><ClipboardList className="h-6 w-6 text-blue-500" /><span>Take Attendance</span></Link>
           </Button>
           <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
-            <Link href="/teacher/lessons/new">
-              <PlusCircle className="h-6 w-6 text-green-500" />
-              <span>Create Lesson Plan</span>
-            </Link>
+            <Link href="/teacher/lessons/new"><PlusCircle className="h-6 w-6 text-green-500" /><span>Create Lesson Plan</span></Link>
           </Button>
           <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
-            <Link href="/teacher/grading">
-              <PenLine className="h-6 w-6 text-orange-500" />
-              <span>Grade Work</span>
-            </Link>
+            <Link href="/teacher/grading"><PenLine className="h-6 w-6 text-orange-500" /><span>Grade Work</span></Link>
           </Button>
           <Button variant="outline" className="h-auto flex-col gap-2 p-4" asChild>
-            <Link href="/teacher/challenges/create">
-              <Lightbulb className="h-6 w-6 text-purple-500" />
-              <span>New Challenge</span>
-            </Link>
+            <Link href="/teacher/challenges/create"><Lightbulb className="h-6 w-6 text-purple-500" /><span>New Challenge</span></Link>
           </Button>
         </div>
       </CardContent>
@@ -202,339 +91,261 @@ function QuickActionsPanel() {
   );
 }
 
-function StatsGridPanel() {
+function StatsGridPanel({ data, isLoading }: { data: ReturnType<typeof useTeacher>['data']; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => <Card key={i}><CardContent className="p-6"><Skeleton className="h-16 w-full" /></CardContent></Card>)}
+      </div>
+    );
+  }
+
+  const overview = data?.analytics?.data?.overview;
+  const platformStats = data?.platformStats?.stats;
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <StatsCard
-        label="Active Students"
-        value={127}
-        icon={Users}
-        variant="primary"
-        change={12}
-      />
-      <StatsCard
-        label="Pending Reviews"
-        value={23}
-        icon={ClipboardCheck}
-        variant="warning"
-        subtitle="8 urgent"
-      />
-      <StatsCard
-        label="Help Requests"
-        value={pendingHelpRequests.length}
-        icon={MessageCircle}
-        variant="error"
-        subtitle="1 urgent"
-      />
-      <StatsCard
-        label="Assessments Due"
-        value={12}
-        icon={FileText}
-        variant="primary"
-        subtitle="This week"
-      />
+      <StatsCard label="Total Students" value={overview?.totalStudents ?? 0} icon={Users} variant="primary" />
+      <StatsCard label="Avg. Performance" value={`${overview?.averagePerformance ?? 0}%`} icon={TrendingUp} variant="primary" />
+      <StatsCard label="AI Engagement Score" value={`${overview?.engagementScore ?? 0}%`} icon={Brain} variant="primary" subtitle={`${overview?.attendanceRate ?? 0}% attendance`} />
+      <StatsCard label="Today's Bookings" value={platformStats?.todayBookings ?? 0} icon={Calendar} variant="warning" subtitle={`${platformStats?.activeTutors ?? 0} active tutors`} />
     </div>
   );
 }
 
-function MainContentPanel() {
+function MainContentPanel({ data, isLoading }: { data: ReturnType<typeof useTeacher>['data']; isLoading: boolean }) {
+  const sessions = data?.upcomingSessions ?? [];
+  const classBreakdown = data?.analytics?.data?.classBreakdown ?? [];
+
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      {/* Class Overview - Takes 2 columns */}
       <div className="lg:col-span-2 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">My Classes</h2>
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/teacher/classes">
-              View All <ChevronRight className="ml-1 h-4 w-4" />
-            </Link>
+            <Link href="/teacher/classes">View All <ChevronRight className="ml-1 h-4 w-4" /></Link>
           </Button>
         </div>
-
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {classCards.map((cls) => (
-            <Card key={cls.id} hover className="group">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
+          {isLoading ? (
+            [1, 2, 3].map((i) => <Card key={i}><CardContent className="p-5"><Skeleton className="h-32 w-full" /></CardContent></Card>)
+          ) : classBreakdown.length > 0 ? (
+            classBreakdown.map((cls) => (
+              <Card key={cls.classId} className="group">
+                <CardContent className="p-5">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
                     <GraduationCap className="h-5 w-5 text-blue-500" />
                   </div>
-                  {cls.nextClass === 'Now' && (
-                    <Badge className="bg-green-500 text-white">Live</Badge>
-                  )}
-                </div>
-
-                <h3 className="mt-3 font-semibold">{cls.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {cls.students} students - {cls.activeAssignments} active assignments
-                </p>
-
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Class Progress</span>
-                    <span className="font-medium">{cls.avgProgress}%</span>
+                  <h3 className="mt-3 font-semibold">{cls.className}</h3>
+                  <p className="text-sm text-muted-foreground">{cls.studentCount} students</p>
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Average Score</span>
+                      <span className="font-medium">{cls.averageScore}%</span>
+                    </div>
+                    <Progress value={cls.averageScore} className="h-2" />
                   </div>
-                  <Progress value={cls.avgProgress} className="h-2" />
-                </div>
-
-                <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>{cls.nextClass}</span>
-                </div>
-
-                <div className="mt-4 flex gap-2">
-                  <Button size="sm" variant="outline" className="flex-1" asChild>
-                    <Link href={`/teacher/classes/${cls.id}`}>View Class</Link>
-                  </Button>
-                  <Button size="sm" variant="ghost" asChild>
-                    <Link href={`/teacher/attendance/${cls.id}`}>
-                      <ClipboardList className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="mt-4 flex gap-2">
+                    <Button size="sm" variant="outline" className="flex-1" asChild>
+                      <Link href={`/teacher/classes/${cls.classId}`}>View Class</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Card className="col-span-full"><CardContent className="p-8 text-center text-muted-foreground">No class data available yet. Analytics will populate as students interact with the platform.</CardContent></Card>
+          )}
         </div>
       </div>
 
-      {/* Today's Schedule */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Today&apos;s Schedule</CardTitle>
+            <CardTitle className="text-base">Upcoming Sessions</CardTitle>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/teacher/scheduling/timetable">Full View</Link>
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {todaySchedule.map((item) => (
-            <div
-              key={item.id}
-              className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
-                item.isCurrent
-                  ? 'border-blue-500 bg-blue-500/5'
-                  : item.isPast
-                    ? 'opacity-60'
-                    : 'hover:bg-muted/50'
-              }`}
-            >
-              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                item.isCurrent ? 'bg-blue-500 text-white' : 'bg-muted'
-              }`}>
-                <BookOpen className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{item.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {item.time} - {item.room}
-                </p>
-              </div>
-              {item.isCurrent && (
-                <Badge className="bg-blue-500 text-white shrink-0">Now</Badge>
-              )}
-              {item.isPast && (
-                <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-              )}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function AtRiskHelpPanel() {
-  return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      {/* At-Risk Students */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
-              <CardTitle>At-Risk Students</CardTitle>
-            </div>
-            <Badge variant="destructive">{atRiskStudents.length} flagged</Badge>
-          </div>
-          <CardDescription>AI-identified students who may need support</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {atRiskStudents.map((student) => (
-            <div
-              key={student.id}
-              className="flex items-center gap-4 rounded-lg border p-4 transition-all hover:shadow-sm"
-            >
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={student.avatar || undefined} />
-                <AvatarFallback>{student.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium">{student.name}</p>
-                  <Badge
-                    variant="outline"
-                    className={
-                      student.riskLevel === 'high'
-                        ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'
-                        : 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-900/20 dark:text-orange-400'
-                    }
-                  >
-                    {student.riskLevel} risk
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">{student.class}</p>
-                <div className="flex items-center gap-1 mt-1 text-sm">
-                  {student.trend === 'down' ? (
-                    <TrendingDown className="h-3 w-3 text-red-500" />
-                  ) : (
-                    <TrendingUp className="h-3 w-3 text-gray-400" />
-                  )}
-                  <span className="text-muted-foreground">{student.issue}</span>
-                </div>
-              </div>
-              <Button size="sm" variant="outline">
-                View Profile
-              </Button>
-            </div>
-          ))}
-          <Button variant="outline" className="w-full" asChild>
-            <Link href="/teacher/students/at-risk">
-              View All At-Risk Students
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Pending Help Requests */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-blue-500" />
-              <CardTitle>Help Requests</CardTitle>
-            </div>
-            <Badge variant="secondary">{pendingHelpRequests.length} pending</Badge>
-          </div>
-          <CardDescription>Students waiting for your assistance</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {pendingHelpRequests.map((request) => (
-            <div
-              key={request.id}
-              className={`flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50 ${
-                request.urgent ? 'border-orange-200 dark:border-orange-800' : ''
-              }`}
-            >
-              {request.urgent && (
-                <AlertCircle className="h-5 w-5 text-orange-500 shrink-0" />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium">{request.student}</p>
-                <p className="text-sm text-muted-foreground truncate">{request.topic}</p>
-                <p className="text-xs text-muted-foreground">{request.time}</p>
-              </div>
-              <Button size="sm">Respond</Button>
-            </div>
-          ))}
-          <Button variant="outline" className="w-full" asChild>
-            <Link href="/teacher/help-requests">View All Requests</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function UpcomingAiPanel() {
-  return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      {/* Upcoming */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Upcoming
-          </CardTitle>
-          <CardDescription>Lessons, assessments, and meetings</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {upcomingItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={item.id}
-                className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
-              >
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                  item.type === 'lesson'
-                    ? 'bg-blue-500/10 text-blue-500'
-                    : item.type === 'grading'
-                      ? 'bg-orange-500/10 text-orange-500'
-                      : 'bg-purple-500/10 text-purple-500'
-                }`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">{item.time}</p>
-                </div>
-                <Button size="sm" variant="ghost">
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
-
-      {/* AI Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-purple-500" />
-            AI Insights
-          </CardTitle>
-          <CardDescription>Suggested interventions and opportunities</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {aiInsights.map((insight) => (
-            <div
-              key={insight.id}
-              className="group rounded-lg border p-4 transition-all hover:border-purple-500/30 hover:shadow-sm"
-            >
-              <div className="flex items-start gap-3">
-                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                  insight.priority === 'high'
-                    ? 'bg-red-500/10 text-red-500'
-                    : insight.priority === 'medium'
-                      ? 'bg-orange-500/10 text-orange-500'
-                      : 'bg-green-500/10 text-green-500'
-                }`}>
-                  <Sparkles className="h-4 w-4" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-medium">{insight.title}</h4>
-                    <Badge variant="outline" className="text-xs capitalize">
-                      {insight.type}
-                    </Badge>
+          {isLoading ? (
+            [1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)
+          ) : sessions.length > 0 ? (
+            sessions.slice(0, 5).map((session) => {
+              const isToday = new Date(session.scheduledStart).toDateString() === new Date().toDateString();
+              const time = new Date(session.scheduledStart).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+              const date = isToday ? 'Today' : new Date(session.scheduledStart).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+              return (
+                <div key={session.id} className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"><BookOpen className="h-5 w-5" /></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{session.participants.map(p => p.learnerProfile.user.displayName).join(', ') || 'Session'}</p>
+                    <p className="text-xs text-muted-foreground">{date} at {time}</p>
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">{insight.description}</p>
+                  <Badge variant="outline" className="text-xs capitalize shrink-0">{session.status}</Badge>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-sm text-muted-foreground py-4 text-center">No upcoming sessions scheduled.</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function AtRiskHelpPanel({ insights, isLoading }: { insights: AIInsight[]; isLoading: boolean }) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    teacherApi.dashboard.getNotifications().then((res) => setNotifications(res.notifications)).catch(() => {});
+  }, []);
+
+  const atRiskInsights = insights.filter(i => i.source === 'ml-at-risk');
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-orange-500" /><CardTitle>At-Risk Students</CardTitle></div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs"><Brain className="h-3 w-3 mr-1" />AI-detected</Badge>
+              {atRiskInsights.length > 0 && <Badge variant="destructive">{atRiskInsights.length} flagged</Badge>}
+            </div>
+          </div>
+          <CardDescription>ML models continuously monitor engagement, performance, and attendance</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isLoading ? (
+            [1, 2, 3].map((i) => (<div key={i} className="flex items-center gap-4 rounded-lg border p-4"><Skeleton className="h-10 w-10 rounded-full" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-48" /></div></div>))
+          ) : atRiskInsights.length > 0 ? (
+            atRiskInsights.map((insight) => (
+              <div key={insight.id} className="flex items-center gap-4 rounded-lg border p-4 transition-all hover:shadow-sm">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30"><AlertTriangle className="h-5 w-5 text-orange-500" /></div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{insight.title}</p>
+                    <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 text-xs">{insight.severity}</Badge>
+                    <span className="text-xs text-muted-foreground">{Math.round(insight.confidence * 100)}%</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">{insight.description}</p>
+                </div>
+                {insight.actionHref && (<Button size="sm" variant="outline" asChild><Link href={insight.actionHref}>{insight.actionLabel || 'View'}</Link></Button>)}
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground py-4 text-center">No at-risk students detected. All learners progressing within expected parameters.</p>
+          )}
+          <Button variant="outline" className="w-full" asChild>
+            <Link href="/teacher/students/at-risk">View All At-Risk Students<ArrowRight className="ml-2 h-4 w-4" /></Link>
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2"><MessageCircle className="h-5 w-5 text-blue-500" /><CardTitle>Notifications</CardTitle></div>
+            <Badge variant="secondary">{notifications.filter(n => !n.read).length} unread</Badge>
+          </div>
+          <CardDescription>Recent alerts and messages</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {notifications.length > 0 ? (
+            notifications.slice(0, 5).map((notif) => (
+              <div key={notif.id} className={`flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50 ${!notif.read ? 'border-blue-200 dark:border-blue-800' : ''}`}>
+                {!notif.read && <AlertCircle className="h-5 w-5 text-blue-500 shrink-0" />}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm">{notif.title}</p>
+                  <p className="text-sm text-muted-foreground truncate">{notif.message}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(notif.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
-              <div className="mt-3 flex gap-2">
-                <Button size="sm" variant="outline" className="flex-1">
-                  Take Action
-                </Button>
-                <Button size="sm" variant="ghost">
-                  Dismiss
-                </Button>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground py-4 text-center">No notifications.</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function UpcomingAiPanel({ insights, isLoading }: { insights: AIInsight[]; isLoading: boolean }) {
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+
+  useEffect(() => {
+    teacherApi.dashboard.getActivity().then((res) => setActivity(res.activities)).catch(() => {});
+  }, []);
+
+  const displayInsights = insights.filter(i => i.source !== 'ml-at-risk');
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" />Recent Activity</CardTitle>
+          <CardDescription>Your teaching activity feed</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {activity.length > 0 ? (
+            activity.slice(0, 5).map((item) => (
+              <div key={item.id} className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted"><FileText className="h-5 w-5" /></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{item.description}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(item.timestamp).toLocaleString()}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground py-4 text-center">No recent activity recorded.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Brain className="h-5 w-5 text-purple-500" />AI Insights</CardTitle>
+          <CardDescription>Real-time intelligence from BKT mastery tracking, ML risk detection, and learning analytics</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isLoading ? (
+            [1, 2, 3].map((i) => <div key={i} className="rounded-lg border p-4 space-y-2"><Skeleton className="h-4 w-48" /><Skeleton className="h-3 w-full" /></div>)
+          ) : displayInsights.length > 0 ? (
+            displayInsights.map((insight) => {
+              const Icon = insightIcon(insight);
+              const colors = insightColors(insight);
+              return (
+                <div key={insight.id} className="group rounded-lg border p-4 transition-all hover:border-purple-500/30 hover:shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${colors}`}><Icon className="h-4 w-4" /></div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{insight.title}</h4>
+                        {insight.confidence > 0 && (<Badge variant="outline" className="text-xs"><Shield className="h-2.5 w-2.5 mr-1" />{Math.round(insight.confidence * 100)}%</Badge>)}
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">{insight.description}</p>
+                      <p className="mt-1 text-xs text-muted-foreground/60">Source: {insight.source.replace(/-/g, ' ')}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    {insight.actionHref ? (
+                      <Button size="sm" variant="outline" className="flex-1" asChild><Link href={insight.actionHref}>{insight.actionLabel || 'Take Action'}</Link></Button>
+                    ) : (
+                      <Button size="sm" variant="outline" className="flex-1">Take Action</Button>
+                    )}
+                    <Button size="sm" variant="ghost">Dismiss</Button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-sm text-muted-foreground py-4 text-center">No AI insights available yet. Insights appear as students interact with the platform and the LIS accumulates data.</p>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -542,16 +353,72 @@ function UpcomingAiPanel() {
 }
 
 // =============================================================================
-// Panel registry — maps IDs to components
+// Ask Issy — contextual AI assistant, calls /api/v1/ai-buddy/message
 // =============================================================================
 
-const PANEL_MAP: Record<TeacherPanelId, () => JSX.Element> = {
-  'quick-actions': QuickActionsPanel,
-  'stats-grid': StatsGridPanel,
-  'main-content': MainContentPanel,
-  'at-risk-help': AtRiskHelpPanel,
-  'upcoming-ai': UpcomingAiPanel,
-};
+function AskIssyPanel() {
+  const [message, setMessage] = useState('');
+  const [response, setResponse] = useState<string | null>(null);
+  const [isThinking, setIsThinking] = useState(false);
+
+  async function handleAsk() {
+    if (!message.trim()) return;
+    setIsThinking(true);
+    setResponse(null);
+    try {
+      const result = await teacherApi.ai.askIssy(message);
+      setResponse(result.data.message.content);
+    } catch {
+      setResponse('Unable to reach the AI assistant. Please try again.');
+    } finally {
+      setIsThinking(false);
+      setMessage('');
+    }
+  }
+
+  return (
+    <Card className="border-purple-200 dark:border-purple-800/50 bg-gradient-to-br from-purple-50/50 to-transparent dark:from-purple-900/10">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-purple-500" />Ask Issy</CardTitle>
+        <CardDescription>Your AI teaching assistant — ask about student progress, lesson ideas, or anything on this page</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {response && (
+          <div className="mb-4 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/20 p-4">
+            <p className="text-sm">{response}</p>
+          </div>
+        )}
+        <div className="flex gap-2">
+          <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
+            placeholder="e.g. Which students need attention this week?"
+            className="flex-1 rounded-lg border bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500" disabled={isThinking} />
+          <Button size="sm" onClick={handleAsk} disabled={isThinking || !message.trim()} className="bg-purple-600 hover:bg-purple-700">
+            {isThinking ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Send className="h-4 w-4" />}
+          </Button>
+        </div>
+        <div className="mt-3 flex gap-2 flex-wrap">
+          {['Who needs help today?', 'Suggest a lesson for Year 4', 'Show mastery gaps'].map((s) => (
+            <button key={s} onClick={() => setMessage(s)} className="text-xs rounded-full border px-3 py-1 text-muted-foreground hover:border-purple-300 hover:text-purple-600 transition-colors">{s}</button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// =============================================================================
+// Panel registry — maps IDs to live-data-powered components
+// =============================================================================
+
+function createPanelMap(data: ReturnType<typeof useTeacher>['data'], isLoading: boolean): Record<TeacherPanelId, () => JSX.Element> {
+  return {
+    'quick-actions': () => <QuickActionsPanel />,
+    'stats-grid': () => <StatsGridPanel data={data} isLoading={isLoading} />,
+    'main-content': () => <MainContentPanel data={data} isLoading={isLoading} />,
+    'at-risk-help': () => <AtRiskHelpPanel insights={data?.insights ?? []} isLoading={isLoading} />,
+    'upcoming-ai': () => <UpcomingAiPanel insights={data?.insights ?? []} isLoading={isLoading} />,
+  };
+}
 
 // =============================================================================
 // Main page
@@ -560,13 +427,18 @@ const PANEL_MAP: Record<TeacherPanelId, () => JSX.Element> = {
 export default function TeacherDashboardPage() {
   const currentPeriod = useMemo(() => getCurrentPeriod(), []);
   const currentTime = useMemo(() => formatCurrentTime(), []);
-  const currentClass = todaySchedule.find(c => c.isCurrent);
-
   const { panelOrder, setPanelOrder } = useTeacherDashboardLayout();
+  const { data, isLoading, error } = useTeacher({ page: 'dashboard' });
+  const panelMap = useMemo(() => createPanelMap(data, isLoading), [data, isLoading]);
+
+  const currentSession = data?.upcomingSessions?.find(s => {
+    const start = new Date(s.scheduledStart);
+    const now = new Date();
+    return s.status === 'in_progress' || (start <= now && (!s.scheduledEnd || new Date(s.scheduledEnd) >= now));
+  });
 
   return (
     <div className="space-y-8">
-      {/* Hero Section - Today's Overview (fixed, not draggable) */}
       <div className="rounded-2xl bg-gradient-to-r from-blue-600/10 via-indigo-500/5 to-transparent p-6 md:p-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div>
@@ -577,47 +449,41 @@ export default function TeacherDashboardPage() {
               <Clock className="h-4 w-4" />
               <span>{currentTime}</span>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Teacher Dashboard
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Teacher Dashboard</h1>
             <p className="text-muted-foreground mt-1">
-              Welcome back, Dr. Wilson. Here&apos;s your day at a glance.
+              {data?.summary?.user ? `Welcome back. Here's your day at a glance.` : isLoading ? 'Loading your dashboard...' : 'Welcome to Scholarly.'}
             </p>
           </div>
-
-          {/* Current Period Indicator */}
           <div className="flex items-center gap-4">
             <div className="rounded-xl bg-white/80 dark:bg-gray-800/80 shadow-sm border px-5 py-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10">
-                  <Play className="h-5 w-5 text-blue-500" />
-                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10"><Play className="h-5 w-5 text-blue-500" /></div>
                 <div>
                   <p className="font-semibold">{currentPeriod.period}</p>
-                  {currentPeriod.remaining && (
-                    <p className="text-sm text-muted-foreground">{currentPeriod.remaining}</p>
-                  )}
+                  {currentPeriod.remaining && <p className="text-sm text-muted-foreground">{currentPeriod.remaining}</p>}
                 </div>
               </div>
             </div>
-
-            {currentClass && (
+            {currentSession && (
               <div className="rounded-xl bg-blue-500 text-white px-5 py-3 shadow-lg">
                 <p className="text-sm font-medium opacity-90">Now Teaching</p>
-                <p className="font-semibold">{currentClass.name}</p>
-                <p className="text-sm opacity-80">{currentClass.room} - {currentClass.students} students</p>
+                <p className="font-semibold">{currentSession.participants.map(p => p.learnerProfile.user.displayName).join(', ')}</p>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Reorderable panels */}
-      <ReorderablePanels
-        panelOrder={panelOrder}
-        onReorder={setPanelOrder}
-        panelMap={PANEL_MAP}
-      />
+      {error && (
+        <Card className="border-red-200 dark:border-red-800">
+          <CardContent className="py-4">
+            <p className="text-sm text-red-600 dark:text-red-400">Unable to load dashboard data: {error}. Some sections may be unavailable.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      <AskIssyPanel />
+      <ReorderablePanels panelOrder={panelOrder} onReorder={setPanelOrder} panelMap={panelMap} />
     </div>
   );
 }

@@ -1,193 +1,72 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  FileText,
-  Plus,
-  Search,
-  Copy,
-  Trash2,
-  Edit,
-  MoreVertical,
-  Users,
-  Clock,
-  Star,
-} from 'lucide-react';
-
-const assessments = [
-  {
-    id: 1,
-    title: 'Algebra Fundamentals Quiz',
-    subject: 'Mathematics',
-    questions: 15,
-    duration: 30,
-    attempts: 124,
-    avgScore: 78,
-    created: '2 weeks ago',
-    status: 'published',
-  },
-  {
-    id: 2,
-    title: 'Climate Change Essay',
-    subject: 'Science',
-    questions: 3,
-    duration: 45,
-    attempts: 89,
-    avgScore: 82,
-    created: '1 month ago',
-    status: 'published',
-  },
-  {
-    id: 3,
-    title: 'Grammar & Punctuation Test',
-    subject: 'English',
-    questions: 25,
-    duration: 20,
-    attempts: 0,
-    avgScore: 0,
-    created: '3 days ago',
-    status: 'draft',
-  },
-  {
-    id: 4,
-    title: 'World War II Knowledge Check',
-    subject: 'History',
-    questions: 20,
-    duration: 25,
-    attempts: 56,
-    avgScore: 71,
-    created: '3 weeks ago',
-    status: 'published',
-  },
-];
+import { Skeleton } from '@/components/ui/skeleton';
+import { teacherApi } from '@/lib/teacher-api';
+import type { ContentItem } from '@/types/teacher';
+import { Search, Library, ArrowLeft, Download, Star } from 'lucide-react';
 
 export default function AssessmentLibraryPage() {
+  const [items, setItems] = useState<ContentItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    teacherApi.content.list({ type: 'assessment' })
+      .then((res) => setItems(res.items.filter(i => i.status === 'published')))
+      .catch((err) => setError(err.message))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const filtered = items.filter(a => !search || a.title.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="sm" asChild><Link href="/teacher/assessment"><ArrowLeft className="mr-2 h-4 w-4" />Back</Link></Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <FileText className="h-8 w-8" />
-            Assessment Library
-          </h1>
-          <p className="text-muted-foreground">
-            Browse and manage your assessments
-          </p>
+          <h1 className="heading-2">Assessment Library</h1>
+          <p className="text-muted-foreground">Browse published assessments from your school and community</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Assessment
-        </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-sm text-muted-foreground">Total Assessments</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">269</div>
-            <p className="text-sm text-muted-foreground">Total Attempts</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">77%</div>
-            <p className="text-sm text-muted-foreground">Average Score</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-sm text-muted-foreground">Published</p>
-          </CardContent>
-        </Card>
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search library..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search assessments..." className="pl-10" />
-        </div>
-        <select className="p-2 rounded border">
-          <option>All Subjects</option>
-          <option>Mathematics</option>
-          <option>Science</option>
-          <option>English</option>
-          <option>History</option>
-        </select>
-        <select className="p-2 rounded border">
-          <option>All Status</option>
-          <option>Published</option>
-          <option>Draft</option>
-        </select>
-      </div>
+      {error && <Card className="border-red-200 dark:border-red-800"><CardContent className="py-4"><p className="text-sm text-red-600">{error}</p></CardContent></Card>}
 
-      {/* Assessment List */}
-      <div className="grid gap-4">
-        {assessments.map((assessment) => (
-          <Card key={assessment.id}>
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <FileText className="h-6 w-6 text-primary" />
-                  </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {isLoading ? (
+          [1, 2, 3, 4, 5, 6].map(i => <Card key={i}><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>)
+        ) : filtered.length > 0 ? (
+          filtered.map((item) => (
+            <Card key={item.id} className="group">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{assessment.title}</h3>
-                      <Badge variant={assessment.status === 'published' ? 'default' : 'secondary'}>
-                        {assessment.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                      <Badge variant="outline">{assessment.subject}</Badge>
-                      <span>{assessment.questions} questions</span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {assessment.duration} min
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        {assessment.attempts} attempts
-                      </span>
-                      {assessment.avgScore > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Star className="h-4 w-4" />
-                          {assessment.avgScore}% avg score
-                        </span>
-                      )}
-                      <span>Created {assessment.created}</span>
-                    </div>
+                    <h3 className="font-medium">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{item.type} · {item.subject}</p>
                   </div>
+                  <Badge variant="secondary" className="text-xs capitalize">{item.type}</Badge>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Copy className="mr-2 h-4 w-4" />
-                    Duplicate
-                  </Button>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
+                {item.description && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.description}</p>}
+                <div className="mt-4 flex gap-2">
+                  <Button size="sm" variant="outline" className="flex-1"><Download className="mr-1 h-3.5 w-3.5" />Use</Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Card className="col-span-full"><CardContent className="p-8 text-center text-muted-foreground">No assessments found in the library{search ? ` matching "${search}"` : ''}.</CardContent></Card>
+        )}
       </div>
     </div>
   );

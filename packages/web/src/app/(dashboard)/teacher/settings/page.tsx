@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useTeacher } from '@/hooks/use-teacher';
 import {
   User,
   Bell,
@@ -27,14 +28,26 @@ import {
   Globe,
   Clock,
   Save,
+  Brain,
+  Bot,
+  Sparkles,
+  AlertTriangle,
+  Heart,
+  Sliders,
+  Zap,
 } from 'lucide-react';
 
 export default function TeacherSettingsPage() {
+  // Fetch teacher data for contextual AI status display
+  const { data } = useTeacher({ page: 'settings' });
+
   const [notifications, setNotifications] = useState({
     emailAssignments: true,
     emailAttendance: false,
     pushMessages: true,
     pushReminders: true,
+    aiAlerts: true,
+    aiWeeklyDigest: true,
   });
 
   const [preferences, setPreferences] = useState({
@@ -44,16 +57,228 @@ export default function TeacherSettingsPage() {
     startOfWeek: 'monday',
   });
 
+  const [aiPreferences, setAiPreferences] = useState({
+    issyPersonality: 'supportive',
+    riskAlertThreshold: 'medium',
+    insightFrequency: 'balanced',
+    aiGradingAssist: true,
+    wellbeingMonitoring: true,
+    autoRecommendations: true,
+    masteryAlertThreshold: 60,
+    showConfidenceScores: true,
+    aiLessonSuggestions: true,
+  });
+
+  const atRiskCount = data?.insights?.filter(i => i.source === 'ml-at-risk').length ?? 0;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Teacher Settings</h1>
         <p className="text-muted-foreground">
-          Manage your teaching preferences and notifications
+          Manage your teaching preferences, AI intelligence settings, and notifications
         </p>
       </div>
 
-      {/* Profile Settings */}
+      {/* ─── AI Intelligence Preferences ────────────────────────────────────── */}
+      {/* This section is placed FIRST because the LIS is central to the teaching
+          experience — it's not a footnote, it's the primary configuration surface */}
+      <Card className="border-purple-200/50 dark:border-purple-800/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-purple-500" />
+            AI Intelligence Settings
+          </CardTitle>
+          <CardDescription>
+            Configure how the Learning Intelligence System assists your teaching.
+            {atRiskCount > 0 && (
+              <span className="ml-1 text-orange-600 dark:text-orange-400">
+                Currently tracking {atRiskCount} at-risk student{atRiskCount > 1 ? 's' : ''}.
+              </span>
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Ask Issy Configuration */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Bot className="h-4 w-4 text-purple-500" />
+              <Label className="text-base font-semibold">Ask Issy — AI Teaching Assistant</Label>
+            </div>
+            <div className="space-y-4 ml-6">
+              <div className="space-y-2">
+                <Label>Conversation Style</Label>
+                <Select
+                  value={aiPreferences.issyPersonality}
+                  onValueChange={(value) => setAiPreferences(prev => ({ ...prev, issyPersonality: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="concise">Concise — Brief, data-driven responses</SelectItem>
+                    <SelectItem value="supportive">Supportive — Warm, encouraging with explanations</SelectItem>
+                    <SelectItem value="detailed">Detailed — Comprehensive analysis with citations</SelectItem>
+                    <SelectItem value="coaching">Coaching — Asks guiding questions to help you reflect</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  This affects how Issy communicates with you across all pages
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* At-Risk Detection */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="h-4 w-4 text-orange-500" />
+              <Label className="text-base font-semibold">At-Risk Detection</Label>
+            </div>
+            <div className="space-y-4 ml-6">
+              <div className="space-y-2">
+                <Label>Alert Sensitivity</Label>
+                <Select
+                  value={aiPreferences.riskAlertThreshold}
+                  onValueChange={(value) => setAiPreferences(prev => ({ ...prev, riskAlertThreshold: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low — Only high-confidence critical alerts</SelectItem>
+                    <SelectItem value="medium">Medium — Balanced alerts for medium and high risk</SelectItem>
+                    <SelectItem value="high">High — All detected risks including early signals</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Higher sensitivity means more alerts but earlier intervention opportunities
+                </p>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label>Wellbeing Monitoring</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Track session duration, engagement drops, and recommend breaks for students
+                  </p>
+                </div>
+                <Switch
+                  checked={aiPreferences.wellbeingMonitoring}
+                  onCheckedChange={(checked) => setAiPreferences(prev => ({ ...prev, wellbeingMonitoring: checked }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Mastery & Insights */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-blue-500" />
+              <Label className="text-base font-semibold">Mastery Insights & Recommendations</Label>
+            </div>
+            <div className="space-y-4 ml-6">
+              <div className="space-y-2">
+                <Label>Insight Frequency</Label>
+                <Select
+                  value={aiPreferences.insightFrequency}
+                  onValueChange={(value) => setAiPreferences(prev => ({ ...prev, insightFrequency: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="minimal">Minimal — Only critical insights on dashboard</SelectItem>
+                    <SelectItem value="balanced">Balanced — Key insights on each page</SelectItem>
+                    <SelectItem value="comprehensive">Comprehensive — Rich AI context on every view</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Mastery Alert Threshold</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={aiPreferences.masteryAlertThreshold}
+                    onChange={(e) => setAiPreferences(prev => ({ ...prev, masteryAlertThreshold: parseInt(e.target.value) || 60 }))}
+                    className="w-24"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    Alert when student mastery drops below {aiPreferences.masteryAlertThreshold}% (BKT pKnown)
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label>Auto-generate Recommendations</Label>
+                  <p className="text-sm text-muted-foreground">
+                    AI automatically suggests activities, storybooks, and interventions based on student mastery profiles
+                  </p>
+                </div>
+                <Switch
+                  checked={aiPreferences.autoRecommendations}
+                  onCheckedChange={(checked) => setAiPreferences(prev => ({ ...prev, autoRecommendations: checked }))}
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label>Show Confidence Scores</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Display AI confidence percentages alongside insights and predictions
+                  </p>
+                </div>
+                <Switch
+                  checked={aiPreferences.showConfidenceScores}
+                  onCheckedChange={(checked) => setAiPreferences(prev => ({ ...prev, showConfidenceScores: checked }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* AI-Assisted Teaching Tools */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Zap className="h-4 w-4 text-yellow-500" />
+              <Label className="text-base font-semibold">AI-Assisted Teaching</Label>
+            </div>
+            <div className="space-y-4 ml-6">
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label>AI Grading Assistance</Label>
+                  <p className="text-sm text-muted-foreground">
+                    AI suggests rubric scores and provides draft feedback for student work
+                  </p>
+                </div>
+                <Switch
+                  checked={aiPreferences.aiGradingAssist}
+                  onCheckedChange={(checked) => setAiPreferences(prev => ({ ...prev, aiGradingAssist: checked }))}
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label>AI Lesson Plan Suggestions</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive AI-generated lesson plan drafts based on curriculum standards and class mastery levels
+                  </p>
+                </div>
+                <Switch
+                  checked={aiPreferences.aiLessonSuggestions}
+                  onCheckedChange={(checked) => setAiPreferences(prev => ({ ...prev, aiLessonSuggestions: checked }))}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ─── Profile Settings ───────────────────────────────────────────────── */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -94,7 +319,7 @@ export default function TeacherSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Teaching Preferences */}
+      {/* ─── Teaching Preferences ───────────────────────────────────────────── */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -153,7 +378,7 @@ export default function TeacherSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Notification Settings */}
+      {/* ─── Notification Settings ──────────────────────────────────────────── */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -163,6 +388,35 @@ export default function TeacherSettingsPage() {
           <CardDescription>Choose how you want to be notified</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Brain className="h-4 w-4 text-purple-500" />
+              <Label className="text-base">AI Notifications</Label>
+            </div>
+            <div className="space-y-3 ml-6">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="aiAlerts" className="font-normal">
+                  Real-time at-risk student alerts
+                </Label>
+                <Switch
+                  id="aiAlerts"
+                  checked={notifications.aiAlerts}
+                  onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, aiAlerts: checked }))}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="aiWeeklyDigest" className="font-normal">
+                  Weekly AI insights digest
+                </Label>
+                <Switch
+                  id="aiWeeklyDigest"
+                  checked={notifications.aiWeeklyDigest}
+                  onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, aiWeeklyDigest: checked }))}
+                />
+              </div>
+            </div>
+          </div>
+          <Separator />
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Mail className="h-4 w-4 text-muted-foreground" />
@@ -223,7 +477,7 @@ export default function TeacherSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Display & Localization */}
+      {/* ─── Display & Localization ─────────────────────────────────────────── */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -314,7 +568,7 @@ export default function TeacherSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Privacy & Security */}
+      {/* ─── Privacy & Security ─────────────────────────────────────────────── */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -351,6 +605,24 @@ export default function TeacherSettingsPage() {
                 <SelectItem value="school">School Only</SelectItem>
                 <SelectItem value="students">My Students</SelectItem>
                 <SelectItem value="private">Private</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <Label>AI Data Usage</Label>
+              <p className="text-sm text-muted-foreground">
+                Control how AI processes your teaching data for insights
+              </p>
+            </div>
+            <Select defaultValue="full">
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="full">Full Analysis</SelectItem>
+                <SelectItem value="anonymised">Anonymised Only</SelectItem>
+                <SelectItem value="minimal">Minimal (core features only)</SelectItem>
               </SelectContent>
             </Select>
           </div>
