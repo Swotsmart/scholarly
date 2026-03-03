@@ -53,11 +53,15 @@ export function useTeacher(context?: { studentIds?: string[]; classId?: string; 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Stable key for studentIds so array identity changes don't cause spurious refetches
+  const studentIdsKey = context?.studentIds?.join(',') ?? '';
+
   useEffect(() => {
     async function fetchTeacherData() {
       setIsLoading(true);
       setError(null);
       try {
+        const studentIds = studentIdsKey ? studentIdsKey.split(',') : undefined;
         const results = await Promise.allSettled([
           teacherApi.dashboard.getSummary(),
           teacherApi.dashboard.getQuickStats(),
@@ -65,7 +69,7 @@ export function useTeacher(context?: { studentIds?: string[]; classId?: string; 
           teacherApi.sessions.list({ upcoming: true }),
           teacherApi.ai.generatePageInsights({
             page: context?.page || 'dashboard',
-            studentIds: context?.studentIds,
+            studentIds,
             classId: context?.classId,
           }),
         ]);
@@ -84,7 +88,7 @@ export function useTeacher(context?: { studentIds?: string[]; classId?: string; 
       }
     }
     fetchTeacherData();
-  }, [context?.page, context?.classId]);
+  }, [context?.page, context?.classId, studentIdsKey]);
 
   return { data, isLoading, error };
 }
