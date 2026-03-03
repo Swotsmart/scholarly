@@ -1,209 +1,101 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  ClipboardCheck,
-  FileText,
-  PenTool,
-  Library,
-  Plus,
-  Search,
-  Filter,
-  MoreHorizontal,
-} from 'lucide-react';
 import { Input } from '@/components/ui/input';
-
-const assessments = [
-  {
-    id: 'a1',
-    title: 'Design Thinking Process Quiz',
-    type: 'quiz',
-    subject: 'Design & Technology',
-    yearLevel: 'Year 10',
-    questions: 15,
-    duration: '30 mins',
-    status: 'published',
-    submissions: 24,
-    total: 28,
-  },
-  {
-    id: 'a2',
-    title: 'Innovation Lab Project Rubric',
-    type: 'rubric',
-    subject: 'Innovation',
-    yearLevel: 'Year 11',
-    criteria: 8,
-    status: 'published',
-    submissions: 20,
-    total: 24,
-  },
-  {
-    id: 'a3',
-    title: 'PBL Milestone Assessment',
-    type: 'rubric',
-    subject: 'Project Based Learning',
-    yearLevel: 'Year 12',
-    criteria: 12,
-    status: 'draft',
-    submissions: 0,
-    total: 18,
-  },
-  {
-    id: 'a4',
-    title: 'Prototyping Skills Test',
-    type: 'practical',
-    subject: 'Design & Technology',
-    yearLevel: 'Year 10',
-    tasks: 5,
-    duration: '60 mins',
-    status: 'scheduled',
-    submissions: 0,
-    total: 28,
-  },
-];
-
-const templates = [
-  { id: 't1', name: 'Multiple Choice Quiz', icon: ClipboardCheck, count: 12 },
-  { id: 't2', name: 'Rubric Assessment', icon: FileText, count: 8 },
-  { id: 't3', name: 'Practical Task', icon: PenTool, count: 5 },
-];
+import { Skeleton } from '@/components/ui/skeleton';
+import { useTeacher } from '@/hooks/use-teacher';
+import { teacherApi } from '@/lib/teacher-api';
+import type { ContentItem, AIInsight } from '@/types/teacher';
+import { ClipboardCheck, FileText, PenTool, Library, Plus, Search, Brain, Shield, Sparkles } from 'lucide-react';
 
 export default function TeacherAssessmentPage() {
+  const { data: teacherData, isLoading: insightsLoading } = useTeacher({ page: 'assessment' });
+  const [assessments, setAssessments] = useState<ContentItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    teacherApi.content.list({ type: 'assessment' })
+      .then((res) => setAssessments(res.items))
+      .catch((err) => setError(err.message))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const insights = teacherData?.insights ?? [];
+  const filtered = assessments.filter(a => !search || a.title.toLowerCase().includes(search.toLowerCase()));
+  const published = assessments.filter(a => a.status === 'published').length;
+  const drafts = assessments.filter(a => a.status === 'draft').length;
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Assessment</h1>
-          <p className="text-muted-foreground">
-            Create and manage assessments for your classes
-          </p>
+          <h1 className="heading-2">Assessments</h1>
+          <p className="text-muted-foreground">{assessments.length} assessments · {published} published · {drafts} drafts</p>
         </div>
-        <Button asChild>
-          <Link href="/teacher/assessment/builder">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Assessment
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild><Link href="/teacher/assessment/library"><Library className="mr-2 h-4 w-4" />Library</Link></Button>
+          <Button asChild><Link href="/teacher/assessment/builder"><Plus className="mr-2 h-4 w-4" />Create Assessment</Link></Button>
+        </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {templates.map(template => {
-          const Icon = template.icon;
-          return (
-            <Card key={template.id} className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                    <Icon className="h-6 w-6 text-primary" />
+      {/* AI insight */}
+      {insights.length > 0 && (
+        <Card className="border-purple-200/50 dark:border-purple-800/30 bg-gradient-to-r from-purple-50/30 to-transparent dark:from-purple-900/10">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-5 w-5 text-purple-500 shrink-0" />
+              <p className="text-sm text-muted-foreground">{insights[0].description}</p>
+              <Badge variant="outline" className="text-xs shrink-0"><Shield className="h-2.5 w-2.5 mr-1" />LIS</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search assessments..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
+      </div>
+
+      {error && <Card className="border-red-200 dark:border-red-800"><CardContent className="py-4"><p className="text-sm text-red-600">{error}</p></CardContent></Card>}
+
+      <div className="space-y-3">
+        {isLoading ? (
+          [1, 2, 3, 4].map(i => <Card key={i}><CardContent className="p-4"><Skeleton className="h-16 w-full" /></CardContent></Card>)
+        ) : filtered.length > 0 ? (
+          filtered.map((assessment) => (
+            <Card key={assessment.id}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                      {assessment.type === 'quiz' ? <PenTool className="h-5 w-5 text-primary" /> : <ClipboardCheck className="h-5 w-5 text-primary" />}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Link href={`/teacher/assessment/${assessment.id}`} className="font-medium hover:underline">{assessment.title}</Link>
+                        <Badge variant={assessment.status === 'published' ? 'default' : 'secondary'} className="text-xs capitalize">{assessment.status}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{assessment.type} · {assessment.subject}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold">{template.name}</p>
-                    <p className="text-sm text-muted-foreground">{template.count} templates</p>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    {assessment.createdAt && <span>{new Date(assessment.createdAt).toLocaleDateString()}</span>}
+                    <Button size="sm" variant="outline" asChild><Link href={`/teacher/grading?assessment=${assessment.id}`}>Grade</Link></Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          );
-        })}
+          ))
+        ) : (
+          <Card><CardContent className="p-8 text-center text-muted-foreground">No assessments found{search ? ` matching "${search}"` : '. Create your first assessment to get started.'}.</CardContent></Card>
+        )}
       </div>
-
-      {/* Search and Filter */}
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search assessments..." className="pl-9" />
-        </div>
-        <Button variant="outline">
-          <Filter className="mr-2 h-4 w-4" />
-          Filters
-        </Button>
-      </div>
-
-      {/* Assessments List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>My Assessments</CardTitle>
-          <CardDescription>All assessments you have created</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {assessments.map(assessment => (
-              <div
-                key={assessment.id}
-                className="flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  {assessment.type === 'quiz' ? (
-                    <ClipboardCheck className="h-5 w-5 text-primary" />
-                  ) : assessment.type === 'rubric' ? (
-                    <FileText className="h-5 w-5 text-primary" />
-                  ) : (
-                    <PenTool className="h-5 w-5 text-primary" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium truncate">{assessment.title}</p>
-                    <Badge
-                      variant={
-                        assessment.status === 'published'
-                          ? 'default'
-                          : assessment.status === 'draft'
-                            ? 'secondary'
-                            : 'outline'
-                      }
-                    >
-                      {assessment.status}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {assessment.subject} • {assessment.yearLevel}
-                  </p>
-                </div>
-                <div className="text-right hidden sm:block">
-                  <p className="text-sm font-medium">
-                    {assessment.submissions}/{assessment.total} submitted
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {assessment.questions
-                      ? `${assessment.questions} questions`
-                      : assessment.criteria
-                        ? `${assessment.criteria} criteria`
-                        : `${assessment.tasks} tasks`}
-                  </p>
-                </div>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Assessment Library Link */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10">
-              <Library className="h-6 w-6 text-blue-500" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold">Assessment Library</p>
-              <p className="text-sm text-muted-foreground">
-                Browse shared assessments from other teachers and curriculum resources
-              </p>
-            </div>
-            <Button variant="outline" asChild>
-              <Link href="/teacher/assessment/library">Browse Library</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
