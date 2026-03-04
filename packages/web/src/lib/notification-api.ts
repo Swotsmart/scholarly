@@ -9,7 +9,10 @@ import type {
 } from '@/types/notification';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || !process.env.NEXT_PUBLIC_API_URL;
+// DEMO_MODE is only active when explicitly set — not as a silent fallback.
+// Previously this also activated when NEXT_PUBLIC_API_URL was unset, which caused
+// hardcoded demo notifications to appear in production-like environments.
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 const now = Date.now();
 

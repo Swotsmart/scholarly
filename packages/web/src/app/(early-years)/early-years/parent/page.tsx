@@ -5,7 +5,7 @@
  * Shows progress for all children in the family with recommendations
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
@@ -30,17 +30,27 @@ import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { earlyYearsApi } from '@/lib/early-years-api';
 import { getAvatar } from '@/components/early-years/child-selector';
+import { usePhonicsAudio } from '@/hooks/use-phonics-audio';
 import type { ParentDashboard } from '@/types/early-years';
 
 export default function ParentDashboardPage() {
   const [dashboard, setDashboard] = useState<ParentDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { speak } = usePhonicsAudio();
 
   useEffect(() => {
+    let greetingTimer: ReturnType<typeof setTimeout>;
     async function loadDashboard() {
       try {
         const data = await earlyYearsApi.getParentDashboard();
         setDashboard(data);
+        // Greet parent with a summary once data loads
+        const childCount = data.childrenSummary?.length ?? 0;
+        if (childCount > 0) {
+          const names = data.childrenSummary.map((s) => s.child.preferredName || s.child.firstName);
+          const nameStr = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+          greetingTimer = setTimeout(() => speak(`Welcome back! Here's how ${nameStr} ${names.length === 1 ? 'is' : 'are'} going today.`), 400);
+        }
       } catch (error) {
         console.error('Failed to load parent dashboard:', error);
       } finally {
@@ -48,7 +58,9 @@ export default function ParentDashboardPage() {
       }
     }
     loadDashboard();
-  }, []);
+    return () => clearTimeout(greetingTimer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speak]);
 
   if (isLoading) {
     return (

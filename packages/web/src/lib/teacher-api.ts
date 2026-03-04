@@ -37,8 +37,30 @@ import type {
   Pagination,
 } from '@/types/teacher';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const V1 = `${API_BASE}/api/v1`;
+
+// =============================================================================
+// BACKEND ↔ FRONTEND TYPE BRIDGE
+// =============================================================================
+
+/** Shape returned by the backend (Prisma-based) notification route */
+interface BackendNotification {
+  id: string;
+  title: string;
+  body: string;
+  type: string;
+  inAppStatus: 'read' | 'unread';
+  createdAt: string;
+  data?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+interface BackendNotificationsPayload {
+  notifications: BackendNotification[];
+  unreadCount: number;
+  pagination: { page: number; limit: number; total: number };
+}
 
 // =============================================================================
 // BASE REQUEST HELPER
@@ -81,7 +103,28 @@ export const teacherApi = {
       return request('GET', `/dashboard/activity?page=${page}`);
     },
     async getNotifications(page = 1): Promise<NotificationsResponse> {
-      return request('GET', `/dashboard/notifications?page=${page}`);
+      // Backend returns Prisma-shaped notifications (body, inAppStatus, limit-based pagination).
+      // The teacher Notification type uses (message, read: boolean, pageSize/totalPages pagination).
+      // Normalise here so every consumer works with the frontend types.
+      const raw = await request<BackendNotificationsPayload>('GET', `/dashboard/notifications?page=${page}`);
+      const pageSize = raw.pagination.limit || 20;
+      return {
+        notifications: (raw.notifications ?? []).map((n) => ({
+          id: n.id,
+          title: n.title,
+          message: n.body,
+          type: n.type,
+          read: n.inAppStatus === 'read',
+          createdAt: n.createdAt,
+          metadata: n.data ?? undefined,
+        })),
+        pagination: {
+          page: raw.pagination.page,
+          pageSize,
+          total: raw.pagination.total,
+          totalPages: Math.ceil(raw.pagination.total / pageSize),
+        },
+      };
     },
     async getQuickStats(): Promise<QuickStats> {
       return request('GET', '/dashboard/quick-stats');
