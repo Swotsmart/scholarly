@@ -7,7 +7,6 @@
  * Little Explorers page without each page needing to implement it independently.
  */
 
-import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { useNativeBridge } from '@/hooks/use-native-bridge';
@@ -31,15 +30,6 @@ const queryClient = new QueryClient({
 function EarlyYearsInner({ children }: { children: React.ReactNode }) {
   useNativeBridge();
   const { isUsingFallback } = usePhonicsAudio();
-
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    // Activate if an active session flag is set in the store (future enhancement)
-    return () => { void handleBeforeUnload; };
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">

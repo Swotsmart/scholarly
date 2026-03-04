@@ -31,15 +31,15 @@ import { Progress } from '@/components/ui/progress';
 import { earlyYearsApi } from '@/lib/early-years-api';
 import { getAvatar } from '@/components/early-years/child-selector';
 import { usePhonicsAudio } from '@/hooks/use-phonics-audio';
-import { VoiceStatusBanner } from '@/components/early-years/voice-status-banner';
 import type { ParentDashboard } from '@/types/early-years';
 
 export default function ParentDashboardPage() {
   const [dashboard, setDashboard] = useState<ParentDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { speak, isUsingFallback } = usePhonicsAudio();
+  const { speak } = usePhonicsAudio();
 
   useEffect(() => {
+    let greetingTimer: ReturnType<typeof setTimeout>;
     async function loadDashboard() {
       try {
         const data = await earlyYearsApi.getParentDashboard();
@@ -49,7 +49,7 @@ export default function ParentDashboardPage() {
         if (childCount > 0) {
           const names = data.childrenSummary.map((s) => s.child.preferredName || s.child.firstName);
           const nameStr = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
-          setTimeout(() => speak(`Welcome back! Here's how ${nameStr} ${names.length === 1 ? 'is' : 'are'} going today.`), 400);
+          greetingTimer = setTimeout(() => speak(`Welcome back! Here's how ${nameStr} ${names.length === 1 ? 'is' : 'are'} going today.`), 400);
         }
       } catch (error) {
         console.error('Failed to load parent dashboard:', error);
@@ -58,7 +58,9 @@ export default function ParentDashboardPage() {
       }
     }
     loadDashboard();
-  }, []);
+    return () => clearTimeout(greetingTimer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speak]);
 
   if (isLoading) {
     return (
@@ -101,8 +103,6 @@ export default function ParentDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      {/* Voice fallback banner — adult audience for the parent view */}
-      <VoiceStatusBanner isUsingFallback={isUsingFallback} audience="adult" className="mx-4 mt-3" />
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4">
