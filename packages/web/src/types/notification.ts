@@ -25,7 +25,7 @@ export interface Notification {
   id: string;
   tenantId: string;
   userId: string;
-  type: string;
+  type: NotificationType;
   title: string;
   body: string;
   data: Record<string, unknown> | null;

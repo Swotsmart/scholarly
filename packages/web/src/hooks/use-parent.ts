@@ -43,25 +43,26 @@ export function useParent() {
     async function fetchParentData() {
       setIsLoading(true);
       setError(null);
-      try {
-        const results = await Promise.allSettled([
-          parentApi.family.getProfile(),
-          parentApi.family.getDailyDigest(),
-        ]);
+      const results = await Promise.allSettled([
+        parentApi.family.getProfile(),
+        parentApi.family.getDailyDigest(),
+      ]);
 
-        const family = results[0].status === 'fulfilled' ? results[0].value : null;
-        const digest = results[1].status === 'fulfilled' ? results[1].value : null;
+      const family = results[0].status === 'fulfilled' ? results[0].value : null;
+      const digest = results[1].status === 'fulfilled' ? results[1].value : null;
 
-        setData({
-          family,
-          familyData: family, // alias for messaging pages
-          digest,
-        });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load parent data');
-      } finally {
-        setIsLoading(false);
-      }
+      // Collect rejected reasons into error state
+      const errors = results
+        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+        .map(r => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
+      if (errors.length > 0) setError(errors.join('; '));
+
+      setData({
+        family,
+        familyData: family, // alias for messaging pages
+        digest,
+      });
+      setIsLoading(false);
     }
     fetchParentData();
   }, []);

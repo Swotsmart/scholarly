@@ -48,7 +48,7 @@ function bridgeLearningChild(child: FamilyChild) {
     courses.push({
       name: 'Phonics',
       progress: Math.round(phonicsAvg),
-      hoursThisWeek: Math.round((child.totalLearningMinutes / child.totalSessions) * 0.6 * 10) / 10 || 0,
+      hoursThisWeek: child.totalSessions > 0 ? Math.round((child.totalLearningMinutes / child.totalSessions) * 0.6 * 10) / 10 : 0,
       status: phonicsStatus,
     });
 
@@ -57,7 +57,7 @@ function bridgeLearningChild(child: FamilyChild) {
     courses.push({
       name: 'Reading',
       progress: readingProgress,
-      hoursThisWeek: Math.round((child.totalLearningMinutes / child.totalSessions) * 0.2 * 10) / 10 || 0,
+      hoursThisWeek: child.totalSessions > 0 ? Math.round((child.totalLearningMinutes / child.totalSessions) * 0.2 * 10) / 10 : 0,
       status: readingProgress >= 80 ? 'ahead' : readingProgress >= 40 ? 'on-track' : 'behind',
     });
   }
@@ -70,7 +70,7 @@ function bridgeLearningChild(child: FamilyChild) {
     courses.push({
       name: 'Numeracy',
       progress: Math.round(numeracyAvg),
-      hoursThisWeek: Math.round((child.totalLearningMinutes / child.totalSessions) * 0.2 * 10) / 10 || 0,
+      hoursThisWeek: child.totalSessions > 0 ? Math.round((child.totalLearningMinutes / child.totalSessions) * 0.2 * 10) / 10 : 0,
       status: numeracyStatus,
     });
   }

@@ -11,7 +11,7 @@ import { test, expect, request } from '@playwright/test';
  * parent portal routes, and storybook routes.
  */
 
-const API_URL = process.env.PLAYWRIGHT_API_URL || 'http://localhost:3002';
+const API_URL = process.env.PLAYWRIGHT_API_URL || 'http://localhost:3001';
 
 test.describe('API Health', () => {
   test('API server is reachable', async ({ }) => {

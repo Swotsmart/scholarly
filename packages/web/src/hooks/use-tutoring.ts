@@ -28,25 +28,27 @@ export function useTutoring(searchParams?: TutorSearchParams) {
     async function fetchTutoringData() {
       setIsLoading(true);
       setError(null);
-      try {
-        const results = await Promise.allSettled([
-          tutoringApi.searchTutors(searchParams),
-          tutoringApi.getUpcomingBookings(10),
-          tutoringApi.getBookings({ role: 'booker' }),
-        ]);
-        setData({
-          tutors: results[0].status === 'fulfilled' ? results[0].value.tutors : [],
-          upcomingBookings: results[1].status === 'fulfilled' ? results[1].value.bookings : [],
-          allBookings: results[2].status === 'fulfilled' ? results[2].value.bookings : [],
-        });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load tutoring data');
-      } finally {
-        setIsLoading(false);
-      }
+      const results = await Promise.allSettled([
+        tutoringApi.searchTutors(searchParams),
+        tutoringApi.getUpcomingBookings(10),
+        tutoringApi.getBookings({ role: 'booker' }),
+      ]);
+
+      const errors = results
+        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+        .map(r => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
+      if (errors.length > 0) setError(errors.join('; '));
+
+      setData({
+        tutors: results[0].status === 'fulfilled' ? results[0].value.tutors : [],
+        upcomingBookings: results[1].status === 'fulfilled' ? results[1].value.bookings : [],
+        allBookings: results[2].status === 'fulfilled' ? results[2].value.bookings : [],
+      });
+      setIsLoading(false);
     }
     fetchTutoringData();
-  }, [searchParams?.subject, searchParams?.minRating, searchParams?.yearLevel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(searchParams)]);
 
   return { data, isLoading, error };
 }

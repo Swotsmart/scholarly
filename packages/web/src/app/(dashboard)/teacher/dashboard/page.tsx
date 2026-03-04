@@ -276,12 +276,13 @@ function AtRiskHelpPanel({ insights, isLoading }: { insights: AIInsight[]; isLoa
 
 function UpcomingAiPanel({ insights, isLoading }: { insights: AIInsight[]; isLoading: boolean }) {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     teacherApi.dashboard.getActivity().then((res) => setActivity(res.activities)).catch(() => {});
   }, []);
 
-  const displayInsights = insights.filter(i => i.source !== 'ml-at-risk');
+  const displayInsights = insights.filter(i => i.source !== 'ml-at-risk' && !dismissedIds.has(i.id));
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -339,9 +340,7 @@ function UpcomingAiPanel({ insights, isLoading }: { insights: AIInsight[]; isLoa
                       <Button size="sm" variant="outline" className="flex-1" asChild><Link href="/teacher/students">{insight.actionLabel || 'Take Action'}</Link></Button>
                     )}
                     <Button size="sm" variant="ghost" onClick={() => {
-                      // Remove this insight from the displayed list
-                      const el = document.getElementById(`insight-${insight.id}`);
-                      if (el) el.style.display = 'none';
+                      setDismissedIds(prev => new Set(prev).add(insight.id));
                     }}>Dismiss</Button>
                   </div>
                 </div>

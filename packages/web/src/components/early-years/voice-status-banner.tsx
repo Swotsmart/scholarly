@@ -42,6 +42,7 @@ export function VoiceStatusBanner({
 
     fetch(url, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         timestamp: new Date().toISOString(),

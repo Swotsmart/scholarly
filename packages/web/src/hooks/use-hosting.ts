@@ -14,8 +14,8 @@
  *
  * Usage:
  *   const { provider, quality, enquiries, tours, reviews, isLoading } = useHosting('provider-123');
- *   // Or without ID to auto-resolve from current tenant:
- *   const { provider, isLoading } = useHosting();
+ *   // providerId is required — omitting it sets an error state:
+ *   const { error } = useHosting(); // error: "No providerId supplied"
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -96,20 +96,24 @@ export function useHosting(
       // before you can see what's inside the rooms.
       let resolvedProvider: HostingEducationalProvider | null = null;
 
-      if (providerId) {
-        try {
-          resolvedProvider = await hostingApi.getProvider(providerId);
-        } catch (e) {
-          setError(`Provider: ${e instanceof Error ? e.message : 'Failed to load'}`);
-          setIsLoading(false);
-          return;
-        }
+      if (!providerId) {
+        setError('No providerId supplied. Pass a providerId to useHosting().');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        resolvedProvider = await hostingApi.getProvider(providerId);
+      } catch (e) {
+        setError(`Provider: ${e instanceof Error ? e.message : 'Failed to load'}`);
+        setIsLoading(false);
+        return;
       }
 
       setProvider(resolvedProvider);
 
-      // If no provider found, we can't fetch the sub-resources
       if (!resolvedProvider) {
+        setError(`Provider ${providerId} not found.`);
         setIsLoading(false);
         return;
       }
