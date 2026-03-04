@@ -7,7 +7,9 @@
 
 import { motion } from 'framer-motion';
 import { Lock, ChevronRight, Sparkles } from 'lucide-react';
+import { useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { usePhonicsAudio } from '@/hooks/use-phonics-audio';
 import { LEARNING_WORLDS, type LearningWorld, type WorldInfo } from '@/types/early-years';
 
 interface WorldSelectorProps {
@@ -37,6 +39,21 @@ export function WorldSelector({
   onSelectWorld,
   onContinue,
 }: WorldSelectorProps) {
+  const { speak } = usePhonicsAudio();
+
+  // Voice welcome on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      speak("Where would you like to explore today? Pick a world!");
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [speak]);
+
+  const handleSelectWorld = useCallback((world: WorldInfo) => {
+    speak(`${world.name}! ${world.description}`);
+    onSelectWorld(world.id);
+  }, [speak, onSelectWorld]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -85,7 +102,7 @@ export function WorldSelector({
               variants={itemVariants}
               whileHover={isUnlocked ? { scale: 1.02, y: -5 } : {}}
               whileTap={isUnlocked ? { scale: 0.98 } : {}}
-              onClick={() => isUnlocked && onSelectWorld(world.id)}
+              onClick={() => isUnlocked && handleSelectWorld(world)}
               disabled={!isUnlocked}
               className={cn(
                 'relative rounded-3xl overflow-hidden text-left transition-all',

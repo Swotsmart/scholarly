@@ -57,7 +57,7 @@ export default function GradingPortfoliosPage() {
                   </div>
                 </div>
                 <div className="mt-3 flex gap-2">
-                  <Button size="sm" className="flex-1">Review Portfolio</Button>
+                  <Button size="sm" className="flex-1" asChild><Link href={`/teacher/grading/portfolios/${portfolio.id}`}>Review Portfolio</Link></Button>
                 </div>
               </CardContent>
             </Card>

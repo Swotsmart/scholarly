@@ -643,6 +643,7 @@ export default function EarlyYearsPage() {
                 mode="setup"
                 onSuccess={handlePasswordSuccess}
                 onCancel={handleLogout}
+                onSpeak={speakMessage}
               />
             </motion.div>
           )}
@@ -663,6 +664,7 @@ export default function EarlyYearsPage() {
                 mode="login"
                 onSuccess={handlePasswordSuccess}
                 onCancel={handleLogout}
+                onSpeak={speakMessage}
               />
             </motion.div>
           )}

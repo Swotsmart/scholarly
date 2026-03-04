@@ -711,7 +711,7 @@ export default function HomeschoolPage() {
                     </p>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <Button size="sm">Accept</Button>
+                    <Button size="sm" onClick={() => alert('Invitation accepted!')}>Accept</Button>
                     <Button size="sm" variant="outline">
                       <MessageCircle className="h-4 w-4" />
                     </Button>

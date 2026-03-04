@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useGoldenPath } from '@/hooks/use-golden-path';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

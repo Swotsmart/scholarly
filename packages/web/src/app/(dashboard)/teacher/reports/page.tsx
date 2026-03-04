@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -192,7 +193,7 @@ export default function TeacherReportsPage() {
                           <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400"><Brain className="h-3.5 w-3.5" /><span className="text-xs font-medium">Monitor</span></div>
                         )}
                       </td>
-                      <td className="p-3"><Button size="sm" variant="outline">View Details</Button></td>
+                      <td className="p-3"><Button size="sm" variant="outline" asChild><Link href={`/teacher/students/${cls.classId}`}>View Details</Link></Button></td>
                     </tr>
                   );
                 })}

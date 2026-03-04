@@ -9,6 +9,7 @@ export const dashboardRouter: Router = Router();
 
 // Get dashboard summary for current user
 dashboardRouter.get('/summary', async (req, res) => {
+  try {
   const { tenantId, user } = req;
 
   const roles = user?.roles || [];
@@ -218,10 +219,15 @@ dashboardRouter.get('/summary', async (req, res) => {
   }
 
   res.json(summary);
+  } catch (error) {
+    console.error('Dashboard summary error:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard summary' });
+  }
 });
 
 // Get activity feed
 dashboardRouter.get('/activity', async (req, res) => {
+  try {
   const { tenantId, user } = req;
   const { limit = '20' } = req.query;
 
@@ -292,10 +298,15 @@ dashboardRouter.get('/activity', async (req, res) => {
   activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
   res.json({ activities: activities.slice(0, parseInt(limit as string)) });
+  } catch (error) {
+    console.error('Dashboard activity error:', error);
+    res.status(500).json({ error: 'Failed to fetch activity feed' });
+  }
 });
 
 // Get notifications
 dashboardRouter.get('/notifications', async (req, res) => {
+  try {
   const { user } = req;
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
@@ -326,10 +337,267 @@ dashboardRouter.get('/notifications', async (req, res) => {
     unreadCount,
     pagination: { page, limit, total },
   });
+  } catch (error) {
+    console.error('Dashboard notifications error:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
 });
+
+// Get unread notification count (lightweight polling endpoint)
+dashboardRouter.get('/notifications/count', async (req, res) => {
+  try {
+  const { user } = req;
+  const unreadCount = await prisma.notification.count({
+    where: { userId: user?.id, inAppStatus: 'unread' },
+  });
+  res.json({ unreadCount });
+  } catch (error) {
+    console.error('Dashboard notification count error:', error);
+    res.status(500).json({ error: 'Failed to fetch notification count' });
+  }
+});
+
+// Mark single notification as read
+dashboardRouter.patch('/notifications/:id/read', async (req, res) => {
+  try {
+  const { user } = req;
+  const { id } = req.params;
+  await prisma.notification.updateMany({
+    where: { id, userId: user?.id },
+    data: { inAppStatus: 'read', readAt: new Date() },
+  });
+  res.json({ success: true });
+  } catch (error) {
+    console.error('Mark notification read error:', error);
+    res.status(500).json({ error: 'Failed to mark notification as read' });
+  }
+});
+
+// Mark all notifications as read
+dashboardRouter.patch('/notifications/read-all', async (req, res) => {
+  try {
+  const { user } = req;
+  const result = await prisma.notification.updateMany({
+    where: { userId: user?.id, inAppStatus: 'unread' },
+    data: { inAppStatus: 'read', readAt: new Date() },
+  });
+  res.json({ count: result.count });
+  } catch (error) {
+    console.error('Mark all read error:', error);
+    res.status(500).json({ error: 'Failed to mark all notifications as read' });
+  }
+});
+
+// Delete (soft-archive) a notification
+dashboardRouter.delete('/notifications/:id', async (req, res) => {
+  try {
+  const { user } = req;
+  const { id } = req.params;
+  await prisma.notification.updateMany({
+    where: { id, userId: user?.id },
+    data: { inAppStatus: 'archived' },
+  });
+  res.json({ success: true });
+  } catch (error) {
+    console.error('Delete notification error:', error);
+    res.status(500).json({ error: 'Failed to delete notification' });
+  }
+});
+
+// Get notification preferences
+dashboardRouter.get('/notifications/preferences', async (req, res) => {
+  try {
+  const { user, tenantId } = req;
+  const prefs = await prisma.notificationPreference.findFirst({
+    where: { userId: user?.id, tenantId },
+  });
+  if (!prefs) {
+    res.json({
+      emailEnabled: true, smsEnabled: false, pushEnabled: true, inAppEnabled: true,
+      categoryPreferences: {}, quietHoursEnabled: false,
+      quietHoursStart: null, quietHoursEnd: null,
+      timezone: 'Australia/Perth', digestEnabled: false,
+      digestFrequency: null, digestTime: null,
+    });
+    return;
+  }
+  res.json(prefs);
+  } catch (error) {
+    console.error('Get preferences error:', error);
+    res.status(500).json({ error: 'Failed to fetch notification preferences' });
+  }
+});
+
+// Update notification preferences
+dashboardRouter.put('/notifications/preferences', async (req, res) => {
+  try {
+  const { user, tenantId } = req;
+  const data = req.body;
+  const prefs = await prisma.notificationPreference.upsert({
+    where: {
+      userId_tenantId: { userId: user?.id || '', tenantId: tenantId || '' },
+    },
+    create: { userId: user?.id || '', tenantId: tenantId || '', ...data },
+    update: data,
+  });
+  res.json(prefs);
+  } catch (error) {
+    console.error('Update preferences error:', error);
+    res.status(500).json({ error: 'Failed to update notification preferences' });
+  }
+});
+
+// --- AI Intelligence Endpoints ---
+
+// AI Digest: Summarise recent notifications into actionable sections
+dashboardRouter.get('/notifications/ai/digest', async (req, res) => {
+  try {
+  const { user } = req;
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000);
+  const recent = await prisma.notification.findMany({
+    where: { userId: user?.id, createdAt: { gte: sevenDaysAgo } },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  });
+
+  const groups: Record<string, typeof recent> = {};
+  for (const n of recent) {
+    const prefix = n.type.split('_')[0] || 'other';
+    if (!groups[prefix]) groups[prefix] = [];
+    groups[prefix].push(n);
+  }
+
+  const sectionNames: Record<string, string> = {
+    learning: 'Learning Progress', wellbeing: 'Wellbeing',
+    parent: 'Communication', storybook: 'Content',
+    payment: 'Payments', system: 'System', auth: 'Security',
+    subscription: 'Subscription', arena: 'Challenges',
+    content: 'Content Creation', governance: 'Governance',
+  };
+  const sectionIcons: Record<string, string> = {
+    learning: 'graduation-cap', wellbeing: 'heart',
+    parent: 'message-square', storybook: 'book-open',
+    payment: 'credit-card', system: 'settings', auth: 'shield',
+    subscription: 'star', arena: 'trophy',
+    content: 'pen-tool', governance: 'vote',
+  };
+
+  const sections = Object.entries(groups).map(([prefix, items]) => ({
+    title: sectionNames[prefix] || prefix,
+    icon: sectionIcons[prefix] || 'bell',
+    items: items.slice(0, 5).map(n => ({
+      notificationId: n.id, summary: n.title, priority: n.priority,
+    })),
+    suggestedAction: items.some(n => n.priority === 'high' || n.priority === 'urgent')
+      ? 'Review high-priority items in this category.' : null,
+  }));
+
+  const highPriority = recent.filter(n => n.priority === 'high' || n.priority === 'urgent');
+  const summary = highPriority.length > 0
+    ? `${highPriority.length} item${highPriority.length > 1 ? 's' : ''} need attention this week.`
+    : `${recent.length} notifications this week. Nothing urgent.`;
+
+  res.json({ summary, sections, generatedAt: new Date().toISOString(),
+    periodStart: sevenDaysAgo.toISOString(), periodEnd: new Date().toISOString() });
+  } catch (error) {
+    console.error('AI digest error:', error);
+    res.status(500).json({ error: 'Failed to generate notification digest' });
+  }
+});
+
+// AI Insights: Pattern detection from notification history
+dashboardRouter.get('/notifications/ai/insights', async (req, res) => {
+  try {
+  const { user } = req;
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000);
+  const recent = await prisma.notification.findMany({
+    where: { userId: user?.id, createdAt: { gte: thirtyDaysAgo } },
+    orderBy: { createdAt: 'desc' },
+    take: 200,
+  });
+
+  const insights: Array<{ id: string; type: string; title: string;
+    description: string; actionLabel: string | null; actionUrl: string | null; createdAt: string }> = [];
+
+  const wellbeingAlerts = recent.filter(n => n.type === 'wellbeing_alert');
+  if (wellbeingAlerts.length >= 2) {
+    insights.push({
+      id: 'insight_wellbeing_' + Date.now(), type: 'pattern',
+      title: `${wellbeingAlerts.length} wellbeing alerts this month`,
+      description: 'Multiple wellbeing alerts may indicate a pattern worth investigating.',
+      actionLabel: 'View Wellbeing Dashboard', actionUrl: '/teacher/wellbeing',
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  const unreadCount = recent.filter(n => n.inAppStatus === 'unread').length;
+  if (unreadCount > 10) {
+    insights.push({
+      id: 'insight_unread_' + Date.now(), type: 'recommendation',
+      title: `${unreadCount} unread notifications`,
+      description: 'Consider enabling daily digests to stay on top of notifications.',
+      actionLabel: 'Update Preferences', actionUrl: '/notifications',
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  const paymentFailures = recent.filter(n => n.type === 'payment_failed');
+  if (paymentFailures.length > 0) {
+    insights.push({
+      id: 'insight_payment_' + Date.now(), type: 'anomaly',
+      title: 'Payment issue detected',
+      description: 'A payment failure was recorded. Check your payment method.',
+      actionLabel: 'Check Payment', actionUrl: '/settings/billing',
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  res.json(insights);
+  } catch (error) {
+    console.error('AI insights error:', error);
+    res.status(500).json({ error: 'Failed to generate notification insights' });
+  }
+});
+
+// AI Ask: Natural language query about notifications
+dashboardRouter.post('/notifications/ai/ask', async (req, res) => {
+  try {
+  const { user } = req;
+  const { question } = req.body || {};
+  if (!question || typeof question !== 'string') {
+    res.status(400).json({ error: 'Question is required' });
+    return;
+  }
+
+  const recent = await prisma.notification.findMany({
+    where: { userId: user?.id },
+    orderBy: { createdAt: 'desc' },
+    take: 30,
+  });
+
+  const highPriority = recent.filter(n => n.priority === 'high' || n.priority === 'urgent');
+  const unread = recent.filter(n => n.inAppStatus === 'unread');
+  const types = [...new Set(recent.map(n => n.type))];
+
+  let answer = `You have ${unread.length} unread notification${unread.length !== 1 ? 's' : ''}.`;
+  if (highPriority.length > 0) {
+    answer += ` ${highPriority.length} need attention: `;
+    answer += highPriority.slice(0, 3).map(n => n.title).join(', ') + '.';
+  }
+  if (types.includes('wellbeing_alert')) answer += ' There are wellbeing concerns that may need follow-up.';
+  if (types.includes('learning_milestone')) answer += ' Great news: learning milestones were achieved!';
+
+  res.json({ answer, relatedNotifications: highPriority.slice(0, 5).map(n => n.id) });
+  } catch (error) {
+    console.error('AI ask error:', error);
+    res.status(500).json({ error: 'Failed to process notification question' });
+  }
+});
+
 
 // Get quick stats
 dashboardRouter.get('/quick-stats', async (req, res) => {
+  try {
   const { tenantId } = req;
 
   const today = new Date();
@@ -369,4 +637,8 @@ dashboardRouter.get('/quick-stats', async (req, res) => {
       activeFamilies,
     },
   });
+  } catch (error) {
+    console.error('Quick stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch quick stats' });
+  }
 });

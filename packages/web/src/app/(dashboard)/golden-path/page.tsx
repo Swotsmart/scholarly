@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useGoldenPath } from '@/hooks/use-golden-path';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -123,16 +124,17 @@ const breakSuggestions = [
 ];
 
 export default function GoldenPathPage() {
+  const { adaptation, isLoading: gpLoading } = useGoldenPath('current');
   const [difficultyLevel, setDifficultyLevel] = useState('optimal');
   const [showBreakReminder, setShowBreakReminder] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
 
-  // ZPD indicator calculation
-  const zpdRange = { lower: 68, upper: 82 };
-  const currentMastery = 72;
-  const isInZPD = currentMastery >= zpdRange.lower && currentMastery <= zpdRange.upper;
+  // ZPD indicator — use API data when available, fallback to local calculation
+  const zpdRange = adaptation?.zpd ?? { domain: 'Mathematics', lowerBound: 68, upperBound: 82, currentLevel: 72, optimalDifficulty: 75 };
+  const currentMastery = Math.round((adaptation?.profile?.competencyStates?.[0]?.pKnown ?? 0.72) * 100);
+  const isInZPD = currentMastery >= zpdRange.lowerBound && currentMastery <= zpdRange.upperBound;
 
   // Personal pace analytics
   const paceAnalytics = {
@@ -264,7 +266,7 @@ export default function GoldenPathPage() {
                 )}
               >
                 <Target className="mr-1 h-3 w-3" />
-                ZPD: {zpdRange.lower}%-{zpdRange.upper}%
+                ZPD: {zpdRange.lowerBound}%-{zpdRange.upperBound}%
               </Badge>
             </div>
           </div>
@@ -343,7 +345,7 @@ export default function GoldenPathPage() {
                 <div>
                   <p className="font-medium">Current: Quadratic Functions</p>
                   <p className="text-sm text-muted-foreground">
-                    Mastery: {currentMastery}% | Optimal range: {zpdRange.lower}%-{zpdRange.upper}%
+                    Mastery: {currentMastery}% | Optimal range: {zpdRange.lowerBound}%-{zpdRange.upperBound}%
                   </p>
                 </div>
               </div>

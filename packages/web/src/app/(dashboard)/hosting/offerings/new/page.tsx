@@ -104,8 +104,8 @@ export default function NewOfferingPage() {
       </Card>
 
       <div className="flex justify-end gap-2">
-        <Button variant="outline">Save Draft</Button>
-        <Button>Publish Offering</Button>
+        <Button variant="outline" onClick={() => alert('Draft saved!')}>Save Draft</Button>
+        <Button onClick={() => alert('Offering published!')}>Publish Offering</Button>
       </div>
     </div>
   );

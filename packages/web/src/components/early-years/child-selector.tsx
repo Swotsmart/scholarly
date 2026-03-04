@@ -7,7 +7,9 @@
 
 import { motion } from 'framer-motion';
 import { Star, Flame, Plus, Settings } from 'lucide-react';
+import { useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { usePhonicsAudio } from '@/hooks/use-phonics-audio';
 import type { Child } from '@/types/early-years';
 
 interface ChildSelectorProps {
@@ -51,6 +53,22 @@ export function ChildSelector({
   onAddChild,
   onManageChildren,
 }: ChildSelectorProps) {
+  const { speak } = usePhonicsAudio();
+
+  // Voice welcome on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      speak("Who's playing today? Tap on your picture!");
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [speak]);
+
+  const handleSelectChild = useCallback((child: Child) => {
+    speak(`Hi ${child.firstName}! Let's go!`);
+    // Small delay so the child hears the greeting before navigation
+    setTimeout(() => onSelectChild(child), 800);
+  }, [speak, onSelectChild]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -100,7 +118,7 @@ export function ChildSelector({
               variants={itemVariants}
               whileHover={{ scale: 1.03, y: -5 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => onSelectChild(child)}
+              onClick={() => handleSelectChild(child)}
               className="bg-white rounded-3xl shadow-xl overflow-hidden text-left transition-shadow hover:shadow-2xl"
             >
               {/* Avatar Section */}

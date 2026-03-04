@@ -5,7 +5,7 @@
  * Child-friendly authentication using picture sequences
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, ArrowLeft, Sparkles, Lock, Unlock } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,8 @@ interface PicturePasswordProps {
   mode: 'setup' | 'login';
   onSuccess: () => void;
   onCancel: () => void;
+  /** Optional voice guidance callback — speaks text via Kokoro TTS */
+  onSpeak?: (message: string) => void;
 }
 
 export function PicturePassword({
@@ -26,6 +28,7 @@ export function PicturePassword({
   mode,
   onSuccess,
   onCancel,
+  onSpeak,
 }: PicturePasswordProps) {
   const [activeCategory, setActiveCategory] = useState(PICTURE_PASSWORD_CATEGORIES[0].id);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,14 +48,43 @@ export function PicturePassword({
   const minImages = 3;
   const maxImages = 6;
 
+  // Voice guidance helper — safe to call even if onSpeak not provided
+  const speak = useCallback(
+    (message: string) => { onSpeak?.(message); },
+    [onSpeak],
+  );
+
+  // Track previous sequence length for milestone detection
+  const prevLengthRef = useRef(0);
+
+  // Speak welcome prompt on mount (slight delay for entrance animation)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (mode === 'setup') {
+        speak(`Hi ${childName}! Let's pick your secret pictures. Choose ${minImages} to ${maxImages} pictures you'll remember.`);
+      } else {
+        speak(`Hi ${childName}! Tap your secret pictures in the right order.`);
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleImageClick = useCallback(
     (image: PicturePasswordImage) => {
       setError(null);
       if (pictureSequence.length < maxImages) {
         addToPicturePassword(image.id);
+        const newLen = pictureSequence.length + 1;
+        speak(image.name);
+        if (newLen === minImages) {
+          setTimeout(() => speak("Great! You can add more, or tap the button when you're done."), 800);
+        } else if (newLen === maxImages) {
+          setTimeout(() => speak(`That's ${maxImages}! Tap the button to finish.`), 800);
+        }
       }
     },
-    [pictureSequence.length, addToPicturePassword]
+    [pictureSequence.length, addToPicturePassword, speak]
   );
 
   const handleRemoveImage = useCallback(
@@ -66,6 +98,7 @@ export function PicturePassword({
   const handleSubmit = async () => {
     if (pictureSequence.length < minImages) {
       setError(`Please pick at least ${minImages} pictures!`);
+      speak(`You need at least ${minImages} pictures. Keep going!`);
       return;
     }
 
@@ -77,22 +110,27 @@ export function PicturePassword({
         const success = await setupPicturePassword(childId);
         if (success) {
           setShowSuccess(true);
+          speak('All done! Your secret pictures are saved!');
           setTimeout(onSuccess, 2000);
         } else {
           setError('Oops! Something went wrong. Try again!');
+          speak('Oops! Something went wrong. Try again!');
         }
       } else {
         const success = await authenticateChild(childId, pictureSequence);
         if (success) {
           setShowSuccess(true);
+          speak(`Welcome back, ${childName}!`);
           setTimeout(onSuccess, 1500);
         } else {
           setError('That\'s not quite right. Try again!');
+          speak("That's not quite right. Try again!");
           clearPicturePassword();
         }
       }
     } catch {
       setError('Oops! Something went wrong. Try again!');
+      speak('Oops! Something went wrong. Try again!');
     } finally {
       setIsSubmitting(false);
     }

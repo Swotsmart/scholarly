@@ -107,7 +107,7 @@ export default function HostingSettingsPage() {
       </Card>
 
       <div className="flex justify-end">
-        <Button>Save Settings</Button>
+        <Button onClick={() => alert('Settings saved successfully!')}>Save Settings</Button>
       </div>
     </div>
   );

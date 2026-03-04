@@ -54,7 +54,7 @@ export default function GradingPitchesPage() {
                     <div className="rounded-lg bg-primary/10 p-2"><Presentation className="h-5 w-5 text-primary" /></div>
                     <div><p className="font-medium">{pitch.title}</p><p className="text-sm text-muted-foreground">{pitch.subject} · {new Date(pitch.createdAt).toLocaleDateString()}</p></div>
                   </div>
-                  <Button size="sm">Review</Button>
+                  <Button size="sm" asChild><Link href={`/teacher/grading/pitches/${pitch.id}`}>Review</Link></Button>
                 </div>
               </CardContent>
             </Card>

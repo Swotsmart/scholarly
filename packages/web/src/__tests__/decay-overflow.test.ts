@@ -147,7 +147,7 @@ describe('Overflow Drawer', () => {
     });
 
     it('displays plural form for multiple items', () => {
-      const count = 5;
+      const count: number = 5;
       const label = `${count} ${count === 1 ? 'item' : 'items'}`;
       expect(label).toBe('5 items');
     });
@@ -297,9 +297,10 @@ describe('More Button', () => {
   });
 
   it('has descriptive aria-label with count', () => {
-    const count = 5;
-    const label = `More. ${count} ${count === 1 ? 'item' : 'items'} in overflow.`;
-    expect(label).toBe('More. 5 items in overflow.');
+    const count: number = 5;
+    const label = `${count} ${count === 1 ? 'item' : 'items'}`;
+    const result = `More. ${label} in overflow.`;
+    expect(result).toBe('More. 5 items in overflow.');
   });
 });
 

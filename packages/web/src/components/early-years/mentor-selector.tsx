@@ -8,6 +8,7 @@
 import { motion } from 'framer-motion';
 import { ChevronRight, ArrowLeft, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePhonicsAudio } from '@/hooks/use-phonics-audio';
 import { MENTORS, type Mentor, type MentorInfo } from '@/types/early-years';
 
 interface MentorSelectorProps {
@@ -49,6 +50,8 @@ export function MentorSelector({
   onContinue,
   onBack,
 }: MentorSelectorProps) {
+  const { speak } = usePhonicsAudio();
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -62,9 +65,8 @@ export function MentorSelector({
     visible: { scale: 1, opacity: 1 },
   };
 
-  const speakCatchphrase = (_mentor: MentorInfo) => {
-    // Disabled — browser SpeechSynthesis replaced by Voice Service TTS
-    // Mentor catchphrases will be handled by usePhonicsAudio when integrated
+  const speakCatchphrase = (mentor: MentorInfo) => {
+    speak(mentor.catchphrase);
   };
 
   return (

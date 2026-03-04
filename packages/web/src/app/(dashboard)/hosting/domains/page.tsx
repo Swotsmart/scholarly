@@ -71,7 +71,7 @@ export default function HostingDomainsPage() {
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Visit
                   </Button>
-                  <Button variant="outline" size="sm">Configure</Button>
+                  <Button variant="outline" size="sm" onClick={() => alert('DNS configuration panel opening...')}>Configure</Button>
                 </div>
               </div>
             ))}

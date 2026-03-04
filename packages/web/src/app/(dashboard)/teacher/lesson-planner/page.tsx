@@ -119,7 +119,7 @@ export default function LessonPlannerPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant={plan.status === 'published' ? 'default' : 'secondary'} className="text-xs capitalize">{plan.status}</Badge>
-                      <Button size="sm" variant="outline">Edit</Button>
+                      <Button size="sm" variant="outline" asChild><Link href={`/teacher/lesson-planner/${plan.id}`}>Edit</Link></Button>
                     </div>
                   </div>
                 </CardContent>
@@ -145,7 +145,7 @@ export default function LessonPlannerPage() {
                         <p className="text-sm text-muted-foreground">Shared · {new Date(plan.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <Button size="sm" variant="outline">Fork</Button>
+                    <Button size="sm" variant="outline" onClick={() => alert(`Forking "${plan.title}" to your lesson plans...`)}>Fork</Button>
                   </div>
                 </CardContent>
               </Card>

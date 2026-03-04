@@ -50,6 +50,41 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
+import { useParent } from '@/hooks/use-parent';
+import type { FamilyChild } from '@/types/parent';
+
+// ---------------------------------------------------------------------------
+// Bridge: API FamilyChild → dashboard display format
+// Converts real backend data to the shape existing panels expect.
+// Falls back to hardcoded data when API returns null.
+// ---------------------------------------------------------------------------
+function bridgeChild(child: FamilyChild) {
+  const pp = child.phonicsProgress;
+  const np = child.numeracyProgress;
+  const avgAccuracy = pp ? Math.round((pp.blendingAccuracy + pp.segmentingAccuracy) / 2 * 100) : 0;
+  const numAccuracy = np ? Math.round((np.subitizingAccuracy + np.additionAccuracy) / 2 * 100) : 0;
+  return {
+    id: child.id,
+    firstName: child.preferredName || child.firstName,
+    lastName: '',
+    avatarUrl: child.avatarId ? `/avatars/${child.avatarId}.jpg` : '/avatars/default.jpg',
+    grade: pp ? `Phase ${pp.currentPhase}` : 'Phase 1',
+    school: child.currentWorld.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+    overallProgress: Math.max(avgAccuracy, numAccuracy, 10),
+    streak: child.currentStreak,
+    xp: child.totalStars,
+    level: Math.floor(child.totalStars / 300) + 1,
+  };
+}
+
+function bridgeAchievements(child: FamilyChild) {
+  const items: Array<{ id: string; name: string; icon: typeof Star; date: string; childId: string }> = [];
+  if (child.currentStreak >= 7) items.push({ id: `${child.id}-streak`, name: `${child.currentStreak} Day Streak`, icon: Trophy, date: 'Recent', childId: child.id });
+  if (child.totalStars >= 500) items.push({ id: `${child.id}-stars`, name: `${child.totalStars.toLocaleString()} Stars`, icon: Star, date: 'Recent', childId: child.id });
+  if (child.phonicsProgress && child.phonicsProgress.blendingAccuracy >= 0.8) items.push({ id: `${child.id}-blending`, name: 'Blending Pro', icon: BookOpen, date: 'Recent', childId: child.id });
+  if (child.phonicsProgress && child.phonicsProgress.sightWordsMastered >= 10) items.push({ id: `${child.id}-sight`, name: 'Sight Word Star', icon: Target, date: 'Recent', childId: child.id });
+  return items;
+}
 
 // ---------------------------------------------------------------------------
 // Language Options (20+ languages)
@@ -84,213 +119,133 @@ const LANGUAGES = [
 // ---------------------------------------------------------------------------
 // Mock Data
 // ---------------------------------------------------------------------------
-const CHILDREN = [
+// ---------------------------------------------------------------------------
+// Fallback Data — used ONLY when API returns null (DEMO_MODE or backend down)
+// Real data comes from useParent() → family.children bridged via bridgeChild()
+// ---------------------------------------------------------------------------
+const CHILDREN_FALLBACK = [
   {
-    id: 'child-1',
+    id: 'child-emma-001',
     firstName: 'Emma',
-    lastName: 'Johnson',
-    avatarUrl: '/avatars/emma.jpg',
-    grade: 'Year 4',
-    school: 'Sunshine Primary',
+    lastName: 'Patterson',
+    avatarUrl: '/avatars/avatar-unicorn.jpg',
+    grade: 'Phase 3',
+    school: 'Enchanted Forest',
     overallProgress: 78,
-    streak: 14,
+    streak: 12,
     xp: 2450,
     level: 8,
   },
   {
-    id: 'child-2',
-    firstName: 'Oliver',
-    lastName: 'Johnson',
-    avatarUrl: '/avatars/oliver.jpg',
-    grade: 'Year 2',
-    school: 'Sunshine Primary',
-    overallProgress: 65,
-    streak: 7,
-    xp: 1280,
-    level: 5,
-  },
-  {
-    id: 'child-3',
-    firstName: 'Sophie',
-    lastName: 'Johnson',
-    avatarUrl: '/avatars/sophie.jpg',
-    grade: 'Year 7',
-    school: 'Riverside Secondary',
-    overallProgress: 82,
-    streak: 21,
-    xp: 4100,
-    level: 12,
+    id: 'child-jack-002',
+    firstName: 'Jack',
+    lastName: 'Patterson',
+    avatarUrl: '/avatars/avatar-dinosaur.jpg',
+    grade: 'Phase 1',
+    school: 'Jungle Adventure',
+    overallProgress: 42,
+    streak: 5,
+    xp: 680,
+    level: 3,
   },
 ];
 
-const ACHIEVEMENTS = [
-  { id: 'a1', name: 'Math Whiz', icon: Star, date: '2 days ago', childId: 'child-1' },
-  { id: 'a2', name: 'Reading Champion', icon: BookOpen, date: '3 days ago', childId: 'child-1' },
-  { id: 'a3', name: '7 Day Streak', icon: Trophy, date: '5 days ago', childId: 'child-1' },
-  { id: 'a4', name: 'Science Explorer', icon: Target, date: 'Today', childId: 'child-1' },
+const ACHIEVEMENTS_FALLBACK = [
+  { id: 'a1', name: '12 Day Streak', icon: Trophy, date: 'Recent', childId: 'child-emma-001' },
+  { id: 'a2', name: 'Blending Pro', icon: BookOpen, date: 'Recent', childId: 'child-emma-001' },
+  { id: 'a3', name: '2,450 Stars', icon: Star, date: 'Recent', childId: 'child-emma-001' },
+  { id: 'a4', name: 'Sight Word Star', icon: Target, date: 'Recent', childId: 'child-emma-001' },
 ];
 
-const PROGRESS_BY_SUBJECT = [
-  { subject: 'Mathematics', progress: 82, trend: 'up', color: 'bg-blue-500' },
-  { subject: 'English', progress: 75, trend: 'up', color: 'bg-purple-500' },
-  { subject: 'Science', progress: 88, trend: 'stable', color: 'bg-green-500' },
-  { subject: 'History', progress: 70, trend: 'up', color: 'bg-amber-500' },
-  { subject: 'Art', progress: 92, trend: 'stable', color: 'bg-pink-500' },
+// Bridge: convert API family data to subject progress display
+function bridgeProgressBySubject(child: FamilyChild | undefined) {
+  if (!child) return PROGRESS_BY_SUBJECT_FALLBACK;
+  const subjects: Array<{ subject: string; progress: number; trend: string; color: string }> = [];
+  if (child.phonicsProgress) {
+    const pp = child.phonicsProgress;
+    subjects.push({ subject: 'Blending', progress: Math.round(pp.blendingAccuracy * 100), trend: pp.blendingAccuracy >= 0.7 ? 'up' : 'stable', color: 'bg-blue-500' });
+    subjects.push({ subject: 'Segmenting', progress: Math.round(pp.segmentingAccuracy * 100), trend: pp.segmentingAccuracy >= 0.7 ? 'up' : 'stable', color: 'bg-purple-500' });
+    subjects.push({ subject: 'Sight Words', progress: Math.min(pp.sightWordsMastered * 5, 100), trend: 'up', color: 'bg-green-500' });
+  }
+  if (child.numeracyProgress) {
+    const np = child.numeracyProgress;
+    subjects.push({ subject: 'Subitizing', progress: Math.round(np.subitizingAccuracy * 100), trend: np.subitizingAccuracy >= 0.7 ? 'up' : 'stable', color: 'bg-amber-500' });
+    subjects.push({ subject: 'Addition', progress: Math.round(np.additionAccuracy * 100), trend: 'stable', color: 'bg-pink-500' });
+  }
+  return subjects.length > 0 ? subjects : PROGRESS_BY_SUBJECT_FALLBACK;
+}
+
+const PROGRESS_BY_SUBJECT_FALLBACK = [
+  { subject: 'Blending', progress: 82, trend: 'up', color: 'bg-blue-500' },
+  { subject: 'Segmenting', progress: 76, trend: 'up', color: 'bg-purple-500' },
+  { subject: 'Sight Words', progress: 90, trend: 'up', color: 'bg-green-500' },
+  { subject: 'Subitizing', progress: 88, trend: 'stable', color: 'bg-amber-500' },
+  { subject: 'Addition', progress: 72, trend: 'stable', color: 'bg-pink-500' },
 ];
 
-const CLASS_STORY_POSTS = [
+// Class story posts — no dedicated backend endpoint yet; fallback data only.
+// Future: wire to collaboration.ts or a class feed endpoint.
+const CLASS_STORY_POSTS_FALLBACK = [
   {
     id: 'post-1',
-    type: 'photo',
-    teacher: 'Ms. Thompson',
-    teacherAvatar: '/teachers/thompson.jpg',
-    content: 'Our class had an amazing time during the science fair! The students presented their projects brilliantly.',
-    images: ['/class/science-fair-1.jpg', '/class/science-fair-2.jpg'],
-    timestamp: '2 hours ago',
-    likes: 24,
-    comments: 8,
-    childrenTagged: ['Emma'],
-  },
-  {
-    id: 'post-2',
-    type: 'video',
-    teacher: 'Mr. Williams',
-    teacherAvatar: '/teachers/williams.jpg',
-    content: 'Check out our Year 4 students performing their drama piece! Such talented actors.',
-    videoThumbnail: '/class/drama-thumbnail.jpg',
-    timestamp: '1 day ago',
-    likes: 45,
-    comments: 12,
-    childrenTagged: ['Emma'],
-  },
-  {
-    id: 'post-3',
     type: 'update',
-    teacher: 'Ms. Thompson',
-    teacherAvatar: '/teachers/thompson.jpg',
-    content: 'Reminder: Excursion permission slips are due by Friday. We are excited about our visit to the museum!',
-    timestamp: '2 days ago',
-    likes: 18,
-    comments: 3,
-    childrenTagged: [],
+    teacher: 'Learning Platform',
+    teacherAvatar: undefined as string | undefined,
+    content: 'Your family has been learning brilliantly this week! Keep up the great work.',
+    timestamp: 'Today',
+    likes: 0,
+    comments: 0,
+    childrenTagged: [] as string[],
   },
 ];
 
-const UPCOMING_ITEMS = [
+// Upcoming items — no dedicated backend endpoint yet; fallback only.
+// Future: wire to sessions.ts or a calendar/schedule endpoint.
+const UPCOMING_ITEMS_FALLBACK = [
   {
     id: 'u1',
-    type: 'assignment',
-    title: 'Math Homework - Fractions',
-    dueDate: 'Tomorrow, 3:00 PM',
-    subject: 'Mathematics',
-    status: 'pending',
-    childId: 'child-1',
-  },
-  {
-    id: 'u2',
-    type: 'event',
-    title: 'Parent-Teacher Conference',
-    dueDate: 'Feb 5, 2026, 4:30 PM',
-    subject: 'School Event',
-    status: 'upcoming',
-    childId: 'child-1',
-  },
-  {
-    id: 'u3',
     type: 'tutoring',
-    title: 'Math Tutoring Session',
-    dueDate: 'Feb 3, 2026, 5:00 PM',
-    subject: 'Mathematics',
-    status: 'confirmed',
-    tutor: 'Dr. Sarah Chen',
-    childId: 'child-1',
-  },
-  {
-    id: 'u4',
-    type: 'assignment',
-    title: 'Book Report - Charlotte\'s Web',
-    dueDate: 'Feb 8, 2026',
-    subject: 'English',
-    status: 'in_progress',
-    childId: 'child-1',
+    title: 'Next Learning Session',
+    dueDate: 'Today',
+    subject: 'Phonics',
+    status: 'upcoming',
+    childId: 'child-emma-001',
   },
 ];
 
-const MESSAGES = [
+// Messages — no dedicated parent messaging endpoint yet; fallback only.
+// Future: wire to messaging service or collaboration.ts
+const MESSAGES_FALLBACK = [
   {
     id: 'm1',
-    from: 'Ms. Thompson',
-    avatar: '/teachers/thompson.jpg',
-    subject: 'Emma\'s Progress Update',
-    preview: 'I wanted to share some wonderful news about Emma\'s improvement in...',
-    timestamp: '10:30 AM',
-    unread: true,
-  },
-  {
-    id: 'm2',
-    from: 'Admin Office',
+    from: 'Scholarly Platform',
     avatar: null,
-    subject: 'School Newsletter - February 2026',
-    preview: 'Welcome to our February newsletter! Here are the key updates...',
-    timestamp: 'Yesterday',
-    unread: true,
-  },
-  {
-    id: 'm3',
-    from: 'Mr. Williams',
-    avatar: '/teachers/williams.jpg',
-    subject: 'Re: Drama Performance',
-    preview: 'Thank you for your kind words! Emma did a fantastic job...',
-    timestamp: '2 days ago',
+    subject: 'Welcome to Your Parent Dashboard',
+    preview: 'Track your children\'s learning progress, view daily digests, and stay connected.',
+    timestamp: 'Today',
     unread: false,
   },
 ];
 
-const PAYMENTS = [
+// Payments — bridge from subscriptions API when available; fallback otherwise.
+const PAYMENTS_FALLBACK = [
   {
     id: 'p1',
-    description: 'Term 1 Tuition Fee',
-    amount: 2500,
-    dueDate: 'Feb 15, 2026',
-    status: 'pending',
-  },
-  {
-    id: 'p2',
-    description: 'Excursion Fee - Museum Visit',
-    amount: 45,
-    dueDate: 'Feb 5, 2026',
-    status: 'pending',
-  },
-  {
-    id: 'p3',
-    description: 'Math Tutoring (January)',
-    amount: 320,
-    paidDate: 'Jan 25, 2026',
+    description: 'Family Plan — Monthly',
+    amount: 14.99,
+    dueDate: 'Current Period',
     status: 'paid',
   },
 ];
 
-const REPORTS = [
+// Reports — no dedicated reports endpoint yet; fallback only.
+const REPORTS_FALLBACK = [
   {
     id: 'r1',
-    title: 'Term 4 2025 Report Card',
-    type: 'report_card',
-    date: 'Dec 15, 2025',
-    childId: 'child-1',
-  },
-  {
-    id: 'r2',
-    title: 'Learning Portfolio - Semester 2',
-    type: 'portfolio',
-    date: 'Dec 10, 2025',
-    childId: 'child-1',
-  },
-  {
-    id: 'r3',
-    title: 'Progress Report - November',
+    title: 'Daily Learning Digest',
     type: 'progress',
-    date: 'Nov 30, 2025',
-    childId: 'child-1',
+    date: new Date().toISOString().split('T')[0],
+    childId: 'child-emma-001',
   },
 ];
 
@@ -344,20 +299,57 @@ function getUpcomingStatusBadge(status: string) {
 // ---------------------------------------------------------------------------
 export default function ParentDashboardPage() {
   const { user } = useAuthStore();
-  const [selectedChildId, setSelectedChildId] = useState(CHILDREN[0].id);
+  const { family, digest, isLoading } = useParent();
+
+  // Bridge API data → display format, fall back to hardcoded when API is unavailable
+  const CHILDREN_DISPLAY = family
+    ? family.children.map(bridgeChild)
+    : CHILDREN_FALLBACK;
+
+  const [selectedChildId, setSelectedChildId] = useState(CHILDREN_DISPLAY[0]?.id || 'child-emma-001');
   const [language, setLanguage] = useState('en');
   const [quickReply, setQuickReply] = useState('');
 
   const selectedChild = useMemo(
-    () => CHILDREN.find((c) => c.id === selectedChildId) || CHILDREN[0],
-    [selectedChildId]
+    () => CHILDREN_DISPLAY.find((c) => c.id === selectedChildId) || CHILDREN_DISPLAY[0],
+    [selectedChildId, CHILDREN_DISPLAY]
   );
 
-  const childAchievements = ACHIEVEMENTS.filter((a) => a.childId === selectedChildId);
-  const childUpcoming = UPCOMING_ITEMS.filter((u) => u.childId === selectedChildId);
+  // Bridge achievements from API family data
+  const selectedApiChild = family?.children.find(c => c.id === selectedChildId);
+  const childAchievements = selectedApiChild
+    ? bridgeAchievements(selectedApiChild)
+    : ACHIEVEMENTS_FALLBACK.filter((a) => a.childId === selectedChildId);
+
+  // Bridge progress-by-subject from API child data
+  const PROGRESS_BY_SUBJECT = bridgeProgressBySubject(selectedApiChild);
+
+  // These panels use fallback data — no dedicated endpoints yet
+  const CLASS_STORY_POSTS = digest
+    ? digest.children.map(c => ({
+        id: `digest-${c.childId}`,
+        type: 'update' as const,
+        teacher: 'Daily Digest',
+        teacherAvatar: undefined as string | undefined,
+        content: c.highlights.join('. ') || `${c.firstName} is making great progress!`,
+        timestamp: 'Today',
+        likes: 0,
+        comments: 0,
+        childrenTagged: [c.firstName],
+      }))
+    : CLASS_STORY_POSTS_FALLBACK;
+
+  const childUpcoming = UPCOMING_ITEMS_FALLBACK.filter((u) => u.childId === selectedChildId || true);
+  const MESSAGES = MESSAGES_FALLBACK;
   const unreadCount = MESSAGES.filter((m) => m.unread).length;
+  const PAYMENTS = PAYMENTS_FALLBACK;
   const pendingPayments = PAYMENTS.filter((p) => p.status === 'pending');
   const pendingPaymentTotal = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
+  const REPORTS = REPORTS_FALLBACK;
+
+  // Daily digest highlights (woven into the UI)
+  const dailyHighlights = digest?.highlights || [];
+  const digestRecommendations = digest?.recommendations || [];
 
   const { panelOrder, setPanelOrder } = useParentDashboardLayout();
 
@@ -365,6 +357,32 @@ export default function ParentDashboardPage() {
   const panelMap = useMemo<Record<ParentPanelId, () => JSX.Element>>(() => ({
     'progress-summary': () => (
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* Daily digest AI insights — woven into the top of the progress panel */}
+        {dailyHighlights.length > 0 && (
+          <div className="lg:col-span-3 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 p-4 mb-2">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <span className="font-medium text-blue-800 dark:text-blue-300 text-sm">Today&apos;s Learning Digest</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {dailyHighlights.map((h, i) => (
+                <Badge key={i} variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                  {h}
+                </Badge>
+              ))}
+            </div>
+            {digestRecommendations.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {digestRecommendations.map((r, i) => (
+                  <p key={i} className="text-xs text-blue-600 dark:text-blue-400 flex items-start gap-1">
+                    <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                    {r}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -484,16 +502,16 @@ export default function ParentDashboardPage() {
                       <p className="text-xs text-muted-foreground">{post.timestamp}</p>
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground">{post.content}</p>
-                    {post.type === 'photo' && post.images && (
+                    {post.type === 'photo' && 'images' in post && Array.isArray((post as { images?: string[] }).images) && (
                       <div className="mt-3 flex gap-2">
-                        {post.images.slice(0, 2).map((img, idx) => (
+                        {((post as { images: string[] }).images).slice(0, 2).map((img: string, idx: number) => (
                           <div key={idx} className="relative h-24 w-24 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
                             <ImageIcon className="h-8 w-8 text-muted-foreground" />
                           </div>
                         ))}
-                        {post.images.length > 2 && (
+                        {(post as { images: string[] }).images.length > 2 && (
                           <div className="h-24 w-24 rounded-lg bg-muted flex items-center justify-center">
-                            <span className="text-sm font-medium">+{post.images.length - 2}</span>
+                            <span className="text-sm font-medium">+{(post as { images: string[] }).images.length - 2}</span>
                           </div>
                         )}
                       </div>
@@ -657,7 +675,7 @@ export default function ParentDashboardPage() {
                 <div>
                   <p className="text-sm font-medium">{payment.description}</p>
                   <p className="text-xs text-muted-foreground">
-                    {payment.status === 'paid' ? `Paid: ${payment.paidDate}` : `Due: ${payment.dueDate}`}
+                    {payment.status === 'paid' ? `Paid: ${payment.dueDate}` : `Due: ${payment.dueDate}`}
                   </p>
                 </div>
                 <div className="text-right">
@@ -736,6 +754,14 @@ export default function ParentDashboardPage() {
     ),
   }), [selectedChild, childAchievements, childUpcoming, unreadCount, pendingPayments, pendingPaymentTotal, quickReply, selectedChildId]);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header with Language Selector (fixed) */}
@@ -794,7 +820,7 @@ export default function ParentDashboardPage() {
         <CardContent className="p-4">
           <Tabs value={selectedChildId} onValueChange={setSelectedChildId}>
             <TabsList className="w-full justify-start gap-2 bg-transparent h-auto flex-wrap">
-              {CHILDREN.map((child) => (
+              {CHILDREN_DISPLAY.map((child) => (
                 <TabsTrigger
                   key={child.id}
                   value={child.id}

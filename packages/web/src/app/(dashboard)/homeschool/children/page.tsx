@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -63,7 +64,7 @@ export default function HomeschoolChildrenPage() {
                   <Calendar className="mr-2 h-4 w-4" />
                   Schedule
                 </Button>
-                <Button size="sm" className="flex-1">View Progress</Button>
+                <Button size="sm" className="flex-1" asChild><Link href="/homeschool/progress">View Progress</Link></Button>
               </div>
             </CardContent>
           </Card>
