@@ -37,7 +37,7 @@ import type {
   Pagination,
 } from '@/types/teacher';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const V1 = `${API_BASE}/api/v1`;
 
 // =============================================================================
@@ -81,7 +81,17 @@ export const teacherApi = {
       return request('GET', `/dashboard/activity?page=${page}`);
     },
     async getNotifications(page = 1): Promise<NotificationsResponse> {
-      return request('GET', `/dashboard/notifications?page=${page}`);
+      // Backend returns `inAppStatus: 'read' | 'unread'` (Prisma field).
+      // The teacher Notification type uses `read: boolean` — normalise here
+      // so every consumer works correctly without knowing about the backend schema.
+      const raw = await request<{ notifications: Array<Record<string, unknown>>; unreadCount: number; pagination: unknown }>('GET', `/dashboard/notifications?page=${page}`);
+      return {
+        ...raw,
+        notifications: (raw.notifications ?? []).map((n) => ({
+          ...n,
+          read: n.inAppStatus === 'read' || n.read === true,
+        })),
+      } as unknown as NotificationsResponse;
     },
     async getQuickStats(): Promise<QuickStats> {
       return request('GET', '/dashboard/quick-stats');

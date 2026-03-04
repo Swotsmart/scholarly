@@ -5,7 +5,7 @@
  * Allows parents to add a new child to the family
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, User, Calendar, Sparkles, Check } from 'lucide-react';
@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { useEarlyYearsStore } from '@/stores/early-years-store';
 import { earlyYearsApi } from '@/lib/early-years-api';
 import { AVATARS } from '@/components/early-years/child-selector';
+import { usePhonicsAudio } from '@/hooks/use-phonics-audio';
 
 const enrollmentSchema = z.object({
   firstName: z.string().min(1, 'Please enter a name').max(50),
@@ -36,6 +37,16 @@ export default function EnrollChildPage() {
   const { family, loadFamily } = useEarlyYearsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const { speak } = usePhonicsAudio();
+
+  // Welcome message when the page loads — parents are setting up for their child
+  useEffect(() => {
+    const t = setTimeout(() => {
+      speak("Let's set up your child's account! Fill in their details and choose a fun avatar.");
+    }, 400);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     register,
@@ -71,6 +82,7 @@ export default function EnrollChildPage() {
       });
 
       setShowSuccess(true);
+      speak("Amazing! Your child is all set up and ready to start their adventure!");
 
       // Reload family data
       await loadFamily();
