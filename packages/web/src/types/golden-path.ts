@@ -64,6 +64,79 @@ export interface CuriositySignal {
 }
 
 // =============================================================================
+// ADAPTATION ENGINE TYPES
+// =============================================================================
+
+export interface AdaptationProfile {
+  learnerId: string;
+  competencyStates: BKTCompetency[];
+  overallMastery: number;
+  lastAssessment: string;
+  adaptationStrategy: string;
+}
+
+export interface OptimalDifficulty {
+  learnerId: string;
+  domain: string;
+  targetDifficulty: number;
+  confidenceInterval: { low: number; high: number };
+  basedOnObservations: number;
+}
+
+export interface AdaptationRule {
+  id: string;
+  name: string;
+  description: string;
+  condition: string;
+  action: string;
+  isActive: boolean;
+  priority: number;
+}
+
+export interface AdaptationEvent {
+  id: string;
+  learnerId: string;
+  ruleId: string;
+  ruleName: string;
+  action: string;
+  outcome: string;
+  timestamp: string;
+}
+
+// =============================================================================
+// CURIOSITY ENGINE TYPES
+// =============================================================================
+
+export interface CuriosityProfile {
+  learnerId: string;
+  overallCuriosity: number;
+  explorationBreadth: number;
+  explorationDepth: number;
+  dominantInterests: string[];
+  lastUpdated: string;
+}
+
+export interface EmergingInterest {
+  id: string;
+  topic: string;
+  signalCount: number;
+  firstSeen: string;
+  lastSeen: string;
+  growthRate: number;
+  relatedClusters: string[];
+}
+
+export interface ContentSuggestion {
+  id: string;
+  title: string;
+  type: string;
+  relevanceScore: number;
+  matchedInterests: string[];
+  difficulty: number;
+  estimatedDuration: string;
+}
+
+// =============================================================================
 // OPTIMIZATION TYPES
 // =============================================================================
 
@@ -71,6 +144,31 @@ export interface OptimizationObjective {
   name: string;
   weight: number;
   score: number;
+}
+
+export interface ObjectiveWeightsConfig {
+  learnerId: string;
+  weights: OptimizationObjective[];
+  lastModified: string;
+  source: 'default' | 'teacher' | 'ai' | 'parent';
+}
+
+export interface OptimizationResult {
+  learnerId: string;
+  selectedPath: LearningPath;
+  alternativePaths: LearningPath[];
+  confidence: number;
+  generatedAt: string;
+}
+
+export interface OptimizationEvent {
+  id: string;
+  learnerId: string;
+  action: string;
+  previousWeights: OptimizationObjective[];
+  newWeights: OptimizationObjective[];
+  outcome: string;
+  timestamp: string;
 }
 
 export interface LearningPath {

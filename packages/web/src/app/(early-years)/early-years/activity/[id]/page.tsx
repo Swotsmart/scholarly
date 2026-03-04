@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEarlyYearsStore } from '@/stores/early-years-store';
+import { usePhonicsAudio } from '@/hooks/use-phonics-audio';
 import { MENTORS, type Mentor } from '@/types/early-years';
 
 // Design System v2.0: Minimum touch target size
@@ -488,16 +489,11 @@ export default function ActivityPlayerPage() {
     speakMessage(activityData.audioInstruction);
   }, [activityId]);
 
-  // Text-to-speech helper
+  // Text-to-speech via Kokoro TTS (with browser fallback)
+  const { speak: kokoroSpeak } = usePhonicsAudio();
   const speakMessage = useCallback((message: string) => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(message);
-    utterance.rate = 0.85;
-    utterance.pitch = 1.1;
-    window.speechSynthesis.speak(utterance);
-  }, []);
+    kokoroSpeak(message);
+  }, [kokoroSpeak]);
 
   // Hint timer
   useEffect(() => {

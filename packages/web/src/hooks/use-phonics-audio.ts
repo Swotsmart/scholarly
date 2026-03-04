@@ -17,6 +17,9 @@ interface UsePhonicsAudioOptions {
   voicePersona?: VoicePersona;
   /** Override store's audio enabled */
   enabled?: boolean;
+  /** Fall back to browser SpeechSynthesis when Kokoro is unavailable (default: true).
+   *  For early-years (pre-literate children), a robotic voice beats silence. */
+  useBrowserFallback?: boolean;
 }
 
 interface UsePhonicsAudioReturn {
@@ -32,6 +35,8 @@ interface UsePhonicsAudioReturn {
   isPlaying: boolean;
   /** Whether TTS API is available */
   isTTSAvailable: boolean;
+  /** Whether currently using browser fallback instead of Kokoro */
+  isUsingFallback: boolean;
   /** Pre-generate and cache phoneme audio for instant playback */
   preloadPhonemes: (phonemes: string[]) => Promise<void>;
 }
@@ -79,9 +84,11 @@ export function usePhonicsAudio(
 
   const persona = options.voicePersona ?? storePersona;
   const enabled = options.enabled ?? storeEnabled;
+  const useBrowserFallback = options.useBrowserFallback ?? true;
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isTTSAvailable, setIsTTSAvailable] = useState(true);
+  const [isUsingFallback, setIsUsingFallback] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const memoryCache = useRef<Map<string, Blob>>(new Map());
@@ -249,6 +256,39 @@ export function usePhonicsAudio(
   }, []);
 
   // -----------------------------------------------------------------------
+  // Browser SpeechSynthesis fallback — the backup generator
+  // A robotic voice is infinitely better than silence for a 4-year-old.
+  // -----------------------------------------------------------------------
+
+  const browserTTSFallback = useCallback(
+    (text: string): Promise<void> => {
+      if (!useBrowserFallback) return Promise.resolve();
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        return Promise.resolve();
+      }
+      return new Promise<void>((resolve) => {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.85;   // Slightly slower for young learners
+        utterance.pitch = 1.1;   // Slightly warmer
+        utterance.volume = 0.9;
+        // Try to pick a female English voice for consistency with Kokoro personas
+        const voices = window.speechSynthesis.getVoices();
+        const preferred = voices.find(
+          (v) => v.lang.startsWith('en') && v.name.toLowerCase().includes('female'),
+        ) ?? voices.find((v) => v.lang.startsWith('en'));
+        if (preferred) utterance.voice = preferred;
+        utterance.onend = () => { setIsPlaying(false); resolve(); };
+        utterance.onerror = () => { setIsPlaying(false); resolve(); };
+        setIsPlaying(true);
+        setIsUsingFallback(true);
+        window.speechSynthesis.speak(utterance);
+      });
+    },
+    [useBrowserFallback],
+  );
+
+  // -----------------------------------------------------------------------
   // Public: speak
   // -----------------------------------------------------------------------
 
@@ -282,11 +322,14 @@ export function usePhonicsAudio(
 
       if (blob) {
         cancelBrowserTTS(); // Kill again in case something triggered it during fetch
+        setIsUsingFallback(false);
         await playBlob(blob);
+      } else {
+        // Kokoro unavailable — fall through to browser voice (the backup generator)
+        await browserTTSFallback(text);
       }
-      // No browser fallback — silence is better than robotic voice
     },
-    [enabled, isTTSAvailable, fetchAudioBlob, playBlob, cancelBrowserTTS],
+    [enabled, isTTSAvailable, fetchAudioBlob, playBlob, cancelBrowserTTS, browserTTSFallback],
   );
 
   // -----------------------------------------------------------------------
@@ -354,6 +397,7 @@ export function usePhonicsAudio(
     stop,
     isPlaying,
     isTTSAvailable,
+    isUsingFallback,
     preloadPhonemes,
   };
 }

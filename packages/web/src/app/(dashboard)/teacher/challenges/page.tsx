@@ -44,7 +44,7 @@ export default function TeacherChallengesPage() {
                   </div>
                   <Badge variant={challenge.status === 'published' ? 'default' : 'secondary'} className="text-xs capitalize">{challenge.status}</Badge>
                 </div>
-                <div className="mt-3"><Button size="sm" variant="outline" className="w-full">Manage</Button></div>
+                <div className="mt-3"><Button size="sm" variant="outline" className="w-full" asChild><Link href={`/teacher/challenges/${challenge.id}`}>Manage</Link></Button></div>
               </CardContent>
             </Card>
           ))

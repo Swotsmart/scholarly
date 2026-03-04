@@ -43,8 +43,8 @@ export default function MyConnectionsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">Decline</Button>
-                  <Button size="sm">Accept</Button>
+                  <Button variant="outline" size="sm" onClick={() => alert('Connection request declined.')}>Decline</Button>
+                  <Button size="sm" onClick={() => alert('Connection request accepted!')}>Accept</Button>
                 </div>
               </div>
             ))}

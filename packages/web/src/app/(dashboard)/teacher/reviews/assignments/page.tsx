@@ -29,7 +29,7 @@ export default function ReviewAssignmentsPage() {
       </div>
       <div className="space-y-3">
         {isLoading ? [1,2,3].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />) : items.length > 0 ? items.map(item => (
-          <Card key={item.id}><CardContent className="p-4"><div className="flex items-center justify-between"><div className="flex items-center gap-3"><ClipboardCheck className="h-5 w-5 text-primary" /><div><p className="font-medium">{item.title}</p><p className="text-sm text-muted-foreground">{item.type} · Created {new Date(item.createdAt).toLocaleDateString()}</p></div></div><Button size="sm">Review</Button></div></CardContent></Card>
+          <Card key={item.id}><CardContent className="p-4"><div className="flex items-center justify-between"><div className="flex items-center gap-3"><ClipboardCheck className="h-5 w-5 text-primary" /><div><p className="font-medium">{item.title}</p><p className="text-sm text-muted-foreground">{item.type} · Created {new Date(item.createdAt).toLocaleDateString()}</p></div></div><Button size="sm" asChild><Link href={`/teacher/reviews/assignments/${item.id}`}>Review</Link></Button></div></CardContent></Card>
         )) : <Card><CardContent className="p-8 text-center text-muted-foreground">No pending review assignments.</CardContent></Card>}
       </div>
     </div>

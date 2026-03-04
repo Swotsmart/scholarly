@@ -11,6 +11,16 @@ import type {
   CuriositySignal,
   OptimizationObjective,
   LearningPath,
+  AdaptationProfile,
+  OptimalDifficulty,
+  AdaptationRule,
+  AdaptationEvent,
+  CuriosityProfile,
+  EmergingInterest,
+  ContentSuggestion,
+  ObjectiveWeightsConfig,
+  OptimizationResult,
+  OptimizationEvent,
 } from '@/types/golden-path';
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
@@ -237,6 +247,78 @@ const demoLearningPaths: LearningPath[] = [
 ];
 
 // =============================================================================
+// DEMO DATA — Adaptation, Curiosity, Optimizer engine types
+// =============================================================================
+
+const demoAdaptationProfile: AdaptationProfile = {
+  learnerId: 'learner-001',
+  competencyStates: demoCompetencies,
+  overallMastery: 0.7,
+  lastAssessment: '2024-02-10T14:00:00Z',
+  adaptationStrategy: 'balanced',
+};
+
+const demoOptimalDifficulty: OptimalDifficulty = {
+  learnerId: 'learner-001',
+  domain: 'Mathematics',
+  targetDifficulty: 0.78,
+  confidenceInterval: { low: 0.72, high: 0.84 },
+  basedOnObservations: 42,
+};
+
+const demoAdaptationRules: AdaptationRule[] = [
+  { id: 'rule-1', name: 'Mastery Threshold', description: 'Advance when pKnown > 0.85', condition: 'pKnown > 0.85', action: 'increase_difficulty', isActive: true, priority: 1 },
+  { id: 'rule-2', name: 'Fatigue Guard', description: 'Reduce load when fatigue > 70', condition: 'fatigue.score > 70', action: 'reduce_difficulty', isActive: true, priority: 2 },
+  { id: 'rule-3', name: 'Curiosity Boost', description: 'Insert interest topic when engagement drops', condition: 'engagement < 0.5', action: 'inject_interest_topic', isActive: true, priority: 3 },
+];
+
+const demoAdaptationHistory: AdaptationEvent[] = [
+  { id: 'evt-1', learnerId: 'learner-001', ruleId: 'rule-1', ruleName: 'Mastery Threshold', action: 'increase_difficulty', outcome: 'Advanced to Year 8 algebra', timestamp: '2024-02-10T14:00:00Z' },
+  { id: 'evt-2', learnerId: 'learner-001', ruleId: 'rule-3', ruleName: 'Curiosity Boost', action: 'inject_interest_topic', outcome: 'Inserted space physics module', timestamp: '2024-02-09T10:30:00Z' },
+  { id: 'evt-3', learnerId: 'learner-001', ruleId: 'rule-2', ruleName: 'Fatigue Guard', action: 'reduce_difficulty', outcome: 'Switched to revision mode', timestamp: '2024-02-08T15:45:00Z' },
+];
+
+const demoCuriosityProfile: CuriosityProfile = {
+  learnerId: 'learner-001',
+  overallCuriosity: 82,
+  explorationBreadth: 75,
+  explorationDepth: 88,
+  dominantInterests: ['Space Exploration', 'Robotics & AI', 'Environmental Science'],
+  lastUpdated: '2024-02-10T14:30:00Z',
+};
+
+const demoEmergingInterests: EmergingInterest[] = [
+  { id: 'ei-1', topic: 'Quantum Computing', signalCount: 5, firstSeen: '2024-02-05T10:00:00Z', lastSeen: '2024-02-10T12:00:00Z', growthRate: 0.85, relatedClusters: ['Robotics & AI'] },
+  { id: 'ei-2', topic: 'Marine Biology', signalCount: 3, firstSeen: '2024-02-07T09:00:00Z', lastSeen: '2024-02-10T11:00:00Z', growthRate: 0.6, relatedClusters: ['Environmental Science'] },
+];
+
+const demoContentSuggestions: ContentSuggestion[] = [
+  { id: 'cs-1', title: 'Introduction to Orbital Mechanics', type: 'interactive', relevanceScore: 95, matchedInterests: ['Space Exploration'], difficulty: 0.7, estimatedDuration: '45 min' },
+  { id: 'cs-2', title: 'Build a Simple Robot Arm', type: 'project', relevanceScore: 90, matchedInterests: ['Robotics & AI'], difficulty: 0.65, estimatedDuration: '2 hours' },
+  { id: 'cs-3', title: 'Climate Data Analysis with Python', type: 'lesson', relevanceScore: 85, matchedInterests: ['Environmental Science'], difficulty: 0.75, estimatedDuration: '1 hour' },
+];
+
+const demoObjectiveWeights: ObjectiveWeightsConfig = {
+  learnerId: 'learner-001',
+  weights: demoObjectives,
+  lastModified: '2024-02-10T08:00:00Z',
+  source: 'ai',
+};
+
+const demoOptimizationResult: OptimizationResult = {
+  learnerId: 'learner-001',
+  selectedPath: demoLearningPaths[0],
+  alternativePaths: [demoLearningPaths[1]],
+  confidence: 0.87,
+  generatedAt: '2024-02-10T14:00:00Z',
+};
+
+const demoOptimizationHistory: OptimizationEvent[] = [
+  { id: 'opt-1', learnerId: 'learner-001', action: 'rebalance', previousWeights: demoObjectives, newWeights: demoObjectives, outcome: 'Shifted focus toward mastery', timestamp: '2024-02-10T08:00:00Z' },
+  { id: 'opt-2', learnerId: 'learner-001', action: 'curiosity_boost', previousWeights: demoObjectives, newWeights: demoObjectives, outcome: 'Increased curiosity weight', timestamp: '2024-02-09T08:00:00Z' },
+];
+
+// =============================================================================
 // API CLIENT
 // =============================================================================
 
@@ -265,37 +347,102 @@ class GoldenPathApiClient {
     return response.json();
   }
 
-  // BKT Competencies
+  // ── Adaptation Engine ──
+
+  async getAdaptationProfile(learnerId: string): Promise<AdaptationProfile> {
+    if (this.demoMode) return { ...demoAdaptationProfile, learnerId };
+    return this.request('GET', `/adaptation/${learnerId}/profile`);
+  }
+
+  async getZPDRange(learnerId: string, domain: string): Promise<ZPDRange> {
+    if (this.demoMode) return demoZPDRanges.find(z => z.domain === domain) ?? demoZPDRanges[0];
+    return this.request('GET', `/adaptation/${learnerId}/zpd?domain=${encodeURIComponent(domain)}`);
+  }
+
+  async getOptimalDifficulty(learnerId: string): Promise<OptimalDifficulty> {
+    if (this.demoMode) return { ...demoOptimalDifficulty, learnerId };
+    return this.request('GET', `/adaptation/${learnerId}/difficulty`);
+  }
+
+  async getAdaptationRules(options?: { isActive?: boolean }): Promise<AdaptationRule[]> {
+    if (this.demoMode) {
+      const rules = options?.isActive ? demoAdaptationRules.filter(r => r.isActive) : demoAdaptationRules;
+      return rules;
+    }
+    const qs = options?.isActive != null ? `?isActive=${options.isActive}` : '';
+    return this.request('GET', `/adaptation/rules${qs}`);
+  }
+
+  async getAdaptationHistory(learnerId: string, options?: { limit?: number }): Promise<AdaptationEvent[]> {
+    if (this.demoMode) return demoAdaptationHistory.slice(0, options?.limit ?? 20);
+    const qs = options?.limit ? `?limit=${options.limit}` : '';
+    return this.request('GET', `/adaptation/${learnerId}/history${qs}`);
+  }
+
+  async getFatigueAssessment(learnerId: string, sessionId?: string): Promise<FatigueAssessment> {
+    if (this.demoMode) return demoFatigue;
+    const qs = sessionId ? `?sessionId=${sessionId}` : '';
+    return this.request('GET', `/adaptation/${learnerId}/fatigue${qs}`);
+  }
+
+  // ── Curiosity Engine ──
+
+  async getCuriosityProfile(learnerId: string): Promise<CuriosityProfile> {
+    if (this.demoMode) return { ...demoCuriosityProfile, learnerId };
+    return this.request('GET', `/curiosity/${learnerId}/profile`);
+  }
+
+  async getInterestClusters(learnerId: string): Promise<InterestCluster[]> {
+    if (this.demoMode) return demoInterestClusters;
+    return this.request('GET', `/curiosity/${learnerId}/clusters`);
+  }
+
+  async getEmergingInterests(learnerId: string): Promise<EmergingInterest[]> {
+    if (this.demoMode) return demoEmergingInterests;
+    return this.request('GET', `/curiosity/${learnerId}/emerging`);
+  }
+
+  async getContentSuggestions(learnerId: string, options?: { limit?: number }): Promise<ContentSuggestion[]> {
+    if (this.demoMode) return demoContentSuggestions.slice(0, options?.limit ?? 5);
+    const qs = options?.limit ? `?limit=${options.limit}` : '';
+    return this.request('GET', `/curiosity/${learnerId}/suggestions${qs}`);
+  }
+
+  // ── Multi-Objective Optimizer ──
+
+  async getObjectiveWeights(learnerId: string): Promise<ObjectiveWeightsConfig> {
+    if (this.demoMode) return { ...demoObjectiveWeights, learnerId };
+    return this.request('GET', `/optimization/${learnerId}/weights`);
+  }
+
+  async getOptimizationHistory(learnerId: string, options?: { limit?: number }): Promise<OptimizationEvent[]> {
+    if (this.demoMode) return demoOptimizationHistory.slice(0, options?.limit ?? 10);
+    const qs = options?.limit ? `?limit=${options.limit}` : '';
+    return this.request('GET', `/optimization/${learnerId}/history${qs}`);
+  }
+
+  async optimizePath(learnerId: string): Promise<OptimizationResult> {
+    if (this.demoMode) return { ...demoOptimizationResult, learnerId };
+    return this.request('POST', `/optimization/${learnerId}/optimize`);
+  }
+
+  // ── Legacy methods (used by existing golden-path pages) ──
+
   async getCompetencies(): Promise<{ competencies: BKTCompetency[] }> {
     if (this.demoMode) return { competencies: demoCompetencies };
     return this.request('GET', '/competencies');
   }
 
-  // ZPD Ranges
   async getZPDRanges(): Promise<{ ranges: ZPDRange[] }> {
     if (this.demoMode) return { ranges: demoZPDRanges };
     return this.request('GET', '/zpd');
   }
 
-  // Fatigue Assessment
-  async getFatigueAssessment(): Promise<{ assessment: FatigueAssessment }> {
-    if (this.demoMode) return { assessment: demoFatigue };
-    return this.request('GET', '/fatigue');
-  }
-
-  // Interest Clusters
-  async getInterestClusters(): Promise<{ clusters: InterestCluster[] }> {
-    if (this.demoMode) return { clusters: demoInterestClusters };
-    return this.request('GET', '/interests');
-  }
-
-  // Curiosity Signals
   async getCuriositySignals(): Promise<{ signals: CuriositySignal[] }> {
     if (this.demoMode) return { signals: demoCuriositySignals };
     return this.request('GET', '/curiosity/signals');
   }
 
-  // Optimization
   async getObjectives(): Promise<{ objectives: OptimizationObjective[] }> {
     if (this.demoMode) return { objectives: demoObjectives };
     return this.request('GET', '/optimization/objectives');

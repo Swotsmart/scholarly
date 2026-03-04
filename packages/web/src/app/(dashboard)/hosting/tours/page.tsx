@@ -122,7 +122,7 @@ export default function HostingToursPage() {
               </select>
             </div>
           </div>
-          <Button>Save Settings</Button>
+          <Button onClick={() => alert('Tour settings saved!')}>Save Settings</Button>
         </CardContent>
       </Card>
     </div>

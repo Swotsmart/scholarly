@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
@@ -36,9 +36,10 @@ import { MobileNav } from './mobile-nav';
 import { Breadcrumbs } from './breadcrumbs';
 import { CommandPaletteTrigger } from './command-palette';
 import { AskIssyHeader, IssyOnboardingOverlay, useIssyOnboarding } from './ask-issy-header';
+import { useNotifications } from '@/hooks/use-notifications';
 
 // ============================================================================
-// NOTIFICATION TYPES & MOCK DATA
+// NOTIFICATION DISPLAY HELPERS (used by dropdown)
 // ============================================================================
 
 interface Notification {
@@ -50,14 +51,6 @@ interface Notification {
   read: boolean;
   href?: string;
 }
-
-const mockNotifications: Notification[] = [
-  { id: 'n1', type: 'alert', title: 'James Chen needs attention', description: 'Missed 3 consecutive assignments in Design & Tech', time: '15 min ago', read: false, href: '/teacher/students' },
-  { id: 'n2', type: 'message', title: 'New message from Emma Thompson', description: 'Can you review my prototype before tomorrow?', time: '1 hour ago', read: false, href: '/teacher/help-requests' },
-  { id: 'n3', type: 'academic', title: 'Assessments ready for review', description: '12 pitch deck submissions waiting for grading', time: '2 hours ago', read: false, href: '/teacher/grading' },
-  { id: 'n4', type: 'system', title: 'Timetable updated', description: 'Room 204 unavailable tomorrow — auto-reassigned to Room 301', time: '3 hours ago', read: true, href: '/teacher/scheduling/timetable' },
-  { id: 'n5', type: 'academic', title: 'AI Insight: Year 10 prototyping', description: 'Students struggling with low-fidelity prototyping techniques', time: '5 hours ago', read: true, href: '/teacher/dashboard' },
-];
 
 function getNotificationIcon(type: Notification['type']) {
   switch (type) {
@@ -85,28 +78,48 @@ export function Header() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
-  const [notifications, setNotifications] = useState(mockNotifications);
   const [issyOpen, setIssyOpen] = useState(false);
   const { showOnboarding, dismissOnboarding } = useIssyOnboarding();
 
-  const unreadCount = useMemo(
-    () => notifications.filter(n => !n.read).length,
-    [notifications]
-  );
+  // Real notification data from API (falls back to DEMO_MODE data when backend unavailable)
+  const {
+    notifications: rawNotifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+  } = useNotifications({ fetchDigest: false, fetchInsights: false });
+
+  // Bridge API notifications to the existing dropdown display format
+  const notifications: Notification[] = rawNotifications.slice(0, 5).map(n => {
+    const typeMap: Record<string, Notification['type']> = {
+      learning: 'academic', wellbeing: 'alert', parent: 'message',
+      storybook: 'academic', system: 'system', auth: 'system',
+      payment: 'system', content: 'academic', governance: 'system',
+      arena: 'academic', subscription: 'system',
+    };
+    const prefix = n.type.split('_')[0] || 'system';
+    const diff = Date.now() - new Date(n.createdAt).getTime();
+    const mins = Math.floor(diff / 60_000);
+    const timeStr = mins < 60 ? `${mins} min ago`
+      : mins < 1440 ? `${Math.floor(mins / 60)} hour${Math.floor(mins / 60) > 1 ? 's' : ''} ago`
+      : `${Math.floor(mins / 1440)} day${Math.floor(mins / 1440) > 1 ? 's' : ''} ago`;
+
+    return {
+      id: n.id,
+      type: typeMap[prefix] || 'system',
+      title: n.title,
+      description: n.body,
+      time: timeStr,
+      read: n.inAppStatus !== 'unread',
+    };
+  });
+
+  const markRead = (id: string) => { markAsRead(id); };
+  const markAllRead = () => { markAllAsRead(); };
 
   const handleLogout = async () => {
     await logout();
     router.push('/login');
-  };
-
-  const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
-
-  const markRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
   };
 
   return (

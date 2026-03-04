@@ -587,7 +587,7 @@ export default function TeacherSettingsPage() {
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary">Not Enabled</Badge>
-              <Button variant="outline" size="sm">Enable</Button>
+              <Button variant="outline" size="sm" onClick={() => alert('Two-factor authentication setup coming soon.')}>Enable</Button>
             </div>
           </div>
           <div className="flex items-center justify-between rounded-lg border p-4">
@@ -626,7 +626,7 @@ export default function TeacherSettingsPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline">Change Password</Button>
+          <Button variant="outline" onClick={() => alert('Password change is handled by your identity provider. Check your account settings.')}>Change Password</Button>
         </CardContent>
       </Card>
 

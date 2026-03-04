@@ -3,9 +3,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, TrendingUp, Clock, Target } from 'lucide-react';
+import { BookOpen, TrendingUp, Clock, Target, Loader2 } from 'lucide-react';
+import { useParent } from '@/hooks/use-parent';
+import type { FamilyChild } from '@/types/parent';
 
-const CHILDREN = [
+// ---------------------------------------------------------------------------
+// Fallback data (original mock — used when API returns null)
+// ---------------------------------------------------------------------------
+const CHILDREN_FALLBACK = [
   {
     id: 'c1',
     name: 'Emma',
@@ -31,20 +36,100 @@ const CHILDREN = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Bridge: API FamilyChild → display shape
+// ---------------------------------------------------------------------------
+function bridgeLearningChild(child: FamilyChild) {
+  const courses: Array<{ name: string; progress: number; hoursThisWeek: number; status: string }> = [];
+
+  if (child.phonicsProgress) {
+    const phonicsAvg = ((child.phonicsProgress.blendingAccuracy + child.phonicsProgress.segmentingAccuracy) / 2) * 100;
+    const phonicsStatus = phonicsAvg >= 80 ? 'ahead' : phonicsAvg >= 60 ? 'on-track' : 'behind';
+    courses.push({
+      name: 'Phonics',
+      progress: Math.round(phonicsAvg),
+      hoursThisWeek: child.totalSessions > 0 ? Math.round((child.totalLearningMinutes / child.totalSessions) * 0.6 * 10) / 10 : 0,
+      status: phonicsStatus,
+    });
+
+    // Sight words / reading as a separate course
+    const readingProgress = Math.min(100, Math.round((child.phonicsProgress.sightWordsMastered / 50) * 100));
+    courses.push({
+      name: 'Reading',
+      progress: readingProgress,
+      hoursThisWeek: child.totalSessions > 0 ? Math.round((child.totalLearningMinutes / child.totalSessions) * 0.2 * 10) / 10 : 0,
+      status: readingProgress >= 80 ? 'ahead' : readingProgress >= 40 ? 'on-track' : 'behind',
+    });
+  }
+
+  if (child.numeracyProgress) {
+    const numeracyAvg = ((child.numeracyProgress.subitizingAccuracy +
+      child.numeracyProgress.additionAccuracy +
+      child.numeracyProgress.subtractionAccuracy) / 3) * 100;
+    const numeracyStatus = numeracyAvg >= 80 ? 'ahead' : numeracyAvg >= 60 ? 'on-track' : 'behind';
+    courses.push({
+      name: 'Numeracy',
+      progress: Math.round(numeracyAvg),
+      hoursThisWeek: child.totalSessions > 0 ? Math.round((child.totalLearningMinutes / child.totalSessions) * 0.2 * 10) / 10 : 0,
+      status: numeracyStatus,
+    });
+  }
+
+  // If no progress data, show a placeholder
+  if (courses.length === 0) {
+    courses.push({
+      name: 'Getting Started',
+      progress: 0,
+      hoursThisWeek: 0,
+      status: 'on-track',
+    });
+  }
+
+  const totalHours = Math.round((child.totalLearningMinutes / 60) * 10) / 10;
+
+  return {
+    id: child.id,
+    name: child.preferredName || child.firstName,
+    courses,
+    totalHours,
+    streak: child.currentStreak,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 function getStatusBadge(status: string) {
   switch (status) {
     case 'ahead':
-      return <Badge className="bg-green-100 text-green-700">Ahead</Badge>;
+      return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Ahead</Badge>;
     case 'on-track':
-      return <Badge className="bg-blue-100 text-blue-700">On Track</Badge>;
+      return <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">On Track</Badge>;
     case 'behind':
-      return <Badge className="bg-amber-100 text-amber-700">Needs Attention</Badge>;
+      return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Needs Attention</Badge>;
     default:
       return null;
   }
 }
 
+// ---------------------------------------------------------------------------
+// Main Component
+// ---------------------------------------------------------------------------
 export default function ParentLearningProgressPage() {
+  const { family, isLoading } = useParent();
+
+  const CHILDREN = family
+    ? family.children.map(bridgeLearningChild)
+    : CHILDREN_FALLBACK;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -60,7 +145,7 @@ export default function ParentLearningProgressPage() {
               <div className="flex items-center gap-4 text-sm font-normal">
                 <span className="flex items-center gap-1">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  {child.totalHours}h this week
+                  {child.totalHours}h total
                 </span>
                 <span className="flex items-center gap-1">
                   <Target className="h-4 w-4 text-orange-500" />

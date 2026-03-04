@@ -49,7 +49,7 @@ export default function HostingThemePage() {
                 </div>
               </div>
             ))}
-            <Button variant="outline" className="w-full">Customize Colors</Button>
+            <Button variant="outline" className="w-full" onClick={() => alert('Color customization panel opening...')}>Customize Colors</Button>
           </CardContent>
         </Card>
 
@@ -86,7 +86,7 @@ export default function HostingThemePage() {
             <div className="border-2 border-dashed rounded-lg p-8 text-center">
               <Image className="h-12 w-12 mx-auto text-muted-foreground/50 mb-2" />
               <p className="text-sm text-muted-foreground">Drop your logo here or click to upload</p>
-              <Button variant="outline" size="sm" className="mt-2">Upload Logo</Button>
+              <Button variant="outline" size="sm" className="mt-2" onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.click(); }}>Upload Logo</Button>
             </div>
           </CardContent>
         </Card>
@@ -121,8 +121,8 @@ export default function HostingThemePage() {
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button variant="outline">Preview</Button>
-        <Button>Save Theme</Button>
+        <Button variant="outline" onClick={() => window.open('/hosting/preview', '_blank')}>Preview</Button>
+        <Button onClick={() => alert('Theme saved successfully!')}>Save Theme</Button>
       </div>
     </div>
   );

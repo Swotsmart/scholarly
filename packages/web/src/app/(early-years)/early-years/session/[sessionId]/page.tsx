@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePhonicsAudio } from '@/hooks/use-phonics-audio';
 import {
   X,
   Volume2,
@@ -169,15 +170,11 @@ export default function SessionPage() {
   const currentActivity = activities[currentActivityIndex];
   const progress = activities.length > 0 ? ((currentActivityIndex) / activities.length) * 100 : 0;
 
+  const { speak: kokoroSpeak } = usePhonicsAudio();
+
   const speakText = useCallback((text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.8;
-      utterance.pitch = 1.1;
-      window.speechSynthesis.speak(utterance);
-    }
-  }, []);
+    kokoroSpeak(text);
+  }, [kokoroSpeak]);
 
   const handleAnswer = async (answer: string) => {
     if (selectedAnswer !== null) return;
