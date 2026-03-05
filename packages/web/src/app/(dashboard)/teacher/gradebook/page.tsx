@@ -30,7 +30,7 @@ export default function TeacherGradebookPage() {
   useEffect(() => {
     if (!selectedClass) return;
     setStudentsLoading(true);
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}/api/v1/users?role=learner&pageSize=50`, { credentials: 'include' })
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/users?role=learner&pageSize=50`, { credentials: 'include' })
       .then(r => r.json()).then(d => setStudents(d.users)).catch(() => {}).finally(() => setStudentsLoading(false));
   }, [selectedClass]);
 

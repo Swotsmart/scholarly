@@ -47,6 +47,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { teacherApi } from '@/lib/teacher-api';
 
 // Persona definitions
 const personas = [
@@ -188,21 +189,32 @@ export default function AIBuddyPage() {
     setInputValue('');
     setIsLoading(true);
 
-    // Simulate AI response
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const result = await teacherApi.ai.askIssy(userMessage.content, {
+        conversationId: `buddy-${selectedPersona}`,
+      });
 
-    const aiResponse: Message = {
-      id: `msg-${Date.now() + 1}`,
-      role: 'assistant',
-      content: userMessage.content.toLowerCase().includes('code') || userMessage.content.toLowerCase().includes('factor')
-        ? sampleCodeMessage
-        : `Great question about "${userMessage.content.substring(0, 50)}..."! Let me help you understand this better.\n\nBased on your current topic of **${currentContext.topic}**, here's what you need to know:\n\n1. **Key Concept**: This is fundamental to understanding how quadratic expressions work.\n\n2. **Application**: You'll use this when solving real-world problems involving parabolic motion, optimization, and more.\n\n3. **Practice Tip**: Try working through several examples to build your intuition.\n\nWould you like me to provide some practice problems or explain any part in more detail?`,
-      timestamp: new Date(),
-      persona: selectedPersona,
-    };
+      const aiResponse: Message = {
+        id: `msg-${Date.now() + 1}`,
+        role: 'assistant',
+        content: result.data.message.content,
+        timestamp: new Date(),
+        persona: selectedPersona,
+      };
 
-    setMessages((prev) => [...prev, aiResponse]);
-    setIsLoading(false);
+      setMessages((prev) => [...prev, aiResponse]);
+    } catch {
+      const fallbackResponse: Message = {
+        id: `msg-${Date.now() + 1}`,
+        role: 'assistant',
+        content: 'I\'m having trouble connecting right now. Please try again in a moment.',
+        timestamp: new Date(),
+        persona: selectedPersona,
+      };
+      setMessages((prev) => [...prev, fallbackResponse]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleQuickPrompt = (prompt: string) => {

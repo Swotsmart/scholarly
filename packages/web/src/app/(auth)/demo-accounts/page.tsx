@@ -97,7 +97,7 @@ const accessUrls = {
     description: 'Web Frontend (Next.js)',
   },
   api: {
-    local: 'http://localhost:3002',
+    local: 'http://localhost:3001',
     description: 'API Server (Express)',
   },
 };
