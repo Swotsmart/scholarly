@@ -307,7 +307,11 @@ export default function EarlyYearsPage() {
     [audioEnabled, speak],
   );
 
-  // Speak step-specific messages
+  // Visual guidance message — shown as speech bubble even when TTS is blocked
+  const [guidanceMessage, setGuidanceMessage] = useState<string | null>(null);
+  const guidanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Speak step-specific messages (voice + visual)
   useEffect(() => {
     const stepMessages: Record<FlowStep, string | undefined> = {
       loading: AUDIO_MESSAGES.loading,
@@ -322,11 +326,26 @@ export default function EarlyYearsPage() {
 
     const message = stepMessages[currentStep];
     if (message) {
-      // Delay slightly to let animations complete
-      const timer = setTimeout(() => speakMessage(message), 500);
-      return () => clearTimeout(timer);
+      // Show visual speech bubble immediately
+      if (guidanceTimerRef.current) clearTimeout(guidanceTimerRef.current);
+      const showTimer = setTimeout(() => {
+        setGuidanceMessage(message);
+        guidanceTimerRef.current = setTimeout(() => setGuidanceMessage(null), 6000);
+      }, 300);
+
+      // Delay audio slightly to let animations complete
+      const audioTimer = setTimeout(() => speakMessage(message), 500);
+      return () => {
+        clearTimeout(showTimer);
+        clearTimeout(audioTimer);
+      };
     }
   }, [currentStep, speakMessage]);
+
+  // Cleanup guidance timer
+  useEffect(() => {
+    return () => { if (guidanceTimerRef.current) clearTimeout(guidanceTimerRef.current); };
+  }, []);
 
   // Load family on mount
   useEffect(() => {
@@ -434,6 +453,27 @@ export default function EarlyYearsPage() {
     speakMessage(action.audio);
     router.push(action.path);
   };
+
+  // Unlock audio on first user interaction (Safari blocks SpeechSynthesis without gesture)
+  const audioUnlockedRef = useRef(false);
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (audioUnlockedRef.current) return;
+      audioUnlockedRef.current = true;
+      // Trigger a silent utterance to unlock Safari's SpeechSynthesis
+      if ('speechSynthesis' in window) {
+        const silent = new SpeechSynthesisUtterance('');
+        silent.volume = 0;
+        window.speechSynthesis.speak(silent);
+      }
+    };
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
 
   const toggleAudio = () => {
     if (audioEnabled) {
@@ -555,6 +595,33 @@ export default function EarlyYearsPage() {
 
       {/* Main Content */}
       <main className="pt-16 min-h-screen">
+        {/* Voice guidance speech bubble — always visible even when TTS/audio is blocked by Safari autoplay */}
+        <AnimatePresence mode="wait">
+          {guidanceMessage && (
+            <motion.div
+              key={guidanceMessage}
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -5, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="max-w-lg mx-auto px-4 pt-4"
+            >
+              <div className="bg-white/90 backdrop-blur-sm border-2 border-purple-300 rounded-2xl px-5 py-3 shadow-lg relative">
+                <div className="flex items-center gap-3">
+                  <motion.span
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="text-2xl shrink-0"
+                  >
+                    🦉
+                  </motion.span>
+                  <p className="text-lg text-purple-800 font-semibold">{guidanceMessage}</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <AnimatePresence mode="wait">
           {/* Loading State - Child-friendly with animated character */}
           {currentStep === 'loading' && (

@@ -22,6 +22,32 @@ interface PicturePasswordProps {
   onSpeak?: (message: string) => void;
 }
 
+/**
+ * Visual speech bubble — shows guidance text so children always see instructions,
+ * even when TTS audio is blocked by Safari autoplay or the API is unavailable.
+ * Critical for pre-literate Early Years pedagogy.
+ */
+function SpeechBubble({ message }: { message: string | null }) {
+  return (
+    <AnimatePresence mode="wait">
+      {message && (
+        <motion.div
+          key={message}
+          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -5, scale: 0.95 }}
+          transition={{ duration: 0.3 }}
+          className="bg-purple-100 border-2 border-purple-300 rounded-2xl px-5 py-3 mb-4 max-w-lg mx-auto relative"
+        >
+          <p className="text-lg text-purple-800 font-semibold text-center">{message}</p>
+          {/* Speech bubble tail */}
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-purple-100 border-b-2 border-r-2 border-purple-300 rotate-45" />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 export function PicturePassword({
   childId,
   childName,
@@ -34,6 +60,8 @@ export function PicturePassword({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [guidanceMessage, setGuidanceMessage] = useState<string | null>(null);
+  const guidanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const pictureSequence = usePicturePassword();
   const {
@@ -48,11 +76,23 @@ export function PicturePassword({
   const minImages = 3;
   const maxImages = 6;
 
-  // Voice guidance helper — safe to call even if onSpeak not provided
+  // Voice + visual guidance helper — shows speech bubble AND speaks via TTS
   const speak = useCallback(
-    (message: string) => { onSpeak?.(message); },
+    (message: string) => {
+      // Always show visual speech bubble (critical — TTS may be blocked by Safari autoplay)
+      setGuidanceMessage(message);
+      if (guidanceTimerRef.current) clearTimeout(guidanceTimerRef.current);
+      guidanceTimerRef.current = setTimeout(() => setGuidanceMessage(null), 5000);
+      // Also fire TTS audio
+      onSpeak?.(message);
+    },
     [onSpeak],
   );
+
+  // Cleanup guidance timer on unmount
+  useEffect(() => {
+    return () => { if (guidanceTimerRef.current) clearTimeout(guidanceTimerRef.current); };
+  }, []);
 
   // Track previous sequence length for milestone detection
   const prevLengthRef = useRef(0);
@@ -197,6 +237,9 @@ export function PicturePassword({
             : 'Tap the pictures in the right order'}
         </p>
       </div>
+
+      {/* Voice guidance speech bubble — always visible even when TTS is blocked */}
+      <SpeechBubble message={guidanceMessage} />
 
       {/* Selected Pictures Display */}
       <div className="bg-white rounded-2xl shadow-lg p-4 mb-6">

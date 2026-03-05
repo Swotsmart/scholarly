@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +44,7 @@ const FALLBACK: TutorDisplay[] = [
 const SUBJECTS = ['All Subjects', 'Mathematics', 'English', 'Science', 'Languages', 'Music', 'Arts'];
 
 export default function ParentTutoringSearchPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('All Subjects');
   const [tutors, setTutors] = useState<TutorDisplay[] | null>(null);
@@ -134,9 +136,9 @@ export default function ParentTutoringSearchPage() {
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{t.availability}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-4">
-                    <Button>Book Session</Button>
-                    <Button variant="outline">View Profile</Button>
-                    <Button variant="ghost">Message</Button>
+                    <Button onClick={() => router.push(`/tutoring/book?tutorId=${t.id}`)}>Book Session</Button>
+                    <Button variant="outline" onClick={() => router.push(`/tutoring/${t.id}`)}>View Profile</Button>
+                    <Button variant="ghost" onClick={() => router.push(`/parent/messages/tutors`)}>Message</Button>
                   </div>
                 </div>
               </div>

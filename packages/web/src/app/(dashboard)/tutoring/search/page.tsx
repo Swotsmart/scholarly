@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -73,7 +74,9 @@ const tutors = [
 ];
 
 export default function TutorSearchPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -95,15 +98,52 @@ export default function TutorSearchPage() {
             className="pl-10"
           />
         </div>
-        <Button variant="outline">
+        <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
           <Filter className="mr-2 h-4 w-4" />
           Filters
         </Button>
       </div>
 
+      {/* Filter Panel */}
+      {showFilters && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <p className="text-sm font-medium mb-2">Subject</p>
+                <div className="flex flex-wrap gap-2">
+                  {['Mathematics', 'Physics', 'Chemistry', 'English', 'Literature'].map((s) => (
+                    <Badge key={s} variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">{s}</Badge>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-2">Year Level</p>
+                <div className="flex flex-wrap gap-2">
+                  {['Year 7-9', 'Year 10-12', 'University'].map((l) => (
+                    <Badge key={l} variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">{l}</Badge>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-2">Price Range</p>
+                <div className="flex flex-wrap gap-2">
+                  {['Under $50', '$50-$75', '$75+'].map((p) => (
+                    <Badge key={p} variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">{p}</Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Tutor Cards */}
       <div className="space-y-4">
-        {tutors.map((tutor) => (
+        {tutors.filter((tutor) =>
+          !searchQuery || tutor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          tutor.subjects.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()))
+        ).map((tutor) => (
           <Card key={tutor.id}>
             <CardContent className="p-6">
               <div className="flex gap-6">
@@ -169,8 +209,8 @@ export default function TutorSearchPage() {
                       Available: {tutor.availability}
                     </p>
                     <div className="flex gap-2">
-                      <Button variant="outline">View Profile</Button>
-                      <Button>Book Session</Button>
+                      <Button variant="outline" onClick={() => router.push(`/tutoring/${tutor.id}`)}>View Profile</Button>
+                      <Button onClick={() => router.push(`/tutoring/book?tutorId=${tutor.id}`)}>Book Session</Button>
                     </div>
                   </div>
                 </div>
