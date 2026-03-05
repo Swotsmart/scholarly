@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,8 +35,6 @@ import {
   AlertCircle,
   Sparkles,
   Wand2,
-  MessageSquare,
-  Zap,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -73,14 +72,23 @@ interface ServiceHealth {
 // Constants
 // =============================================================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const normalizedApiUrl = rawApiUrl.replace(/\/$/, '');
+const API_BASE_URL = normalizedApiUrl.endsWith('/api/v1')
+  ? normalizedApiUrl
+  : `${normalizedApiUrl}/api/v1`;
 
 // =============================================================================
 // Page Component
 // =============================================================================
 
+const VALID_TABS = ['tts', 'voices', 'cloning', 'pronunciation', 'api'] as const;
+
 export default function VoiceIntelligencePage() {
   const { accessToken } = useAuthStore();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const defaultTab = VALID_TABS.includes(tabParam as any) ? tabParam! : 'tts';
 
   // Service health
   const [health, setHealth] = useState<ServiceHealth>({ status: 'checking' });
@@ -106,7 +114,7 @@ export default function VoiceIntelligencePage() {
   const [pronText, setPronText] = useState('The quick brown fox jumps over the lazy dog.');
   const [pronLanguage, setPronLanguage] = useState('en');
   const [isRecording, setIsRecording] = useState(false);
-  const [pronResult, setPronResult] = useState<any>(null);
+  const [pronResult] = useState<any>(null);
 
   // Voice cloning
   const [cloneName, setCloneName] = useState('');
@@ -114,12 +122,6 @@ export default function VoiceIntelligencePage() {
   const [cloneProvider, setCloneProvider] = useState<'chatterbox' | 'kokoro'>('chatterbox');
   const [cloneLoading, setCloneLoading] = useState(false);
   const [cloneResult, setCloneResult] = useState<{ cloneId: string; voiceId: string } | null>(null);
-
-  // Dialogue
-  const [dialogueScript, setDialogueScript] = useState(
-    `Character 1: Hello, how are you today?\nCharacter 2: I'm doing great, thanks for asking!\nCharacter 1: That's wonderful to hear.`
-  );
-  const [dialogueLoading, setDialogueLoading] = useState(false);
 
   // UI
   const [error, setError] = useState<string | null>(null);
@@ -136,11 +138,19 @@ export default function VoiceIntelligencePage() {
     }
   }, [accessToken]);
 
+  // Revoke blob URL on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+    };
+  }, [audioUrl]);
+
   // ---------------------------------------------------------------------------
   // API Calls
   // ---------------------------------------------------------------------------
 
   const checkHealth = async () => {
+    if (!accessToken) return;
     setHealth({ status: 'checking' });
     try {
       const start = Date.now();
@@ -201,6 +211,9 @@ export default function VoiceIntelligencePage() {
       if (res.ok) {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
+        if (audioUrl) {
+          URL.revokeObjectURL(audioUrl);
+        }
         setAudioUrl(url);
         if (audioRef.current) {
           audioRef.current.src = url;
@@ -338,7 +351,7 @@ const audioBlob = await response.blob();`;
               <span className="text-muted-foreground font-normal">({health.latencyMs}ms)</span>
             )}
           </div>
-          <Button variant="outline" size="sm" onClick={checkHealth}>
+          <Button variant="outline" size="sm" onClick={checkHealth} disabled={!accessToken}>
             <RefreshCw className="h-4 w-4 mr-1.5" />
             Refresh
           </Button>
@@ -378,7 +391,7 @@ const audioBlob = await response.blob();`;
       />
 
       {/* ── Tabs ── */}
-      <Tabs defaultValue="tts" className="space-y-6">
+      <Tabs defaultValue={defaultTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="tts" className="flex items-center gap-1.5">
             <Volume2 className="h-4 w-4" />

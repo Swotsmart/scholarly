@@ -193,10 +193,10 @@ export const taskRegistry: Record<string, RegisteredTask> = {
     cluster: 'voice',
     description: 'Self-hosted TTS, STT, pronunciation assessment, and voice cloning',
     children: [
-      { name: 'Text-to-Speech', href: '/voice-intelligence', icon: Volume2 },
-      { name: 'Voice Library', href: '/voice-intelligence', icon: Users },
-      { name: 'Voice Cloning', href: '/voice-intelligence', icon: Wand2 },
-      { name: 'Pronunciation', href: '/voice-intelligence', icon: Mic },
+      { name: 'Text-to-Speech', href: '/voice-intelligence?tab=tts', icon: Volume2 },
+      { name: 'Voice Library', href: '/voice-intelligence?tab=voices', icon: Users },
+      { name: 'Voice Cloning', href: '/voice-intelligence?tab=cloning', icon: Wand2 },
+      { name: 'Pronunciation', href: '/voice-intelligence?tab=pronunciation', icon: Mic },
     ],
   },
 
