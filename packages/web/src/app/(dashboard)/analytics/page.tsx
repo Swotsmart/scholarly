@@ -67,6 +67,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
+import { useTeacher } from '@/hooks/use-teacher';
 
 // Types
 interface MetricCard {
@@ -141,7 +142,7 @@ const pieChartData = [
   { name: 'Needs Support', value: 10, color: '#ef4444' },
 ];
 
-// Metric cards data
+// Metric cards data — values may be overridden with real API data at render time
 const METRIC_CARDS: MetricCard[] = [
   {
     id: 'total-students',
@@ -242,6 +243,10 @@ export default function AnalyticsPage() {
   const [subject, setSubject] = useState('all');
   const [activeTab, setActiveTab] = useState('overview');
   const [drillDownData, setDrillDownData] = useState<DrillDownData | null>(null);
+
+  // Fetch real analytics data — overlay onto static charts as data becomes available
+  const { data: teacherData } = useTeacher({ page: 'analytics' });
+  const overview = teacherData?.analytics?.data?.overview;
 
   // Handle metric card click for drill-down
   const handleMetricClick = (metric: MetricCard) => {
@@ -427,6 +432,13 @@ export default function AnalyticsPage() {
       <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {METRIC_CARDS.map((metric) => {
           const Icon = metric.icon;
+          // Overlay real analytics data when available
+          const liveValue = overview ? ({
+            'total-students': overview.totalStudents?.toLocaleString(),
+            'completion-rate': `${overview.averagePerformance}%`,
+            'daily-active': `${overview.engagementScore}%`,
+          } as Record<string, string>)[metric.id] : undefined;
+          const displayValue = liveValue ?? metric.value;
           return (
             <Card
               key={metric.id}
@@ -437,7 +449,7 @@ export default function AnalyticsPage() {
                 <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center mb-3', metric.color)}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <div className="text-2xl font-bold">{metric.value}</div>
+                <div className="text-2xl font-bold">{displayValue}</div>
                 <div className="text-sm text-muted-foreground">{metric.title}</div>
                 <div className="flex items-center gap-1 mt-2">
                   {metric.change >= 0 ? (

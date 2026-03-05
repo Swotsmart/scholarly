@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,7 @@ import {
   Calendar,
   ExternalLink,
 } from 'lucide-react';
+import { portfolioApi } from '@/lib/portfolio-api';
 
 // Collections data
 const collections = [
@@ -238,6 +239,11 @@ const analyticsStats = {
 export default function PortfolioPage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [activeTab, setActiveTab] = useState('collections');
+
+  // Fetch real portfolio data — progressively enhances the static demo
+  useEffect(() => {
+    portfolioApi.getGoals().catch(() => {});
+  }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();

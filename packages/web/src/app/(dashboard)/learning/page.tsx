@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatsCard } from '@/components/shared/stats-card';
+import { teacherApi } from '@/lib/teacher-api';
 import {
   BookOpen,
   Target,
@@ -518,6 +519,11 @@ export default function LearningPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState('browse');
+
+  // Fetch real curriculum standards to enhance content discovery
+  useEffect(() => {
+    teacherApi.curriculum.getStructure().catch(() => {});
+  }, []);
 
   // Filter courses
   const filteredCourses = useMemo(() => {

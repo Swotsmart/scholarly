@@ -127,8 +127,27 @@ export class PrismaWorkflowStore implements WorkflowStore {
 /**
  * Prisma-backed workflow run store
  */
+
+function parseRunError(raw: unknown): { nodeId: string; message: string } | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const obj = raw as Record<string, unknown>;
+  if (typeof obj.nodeId === 'string' && typeof obj.message === 'string') {
+    return { nodeId: obj.nodeId, message: obj.message };
+  }
+  return undefined;
+}
+
 export class PrismaRunStore implements WorkflowRunStore {
   async save(run: WorkflowRun): Promise<void> {
+    const tenantId = run.tenantId;
+    if (!tenantId) {
+      logger.error('PrismaRunStore.save called without tenantId', {
+        runId: run.runId,
+        workflowId: run.workflowId,
+      });
+      throw new Error('tenantId is required to save a workflow run');
+    }
+
     await prisma.sRWorkflowRun.upsert({
       where: { runId: run.runId },
       create: {
@@ -175,7 +194,7 @@ export class PrismaRunStore implements WorkflowRunStore {
       nodeRuns: (row.nodeRuns as any[]) || [],
       portData: new Map(Object.entries((row.portData as Record<string, any>) || {})),
       timeline: (row.timeline as any[]) || [],
-      error: row.error ? JSON.parse(row.error) : undefined,
+      error: row.error ? parseRunError(JSON.parse(row.error)) : undefined,
       durationMs: row.durationMs,
       pausedAtNodeId: row.pausedAtNodeId ?? undefined,
       startedAt: row.startedAt,
@@ -216,7 +235,7 @@ export class PrismaRunStore implements WorkflowRunStore {
       nodeRuns: (row.nodeRuns as any[]) || [],
       portData: new Map(Object.entries((row.portData as Record<string, any>) || {})),
       timeline: (row.timeline as any[]) || [],
-      error: row.error ? JSON.parse(row.error) : undefined,
+      error: row.error ? parseRunError(JSON.parse(row.error)) : undefined,
       durationMs: row.durationMs,
       pausedAtNodeId: row.pausedAtNodeId ?? undefined,
       startedAt: row.startedAt,

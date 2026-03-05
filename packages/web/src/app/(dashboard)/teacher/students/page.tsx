@@ -47,7 +47,7 @@ export default function TeacherStudentsPage() {
     const params = new URLSearchParams({ role: 'learner', page: String(page), pageSize: '20' });
     if (search.trim()) params.set('search', search.trim());
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}/api/v1/users?${params}`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/users?${params}`, {
       credentials: 'include',
     })
       .then(r => { if (!r.ok) throw new Error(`Failed (${r.status})`); return r.json(); })

@@ -104,6 +104,7 @@ class MetricsRegistry {
           output.push(`${entry.name}_bucket{${infLabels}} ${entry.bucketCounts[HISTOGRAM_BUCKETS.length]}`);
           output.push(`${entry.name}_sum${labelStr ? `{${labelStr}}` : ''} ${entry.histogramSum}`);
           output.push(`${entry.name}_count${labelStr ? `{${labelStr}}` : ''} ${entry.value}`);
+
         } else {
           output.push(`${entry.name}${labelStr ? `{${labelStr}}` : ''} ${entry.value}`);
         }

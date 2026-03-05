@@ -71,8 +71,8 @@ test.describe('Dashboard Page Navigation — Zero 404 Guarantee', () => {
 
       await page.goto(route.path, { waitUntil: 'domcontentloaded' });
 
-      // Wait briefly for content
-      await page.waitForTimeout(2000);
+      // Wait for page content to render (deterministic wait for navigation elements)
+      await page.locator('[data-testid="sidebar"], nav, [role="navigation"], aside, form').first().waitFor({ timeout: 10000 }).catch(() => {});
 
       // Page should not show a raw 404 message
       const body = await page.textContent('body');

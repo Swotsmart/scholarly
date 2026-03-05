@@ -59,7 +59,7 @@ export default function StudentDetailPage() {
 
     // Fetch student profile + all AI data in parallel
     Promise.allSettled([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}/api/v1/users/${id}`, { credentials: 'include' }).then(r => r.json()),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/v1/users/${id}`, { credentials: 'include' }).then(r => r.json()),
       teacherApi.ai.getLearnerMastery(id),
       teacherApi.ai.getLearnerFeatures(id),
       teacherApi.ai.getLearnerPredictions(id),

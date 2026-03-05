@@ -36,7 +36,8 @@ import {
   Sparkles,
   Bell,
 } from 'lucide-react';
-import { children, weeklySchedule, subjects, resources } from '@/lib/homeschool-api';
+import { children as staticChildren, weeklySchedule, subjects as staticSubjects, resources as staticResources } from '@/lib/homeschool-api';
+import { useHomeschool } from '@/hooks/use-homeschool';
 
 // Compliance data
 const complianceItems = [
@@ -137,6 +138,21 @@ const statusStyles: Record<string, { bg: string; text: string; label: string }> 
 
 export default function HomeschoolPage() {
   const [activeTab, setActiveTab] = useState('overview');
+  const { family, coops, excursions, matches, isLoading } = useHomeschool();
+
+  // Use API data with fallback to static data for progressive integration
+  const children = family?.children?.map(c => ({
+    id: c.id,
+    name: c.name,
+    age: c.age,
+    yearLevel: c.yearLevel,
+    avatar: c.name.charAt(0),
+    subjects: c.subjects?.map((s: { name: string }) => s.name) ?? [],
+    overallProgress: c.overallProgress ?? 0,
+  })) ?? staticChildren;
+
+  const subjects = staticSubjects;
+  const resources = staticResources;
 
   // Calculate stats
   const totalSubjects = subjects.length;
@@ -683,7 +699,15 @@ export default function HomeschoolPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {communityInvitations.map((invitation) => (
+              {(coops?.items ? coops.items.map((coop) => ({
+                id: coop.id,
+                familyName: coop.name,
+                location: coop.primaryLocation?.label ?? '',
+                philosophy: coop.philosophy,
+                childrenAges: coop.ageRange ? [coop.ageRange.min, coop.ageRange.max] : [],
+                message: coop.description,
+                avatar: coop.name.split(' ').map(w => w[0]).join('').slice(0, 2),
+              })) : communityInvitations).map((invitation) => (
                 <div
                   key={invitation.id}
                   className="flex items-start gap-4 rounded-lg border p-4"
@@ -739,7 +763,14 @@ export default function HomeschoolPage() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
-                {localFamilies.map((family) => (
+                {(matches ? matches.map((m) => ({
+                  id: m.familyId,
+                  name: m.familyName,
+                  location: m.location,
+                  childrenCount: m.childrenCount,
+                  philosophy: m.educationalApproach,
+                  interests: m.matchReasons,
+                })) : localFamilies).map((family) => (
                   <Card key={family.id} className="overflow-hidden">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
