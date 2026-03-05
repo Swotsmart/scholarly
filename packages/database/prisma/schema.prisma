@@ -170,6 +170,9 @@ model Tenant {
   // Tutor Onboarding
   onboardingSessions OnboardingSession[]
 
+  // S&R Canvas Workflows
+  srWorkflows SRWorkflow[]
+
   @@index([slug])
   @@index([status])
   @@index([deletedAt])
@@ -7012,4 +7015,54 @@ model MigrationContentItem {
   @@index([migrationId])
   @@index([migrationId, status])
   @@index([migrationId, sourceType])
+}
+
+// ============================================================================
+// S&R CANVAS PERSISTENCE (replaces InMemory stores)
+// ============================================================================
+
+model SRWorkflow {
+  id          String   @id @default(cuid())
+  workflowId  String
+  tenantId    String
+  name        String
+  description String   @default("")
+  version     Int      @default(1)
+  definition  Json
+  createdBy   String
+  tags        String[] @default([])
+  isDeleted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  runs        SRWorkflowRun[]
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([workflowId, tenantId])
+  @@index([tenantId, isDeleted, updatedAt])
+  @@index([tenantId, tags])
+}
+
+model SRWorkflowRun {
+  id             String    @id @default(cuid())
+  runId          String    @unique
+  workflowId     String
+  tenantId       String
+  triggeredBy    String    @default("")
+  status         String    @default("pending")
+  nodeRuns       Json      @default("[]")
+  portData       Json      @default("{}")
+  timeline       Json      @default("[]")
+  error          String?
+  durationMs     Int       @default(0)
+  pausedAtNodeId String?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  workflow     SRWorkflow @relation(fields: [workflowId, tenantId], references: [workflowId, tenantId])
+
+  @@index([workflowId, tenantId])
+  @@index([tenantId, status])
 }

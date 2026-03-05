@@ -15,6 +15,13 @@ import rateLimit from 'express-rate-limit';
 import { prisma } from '@scholarly/database';
 import { logger } from './lib/logger';
 
+// Hardening middleware
+import { correlationIdMiddleware } from './middleware/request-id';
+import { healthRouter } from './middleware/health';
+import { metricsMiddleware, metricsRouter } from './middleware/metrics';
+import { swaggerRouter } from './middleware/swagger';
+import { auditMiddleware } from './middleware/audit';
+
 // Routes
 import { authRouter } from './routes/auth';
 import { usersRouter } from './routes/users';
@@ -70,10 +77,10 @@ import {
   WorkflowRunner,
 } from './services/sr/sr-workflow-engine';
 import {
-  InMemoryWorkflowStore,
-  InMemoryRunStore,
-  InMemoryEventBus,
-} from './services/sr/sr-api-gateway';
+  PrismaWorkflowStore,
+  PrismaRunStore,
+  PersistentEventBus,
+} from './services/sr/sr-prisma-stores';
 import { registerMigrationNodes } from './services/sr/sr-migration-workflow-template';
 import { registerCompetitionNodes } from './services/sr/sr-competition-workflow-template';
 
@@ -87,13 +94,36 @@ import { initializeTutorOnboarding } from './services/tutor-onboarding/bootstrap
 import { initializeKeys } from './config/keys';
 
 const app: Application = express();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3001;
 
 // Trust proxy when behind a reverse proxy (Azure Container Apps, nginx, etc.)
 app.set('trust proxy', 1);
 
+// Correlation ID — must be first for tracing
+app.use(correlationIdMiddleware);
+
+// Metrics collection
+app.use(metricsMiddleware);
+
 // Global middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'"],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
+}));
 
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
   .split(',')
@@ -119,15 +149,15 @@ app.use((_req, res, next) => {
 });
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// Health check
-app.get('/health', async (_req, res) => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
-  } catch (error) {
-    res.status(503).json({ status: 'unhealthy', error: 'Database connection failed' });
-  }
-});
+// Health & monitoring endpoints (unauthenticated)
+app.use(healthRouter);
+app.use(metricsRouter);
+
+// API documentation
+app.use('/api/docs', swaggerRouter);
+
+// Audit middleware — captures mutations for compliance
+app.use(auditMiddleware);
 
 // Auth rate limiter: only applies to login/register, NOT to /me or /refresh
 const authRateLimiter = rateLimit({
@@ -200,8 +230,14 @@ app.use('/api/v1', api);
 app.use(errorHandler);
 
 // 404 handler
-app.use((_req, res) => {
-  res.status(404).json({ error: 'Not found' });
+app.use((req, res) => {
+  logger.warn({ method: req.method, path: req.path, ip: req.ip }, '404 Not Found');
+  res.status(404).json({
+    error: 'Not found',
+    path: req.path,
+    method: req.method,
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Start server
@@ -228,9 +264,9 @@ async function start() {
     registerMigrationNodes(srRegistry);
     registerCompetitionNodes(srRegistry);
 
-    const srEventBus = new InMemoryEventBus();
-    const srWorkflowStore = new InMemoryWorkflowStore();
-    const srRunStore = new InMemoryRunStore();
+    const srEventBus = new PersistentEventBus();
+    const srWorkflowStore = new PrismaWorkflowStore();
+    const srRunStore = new PrismaRunStore();
 
     const srServices: import('./services/sr/sr-workflow-engine').WorkflowServices = {
       eventBus: srEventBus,
@@ -272,18 +308,55 @@ async function start() {
   }
 }
 
-// Graceful shutdown
+// Graceful shutdown with 30-second timeout
+let isShuttingDown = false;
+
 async function shutdown(signal: string) {
-  logger.info({ signal }, 'Shutdown signal received, shutting down...');
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  logger.info({ signal }, 'Shutdown signal received, beginning graceful shutdown...');
+
+  // Stop accepting new connections
   server.close(async () => {
-    await prisma.$disconnect().catch(() => {});
-    process.exit(0);
+    logger.info('HTTP server closed, cleaning up resources...');
+
+    try {
+      // Close Redis connections (rate limiter)
+      const { closeRateLimitRedis } = await import('./middleware/rate-limit');
+      await closeRateLimitRedis().catch(() => {});
+
+      // Disconnect database
+      await prisma.$disconnect().catch(() => {});
+
+      // Flush any pending metrics/telemetry
+      logger.info('All resources cleaned up, exiting.');
+      process.exit(0);
+    } catch (error) {
+      logger.error({ err: error }, 'Error during cleanup');
+      process.exit(1);
+    }
   });
-  // Force exit after 10s if graceful shutdown hangs
-  setTimeout(() => process.exit(1), 10000);
+
+  // Force exit after 30s if graceful shutdown hangs
+  setTimeout(() => {
+    logger.error('Graceful shutdown timed out after 30s, forcing exit');
+    process.exit(1);
+  }, 30000).unref();
 }
+
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
+
+// Handle uncaught exceptions and unhandled rejections
+process.on('uncaughtException', (error) => {
+  logger.fatal({ err: error }, 'Uncaught exception — shutting down');
+  shutdown('uncaughtException');
+});
+
+process.on('unhandledRejection', (reason) => {
+  logger.error({ err: reason }, 'Unhandled rejection');
+});
 
 start();
 
