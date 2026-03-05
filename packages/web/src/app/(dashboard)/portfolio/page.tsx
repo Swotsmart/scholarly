@@ -242,7 +242,6 @@ export default function PortfolioPage() {
 
   // Fetch real portfolio data — progressively enhances the static demo
   useEffect(() => {
-    portfolioApi.getCollections().catch(() => {});
     portfolioApi.getGoals().catch(() => {});
   }, []);
 
