@@ -15,8 +15,13 @@ interface MetricEntry {
   labels: Record<string, string>;
   value: number;
   buckets?: number[];
-  observations?: number[];
+  // Pre-computed bucket counters for histograms (avoids unbounded array growth)
+  bucketCounts?: number[];
+  histogramSum?: number;
+  histogramCount?: number;
 }
+
+const DEFAULT_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
 
 class MetricsRegistry {
   private metrics = new Map<string, MetricEntry[]>();
@@ -45,17 +50,32 @@ class MetricsRegistry {
     const key = this.getKey(name, labels);
     const existing = this.metrics.get(key);
     if (existing && existing.length > 0) {
-      if (!existing[0].observations) existing[0].observations = [];
-      existing[0].observations.push(value);
-      existing[0].value = existing[0].observations.length;
+      const entry = existing[0];
+      // Increment pre-computed bucket counters in-place
+      for (let i = 0; i < DEFAULT_BUCKETS.length; i++) {
+        if (value <= DEFAULT_BUCKETS[i]) {
+          entry.bucketCounts![i]++;
+        }
+      }
+      entry.histogramSum! += value;
+      entry.histogramCount! += 1;
+      entry.value = entry.histogramCount!;
     } else {
+      const bucketCounts = new Array(DEFAULT_BUCKETS.length).fill(0);
+      for (let i = 0; i < DEFAULT_BUCKETS.length; i++) {
+        if (value <= DEFAULT_BUCKETS[i]) {
+          bucketCounts[i] = 1;
+        }
+      }
       this.metrics.set(key, [{
         name,
         type: 'histogram',
         help,
         labels,
         value: 1,
-        observations: [value],
+        bucketCounts,
+        histogramSum: value,
+        histogramCount: 1,
       }]);
     }
   }
@@ -76,20 +96,17 @@ class MetricsRegistry {
           .map(([k, v]) => `${k}="${v}"`)
           .join(',');
 
-        if (entry.type === 'histogram' && entry.observations) {
-          const sorted = [...entry.observations].sort((a, b) => a - b);
-          const buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
-          const sum = sorted.reduce((a, b) => a + b, 0);
+        if (entry.type === 'histogram' && entry.bucketCounts) {
+          const buckets = DEFAULT_BUCKETS;
 
-          for (const bucket of buckets) {
-            const count = sorted.filter(v => v <= bucket).length;
-            const bucketLabels = labelStr ? `${labelStr},le="${bucket}"` : `le="${bucket}"`;
-            output.push(`${entry.name}_bucket{${bucketLabels}} ${count}`);
+          for (let i = 0; i < buckets.length; i++) {
+            const bucketLabels = labelStr ? `${labelStr},le="${buckets[i]}"` : `le="${buckets[i]}"`;
+            output.push(`${entry.name}_bucket{${bucketLabels}} ${entry.bucketCounts[i]}`);
           }
           const infLabels = labelStr ? `${labelStr},le="+Inf"` : `le="+Inf"`;
-          output.push(`${entry.name}_bucket{${infLabels}} ${sorted.length}`);
-          output.push(`${entry.name}_sum${labelStr ? `{${labelStr}}` : ''} ${sum}`);
-          output.push(`${entry.name}_count${labelStr ? `{${labelStr}}` : ''} ${sorted.length}`);
+          output.push(`${entry.name}_bucket{${infLabels}} ${entry.histogramCount}`);
+          output.push(`${entry.name}_sum${labelStr ? `{${labelStr}}` : ''} ${entry.histogramSum}`);
+          output.push(`${entry.name}_count${labelStr ? `{${labelStr}}` : ''} ${entry.histogramCount}`);
         } else {
           output.push(`${entry.name}${labelStr ? `{${labelStr}}` : ''} ${entry.value}`);
         }

@@ -132,7 +132,11 @@ test.describe('Error Sanitization', () => {
 
 test.describe('Rate Limiting', () => {
   test('Auth endpoint rate limits after excessive attempts', async () => {
-    const ctx = await request.newContext({ baseURL: API_URL });
+    // Use a unique context to isolate rate-limit state
+    const ctx = await request.newContext({
+      baseURL: API_URL,
+      extraHTTPHeaders: { 'X-Forwarded-For': `rate-limit-test-${Date.now()}` },
+    });
     let rateLimited = false;
 
     // Make many rapid requests

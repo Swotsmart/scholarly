@@ -15,6 +15,33 @@ import { logger } from '../lib/logger';
 
 const healthRouter = Router();
 
+// Cached Redis client for health checks (avoids creating a new connection per request)
+let redisClient: any = null;
+let redisClientReady = false;
+
+async function getRedisClient() {
+  if (redisClient && redisClientReady) return redisClient;
+  if (redisClient) {
+    // Client exists but not ready — wait for it or return null
+    return null;
+  }
+  if (!process.env.REDIS_URL) return null;
+  try {
+    const { createClient } = await import('redis');
+    const client = createClient({ url: process.env.REDIS_URL });
+    client.on('error', () => { redisClientReady = false; });
+    client.on('ready', () => { redisClientReady = true; });
+    await client.connect();
+    redisClient = client;
+    redisClientReady = true;
+    return redisClient;
+  } catch {
+    redisClient = null;
+    redisClientReady = false;
+    return null;
+  }
+}
+
 interface DependencyHealth {
   status: 'healthy' | 'degraded' | 'unhealthy';
   latencyMs: number;
@@ -41,13 +68,16 @@ async function checkRedis(): Promise<DependencyHealth> {
   }
   const start = Date.now();
   try {
-    const { createClient } = await import('redis');
-    const client = createClient({ url: process.env.REDIS_URL });
-    await client.connect();
+    const client = await getRedisClient();
+    if (!client) {
+      return { status: 'unhealthy', latencyMs: Date.now() - start, details: { error: 'Failed to create Redis client' } };
+    }
     await client.ping();
-    await client.disconnect();
     return { status: 'healthy', latencyMs: Date.now() - start };
   } catch (error) {
+    // Reset cached client on failure so it reconnects on next check
+    redisClient = null;
+    redisClientReady = false;
     return {
       status: 'unhealthy',
       latencyMs: Date.now() - start,

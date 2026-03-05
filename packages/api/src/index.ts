@@ -151,10 +151,31 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // Health & monitoring endpoints (unauthenticated)
 app.use(healthRouter);
-app.use(metricsRouter);
 
-// API documentation
-app.use('/api/docs', swaggerRouter);
+// Internal monitoring protection for production
+const internalMonitoringAuth: express.RequestHandler = (req, res, next) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (!isProduction) {
+    return next();
+  }
+
+  const internalKey = process.env.INTERNAL_API_KEY;
+  if (!internalKey) {
+    return res.status(404).end();
+  }
+
+  const providedKey = req.header('x-internal-api-key');
+  if (providedKey && providedKey === internalKey) {
+    return next();
+  }
+
+  return res.status(401).json({ error: 'Unauthorized' });
+};
+
+app.use(internalMonitoringAuth, metricsRouter);
+
+// API documentation (protected in production)
+app.use('/api/docs', internalMonitoringAuth, swaggerRouter);
 
 // Audit middleware — captures mutations for compliance
 app.use(auditMiddleware);

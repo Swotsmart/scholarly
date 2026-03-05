@@ -10,12 +10,12 @@ import { Router, Request, Response } from 'express';
 const swaggerRouter = Router();
 
 function getServerUrl(): string {
-  if (process.env.NODE_ENV === 'production') {
-    return 'https://scholarly-api.bravefield-dce0abaf.australiaeast.azurecontainerapps.io';
+  // Prefer an explicit base URL from environment configuration.
+  if (process.env.API_BASE_URL) {
+    return process.env.API_BASE_URL;
   }
-  if (process.env.NODE_ENV === 'staging') {
-    return 'https://scholarly-staging-api.bravefield-dce0abaf.australiaeast.azurecontainerapps.io';
-  }
+
+  // Fallback to localhost for development or when no base URL is configured.
   return `http://localhost:${process.env.PORT || 3001}`;
 }
 

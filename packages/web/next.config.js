@@ -14,7 +14,7 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   },
   async headers() {
-    return [
+    const securityHeaders = [
       {
         source: '/(.*)',
         headers: [
@@ -26,7 +26,11 @@ const nextConfig = {
           { key: 'X-DNS-Prefetch-Control', value: 'off' },
         ],
       },
-      {
+    ];
+
+    // Only add HSTS in production to avoid breaking local development over HTTP
+    if (process.env.NODE_ENV === 'production') {
+      securityHeaders.push({
         source: '/(.*)',
         headers: [
           {
@@ -34,8 +38,10 @@ const nextConfig = {
             value: 'max-age=31536000; includeSubDomains; preload',
           },
         ],
-      },
-    ];
+      });
+    }
+
+    return securityHeaders;
   },
   async rewrites() {
     return [

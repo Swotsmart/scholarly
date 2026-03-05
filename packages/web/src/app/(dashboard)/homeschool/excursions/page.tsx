@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,7 +43,8 @@ export default function ExcursionsPage() {
 
   useEffect(() => {
     setIsLoading(true);
-    homeschoolApi.getExcursions({ upcoming: tab === 'upcoming' })
+    // Fetch all excursions (not filtered by tab) so stats are always correct
+    homeschoolApi.getExcursions({})
       .then((data) => setExcursions(data.excursions))
       .catch(() => {})
       .finally(() => setIsLoading(false));

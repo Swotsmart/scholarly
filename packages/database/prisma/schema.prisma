@@ -7052,7 +7052,7 @@ model SRWorkflowRun {
   nodeRuns     Json     @default("[]")
   portData     Json     @default("{}")
   timeline     Json     @default("[]")
-  error        String?
+  error        Json?
   startedAt    DateTime @default(now())
   completedAt  DateTime?
   createdAt    DateTime @default(now())
