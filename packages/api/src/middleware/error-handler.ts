@@ -1,15 +1,18 @@
 /**
  * Error Handler Middleware
+ *
+ * Centralized error management with:
+ * - ZodError -> 400 with structured validation details
+ * - ApiError -> proper HTTP status codes
+ * - Prisma errors -> mapped to appropriate responses
+ * - Production error sanitization (no stack traces)
+ * - Metrics integration for exception tracking
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { Prisma, PrismaClient } from '@prisma/client';
 import { logger } from '../lib/logger';
-
-// Create a test client to get runtime types
-const prisma = new PrismaClient();
-type PrismaError = typeof prisma extends { $extends: infer E } ? E : unknown;
+import { registry } from './metrics';
 
 export class ApiError extends Error {
   status: number;
@@ -51,7 +54,15 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ) {
-  logger.error({ err, name: err?.name, status: (err as any)?.statusCode || 500 }, 'Request error');
+  const requestId = (req as any).id || 'unknown';
+
+  logger.error({ err, name: err?.name, status: (err as any)?.statusCode || 500, requestId }, 'Request error');
+
+  // Track error metrics
+  registry.increment('api_errors_total', 'Total API errors', {
+    type: err.constructor.name,
+    path: req.path,
+  });
 
   // Zod validation errors
   if (err instanceof ZodError) {
@@ -104,10 +115,12 @@ export function errorHandler(
     });
   }
 
-  // Default server error
+  // Default server error — sanitize in production (no stack traces)
+  const isProduction = process.env.NODE_ENV === 'production';
   return res.status(500).json({
-    error: process.env.NODE_ENV === 'production'
-      ? 'Internal server error'
-      : err.message,
+    error: isProduction ? 'Internal server error' : err.message,
+    ...(isProduction ? {} : { stack: err.stack }),
+    requestId,
+    timestamp: new Date().toISOString(),
   });
 }
