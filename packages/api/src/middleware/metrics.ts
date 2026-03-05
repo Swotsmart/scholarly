@@ -7,6 +7,9 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 
+// Prometheus histogram bucket boundaries (seconds)
+const HISTOGRAM_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
+
 // Simple metrics registry (no external dependency)
 interface MetricEntry {
   name: string;
@@ -14,8 +17,9 @@ interface MetricEntry {
   help: string;
   labels: Record<string, string>;
   value: number;
-  buckets?: number[];
-  observations?: number[];
+  // Histogram: pre-computed cumulative bucket counts (avoids unbounded observation array)
+  bucketCounts?: number[];
+  histogramSum?: number;
 }
 
 class MetricsRegistry {
@@ -45,17 +49,32 @@ class MetricsRegistry {
     const key = this.getKey(name, labels);
     const existing = this.metrics.get(key);
     if (existing && existing.length > 0) {
-      if (!existing[0].observations) existing[0].observations = [];
-      existing[0].observations.push(value);
-      existing[0].value = existing[0].observations.length;
+      const entry = existing[0];
+      // Increment cumulative bucket counts (O(1) per observation, no unbounded array)
+      for (let i = 0; i < HISTOGRAM_BUCKETS.length; i++) {
+        if (value <= HISTOGRAM_BUCKETS[i]) {
+          entry.bucketCounts![i]++;
+        }
+      }
+      entry.bucketCounts![HISTOGRAM_BUCKETS.length]++; // +Inf bucket
+      entry.histogramSum! += value;
+      entry.value++; // count
     } else {
+      const bucketCounts = new Array(HISTOGRAM_BUCKETS.length + 1).fill(0);
+      for (let i = 0; i < HISTOGRAM_BUCKETS.length; i++) {
+        if (value <= HISTOGRAM_BUCKETS[i]) {
+          bucketCounts[i]++;
+        }
+      }
+      bucketCounts[HISTOGRAM_BUCKETS.length] = 1; // +Inf bucket
       this.metrics.set(key, [{
         name,
         type: 'histogram',
         help,
         labels,
         value: 1,
-        observations: [value],
+        bucketCounts,
+        histogramSum: value,
       }]);
     }
   }
@@ -76,20 +95,15 @@ class MetricsRegistry {
           .map(([k, v]) => `${k}="${v}"`)
           .join(',');
 
-        if (entry.type === 'histogram' && entry.observations) {
-          const sorted = [...entry.observations].sort((a, b) => a - b);
-          const buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10];
-          const sum = sorted.reduce((a, b) => a + b, 0);
-
-          for (const bucket of buckets) {
-            const count = sorted.filter(v => v <= bucket).length;
-            const bucketLabels = labelStr ? `${labelStr},le="${bucket}"` : `le="${bucket}"`;
-            output.push(`${entry.name}_bucket{${bucketLabels}} ${count}`);
+        if (entry.type === 'histogram' && entry.bucketCounts) {
+          for (let i = 0; i < HISTOGRAM_BUCKETS.length; i++) {
+            const bucketLabels = labelStr ? `${labelStr},le="${HISTOGRAM_BUCKETS[i]}"` : `le="${HISTOGRAM_BUCKETS[i]}"`;
+            output.push(`${entry.name}_bucket{${bucketLabels}} ${entry.bucketCounts[i]}`);
           }
           const infLabels = labelStr ? `${labelStr},le="+Inf"` : `le="+Inf"`;
-          output.push(`${entry.name}_bucket{${infLabels}} ${sorted.length}`);
-          output.push(`${entry.name}_sum${labelStr ? `{${labelStr}}` : ''} ${sum}`);
-          output.push(`${entry.name}_count${labelStr ? `{${labelStr}}` : ''} ${sorted.length}`);
+          output.push(`${entry.name}_bucket{${infLabels}} ${entry.bucketCounts[HISTOGRAM_BUCKETS.length]}`);
+          output.push(`${entry.name}_sum${labelStr ? `{${labelStr}}` : ''} ${entry.histogramSum}`);
+          output.push(`${entry.name}_count${labelStr ? `{${labelStr}}` : ''} ${entry.value}`);
         } else {
           output.push(`${entry.name}${labelStr ? `{${labelStr}}` : ''} ${entry.value}`);
         }
@@ -103,6 +117,17 @@ class MetricsRegistry {
 export const registry = new MetricsRegistry();
 
 /**
+ * Normalize path to prevent high cardinality (replace IDs with :id).
+ * Exported for use in error-handler.ts.
+ */
+export function normalizePath(path: string): string {
+  return path
+    .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, '/:id')
+    .replace(/\/c[a-z0-9]{20,30}/g, '/:id')
+    .replace(/\/[0-9]+/g, '/:id');
+}
+
+/**
  * Middleware to collect request metrics
  */
 export function metricsMiddleware(req: Request, res: Response, next: NextFunction): void {
@@ -112,9 +137,12 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
     const durationMs = Number(process.hrtime.bigint() - start) / 1_000_000;
     const durationSec = durationMs / 1000;
 
+    // Use matched route pattern when available; fall back to 'unmatched' to cap cardinality
+    const path = req.route?.path ? normalizePath(req.route.path) : 'unmatched';
+
     const labels = {
       method: req.method,
-      path: normalizePath(req.route?.path || req.path),
+      path,
       status: String(res.statusCode),
     };
 
@@ -127,7 +155,7 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
     registry.observe(
       'http_request_duration_seconds',
       'HTTP request duration in seconds',
-      { method: req.method, path: normalizePath(req.route?.path || req.path) },
+      { method: req.method, path },
       durationSec,
     );
 
@@ -141,16 +169,6 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
   });
 
   next();
-}
-
-/**
- * Normalize path to prevent high cardinality (replace IDs with :id)
- */
-function normalizePath(path: string): string {
-  return path
-    .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, '/:id')
-    .replace(/\/c[a-z0-9]{20,30}/g, '/:id')
-    .replace(/\/[0-9]+/g, '/:id');
 }
 
 /**

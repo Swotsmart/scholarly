@@ -7044,48 +7044,25 @@ model SRWorkflow {
 }
 
 model SRWorkflowRun {
-  id           String   @id @default(cuid())
-  runId        String   @unique
-  workflowId   String
-  tenantId     String
-  status       String   @default("pending")
-  nodeRuns     Json     @default("[]")
-  portData     Json     @default("{}")
-  timeline     Json     @default("[]")
-  error        String?
-  startedAt    DateTime @default(now())
-  completedAt  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String    @id @default(cuid())
+  runId          String    @unique
+  workflowId     String
+  tenantId       String
+  triggeredBy    String    @default("")
+  status         String    @default("pending")
+  nodeRuns       Json      @default("[]")
+  portData       Json      @default("{}")
+  timeline       Json      @default("[]")
+  error          String?
+  durationMs     Int       @default(0)
+  pausedAtNodeId String?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   workflow     SRWorkflow @relation(fields: [workflowId, tenantId], references: [workflowId, tenantId])
 
   @@index([workflowId, tenantId])
   @@index([tenantId, status])
-}
-
-// ============================================================================
-// HEALTH CHECK & METRICS PERSISTENCE
-// ============================================================================
-
-model HealthCheckLog {
-  id        String   @id @default(cuid())
-  service   String
-  status    String
-  latencyMs Int
-  details   Json?
-  checkedAt DateTime @default(now())
-
-  @@index([service, checkedAt])
-  @@index([status, checkedAt])
-}
-
-model MetricsSnapshot {
-  id        String   @id @default(cuid())
-  name      String
-  value     Float
-  labels    Json?
-  timestamp DateTime @default(now())
-
-  @@index([name, timestamp])
 }
