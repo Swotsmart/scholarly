@@ -12,7 +12,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { logger } from '../lib/logger';
-import { registry } from './metrics';
+import { registry, normalizePath } from './metrics';
 
 export class ApiError extends Error {
   status: number;
@@ -50,7 +50,7 @@ export class ApiError extends Error {
 
 export function errorHandler(
   err: Error,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ) {
@@ -58,10 +58,10 @@ export function errorHandler(
 
   logger.error({ err, name: err?.name, status: (err as any)?.statusCode || 500, requestId }, 'Request error');
 
-  // Track error metrics
+  // Track error metrics (normalize path to prevent unbounded cardinality)
   registry.increment('api_errors_total', 'Total API errors', {
     type: err.constructor.name,
-    path: req.path,
+    path: req.route?.path ? normalizePath(req.route.path) : 'unmatched',
   });
 
   // Zod validation errors

@@ -134,12 +134,15 @@ export class PrismaRunStore implements WorkflowRunStore {
       create: {
         runId: run.runId,
         workflowId: run.workflowId,
-        tenantId: (run as any).tenantId || 'default',
+        tenantId: run.tenantId,
+        triggeredBy: run.triggeredBy,
         status: run.status,
         nodeRuns: run.nodeRuns as any,
         portData: Object.fromEntries(run.portData),
         timeline: run.timeline as any,
-        error: run.error,
+        error: run.error ? JSON.stringify(run.error) : null,
+        durationMs: run.durationMs,
+        pausedAtNodeId: run.pausedAtNodeId ?? null,
         startedAt: run.startedAt,
         completedAt: run.completedAt,
       },
@@ -148,7 +151,9 @@ export class PrismaRunStore implements WorkflowRunStore {
         nodeRuns: run.nodeRuns as any,
         portData: Object.fromEntries(run.portData),
         timeline: run.timeline as any,
-        error: run.error,
+        error: run.error ? JSON.stringify(run.error) : null,
+        durationMs: run.durationMs,
+        pausedAtNodeId: run.pausedAtNodeId ?? null,
         completedAt: run.completedAt,
       },
     });
@@ -164,13 +169,17 @@ export class PrismaRunStore implements WorkflowRunStore {
     return {
       runId: row.runId,
       workflowId: row.workflowId,
+      tenantId: row.tenantId,
+      triggeredBy: row.triggeredBy,
       status: row.status as WorkflowRunStatus,
       nodeRuns: (row.nodeRuns as any[]) || [],
       portData: new Map(Object.entries((row.portData as Record<string, any>) || {})),
       timeline: (row.timeline as any[]) || [],
-      error: row.error || undefined,
+      error: row.error ? JSON.parse(row.error) : undefined,
+      durationMs: row.durationMs,
+      pausedAtNodeId: row.pausedAtNodeId ?? undefined,
       startedAt: row.startedAt,
-      completedAt: row.completedAt || undefined,
+      completedAt: row.completedAt ?? undefined,
     };
   }
 
@@ -180,8 +189,10 @@ export class PrismaRunStore implements WorkflowRunStore {
     if (updates.nodeRuns !== undefined) data.nodeRuns = updates.nodeRuns;
     if (updates.portData !== undefined) data.portData = Object.fromEntries(updates.portData);
     if (updates.timeline !== undefined) data.timeline = updates.timeline;
-    if (updates.error !== undefined) data.error = updates.error;
+    if (updates.error !== undefined) data.error = JSON.stringify(updates.error);
     if (updates.completedAt !== undefined) data.completedAt = updates.completedAt;
+    if (updates.durationMs !== undefined) data.durationMs = updates.durationMs;
+    if (updates.pausedAtNodeId !== undefined) data.pausedAtNodeId = updates.pausedAtNodeId ?? null;
 
     await prisma.sRWorkflowRun.update({
       where: { runId },
@@ -199,23 +210,27 @@ export class PrismaRunStore implements WorkflowRunStore {
     return rows.map((row) => ({
       runId: row.runId,
       workflowId: row.workflowId,
+      tenantId: row.tenantId,
+      triggeredBy: row.triggeredBy,
       status: row.status as WorkflowRunStatus,
       nodeRuns: (row.nodeRuns as any[]) || [],
       portData: new Map(Object.entries((row.portData as Record<string, any>) || {})),
       timeline: (row.timeline as any[]) || [],
-      error: row.error || undefined,
+      error: row.error ? JSON.parse(row.error) : undefined,
+      durationMs: row.durationMs,
+      pausedAtNodeId: row.pausedAtNodeId ?? undefined,
       startedAt: row.startedAt,
-      completedAt: row.completedAt || undefined,
+      completedAt: row.completedAt ?? undefined,
     }));
   }
 }
 
 /**
- * Database-backed event bus with in-process pub/sub
+ * In-process event bus
  *
- * Uses in-process handlers for real-time WebSocket streaming
- * while persisting events to the database for audit.
- * For multi-instance deployments, swap this for NATS or Redis pub/sub.
+ * Delivers events to in-process subscribers for real-time WebSocket streaming.
+ * This is purely in-memory pub/sub — no database persistence occurs.
+ * For multi-instance deployments, swap for a NATS or Redis pub/sub implementation.
  */
 export class PersistentEventBus implements EventBus {
   private handlers = new Map<string, Array<(payload: Record<string, unknown>) => void>>();
