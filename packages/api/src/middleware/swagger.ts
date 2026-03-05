@@ -2,7 +2,8 @@
  * OpenAPI/Swagger Documentation
  *
  * Generates OpenAPI 3.0 spec from route definitions.
- * Serves Swagger UI at /api/docs in non-production environments.
+ * Serves Swagger UI at /api/docs in non-production environments only.
+ * In production the endpoints return 404 to avoid exposing internal API details.
  */
 
 import { Router, Request, Response } from 'express';
@@ -342,16 +343,24 @@ const openApiSpec = {
 };
 
 /**
- * GET /api/docs/openapi.json — Raw OpenAPI spec
+ * GET /api/docs/openapi.json — Raw OpenAPI spec (non-production only)
  */
 swaggerRouter.get('/openapi.json', (_req: Request, res: Response) => {
+  if (process.env.NODE_ENV === 'production') {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
   res.json(openApiSpec);
 });
 
 /**
- * GET /api/docs — Swagger UI (HTML)
+ * GET /api/docs — Swagger UI (non-production only)
  */
 swaggerRouter.get('/', (_req: Request, res: Response) => {
+  if (process.env.NODE_ENV === 'production') {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>

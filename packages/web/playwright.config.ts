@@ -198,14 +198,14 @@ export default defineConfig({
     /* === API Hardening (no auth needed) === */
     {
       name: 'hardening',
-      testMatch: /e2e\/common\/hardening\.spec\.ts/,
+      testMatch: /e2e\/hardening\/hardening\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
 
     /* === Security Regression (no auth needed) === */
     {
       name: 'security',
-      testMatch: /e2e\/common\/security-regression\.spec\.ts/,
+      testMatch: /e2e\/hardening\/security-regression\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
   ],

@@ -35,17 +35,34 @@ async function checkDatabase(): Promise<DependencyHealth> {
   }
 }
 
+// Persistent Redis client singleton — avoids creating a new connection on every /health call.
+// Uses a promise-based singleton to prevent concurrent connection attempts during initialization.
+let _redisClientPromise: Promise<any> | null = null;
+
+async function getRedisHealthClient(): Promise<any> {
+  if (!_redisClientPromise) {
+    _redisClientPromise = (async () => {
+      const { createClient } = await import('redis');
+      const client = createClient({ url: process.env.REDIS_URL });
+      client.on('error', (err: Error) => logger.warn({ err }, 'Redis health client error'));
+      await client.connect();
+      return client;
+    })().catch((err) => {
+      _redisClientPromise = null; // Allow retry on next /health call
+      throw err;
+    });
+  }
+  return _redisClientPromise;
+}
+
 async function checkRedis(): Promise<DependencyHealth> {
   if (!process.env.REDIS_URL) {
     return { status: 'healthy', latencyMs: 0, details: { note: 'Redis not configured' } };
   }
   const start = Date.now();
   try {
-    const { createClient } = await import('redis');
-    const client = createClient({ url: process.env.REDIS_URL });
-    await client.connect();
+    const client = await getRedisHealthClient();
     await client.ping();
-    await client.disconnect();
     return { status: 'healthy', latencyMs: Date.now() - start };
   } catch (error) {
     return {
