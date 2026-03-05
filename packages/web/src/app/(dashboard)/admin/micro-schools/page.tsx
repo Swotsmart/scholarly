@@ -17,9 +17,11 @@ import {
   Calendar,
   TrendingUp,
   GraduationCap,
+  Loader2,
 } from 'lucide-react';
+import { useAdmin } from '@/hooks/use-admin';
 
-const microSchools = [
+const FALLBACK_MICRO_SCHOOLS = [
   {
     id: 1,
     name: 'Montessori Learning Pod - Sydney',
@@ -67,6 +69,17 @@ const microSchools = [
 ];
 
 export default function MicroSchoolsPage() {
+  const { isLoading } = useAdmin();
+  const microSchools = FALLBACK_MICRO_SCHOOLS;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

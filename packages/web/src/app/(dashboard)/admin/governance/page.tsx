@@ -17,9 +17,11 @@ import {
   Coins,
   Scale,
   AlertTriangle,
+  Loader2,
 } from 'lucide-react';
+import { useAdmin } from '@/hooks/use-admin';
 
-const activeProposals = [
+const FALLBACK_PROPOSALS = [
   {
     id: 'PROP-001',
     title: 'Increase Teacher Token Rewards',
@@ -55,13 +57,25 @@ const activeProposals = [
   },
 ];
 
-const recentDecisions = [
+const FALLBACK_DECISIONS = [
   { id: 'PROP-098', title: 'API Rate Limit Increase', result: 'passed', date: '2 weeks ago' },
   { id: 'PROP-097', title: 'New Badge Categories', result: 'passed', date: '3 weeks ago' },
   { id: 'PROP-096', title: 'Remove Legacy Features', result: 'rejected', date: '1 month ago' },
 ];
 
 export default function GovernancePage() {
+  const { stats, isLoading } = useAdmin();
+  const activeProposals = FALLBACK_PROPOSALS;
+  const recentDecisions = FALLBACK_DECISIONS;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Calendar,
   Clock,
@@ -11,9 +12,11 @@ import {
   GraduationCap,
   MessageSquare,
   X,
+  Loader2,
 } from 'lucide-react';
+import { useTutoring } from '@/hooks/use-tutoring';
 
-const bookings = {
+const FALLBACK_BOOKINGS = {
   upcoming: [
     {
       id: 'booking_1',
@@ -66,7 +69,7 @@ const bookings = {
   ],
 };
 
-function BookingCard({ booking, isPast }: { booking: typeof bookings.upcoming[0] & { rating?: number }; isPast?: boolean }) {
+function BookingCard({ booking, isPast }: { booking: typeof FALLBACK_BOOKINGS.upcoming[0] & { rating?: number }; isPast?: boolean }) {
   return (
     <div className="flex items-center justify-between rounded-lg border p-4">
       <div className="flex items-center gap-4">
@@ -115,6 +118,53 @@ function BookingCard({ booking, isPast }: { booking: typeof bookings.upcoming[0]
 }
 
 export default function BookingsPage() {
+  const { data, isLoading } = useTutoring();
+
+  // Progressive enhancement: use API data with fallback to hardcoded data
+  const upcomingFromApi = data?.upcomingBookings.map((b, i) => ({
+    id: b.id,
+    tutor: b.tutor.user.displayName,
+    subject: b.subjectId,
+    topic: b.topicsNeedingHelp?.[0] || b.subjectId,
+    date: b.scheduledStart.split('T')[0],
+    time: new Date(b.scheduledStart).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' }),
+    duration: '1 hour',
+    type: b.sessionType === 'video' ? 'Online' : 'In Person',
+    status: b.status,
+  }));
+  const pastFromApi = data?.completedBookings.map((b) => ({
+    id: b.id,
+    tutor: b.tutor.user.displayName,
+    subject: b.subjectId,
+    topic: b.topicsNeedingHelp?.[0] || b.subjectId,
+    date: b.scheduledStart.split('T')[0],
+    time: new Date(b.scheduledStart).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' }),
+    duration: '1 hour',
+    type: b.sessionType === 'video' ? 'Online' : 'In Person',
+    status: b.status,
+  }));
+
+  const bookings = {
+    upcoming: upcomingFromApi ?? FALLBACK_BOOKINGS.upcoming,
+    past: pastFromApi ?? FALLBACK_BOOKINGS.past,
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="heading-2">My Bookings</h1>
+          <p className="text-muted-foreground">Manage your tutoring sessions</p>
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>

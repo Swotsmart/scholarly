@@ -274,6 +274,14 @@ async function start() {
     await initializeKeys();
     logger.info('JWT keys initialized');
 
+    // Log voice service configuration
+    const voiceServiceUrl = process.env.VOICE_SERVICE_URL;
+    if (voiceServiceUrl) {
+      logger.info({ url: voiceServiceUrl }, 'Voice service configured');
+    } else {
+      logger.warn('VOICE_SERVICE_URL not set — voice features (TTS/STT) will be unavailable');
+    }
+
     // Initialize hosting services
     initializeHostingServices();
 

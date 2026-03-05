@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DollarSign,
   TrendingUp,
@@ -12,9 +13,11 @@ import {
   ArrowUpRight,
   Download,
   CreditCard,
+  Loader2,
 } from 'lucide-react';
+import { useTutoring } from '@/hooks/use-tutoring';
 
-const monthlyData = [
+const FALLBACK_MONTHLY_DATA = [
   { month: 'Sep', earnings: 2400 },
   { month: 'Oct', earnings: 2800 },
   { month: 'Nov', earnings: 3200 },
@@ -23,7 +26,7 @@ const monthlyData = [
   { month: 'Feb', earnings: 3450 },
 ];
 
-const recentSessions = [
+const FALLBACK_RECENT_SESSIONS = [
   { student: 'Emma Smith', subject: 'Algebra', duration: 60, amount: 65, date: 'Today' },
   { student: 'Liam Chen', subject: 'Calculus', duration: 90, amount: 112.50, date: 'Yesterday' },
   { student: 'Sophie Garcia', subject: 'Statistics', duration: 60, amount: 70, date: '2 days ago' },
@@ -31,6 +34,52 @@ const recentSessions = [
 ];
 
 export default function EarningsOverviewPage() {
+  const { data, isLoading } = useTutoring();
+
+  // Progressive enhancement: derive recent sessions from completed bookings
+  const recentFromApi = data?.completedBookings.slice(0, 4).map((b) => {
+    const start = new Date(b.scheduledStart);
+    const end = new Date(b.scheduledEnd);
+    const durationMin = Math.round((end.getTime() - start.getTime()) / 60000) || 60;
+    const now = new Date();
+    const diffDays = Math.round((now.getTime() - start.getTime()) / 86400000);
+    return {
+      student: b.tutor.user.displayName,
+      subject: b.subjectId,
+      duration: durationMin,
+      amount: (durationMin / 60) * 65,
+      date: diffDays === 0 ? 'Today' : diffDays === 1 ? 'Yesterday' : `${diffDays} days ago`,
+    };
+  });
+
+  const monthlyData = FALLBACK_MONTHLY_DATA;
+  const recentSessions = recentFromApi && recentFromApi.length > 0 ? recentFromApi : FALLBACK_RECENT_SESSIONS;
+  const completedCount = data?.completedBookings.length ?? 342;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <DollarSign className="h-8 w-8" />
+            Earnings Overview
+          </h1>
+          <p className="text-muted-foreground">Track your tutoring income</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-28 rounded-lg" />
+          ))}
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Skeleton className="h-72 rounded-lg" />
+          <Skeleton className="h-72 rounded-lg" />
+        </div>
+        <Skeleton className="h-48 rounded-lg" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -80,7 +129,7 @@ export default function EarningsOverviewPage() {
               <span className="text-sm text-muted-foreground">Lifetime</span>
             </div>
             <div className="mt-2 text-2xl font-bold">$24,580</div>
-            <p className="text-xs text-muted-foreground mt-1">342 sessions</p>
+            <p className="text-xs text-muted-foreground mt-1">{completedCount} sessions</p>
           </CardContent>
         </Card>
         <Card>

@@ -158,6 +158,13 @@ variable "ai_provider" {
   }
 }
 
+# Voice service configuration
+variable "voice_service_url" {
+  description = "URL of the Scholarly Voice Service (Kokoro TTS / Whisper STT)"
+  type        = string
+  default     = ""
+}
+
 # Email service configuration
 variable "email_from" {
   description = "Email from address"

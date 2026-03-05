@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Calendar,
   Clock,
@@ -14,9 +15,11 @@ import {
   User,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from 'lucide-react';
+import { useTutoring } from '@/hooks/use-tutoring';
 
-const upcomingSessions = [
+const FALLBACK_UPCOMING_SESSIONS = [
   {
     id: 1,
     student: 'Emma Smith',
@@ -73,6 +76,59 @@ const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const weekDates = [3, 4, 5, 6, 7, 8, 9];
 
 export default function UpcomingSessionsPage() {
+  const { data, isLoading } = useTutoring();
+
+  // Progressive enhancement: derive upcoming sessions from API bookings
+  const upcomingFromApi = data?.upcomingBookings.map((b, i) => {
+    const start = new Date(b.scheduledStart);
+    const end = new Date(b.scheduledEnd);
+    const now = new Date();
+    const diffMs = start.getTime() - now.getTime();
+    const diffHours = Math.round(diffMs / 3600000);
+    const isToday = start.toDateString() === now.toDateString();
+    const isTomorrow = start.toDateString() === new Date(now.getTime() + 86400000).toDateString();
+    return {
+      id: i + 1,
+      student: b.tutor.user.displayName,
+      subject: b.subjectId,
+      date: isToday ? 'Today' : isTomorrow ? 'Tomorrow' : start.toLocaleDateString('en-AU', { month: 'short', day: 'numeric' }),
+      time: `${start.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })} - ${end.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`,
+      timeUntil: diffHours < 1 ? 'soon' : diffHours < 24 ? `${diffHours} hours` : `${Math.round(diffHours / 24)} days`,
+      status: b.status as string,
+      notes: b.learnerNotes || '',
+    };
+  });
+
+  const upcomingSessions = upcomingFromApi && upcomingFromApi.length > 0 ? upcomingFromApi : FALLBACK_UPCOMING_SESSIONS;
+  const pendingCount = data?.pendingBookings.length ?? 1;
+  const todayCount = upcomingSessions.filter(s => s.date === 'Today').length;
+  const weekCount = data?.upcomingBookings.length ?? 12;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Calendar className="h-8 w-8" />
+            Upcoming Sessions
+          </h1>
+          <p className="text-muted-foreground">View and manage your scheduled sessions</p>
+        </div>
+        <Skeleton className="h-32 rounded-lg" />
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-28 rounded-lg" />
+          ))}
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-28 rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -139,7 +195,7 @@ export default function UpcomingSessionsPage() {
               <Calendar className="h-5 w-5 text-blue-500" />
               <span className="text-sm text-muted-foreground">Today</span>
             </div>
-            <div className="mt-2 text-2xl font-bold">2</div>
+            <div className="mt-2 text-2xl font-bold">{todayCount}</div>
             <p className="text-xs text-muted-foreground mt-1">sessions scheduled</p>
           </CardContent>
         </Card>
@@ -149,7 +205,7 @@ export default function UpcomingSessionsPage() {
               <Clock className="h-5 w-5 text-green-500" />
               <span className="text-sm text-muted-foreground">This Week</span>
             </div>
-            <div className="mt-2 text-2xl font-bold">12</div>
+            <div className="mt-2 text-2xl font-bold">{weekCount}</div>
             <p className="text-xs text-muted-foreground mt-1">sessions total</p>
           </CardContent>
         </Card>
@@ -159,7 +215,7 @@ export default function UpcomingSessionsPage() {
               <AlertCircle className="h-5 w-5 text-yellow-500" />
               <span className="text-sm text-muted-foreground">Pending</span>
             </div>
-            <div className="mt-2 text-2xl font-bold">1</div>
+            <div className="mt-2 text-2xl font-bold">{pendingCount}</div>
             <p className="text-xs text-muted-foreground mt-1">awaiting confirmation</p>
           </CardContent>
         </Card>

@@ -1,8 +1,9 @@
 /**
  * useTutoring Hook
  *
- * Fetches tutor search results and booking data from the tutoring API.
- * Follows the same pattern as useParent (Promise.allSettled, error-safe).
+ * Fetches tutor search results, booking data, completed sessions, and reviews
+ * from the tutoring API. Follows the same pattern as useParent
+ * (Promise.allSettled, error-safe).
  *
  * Backend routes:
  *   packages/api/src/routes/tutors.ts (302L)
@@ -11,12 +12,16 @@
 
 import { useEffect, useState } from 'react';
 import { tutoringApi } from '@/lib/tutoring-api';
-import type { TutorSearchResult, TutorSearchParams, Booking } from '@/types/tutoring';
+import type { TutorSearchResult, TutorSearchParams, Booking, TutorReview } from '@/types/tutoring';
 
 interface TutoringData {
   tutors: TutorSearchResult[];
   upcomingBookings: Booking[];
   allBookings: Booking[];
+  completedBookings: Booking[];
+  pendingBookings: Booking[];
+  cancelledBookings: Booking[];
+  reviews: TutorReview[];
 }
 
 export function useTutoring(searchParams?: TutorSearchParams) {
@@ -32,6 +37,15 @@ export function useTutoring(searchParams?: TutorSearchParams) {
         tutoringApi.searchTutors(searchParams),
         tutoringApi.getUpcomingBookings(10),
         tutoringApi.getBookings({ role: 'booker' }),
+        tutoringApi.getBookings({ status: 'completed' }),
+        tutoringApi.getBookings({ status: 'pending' }),
+        tutoringApi.getBookings({ status: 'cancelled' }),
+        // Reviews require a tutorId; fetch for the first tutor found or skip
+        searchParams?.subject
+          ? tutoringApi.searchTutors(searchParams).then(r =>
+              r.tutors[0] ? tutoringApi.getTutorReviews(r.tutors[0].tutorId) : { reviews: [], pagination: { page: 1, pageSize: 20, total: 0 } }
+            )
+          : Promise.resolve({ reviews: [] as TutorReview[], pagination: { page: 1, pageSize: 20, total: 0 } }),
       ]);
 
       const errors = results
@@ -43,6 +57,10 @@ export function useTutoring(searchParams?: TutorSearchParams) {
         tutors: results[0].status === 'fulfilled' ? results[0].value.tutors : [],
         upcomingBookings: results[1].status === 'fulfilled' ? results[1].value.bookings : [],
         allBookings: results[2].status === 'fulfilled' ? results[2].value.bookings : [],
+        completedBookings: results[3].status === 'fulfilled' ? results[3].value.bookings : [],
+        pendingBookings: results[4].status === 'fulfilled' ? results[4].value.bookings : [],
+        cancelledBookings: results[5].status === 'fulfilled' ? results[5].value.bookings : [],
+        reviews: results[6].status === 'fulfilled' ? results[6].value.reviews : [],
       });
       setIsLoading(false);
     }

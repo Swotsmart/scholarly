@@ -22,10 +22,12 @@ import {
   Microscope,
   Languages,
   Monitor,
+  Loader2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useAdmin } from '@/hooks/use-admin';
 
-const apps = [
+const FALLBACK_APPS = [
   {
     id: 1,
     name: 'Math Visualizer Pro',
@@ -72,13 +74,25 @@ const apps = [
   },
 ];
 
-const pendingReviews = [
+const FALLBACK_PENDING_REVIEWS = [
   { name: 'Music Theory Tutor', developer: 'HarmonyApps', submitted: '2 days ago' },
   { name: 'Geography Explorer', developer: 'WorldMap Studios', submitted: '3 days ago' },
   { name: 'Chemistry Balancer', developer: 'ScienceTools', submitted: '5 days ago' },
 ];
 
 export default function MarketplacePage() {
+  const { isLoading } = useAdmin();
+  const apps = FALLBACK_APPS;
+  const pendingReviews = FALLBACK_PENDING_REVIEWS;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

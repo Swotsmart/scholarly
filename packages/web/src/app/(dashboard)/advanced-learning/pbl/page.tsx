@@ -39,10 +39,12 @@ import {
   ClipboardList,
   AlertCircle,
   BarChart3,
+  Loader2,
 } from 'lucide-react';
+import { useAdvancedLearning } from '@/hooks/use-advanced-learning';
 
 // PBL Phases: Investigate -> Design -> Build -> Reflect -> Present
-const PBL_PHASES = [
+const FALLBACK_PBL_PHASES = [
   { id: 'investigate', label: 'Investigate', icon: Microscope, color: 'blue', description: 'Research and understand the problem' },
   { id: 'design', label: 'Design', icon: PenLine, color: 'violet', description: 'Plan your solution approach' },
   { id: 'build', label: 'Build', icon: Hammer, color: 'amber', description: 'Create your prototype or product' },
@@ -51,7 +53,7 @@ const PBL_PHASES = [
 ];
 
 // Current project workspace
-const CURRENT_PROJECT = {
+const FALLBACK_PROJECT = {
   id: 'proj_001',
   title: 'Sustainable Water Management for Murray-Darling Basin',
   drivingQuestion: 'How can we design a community-scale water management system that balances agricultural needs with environmental sustainability in the Murray-Darling Basin?',
@@ -65,7 +67,7 @@ const CURRENT_PROJECT = {
 };
 
 // Team members with roles and contributions
-const TEAM_MEMBERS = [
+const FALLBACK_TEAM_MEMBERS = [
   {
     id: 'tm_001',
     name: 'Emma Thompson',
@@ -139,7 +141,7 @@ const TEAM_MEMBERS = [
 ];
 
 // Milestones with deadline tracker
-const MILESTONES = [
+const FALLBACK_MILESTONES = [
   { id: 'ms_001', name: 'Stakeholder interviews completed', dueDate: '2025-02-20', status: 'completed', phase: 'investigate' },
   { id: 'ms_002', name: 'Water usage data analysis', dueDate: '2025-02-28', status: 'completed', phase: 'investigate' },
   { id: 'ms_003', name: 'Solution design document', dueDate: '2025-03-10', status: 'completed', phase: 'design' },
@@ -152,7 +154,7 @@ const MILESTONES = [
 ];
 
 // Shared artifacts/documents
-const ARTIFACTS = [
+const FALLBACK_ARTIFACTS = [
   {
     id: 'art_001',
     name: 'Stakeholder Interview Notes.docx',
@@ -210,7 +212,7 @@ const ARTIFACTS = [
 ];
 
 // Exhibition scheduling
-const EXHIBITION = {
+const FALLBACK_EXHIBITION = {
   date: '2025-04-15',
   time: '10:00 AM - 2:00 PM',
   location: 'School Assembly Hall',
@@ -231,7 +233,7 @@ const EXHIBITION = {
 };
 
 // Assessment rubric
-const ASSESSMENT_RUBRIC = {
+const FALLBACK_ASSESSMENT_RUBRIC = {
   criteria: [
     {
       id: 'crit_001',
@@ -297,7 +299,7 @@ const ASSESSMENT_RUBRIC = {
   feedback: [],
 };
 
-const pageStats = [
+const FALLBACK_PAGE_STATS = [
   { label: 'Team Members', value: '5', icon: Users, color: 'blue' },
   { label: 'Milestones', value: '4/9', icon: Target, color: 'emerald' },
   { label: 'Artifacts', value: '6', icon: FileText, color: 'violet' },
@@ -335,8 +337,27 @@ function getArtifactIcon(type: string) {
 }
 
 export default function PBLPage() {
-  const currentPhaseIndex = PBL_PHASES.findIndex((p) => p.id === CURRENT_PROJECT.currentPhase);
+  const { data: hookData, isLoading } = useAdvancedLearning();
   const [selfAssessment, setSelfAssessment] = useState<Record<string, number>>({});
+
+  const PBL_PHASES = FALLBACK_PBL_PHASES;
+  const CURRENT_PROJECT = hookData?.pbl?.project ?? FALLBACK_PROJECT;
+  const TEAM_MEMBERS = hookData?.pbl?.teamMembers?.length ? hookData.pbl.teamMembers : FALLBACK_TEAM_MEMBERS;
+  const MILESTONES = hookData?.pbl?.milestones?.length ? hookData.pbl.milestones : FALLBACK_MILESTONES;
+  const ARTIFACTS = hookData?.pbl?.artifacts?.length ? hookData.pbl.artifacts : FALLBACK_ARTIFACTS;
+  const EXHIBITION = hookData?.pbl?.exhibition ?? FALLBACK_EXHIBITION;
+  const ASSESSMENT_RUBRIC = hookData?.pbl?.assessmentRubric ?? FALLBACK_ASSESSMENT_RUBRIC;
+  const pageStats = FALLBACK_PAGE_STATS;
+
+  const currentPhaseIndex = PBL_PHASES.findIndex((p) => p.id === CURRENT_PROJECT.currentPhase);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -623,7 +644,7 @@ export default function PBLPage() {
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Contributions</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {member.contributions.map((contrib) => (
+                      {member.contributions.map((contrib: { type: string; count: number }) => (
                         <Badge key={contrib.type} variant="secondary" className="text-xs">
                           {contrib.type}: {contrib.count}
                         </Badge>
@@ -649,8 +670,8 @@ export default function PBLPage() {
             <CardContent>
               <div className="space-y-3">
                 {TEAM_MEMBERS.map((member) => {
-                  const totalContribs = member.contributions.reduce((sum, c) => sum + c.count, 0);
-                  const maxContribs = Math.max(...TEAM_MEMBERS.flatMap(m => m.contributions.map(c => c.count))) * 3;
+                  const totalContribs = member.contributions.reduce((sum: number, c: { count: number }) => sum + c.count, 0);
+                  const maxContribs = Math.max(...TEAM_MEMBERS.flatMap((m: { contributions: { count: number }[] }) => m.contributions.map((c: { count: number }) => c.count))) * 3;
                   return (
                     <div key={member.id} className="flex items-center gap-4">
                       <div className="w-32 text-sm font-medium truncate">{member.name}</div>
@@ -820,7 +841,7 @@ export default function PBLPage() {
               <div>
                 <p className="text-sm font-medium mb-2">Invited Audiences</p>
                 <div className="flex flex-wrap gap-2">
-                  {EXHIBITION.invitees.map((invitee) => (
+                  {EXHIBITION.invitees.map((invitee: string) => (
                     <Badge key={invitee} variant="secondary">{invitee}</Badge>
                   ))}
                 </div>
@@ -830,7 +851,7 @@ export default function PBLPage() {
               <div>
                 <p className="text-sm font-medium mb-3">Presentation Schedule</p>
                 <div className="space-y-2">
-                  {EXHIBITION.presentations.map((item, index) => (
+                  {EXHIBITION.presentations.map((item: { time: string; item: string; presenter: string }, index: number) => (
                     <div
                       key={index}
                       className="flex items-center gap-4 rounded-lg border p-3"
@@ -872,7 +893,7 @@ export default function PBLPage() {
               <CardDescription>Self-assess your work against the rubric criteria</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {ASSESSMENT_RUBRIC.criteria.map((criterion) => (
+              {ASSESSMENT_RUBRIC.criteria.map((criterion: { id: string; name: string; description: string; weight: number; levels: string[] }) => (
                 <div key={criterion.id} className="rounded-lg border p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
@@ -883,7 +904,7 @@ export default function PBLPage() {
                   </div>
 
                   <div className="grid grid-cols-4 gap-2">
-                    {criterion.levels.map((level, index) => (
+                    {criterion.levels.map((level: string, index: number) => (
                       <button
                         key={level}
                         onClick={() => setSelfAssessment({ ...selfAssessment, [criterion.id]: index + 1 })}

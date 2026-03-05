@@ -1,16 +1,59 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, BookOpen, Clock, Award, Target } from 'lucide-react';
+import { TrendingUp, BookOpen, Clock, Award, Target, Loader2 } from 'lucide-react';
+import { useHomeschool } from '@/hooks/use-homeschool';
+
+const FALLBACK_SUBJECTS = [
+  { name: 'Mathematics', progress: 75, hours: 24, status: 'on-track' },
+  { name: 'English', progress: 82, hours: 30, status: 'ahead' },
+  { name: 'Science', progress: 68, hours: 18, status: 'on-track' },
+  { name: 'History', progress: 45, hours: 12, status: 'behind' },
+  { name: 'Art', progress: 90, hours: 15, status: 'ahead' },
+];
+
+function deriveStatus(progress: number): string {
+  if (progress >= 80) return 'ahead';
+  if (progress >= 60) return 'on-track';
+  return 'behind';
+}
 
 export default function HomeschoolProgressPage() {
-  const subjects = [
-    { name: 'Mathematics', progress: 75, hours: 24, status: 'on-track' },
-    { name: 'English', progress: 82, hours: 30, status: 'ahead' },
-    { name: 'Science', progress: 68, hours: 18, status: 'on-track' },
-    { name: 'History', progress: 45, hours: 12, status: 'behind' },
-    { name: 'Art', progress: 90, hours: 15, status: 'ahead' },
-  ];
+  const { family, isLoading } = useHomeschool();
+
+  // Aggregate subject progress across all children from the hook
+  const subjects = family?.children?.length
+    ? (() => {
+        const subjectMap = new Map<string, { total: number; count: number }>();
+        for (const child of family.children) {
+          for (const sp of child.subjectProgress ?? []) {
+            const pct = sp.curriculumCodes.length > 0
+              ? Math.round((sp.completedCodes.length / sp.curriculumCodes.length) * 100)
+              : 0;
+            const existing = subjectMap.get(sp.subject);
+            if (existing) {
+              existing.total += pct;
+              existing.count += 1;
+            } else {
+              subjectMap.set(sp.subject, { total: pct, count: 1 });
+            }
+          }
+        }
+        if (subjectMap.size === 0) return FALLBACK_SUBJECTS;
+        return Array.from(subjectMap.entries()).map(([name, { total, count }]) => {
+          const progress = Math.round(total / count);
+          return { name, progress, hours: 0, status: deriveStatus(progress) };
+        });
+      })()
+    : FALLBACK_SUBJECTS;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -35,7 +78,7 @@ export default function HomeschoolProgressPage() {
                 <TrendingUp className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">72%</p>
+                <p className="text-2xl font-bold">{subjects.length > 0 ? Math.round(subjects.reduce((s, sub) => s + sub.progress, 0) / subjects.length) : 0}%</p>
                 <p className="text-sm text-muted-foreground">Overall Progress</p>
               </div>
             </div>
@@ -48,7 +91,7 @@ export default function HomeschoolProgressPage() {
                 <BookOpen className="h-5 w-5 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">5</p>
+                <p className="text-2xl font-bold">{subjects.length}</p>
                 <p className="text-sm text-muted-foreground">Active Subjects</p>
               </div>
             </div>
@@ -61,7 +104,7 @@ export default function HomeschoolProgressPage() {
                 <Clock className="h-5 w-5 text-purple-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">99h</p>
+                <p className="text-2xl font-bold">{subjects.reduce((s, sub) => s + sub.hours, 0)}h</p>
                 <p className="text-sm text-muted-foreground">Total Hours</p>
               </div>
             </div>

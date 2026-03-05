@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   History,
   Search,
@@ -15,9 +16,11 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from 'lucide-react';
+import { useTutoring } from '@/hooks/use-tutoring';
 
-const pastSessions = [
+const FALLBACK_PAST_SESSIONS = [
   {
     id: 1,
     student: 'Emma Smith',
@@ -76,6 +79,54 @@ const pastSessions = [
 ];
 
 export default function SessionHistoryPage() {
+  const { data, isLoading } = useTutoring();
+
+  // Progressive enhancement: derive past sessions from completed bookings
+  const pastFromApi = data?.completedBookings.map((b, i) => {
+    const start = new Date(b.scheduledStart);
+    const end = new Date(b.scheduledEnd);
+    const durationMin = Math.round((end.getTime() - start.getTime()) / 60000);
+    return {
+      id: i + 1,
+      student: b.tutor.user.displayName,
+      subject: b.subjectId,
+      date: start.toLocaleDateString('en-AU', { month: 'short', day: 'numeric', year: 'numeric' }),
+      time: `${start.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })} - ${end.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`,
+      duration: durationMin || 60,
+      rating: 5,
+      amount: (durationMin / 60) * 65,
+      notes: b.learnerNotes || b.topicsNeedingHelp?.join(', ') || '',
+    };
+  });
+
+  const pastSessions = pastFromApi && pastFromApi.length > 0 ? pastFromApi : FALLBACK_PAST_SESSIONS;
+  const totalCompleted = data?.completedBookings.length ?? 342;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <History className="h-8 w-8" />
+            Session History
+          </h1>
+          <p className="text-muted-foreground">View and manage your completed sessions</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-28 rounded-lg" />
+          ))}
+        </div>
+        <Skeleton className="h-16 rounded-lg" />
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-32 rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -102,7 +153,7 @@ export default function SessionHistoryPage() {
               <Calendar className="h-5 w-5 text-blue-500" />
               <span className="text-sm text-muted-foreground">This Month</span>
             </div>
-            <div className="mt-2 text-2xl font-bold">46</div>
+            <div className="mt-2 text-2xl font-bold">{pastSessions.length}</div>
             <p className="text-xs text-muted-foreground mt-1">sessions completed</p>
           </CardContent>
         </Card>
@@ -132,7 +183,7 @@ export default function SessionHistoryPage() {
               <Video className="h-5 w-5 text-purple-500" />
               <span className="text-sm text-muted-foreground">Lifetime</span>
             </div>
-            <div className="mt-2 text-2xl font-bold">342</div>
+            <div className="mt-2 text-2xl font-bold">{totalCompleted}</div>
             <p className="text-xs text-muted-foreground mt-1">sessions total</p>
           </CardContent>
         </Card>
@@ -169,7 +220,7 @@ export default function SessionHistoryPage() {
       <Card>
         <CardHeader>
           <CardTitle>Completed Sessions</CardTitle>
-          <CardDescription>Showing 5 of 342 sessions</CardDescription>
+          <CardDescription>Showing {pastSessions.length} of {totalCompleted} sessions</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -221,7 +272,7 @@ export default function SessionHistoryPage() {
           {/* Pagination */}
           <div className="flex items-center justify-between mt-6 pt-4 border-t">
             <p className="text-sm text-muted-foreground">
-              Showing 1-5 of 342 sessions
+              Showing 1-{pastSessions.length} of {totalCompleted} sessions
             </p>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" disabled>

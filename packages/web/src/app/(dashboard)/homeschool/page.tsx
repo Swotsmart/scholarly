@@ -144,11 +144,13 @@ export default function HomeschoolPage() {
   const children = family?.children?.map(c => ({
     id: c.id,
     name: c.name,
-    age: c.age,
-    yearLevel: c.yearLevel,
+    age: c.dateOfBirth ? Math.floor((Date.now() - new Date(c.dateOfBirth).getTime()) / 31557600000) : 0,
+    yearLevel: c.currentYearLevel,
     avatar: c.name.charAt(0),
-    subjects: c.subjects?.map((s: { name: string }) => s.name) ?? [],
-    overallProgress: c.overallProgress ?? 0,
+    subjects: c.subjectProgress?.map(s => s.subject) ?? [],
+    overallProgress: c.subjectProgress?.length
+      ? Math.round(c.subjectProgress.reduce((sum, s) => sum + (s.completedCodes.length / Math.max(s.curriculumCodes.length, 1)) * 100, 0) / c.subjectProgress.length)
+      : 0,
   })) ?? staticChildren;
 
   const subjects = staticSubjects;
@@ -259,7 +261,7 @@ export default function HomeschoolPage() {
                   </CardHeader>
                   <CardContent className="space-y-4 pt-4">
                     <div className="flex flex-wrap gap-2">
-                      {child.subjects.slice(0, 4).map((subject) => (
+                      {child.subjects.slice(0, 4).map((subject: string) => (
                         <Badge key={subject} variant="outline" className="text-xs">
                           {subject}
                         </Badge>

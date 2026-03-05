@@ -14,9 +14,21 @@ import {
   RefreshCw,
   Play,
   Link,
+  Loader2,
 } from 'lucide-react';
+import { useAdmin } from '@/hooks/use-admin';
 
 export default function EdFiPage() {
+  const { isLoading } = useAdmin();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

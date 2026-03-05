@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Star,
   TrendingUp,
@@ -12,9 +13,11 @@ import {
   MessageSquare,
   Filter,
   Quote,
+  Loader2,
 } from 'lucide-react';
+import { useTutoring } from '@/hooks/use-tutoring';
 
-const reviews = [
+const FALLBACK_REVIEWS = [
   {
     id: 1,
     student: 'Emma Smith',
@@ -67,7 +70,7 @@ const reviews = [
   },
 ];
 
-const ratingBreakdown = [
+const FALLBACK_RATING_BREAKDOWN = [
   { stars: 5, count: 105, percentage: 83 },
   { stars: 4, count: 18, percentage: 14 },
   { stars: 3, count: 3, percentage: 2 },
@@ -76,6 +79,51 @@ const ratingBreakdown = [
 ];
 
 export default function ReviewsPage() {
+  const { data, isLoading } = useTutoring();
+
+  // Progressive enhancement: derive reviews from API data
+  const reviewsFromApi = data?.reviews.map((r, i) => {
+    const initials = r.reviewer.displayName.split(' ').map(n => n[0]).join('');
+    return {
+      id: i + 1,
+      student: r.reviewer.displayName,
+      initials,
+      rating: r.rating,
+      date: new Date(r.createdAt).toLocaleDateString('en-AU', { month: 'short', day: 'numeric', year: 'numeric' }),
+      subject: 'Tutoring',
+      comment: r.comment || '',
+      helpful: 0,
+    };
+  });
+
+  const reviews = reviewsFromApi && reviewsFromApi.length > 0 ? reviewsFromApi : FALLBACK_REVIEWS;
+  const ratingBreakdown = FALLBACK_RATING_BREAKDOWN;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Star className="h-8 w-8" />
+            Reviews & Ratings
+          </h1>
+          <p className="text-muted-foreground">View feedback from your students</p>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-48 rounded-lg" />
+          ))}
+        </div>
+        <Skeleton className="h-12 rounded-lg" />
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-36 rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

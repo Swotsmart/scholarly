@@ -37,10 +37,12 @@ import {
   Eye,
   Plus,
   Trash2,
+  Loader2,
 } from 'lucide-react';
+import { useAdvancedLearning } from '@/hooks/use-advanced-learning';
 
 // Mock opportunities
-const MOCK_OPPORTUNITIES = [
+const FALLBACK_OPPORTUNITIES = [
   {
     id: 'opp_001',
     company: 'CSIRO',
@@ -119,7 +121,7 @@ const MOCK_OPPORTUNITIES = [
 ];
 
 // Mock applications
-const MOCK_APPLICATIONS = [
+const FALLBACK_APPLICATIONS = [
   {
     id: 'app_001',
     company: 'CSIRO',
@@ -155,7 +157,7 @@ const MOCK_APPLICATIONS = [
 ];
 
 // Mock documents
-const MOCK_DOCUMENTS = [
+const FALLBACK_DOCUMENTS = [
   {
     id: 'doc_001',
     name: 'Resume_2025.pdf',
@@ -199,7 +201,7 @@ const MOCK_DOCUMENTS = [
 ];
 
 // Mock logbook entries
-const MOCK_LOGBOOK = [
+const FALLBACK_LOGBOOK = [
   {
     id: 'log_001',
     date: '2025-04-07',
@@ -239,7 +241,7 @@ const MOCK_LOGBOOK = [
 ];
 
 // Supervisor feedback
-const SUPERVISOR_FEEDBACK = [
+const FALLBACK_SUPERVISOR_FEEDBACK = [
   {
     id: 'fb_001',
     date: '2025-04-14',
@@ -251,7 +253,7 @@ const SUPERVISOR_FEEDBACK = [
   },
 ];
 
-const pageStats = [
+const FALLBACK_PAGE_STATS = [
   { label: 'Open Opportunities', value: '12', icon: Briefcase, color: 'blue' },
   { label: 'My Applications', value: '4', icon: Send, color: 'emerald' },
   { label: 'Hours Logged', value: '28.5', icon: Clock, color: 'violet' },
@@ -296,6 +298,14 @@ export default function WorkExperiencePage() {
     activities: '',
     reflection: '',
   });
+  const { data: hookData, isLoading } = useAdvancedLearning();
+
+  const MOCK_OPPORTUNITIES = hookData?.workExperience?.opportunities?.length ? hookData.workExperience.opportunities : FALLBACK_OPPORTUNITIES;
+  const MOCK_APPLICATIONS = hookData?.workExperience?.applications?.length ? hookData.workExperience.applications : FALLBACK_APPLICATIONS;
+  const MOCK_DOCUMENTS = hookData?.workExperience?.documents?.length ? hookData.workExperience.documents : FALLBACK_DOCUMENTS;
+  const MOCK_LOGBOOK = hookData?.workExperience?.logbook?.length ? hookData.workExperience.logbook : FALLBACK_LOGBOOK;
+  const SUPERVISOR_FEEDBACK = hookData?.workExperience?.supervisorFeedback?.length ? hookData.workExperience.supervisorFeedback : FALLBACK_SUPERVISOR_FEEDBACK;
+  const pageStats = FALLBACK_PAGE_STATS;
 
   const filteredOpportunities = MOCK_OPPORTUNITIES.filter(
     (opp) =>
@@ -307,6 +317,14 @@ export default function WorkExperiencePage() {
 
   const totalHours = MOCK_LOGBOOK.reduce((sum, entry) => sum + entry.hours, 0);
   const requiredHours = 80;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -427,7 +445,7 @@ export default function WorkExperiencePage() {
                   </div>
 
                   <div className="flex flex-wrap gap-1.5">
-                    {opp.skills.slice(0, 3).map((skill) => (
+                    {opp.skills.slice(0, 3).map((skill: string) => (
                       <Badge key={skill} variant="secondary" className="text-xs">
                         {skill}
                       </Badge>
@@ -766,7 +784,7 @@ export default function WorkExperiencePage() {
                   </div>
 
                   <div className="flex flex-wrap gap-1.5">
-                    {entry.skills.map((skill) => (
+                    {entry.skills.map((skill: string) => (
                       <Badge key={skill} variant="secondary" className="text-xs">
                         {skill}
                       </Badge>
