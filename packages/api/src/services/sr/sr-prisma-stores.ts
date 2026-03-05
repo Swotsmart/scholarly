@@ -129,17 +129,26 @@ export class PrismaWorkflowStore implements WorkflowStore {
  */
 export class PrismaRunStore implements WorkflowRunStore {
   async save(run: WorkflowRun): Promise<void> {
+    const tenantId = run.tenantId;
+    if (!tenantId) {
+      logger.error('PrismaRunStore.save called without tenantId', {
+        runId: run.runId,
+        workflowId: run.workflowId,
+      });
+      throw new Error('tenantId is required to save a workflow run');
+    }
+
     await prisma.sRWorkflowRun.upsert({
       where: { runId: run.runId },
       create: {
         runId: run.runId,
         workflowId: run.workflowId,
-        tenantId: (run as any).tenantId || 'default',
+        tenantId,
         status: run.status,
         nodeRuns: run.nodeRuns as any,
         portData: Object.fromEntries(run.portData),
         timeline: run.timeline as any,
-        error: run.error,
+        error: run.error ?? undefined,
         startedAt: run.startedAt,
         completedAt: run.completedAt,
       },
@@ -148,7 +157,7 @@ export class PrismaRunStore implements WorkflowRunStore {
         nodeRuns: run.nodeRuns as any,
         portData: Object.fromEntries(run.portData),
         timeline: run.timeline as any,
-        error: run.error,
+        error: run.error ?? undefined,
         completedAt: run.completedAt,
       },
     });
@@ -164,11 +173,16 @@ export class PrismaRunStore implements WorkflowRunStore {
     return {
       runId: row.runId,
       workflowId: row.workflowId,
+      tenantId: row.tenantId,
+      triggeredBy: '',
       status: row.status as WorkflowRunStatus,
       nodeRuns: (row.nodeRuns as any[]) || [],
       portData: new Map(Object.entries((row.portData as Record<string, any>) || {})),
       timeline: (row.timeline as any[]) || [],
-      error: row.error || undefined,
+      error: (row.error as { nodeId: string; message: string }) || undefined,
+      durationMs: row.completedAt
+        ? row.completedAt.getTime() - row.startedAt.getTime()
+        : Date.now() - row.startedAt.getTime(),
       startedAt: row.startedAt,
       completedAt: row.completedAt || undefined,
     };
@@ -199,11 +213,16 @@ export class PrismaRunStore implements WorkflowRunStore {
     return rows.map((row) => ({
       runId: row.runId,
       workflowId: row.workflowId,
+      tenantId: row.tenantId,
+      triggeredBy: '',
       status: row.status as WorkflowRunStatus,
       nodeRuns: (row.nodeRuns as any[]) || [],
       portData: new Map(Object.entries((row.portData as Record<string, any>) || {})),
       timeline: (row.timeline as any[]) || [],
-      error: row.error || undefined,
+      error: (row.error as { nodeId: string; message: string }) || undefined,
+      durationMs: row.completedAt
+        ? row.completedAt.getTime() - row.startedAt.getTime()
+        : Date.now() - row.startedAt.getTime(),
       startedAt: row.startedAt,
       completedAt: row.completedAt || undefined,
     }));
