@@ -83,6 +83,7 @@ function buildPlatformContext(): string {
     arena: 'Arena (Competitions)',
     creator: 'Content Creation',
     cross: 'General / Cross-cutting',
+    voice: 'Voice Intelligence',
   };
 
   let ctx = 'SCHOLARLY PLATFORM — COMPLETE MODULE MAP\n\n';
@@ -104,7 +105,7 @@ function buildPlatformContext(): string {
 function getRoleCapabilities(role: string): string {
   switch (role) {
     case 'teacher':
-      return `This user is a TEACHER. They can: plan lessons, manage classes, grade submissions, create assessments, track student progress, use Voice Studio for narration, manage scheduling/timetable, view student alerts, create challenges, and generate reports.`;
+      return `This user is a TEACHER. They can: plan lessons, manage classes, grade submissions, create assessments, track student progress, use Voice Intelligence (/voice-intelligence) for TTS narration and pronunciation assessment, manage scheduling/timetable, view student alerts, create challenges, and generate reports.`;
     case 'tutor':
       return `This user is a TUTOR. They can: manage tutoring sessions, track student progress, set availability, manage resources/materials, view earnings and payouts, and manage their public profile.`;
     case 'parent':
@@ -151,7 +152,7 @@ const suggestedQuestions: Record<string, string[]> = {
     'How do I create a lesson plan?',
     'Where can I grade submissions?',
     'How do I generate a report?',
-    'Where is the Voice Studio?',
+    'Where is the Voice Intelligence service?',
   ],
   parent: [
     "How do I check my child's progress?",
@@ -463,13 +464,13 @@ function localSearch(query: string, role: string): IsssyMessage {
 
     // Boost role-relevant modules
     const roleClusterMap: Record<string, string[]> = {
-      teacher: ['teaching', 'daily'],
+      teacher: ['teaching', 'daily', 'voice'],
       learner: ['learning', 'daily', 'language', 'arena'],
       parent: ['family', 'daily'],
       tutor: ['tutoring', 'daily'],
-      admin: ['admin', 'daily', 'teaching'],
+      admin: ['admin', 'daily', 'teaching', 'voice'],
       homeschool: ['homeschool', 'family'],
-      creator: ['creator'],
+      creator: ['creator', 'voice'],
     };
     if (roleClusterMap[role]?.includes(m.cluster)) score += 2;
 

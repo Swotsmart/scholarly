@@ -30,7 +30,7 @@ import {
   Building, Landmark, Store, BarChart3, Map,
   Swords, Coins, PenSquare, Palette, Workflow, Play,
   Home, Bell, HelpCircle, Fingerprint,
-  Vote, Database,
+  Vote, Database, Wand2, Volume2,
 } from 'lucide-react';
 
 import type { RegisteredTask, RoleAnchors } from '@/types/composing-menu-types';
@@ -182,6 +182,23 @@ export const taskRegistry: Record<string, RegisteredTask> = {
   CR4: { ref: 'CR4', name: 'Marketplace', href: '/marketplace', icon: Store, type: 'atomic', cluster: 'creator', description: 'Discover apps and content' },
   CR_DEV: { ref: 'CR_DEV', name: 'My Content', href: '/marketplace/developer', icon: PenSquare, type: 'atomic', cluster: 'creator', description: 'Manage your published content' },
   CR_EARNINGS: { ref: 'CR_EARNINGS', name: 'Earnings', href: '/marketplace/developer', icon: CreditCard, type: 'atomic', cluster: 'creator', description: 'Content revenue and analytics' },
+
+  // ── CLUSTER 10.5: VOICE INTELLIGENCE ──
+  VI: {
+    ref: 'VI',
+    name: 'Voice Intelligence',
+    href: '/voice-intelligence',
+    icon: Wand2,
+    type: 'compound',
+    cluster: 'voice',
+    description: 'Self-hosted TTS, STT, pronunciation assessment, and voice cloning',
+    children: [
+      { name: 'Text-to-Speech', href: '/voice-intelligence?tab=tts', icon: Volume2 },
+      { name: 'Voice Library', href: '/voice-intelligence?tab=voices', icon: Users },
+      { name: 'Voice Cloning', href: '/voice-intelligence?tab=cloning', icon: Wand2 },
+      { name: 'Pronunciation', href: '/voice-intelligence?tab=pronunciation', icon: Mic },
+    ],
+  },
 
   // ── CLUSTER 11: AUTOMATION ──
   SR1: {
