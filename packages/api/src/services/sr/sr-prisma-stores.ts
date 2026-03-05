@@ -127,6 +127,16 @@ export class PrismaWorkflowStore implements WorkflowStore {
 /**
  * Prisma-backed workflow run store
  */
+
+function parseRunError(raw: unknown): { nodeId: string; message: string } | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const obj = raw as Record<string, unknown>;
+  if (typeof obj.nodeId === 'string' && typeof obj.message === 'string') {
+    return { nodeId: obj.nodeId, message: obj.message };
+  }
+  return undefined;
+}
+
 export class PrismaRunStore implements WorkflowRunStore {
   async save(run: WorkflowRun): Promise<void> {
     const tenantId = run.tenantId;
@@ -179,7 +189,7 @@ export class PrismaRunStore implements WorkflowRunStore {
       nodeRuns: (row.nodeRuns as any[]) || [],
       portData: new Map(Object.entries((row.portData as Record<string, any>) || {})),
       timeline: (row.timeline as any[]) || [],
-      error: (row.error as { nodeId: string; message: string }) || undefined,
+      error: parseRunError(row.error),
       durationMs: row.completedAt
         ? row.completedAt.getTime() - row.startedAt.getTime()
         : Date.now() - row.startedAt.getTime(),
@@ -219,7 +229,7 @@ export class PrismaRunStore implements WorkflowRunStore {
       nodeRuns: (row.nodeRuns as any[]) || [],
       portData: new Map(Object.entries((row.portData as Record<string, any>) || {})),
       timeline: (row.timeline as any[]) || [],
-      error: (row.error as { nodeId: string; message: string }) || undefined,
+      error: parseRunError(row.error),
       durationMs: row.completedAt
         ? row.completedAt.getTime() - row.startedAt.getTime()
         : Date.now() - row.startedAt.getTime(),

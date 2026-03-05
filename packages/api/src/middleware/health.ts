@@ -21,13 +21,18 @@ let redisClientReady = false;
 
 async function getRedisClient() {
   if (redisClient && redisClientReady) return redisClient;
+  if (redisClient) {
+    // Client exists but not ready — wait for it or return null
+    return null;
+  }
   if (!process.env.REDIS_URL) return null;
   try {
     const { createClient } = await import('redis');
-    redisClient = createClient({ url: process.env.REDIS_URL });
-    redisClient.on('error', () => { redisClientReady = false; });
-    redisClient.on('ready', () => { redisClientReady = true; });
-    await redisClient.connect();
+    const client = createClient({ url: process.env.REDIS_URL });
+    client.on('error', () => { redisClientReady = false; });
+    client.on('ready', () => { redisClientReady = true; });
+    await client.connect();
+    redisClient = client;
     redisClientReady = true;
     return redisClient;
   } catch {
@@ -36,8 +41,6 @@ async function getRedisClient() {
     return null;
   }
 }
-
-const healthRouter = Router();
 
 interface DependencyHealth {
   status: 'healthy' | 'degraded' | 'unhealthy';
