@@ -267,7 +267,7 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
    */
   async checkHealth(): Promise<Result<{ status: string }>> {
     try {
-      const result = await this.voiceServiceRequest<{ status: string }>('/health', { method: 'GET' });
+      const result = await this.voiceServiceRequest<{ status: string }>('/healthz', { method: 'GET' });
       return { success: true, data: result };
     } catch (error) {
       return { success: false, error: { code: 'VOICE_SERVICE_UNAVAILABLE', message: (error as Error).message } };
@@ -283,7 +283,7 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
    */
   async textToSpeech(request: TTSRequest): Promise<Result<TTSResponse>> {
     try {
-      const audioData = await this.voiceServiceRequest<Buffer>('/tts/synthesise', {
+      const audioData = await this.voiceServiceRequest<Buffer>('/api/v1/tts/synthesize', {
         body: {
           text: request.text,
           voice_id: request.voiceId,
@@ -323,7 +323,7 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
         text?: string;
         language?: string;
         words?: Array<{ text: string; start: number; end: number; confidence?: number }>;
-      }>('/stt/transcribe', {
+      }>('/api/v1/stt/transcribe', {
         body: {
           audio_data: request.audioData.toString('base64'),
           audio_format: request.audioFormat,
@@ -670,7 +670,7 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
    */
   async createVoiceClone(request: VoiceCloneRequest): Promise<Result<{ cloneId: string; voiceId: string }>> {
     try {
-      const cloneResult = await this.voiceServiceRequest<{ clone_id: string; voice_id: string }>('/clone/create', {
+      const cloneResult = await this.voiceServiceRequest<{ clone_id: string; voice_id: string }>('/api/v1/cloning/profiles', {
         body: {
           name: request.name,
           description: request.description,

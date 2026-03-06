@@ -117,7 +117,7 @@ function getRoleCapabilities(role: string): string {
     case 'creator':
       return `This user is a CONTENT CREATOR. They can: use AI Content Studio, publish to the marketplace, manage their published content, and track earnings/analytics.`;
     default:
-      return `This user is a LEARNER. They can: browse and enrol in courses, ask Issy for help, follow adaptive learning pathways (Golden Path), work on design challenges and pitch decks, manage their portfolio, track achievements/XP, find tutors, participate in Arena competitions, and access LinguaFlow for language learning.`;
+      return `This user is a LEARNER. They can: browse and enrol in courses, ask Issy for help, follow adaptive learning pathways (Golden Path), work on design challenges and pitch decks, manage their portfolio, track achievements/XP, find tutors, participate in Arena competitions, access LinguaFlow for language learning, and use Voice Intelligence (/voice-intelligence) for TTS, voice cloning, and pronunciation practice.`;
   }
 }
 

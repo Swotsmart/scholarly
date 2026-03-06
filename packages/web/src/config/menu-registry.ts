@@ -191,7 +191,7 @@ export const taskRegistry: Record<string, RegisteredTask> = {
     icon: Wand2,
     type: 'compound',
     cluster: 'voice',
-    description: 'Self-hosted TTS, STT, pronunciation assessment, and voice cloning',
+    description: 'Voice Services — self-hosted TTS, STT, pronunciation assessment, voice cloning, and synthesizer',
     children: [
       { name: 'Text-to-Speech', href: '/voice-intelligence?tab=tts', icon: Volume2 },
       { name: 'Voice Library', href: '/voice-intelligence?tab=voices', icon: Users },
@@ -272,6 +272,7 @@ export const roleAnchors: RoleAnchors[] = [
       { ref: 'D1', position: 0 },         // Home / Dashboard
       { ref: 'L1', position: 1 },         // Courses
       { ref: 'L3', position: 2 },         // AI Buddy
+      { ref: 'VI', position: 3 },         // Voice Intelligence
     ],
   },
   {
@@ -282,6 +283,7 @@ export const roleAnchors: RoleAnchors[] = [
       { ref: 'TEACHER_CLASSES', position: 1 }, // My Classes
       { ref: 'TEACHER_STUDENTS', position: 2 }, // Students
       { ref: 'T2', position: 3 },         // Gradebook
+      { ref: 'VI', position: 4 },         // Voice Intelligence
     ],
   },
   {
@@ -300,6 +302,7 @@ export const roleAnchors: RoleAnchors[] = [
       { ref: 'D1', position: 0 },         // Dashboard
       { ref: 'TU5', position: 1 },        // My Students
       { ref: 'TU2', position: 2 },        // Sessions
+      { ref: 'VI', position: 3 },         // Voice Intelligence
     ],
   },
   {
@@ -310,6 +313,7 @@ export const roleAnchors: RoleAnchors[] = [
       { ref: 'A1', position: 1 },         // Users
       { ref: 'T8-admin', position: 2 },   // Reports
       { ref: 'D4-admin', position: 3 },   // Timetable
+      { ref: 'VI', position: 4 },         // Voice Intelligence
     ],
   },
   {
