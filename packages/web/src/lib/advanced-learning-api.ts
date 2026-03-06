@@ -113,7 +113,8 @@ export interface EduScrumAISuggestion {
   type: string;
   title: string;
   message: string;
-  color: string;
+  color?: string;
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 export interface EduScrumRetroItem {
