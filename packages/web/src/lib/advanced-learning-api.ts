@@ -1,3 +1,5 @@
+import type React from 'react';
+
 /**
  * Advanced Learning API Client
  *
@@ -12,7 +14,9 @@
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const V1 = `${API_BASE}/api/v1`;
+const NORMALIZED_API_BASE = API_BASE.replace(/\/+$/, '');
+// NEXT_PUBLIC_API_URL may already include /api/v1 (production) or not (local dev)
+const V1 = NORMALIZED_API_BASE.endsWith('/api/v1') ? NORMALIZED_API_BASE : `${NORMALIZED_API_BASE}/api/v1`;
 
 // =============================================================================
 // BASE REQUEST HELPER
@@ -194,6 +198,14 @@ export interface PblAssessmentRubric {
   criteria: PblAssessmentCriterion[];
 }
 
+// PBL types
+export interface PblProject { id: string; title: string; phase?: string; status?: string; subjectArea?: string; gradeLevel?: string }
+export interface PblPhase { id: string; name: string; status?: string; order?: number }
+export interface PblMilestone { id: string; title: string; dueDate?: string; status?: string }
+export interface PblArtifact { id: string; name: string; type?: string; url?: string }
+export interface Exhibition { id: string; date: string; title?: string; location?: string; description?: string }
+export interface AssessmentRubric { id: string; title: string; criteria?: Array<{ name: string; weight?: number }> }
+
 export interface PblData {
   project: PblProject | null;
   phases: PblPhase[];
@@ -242,6 +254,12 @@ export interface IndustryPartner {
   name: string;
   sector: string;
 }
+
+// Industry Experience types
+export interface IndustryOpportunity { id: string; title: string; company?: string; type?: string; industry?: string; duration?: string }
+export interface IndustryApplication { id: string; opportunityId: string; status?: string; appliedDate?: string }
+export interface IndustryPlacement { id: string; company: string; startDate?: string; endDate?: string; supervisor?: string }
+export interface PartnerCompany { id: string; name: string; industry?: string; logo?: string; website?: string }
 
 export interface IndustryData {
   opportunities: IndustryOpportunity[];
@@ -309,6 +327,14 @@ export interface WorkSupervisor {
   email: string;
   phone?: string;
 }
+
+// Work Experience types
+export interface WorkOpportunity { id: string; title: string; company?: string; duration?: string; location?: string }
+export interface WorkApplication { id: string; opportunityId: string; status?: string; appliedDate?: string }
+export interface WorkDocument { id: string; name: string; type?: string; url?: string; uploadedDate?: string }
+export interface LogbookEntry { id: string; date: string; summary?: string; hours?: number; tasks?: string[] }
+export interface SupervisorFeedback { id: string; date: string; comments?: string; rating?: number }
+export interface SupervisorDetails { id: string; name: string; role?: string; email?: string; company?: string }
 
 export interface WorkExperienceData {
   opportunities: WorkOpportunity[];
