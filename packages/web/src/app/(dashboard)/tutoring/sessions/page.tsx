@@ -45,7 +45,7 @@ export default function SessionsPage() {
     .filter(b => b.scheduledStart.startsWith(todayStr))
     .map((b, i) => ({
       id: i + 1,
-      student: b.tutor.user.displayName,
+      student: b.bookedByUser.displayName,
       subject: b.subjectId,
       time: `${new Date(b.scheduledStart).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })} - ${new Date(b.scheduledEnd).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`,
       status: b.status === 'confirmed' ? 'upcoming' : b.status,

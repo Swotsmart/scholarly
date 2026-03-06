@@ -44,7 +44,7 @@ export default function EarningsOverviewPage() {
     const now = new Date();
     const diffDays = Math.round((now.getTime() - start.getTime()) / 86400000);
     return {
-      student: b.tutor.user.displayName,
+      student: b.bookedByUser.displayName,
       subject: b.subjectId,
       duration: durationMin,
       amount: (durationMin / 60) * 65,

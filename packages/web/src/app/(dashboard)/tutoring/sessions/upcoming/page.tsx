@@ -89,7 +89,7 @@ export default function UpcomingSessionsPage() {
     const isTomorrow = start.toDateString() === new Date(now.getTime() + 86400000).toDateString();
     return {
       id: i + 1,
-      student: b.tutor.user.displayName,
+      student: b.bookedByUser.displayName,
       subject: b.subjectId,
       date: isToday ? 'Today' : isTomorrow ? 'Tomorrow' : start.toLocaleDateString('en-AU', { month: 'short', day: 'numeric' }),
       time: `${start.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })} - ${end.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`,

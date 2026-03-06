@@ -110,7 +110,7 @@ export default function StudentsPage() {
   const studentsFromApi = data ? (() => {
     const studentMap = new Map<string, { name: string; sessions: number; subjects: Set<string> }>();
     for (const b of data.allBookings) {
-      const name = b.tutor.user.displayName;
+      const name = b.bookedByUser.displayName;
       const existing = studentMap.get(name);
       if (existing) {
         existing.sessions++;
