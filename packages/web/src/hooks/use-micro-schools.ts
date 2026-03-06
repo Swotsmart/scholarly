@@ -1,12 +1,10 @@
 /**
  * useMicroSchools Hook — Production
  *
- * Fetches core micro-schools data in parallel using Promise.allSettled for
- * independent failure isolation. If one data source fails, others
- * continue loading — a parent can still browse schools even
- * if the applications endpoint is temporarily down.
+ * Loads core micro-schools data from in-memory static exports in
+ * micro-schools-api.ts. Data is filtered and assigned synchronously.
  *
- * Data fetched (from static exports in micro-schools-api.ts):
+ * Data loaded:
  *   microSchools   — all registered micro-schools with details
  *   applications   — user's micro-school applications
  *   enrollment stats are derived from the schools list
@@ -56,37 +54,23 @@ export function useMicroSchools(config?: { state?: string }) {
     enrollmentStats: null,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   const stateFilter = config?.state;
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(() => {
     setIsLoading(true);
-    setError(null);
 
-    try {
-      // micro-schools-api uses static exports, wrap in promises for consistency
-      const results = await Promise.allSettled([
-        Promise.resolve(stateFilter ? allSchools.filter((s) => s.state === stateFilter) : allSchools),
-        Promise.resolve(allApplications),
-      ]);
+    const schools = stateFilter ? allSchools.filter((s) => s.state === stateFilter) : allSchools;
+    const apps = allApplications;
 
-      const schools = results[0].status === 'fulfilled' ? results[0].value : [];
-      const apps = results[1].status === 'fulfilled' ? results[1].value : [];
+    setData({
+      schools,
+      applications: apps,
+      enrollmentStats: computeEnrollmentStats(schools),
+    });
 
-      const errors = results
-        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-        .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
-      if (errors.length > 0) setError(errors.join('; '));
-
-      setData({
-        schools,
-        applications: apps,
-        enrollmentStats: computeEnrollmentStats(schools),
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    setIsLoading(false);
   }, [stateFilter]);
 
   useEffect(() => {
