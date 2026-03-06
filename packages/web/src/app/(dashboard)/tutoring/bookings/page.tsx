@@ -13,6 +13,7 @@ import {
   MessageSquare,
   X,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useTutoring } from '@/hooks/use-tutoring';
 
 const FALLBACK_BOOKINGS = {
@@ -96,13 +97,17 @@ function BookingCard({ booking, isPast }: { booking: typeof FALLBACK_BOOKINGS.up
         </Badge>
         {!isPast && (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Message
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/messages?recipient=${booking.id}`}>
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Message
+              </Link>
             </Button>
-            <Button size="sm">
-              <Video className="mr-2 h-4 w-4" />
-              Join
+            <Button size="sm" asChild>
+              <Link href={`/tutoring/session/${booking.id}`}>
+                <Video className="mr-2 h-4 w-4" />
+                Join
+              </Link>
             </Button>
           </div>
         )}

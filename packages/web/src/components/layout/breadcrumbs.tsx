@@ -34,7 +34,7 @@ const segmentLabels: Record<string, string> = {
   artifacts: 'Artifacts',
   goals: 'Goals',
   showcase: 'Showcase',
-  'ai-buddy': 'Ask Alice',
+  'ai-buddy': 'Ask Issy',
   'ai-studio': 'AI Studio',
   tutoring: 'Tutoring',
   search: 'Search',

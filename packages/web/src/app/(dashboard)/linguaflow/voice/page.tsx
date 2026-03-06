@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useKokoroTTS } from '@/hooks/use-kokoro-tts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -62,6 +63,7 @@ export default function VoiceIntelligencePage() {
   const [analysisResult, setAnalysisResult] = useState<{ score: number; feedback: string } | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const [speechSupported, setSpeechSupported] = useState(true);
+  const tts = useKokoroTTS({ lang: LANGUAGE_MAP[selectedLanguage]?.code || 'fr-FR' });
 
   useEffect(() => {
     const SpeechRecognition = (window as unknown as Record<string, unknown>).SpeechRecognition ||
@@ -138,18 +140,12 @@ export default function VoiceIntelligencePage() {
 
   const handleListenBack = useCallback(() => {
     if (!transcript.trim()) return;
-    const utterance = new SpeechSynthesisUtterance(transcript);
-    utterance.lang = LANGUAGE_MAP[selectedLanguage]?.code || 'fr-FR';
-    utterance.rate = 0.85;
-    speechSynthesis.speak(utterance);
-  }, [transcript, selectedLanguage]);
+    tts.speak(transcript);
+  }, [transcript, tts]);
 
   const speakWord = useCallback((word: string) => {
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = LANGUAGE_MAP[selectedLanguage]?.code || 'fr-FR';
-    utterance.rate = 0.75;
-    speechSynthesis.speak(utterance);
-  }, [selectedLanguage]);
+    tts.speak(word);
+  }, [tts]);
 
   // Mock data
   const recentSessions = [
@@ -542,14 +538,11 @@ export default function VoiceIntelligencePage() {
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => {
-                        const utterance = new SpeechSynthesisUtterance(
+                        tts.speak(
                           dialogue.lang === 'french'
                             ? 'Bonjour, bienvenue! Comment puis-je vous aider?'
                             : 'Hola, bienvenido! Como puedo ayudarle?'
                         );
-                        utterance.lang = LANGUAGE_MAP[dialogue.lang]?.code || 'fr-FR';
-                        utterance.rate = 0.8;
-                        speechSynthesis.speak(utterance);
                       }}>
                         <Play className="h-4 w-4 mr-1" />
                         Listen

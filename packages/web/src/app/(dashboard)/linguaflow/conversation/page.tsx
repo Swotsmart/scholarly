@@ -7,6 +7,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useKokoroTTS } from '@/hooks/use-kokoro-tts';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -449,6 +450,7 @@ export default function ConversationPage() {
     vocabulary: 0,
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const tts = useKokoroTTS({ lang: 'fr-FR' });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -458,15 +460,9 @@ export default function ConversationPage() {
     scrollToBottom();
   }, [messages]);
 
-  const speakText = useCallback((text: string, lang: string = 'fr-FR') => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      utterance.rate = 0.85;
-      window.speechSynthesis.speak(utterance);
-    }
-  }, []);
+  const speakText = useCallback((text: string, _lang: string = 'fr-FR') => {
+    tts.speak(text);
+  }, [tts]);
 
   const startConversation = useCallback((persona: Persona, scenario?: Scenario) => {
     setSelectedPersona(persona);

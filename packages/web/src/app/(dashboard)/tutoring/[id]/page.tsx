@@ -346,9 +346,11 @@ export default function TutorProfilePage() {
                   Book a Session
                 </Link>
               </Button>
-              <Button variant="outline" className="w-full">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Send Message
+              <Button variant="outline" className="w-full" asChild>
+                <Link href={`/messages?recipient=${tutor.id}`}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Send Message
+                </Link>
               </Button>
               <p className="text-xs text-center text-muted-foreground">
                 Instant booking - get confirmation within {tutor.responseTime}

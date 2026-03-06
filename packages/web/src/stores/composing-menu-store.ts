@@ -207,21 +207,34 @@ export const useComposingMenuStore = create<ComposingMenuStore>()(
         const state = get();
         const existing = state.roleMenus[role];
 
-        // Already initialised — anchors present
-        if (existing && existing.items.some(i => i.state === 'anchor')) return;
-
         const anchorDef = getAnchorsForRole(role);
         if (!anchorDef) return;
 
+        // Build canonical anchor items
         const anchors: ComposingMenuItem[] = anchorDef.anchors.map(a => ({
           ref: a.ref,
           state: 'anchor' as MenuItemState,
           addedAt: now(),
           lastUsed: null,
           useCount: 0,
-          pinned: false, // anchors don't need pinning — they're permanent
+          pinned: false,
           position: a.position,
         }));
+
+        if (existing && existing.items.some(i => i.state === 'anchor')) {
+          // Already initialised — patch in any missing anchors (e.g. Voice Intelligence added after first init)
+          const existingRefs = new Set(existing.items.filter(i => i.state === 'anchor').map(i => i.ref));
+          const missing = anchors.filter(a => !existingRefs.has(a.ref));
+          if (missing.length === 0) return;
+
+          set(s => ({
+            roleMenus: {
+              ...s.roleMenus,
+              [role]: { ...existing, items: [...existing.items, ...missing] },
+            },
+          }));
+          return;
+        }
 
         const menu = existing
           ? { ...existing, items: [...anchors, ...existing.items.filter(i => i.state !== 'anchor')] }

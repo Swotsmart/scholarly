@@ -27,6 +27,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { eruditsApi } from '@/lib/erudits-api';
+import { toast } from '@/hooks/use-toast';
 import type { BookClub, BookClubSession, BookClubReading, BookClubMember } from '@/types/erudits';
 
 export default function BookClubDetailPage() {
@@ -129,7 +130,12 @@ export default function BookClubDetailPage() {
             <p className="text-muted-foreground mt-1">Organised by {club.organiserName}</p>
           </div>
         </div>
-        <Button>
+        <Button onClick={async () => {
+          try {
+            await eruditsApi.bookclub.join(clubId);
+            toast({ title: 'Joined!', description: 'You have joined the book club.' });
+          } catch { toast({ title: 'Failed to join', variant: 'destructive' }); }
+        }}>
           <UserPlus className="mr-2 h-4 w-4" />Join Club
         </Button>
       </div>

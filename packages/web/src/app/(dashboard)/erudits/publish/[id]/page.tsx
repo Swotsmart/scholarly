@@ -32,6 +32,7 @@ import {
   School,
 } from 'lucide-react';
 import { eruditsApi } from '@/lib/erudits-api';
+import { toast } from '@/hooks/use-toast';
 import type { Manuscript, ManuscriptVersion, BookCover, ManuscriptStatus, DistributionChannel, PublicationFormat } from '@/types/erudits';
 
 function statusColor(status: ManuscriptStatus): string {
@@ -142,7 +143,14 @@ export default function ManuscriptEditorPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={async () => {
+            try {
+              await eruditsApi.publishing.saveVersion(manuscriptId);
+              toast({ title: 'Version saved' });
+              const vs = await eruditsApi.publishing.getVersions(manuscriptId);
+              setVersions(vs);
+            } catch { toast({ title: 'Failed to save version', variant: 'destructive' }); }
+          }}>
             <Save className="mr-2 h-3 w-3" />Save Version
           </Button>
           <Button size="sm" onClick={() => setShowPublishModal(true)}>
@@ -165,7 +173,7 @@ export default function ManuscriptEditorPage() {
         <Card className="lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between py-3">
             <CardTitle className="text-sm">Chapters</CardTitle>
-            <Button variant="ghost" size="icon" className="h-6 w-6">
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => toast({ title: 'Coming soon', description: 'Chapter creation will be available in the next update.' })}>
               <Plus className="h-3 w-3" />
             </Button>
           </CardHeader>
@@ -191,7 +199,7 @@ export default function ManuscriptEditorPage() {
             ) : (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 <p>No chapters yet</p>
-                <Button variant="outline" size="sm" className="mt-2">
+                <Button variant="outline" size="sm" className="mt-2" onClick={() => toast({ title: 'Coming soon', description: 'Chapter creation will be available in the next update.' })}>
                   <Plus className="mr-1 h-3 w-3" />Add Chapter
                 </Button>
               </div>
@@ -253,7 +261,7 @@ export default function ManuscriptEditorPage() {
                               )}
                             </div>
                           </div>
-                          <Button variant="outline" size="sm">Restore</Button>
+                          <Button variant="outline" size="sm" onClick={() => toast({ title: 'Version restore', description: 'Version restoration coming soon.' })}>Restore</Button>
                         </div>
                       ))}
                     </div>
@@ -261,7 +269,14 @@ export default function ManuscriptEditorPage() {
                     <div className="py-8 text-center text-muted-foreground">
                       <History className="mx-auto h-8 w-8 mb-2 opacity-50" />
                       <p>No versions saved yet</p>
-                      <Button variant="outline" size="sm" className="mt-3">
+                      <Button variant="outline" size="sm" className="mt-3" onClick={async () => {
+                        try {
+                          await eruditsApi.publishing.saveVersion(manuscriptId, 'Initial version');
+                          toast({ title: 'First version saved' });
+                          const vs = await eruditsApi.publishing.getVersions(manuscriptId);
+                          setVersions(vs);
+                        } catch { toast({ title: 'Failed to save version', variant: 'destructive' }); }
+                      }}>
                         <Save className="mr-1 h-3 w-3" />Save First Version
                       </Button>
                     </div>

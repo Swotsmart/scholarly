@@ -556,6 +556,47 @@ class ApiClient {
       return this.get<AskIssyConversation>(`/ask-issy/conversations/${id}`);
     },
   };
+
+  // ==========================================================================
+  // VOICE SERVICE (Kokoro TTS)
+  // ==========================================================================
+
+  voice = {
+    tts: async (text: string, voice?: string): Promise<Blob | null> => {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 5000);
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (this.accessToken) headers['Authorization'] = `Bearer ${this.accessToken}`;
+        const res = await fetch(`${this.baseUrl}/voice/tts`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ text, voice }),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        if (!res.ok) return null;
+        return res.blob();
+      } catch {
+        return null;
+      }
+    },
+    voices: () => this.get<Array<{ id: string; name: string; language: string }>>('/voice/voices'),
+    health: async (): Promise<boolean> => {
+      try {
+        const res = await this.get<{ status: string }>('/voice/health');
+        return res.success;
+      } catch {
+        return false;
+      }
+    },
+    pronunciationAssess: (text: string, audioBlob: Blob) => {
+      const formData = new FormData();
+      formData.append('text', text);
+      formData.append('audio', audioBlob);
+      return this.post<{ score: number; feedback: string }>('/voice/pronunciation/assess', formData);
+    },
+  };
 }
 
 export const api = new ApiClient(API_BASE_URL);

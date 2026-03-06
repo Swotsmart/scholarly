@@ -379,7 +379,13 @@ export default function MigrationWizardPage() {
               Refresh Status
             </Button>
             {migration.status === 'ready_for_review' && (
-              <Button>
+              <Button onClick={async () => {
+                try {
+                  const approvedIds = contentItems.map(c => c.id);
+                  const result = await eruditsApi.migration.approve(migration.id, approvedIds, []);
+                  setMigration(result);
+                } catch { setError('Failed to approve migration'); }
+              }}>
                 <CheckCircle2 className="mr-2 h-4 w-4" />Approve & Import
               </Button>
             )}

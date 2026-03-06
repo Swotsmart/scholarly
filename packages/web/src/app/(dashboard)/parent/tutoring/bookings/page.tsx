@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, Clock, Video, MessageSquare, XCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 import { useTutoring } from '@/hooks/use-tutoring';
 import type { Booking } from '@/types/tutoring';
 
@@ -103,8 +104,8 @@ export default function ParentTutoringBookingsPage() {
                   <Badge variant="outline">{b.child}</Badge>
                 </div>
                 <div className="flex items-center gap-2 mt-3">
-                  <Button size="sm"><Video className="h-4 w-4 mr-1" />Join Session</Button>
-                  <Button size="sm" variant="outline"><MessageSquare className="h-4 w-4 mr-1" />Message</Button>
+                  <Button size="sm" asChild><Link href={`/tutoring/session/${b.id}`}><Video className="h-4 w-4 mr-1" />Join Session</Link></Button>
+                  <Button size="sm" variant="outline" asChild><Link href={`/messages?recipient=${b.id}`}><MessageSquare className="h-4 w-4 mr-1" />Message</Link></Button>
                   <Button size="sm" variant="ghost" className="text-destructive"><XCircle className="h-4 w-4 mr-1" />Cancel</Button>
                 </div>
               </div>

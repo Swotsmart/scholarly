@@ -30,7 +30,7 @@ import {
   Building, Landmark, Store, BarChart3, Map,
   Swords, Coins, PenSquare, Palette, Workflow, Play,
   Home, Bell, HelpCircle, Fingerprint,
-  Vote, Database, Wand2, Volume2,
+  Vote, Database, Wand2, Volume2, Globe,
 } from 'lucide-react';
 
 import type { RegisteredTask, RoleAnchors } from '@/types/composing-menu-types';
@@ -151,6 +151,7 @@ export const taskRegistry: Record<string, RegisteredTask> = {
     { name: 'Profile', href: '/tutoring/profile', icon: Briefcase },
     { name: 'Reviews', href: '/tutoring/reviews', icon: Award },
   ]},
+  TU_ONBOARD: { ref: 'TU_ONBOARD', name: 'Tutor Onboarding', href: '/tutoring/onboarding', icon: Rocket, type: 'atomic', cluster: 'tutoring', description: 'Set up your tutoring profile' },
 
   // ── CLUSTER 8: ADMINISTRATION ──
   A1: { ref: 'A1', name: 'Users', href: '/admin/users', icon: Users, type: 'atomic', cluster: 'admin', description: 'Manage user accounts' },
@@ -197,6 +198,23 @@ export const taskRegistry: Record<string, RegisteredTask> = {
       { name: 'Voice Library', href: '/voice-intelligence?tab=voices', icon: Users },
       { name: 'Voice Cloning', href: '/voice-intelligence?tab=cloning', icon: Wand2 },
       { name: 'Pronunciation', href: '/voice-intelligence?tab=pronunciation', icon: Mic },
+    ],
+  },
+
+  // ── CLUSTER 10b: ERUDITS ──
+  ER: {
+    ref: 'ER',
+    name: 'Erudits',
+    href: '/erudits',
+    icon: Library,
+    type: 'compound',
+    cluster: 'erudits',
+    description: 'Publishing, storefront, book clubs, and migration',
+    children: [
+      { name: 'Publish', href: '/erudits/publish', icon: PenTool },
+      { name: 'Storefront', href: '/erudits/storefront', icon: BookOpen },
+      { name: 'Book Clubs', href: '/erudits/bookclub', icon: Users },
+      { name: 'Migrate', href: '/erudits/migrate', icon: Globe },
     ],
   },
 

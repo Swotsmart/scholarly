@@ -87,7 +87,7 @@ const demoAccounts = [
     icon: Baby,
     color: 'bg-orange-500',
     description: 'Year 8 student, interested in design and French',
-    features: ['Learning Dashboard', 'Ask Alice', 'Design Challenges', 'LinguaFlow', 'Portfolio'],
+    features: ['Learning Dashboard', 'Ask Issy', 'Design Challenges', 'LinguaFlow', 'Portfolio'],
   },
 ];
 

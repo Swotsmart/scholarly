@@ -7,6 +7,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useKokoroTTS } from '@/hooks/use-kokoro-tts';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BookOpen,
@@ -109,15 +110,13 @@ function Flashcard({
   onInputChange: (value: string) => void;
   showAnswer: boolean;
 }) {
+  const tts = useKokoroTTS({ lang: 'fr-FR' });
   const playAudio = () => {
     if (card.item.audioUrl) {
       const audio = new Audio(card.item.audioUrl);
       audio.play();
     } else {
-      // Use browser speech synthesis as fallback
-      const utterance = new SpeechSynthesisUtterance(card.item.word);
-      utterance.lang = 'fr-FR'; // French for demo
-      speechSynthesis.speak(utterance);
+      tts.speak(card.item.word);
     }
   };
 

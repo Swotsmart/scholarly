@@ -24,6 +24,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { eruditsApi } from '@/lib/erudits-api';
+import { toast } from '@/hooks/use-toast';
 import type { DigitalResource, ResourceReview, LicenceScope } from '@/types/erudits';
 
 function formatCents(cents: number): string {
@@ -131,7 +132,7 @@ export default function ResourceDetailPage() {
                   <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/50" />
                   <p className="text-sm text-muted-foreground mt-2">Resource preview</p>
                   {resource.previewPageCount && (
-                    <Button variant="outline" size="sm" className="mt-3">
+                    <Button variant="outline" size="sm" className="mt-3" onClick={() => toast({ title: 'Preview', description: 'Resource preview opening...' })}>
                       <Eye className="mr-2 h-3 w-3" />
                       Preview {resource.previewPageCount} pages
                     </Button>
@@ -298,7 +299,7 @@ export default function ResourceDetailPage() {
                 );
               })}
 
-              <Button className="w-full mt-4" size="lg">
+              <Button className="w-full mt-4" size="lg" onClick={() => toast({ title: 'Purchase', description: 'Payment integration coming soon. This will connect to Stripe checkout.' })}>
                 <ShoppingCart className="mr-2 h-4 w-4" />
                 Purchase for {formatCents(getPriceForLicence())}
               </Button>

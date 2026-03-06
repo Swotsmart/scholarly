@@ -20,6 +20,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useKokoroTTS } from '@/hooks/use-kokoro-tts';
 
 // SpeechRecognition types
 interface SpeechRecognitionEvent {
@@ -122,6 +123,7 @@ export default function VoiceSessionPage() {
   const [currentTranscript, setCurrentTranscript] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const tts = useKokoroTTS({ lang: langCode });
 
   // Session timer
   useEffect(() => {
@@ -139,10 +141,7 @@ export default function VoiceSessionPage() {
   // Speak the agent greeting on load
   useEffect(() => {
     if (!isMuted) {
-      const utterance = new SpeechSynthesisUtterance(scenarioData.text);
-      utterance.lang = langCode;
-      utterance.rate = 0.85;
-      speechSynthesis.speak(utterance);
+      tts.speak(scenarioData.text);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -155,13 +154,9 @@ export default function VoiceSessionPage() {
 
   const speakText = useCallback((text: string) => {
     if (isMuted) return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = langCode;
-    utterance.rate = 0.85;
     setIsAgentSpeaking(true);
-    utterance.onend = () => setIsAgentSpeaking(false);
-    speechSynthesis.speak(utterance);
-  }, [isMuted, langCode]);
+    tts.speak(text).then(() => setIsAgentSpeaking(false));
+  }, [isMuted, tts]);
 
   const addAgentResponse = useCallback(() => {
     setIsAgentSpeaking(true);
@@ -368,7 +363,7 @@ export default function VoiceSessionPage() {
                 size="icon"
                 onClick={() => {
                   setIsMuted(!isMuted);
-                  if (!isMuted) speechSynthesis.cancel();
+                  if (!isMuted) tts.stop();
                 }}
               >
                 {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
@@ -380,9 +375,9 @@ export default function VoiceSessionPage() {
                 }`}
                 onClick={toggleListening}
               >
-                {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+                {isListening ? <MicOff className="h-6 w-6 text-white" /> : <Mic className="h-6 w-6 text-white" />}
               </Button>
-              <Button variant="outline" size="icon" onClick={() => speechSynthesis.cancel()}>
+              <Button variant="outline" size="icon" onClick={() => tts.stop()}>
                 <Pause className="h-5 w-5" />
               </Button>
             </div>
