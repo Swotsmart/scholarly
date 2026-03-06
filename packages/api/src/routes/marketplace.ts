@@ -358,6 +358,282 @@ marketplaceRouter.post('/apps/:id/reviews', async (req, res) => {
   }
 });
 
+/**
+ * GET /marketplace/apps/:id
+ * Get full app detail with reviews and versions
+ */
+marketplaceRouter.get('/apps/:id', async (req, res) => {
+  const tenantId = req.user!.tenantId;
+  const appId = req.params.id;
+
+  try {
+    const service = getDeveloperMarketplaceService();
+    const result = await service.getAppById(tenantId, appId);
+
+    if (isFailure(result)) {
+      const status = errorStatus(result.error.code);
+      return res.status(status).json({ error: result.error });
+    }
+
+    res.json({ success: true, data: result.data });
+  } catch (error) {
+    // Fallback: try direct Prisma query if service method doesn't exist
+    try {
+      const { prisma } = await import('@scholarly/database');
+      const app = await prisma.marketplaceApp.findFirst({
+        where: { id: appId, tenantId },
+        include: {
+          developer: { select: { id: true, name: true, verificationStatus: true } },
+          reviews: { orderBy: { createdAt: 'desc' }, take: 10 },
+          installations: { where: { status: 'active' }, select: { id: true } },
+        },
+      });
+
+      if (!app) {
+        return res.status(404).json({ success: false, error: 'App not found' });
+      }
+
+      res.json({ success: true, data: app });
+    } catch (fallbackErr) {
+      res.status(500).json({ success: false, error: 'Failed to retrieve app details' });
+    }
+  }
+});
+
+/**
+ * GET /marketplace/developers/me/apps
+ * Current developer's apps
+ */
+marketplaceRouter.get('/developers/me/apps', async (req, res) => {
+  const tenantId = req.user!.tenantId;
+  const userId = req.user!.id;
+
+  try {
+    const { prisma } = await import('@scholarly/database');
+    const account = await prisma.developerAccount.findUnique({
+      where: { userId },
+      include: {
+        apps: {
+          orderBy: { updatedAt: 'desc' },
+        },
+      },
+    });
+
+    if (!account) {
+      return res.json({ success: true, data: { apps: [] } });
+    }
+
+    const apps = account.apps.map(app => ({
+      id: app.id,
+      name: app.name,
+      status: app.status,
+      version: app.version,
+      installs: app.installs,
+      rating: app.rating,
+      ratingCount: app.ratingCount,
+      category: app.category,
+      lastUpdated: app.updatedAt.toISOString(),
+    }));
+
+    res.json({ success: true, data: { apps } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to retrieve developer apps' });
+  }
+});
+
+/**
+ * GET /marketplace/community-requests
+ * List community requests with pagination
+ */
+marketplaceRouter.get('/community-requests', async (req, res) => {
+  const tenantId = req.user!.tenantId;
+  const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+  const offset = parseInt(req.query.offset as string) || 0;
+
+  try {
+    const { prisma } = await import('@scholarly/database');
+    const [requests, total] = await Promise.all([
+      prisma.communityRequest.findMany({
+        where: { tenantId },
+        orderBy: { createdAt: 'desc' },
+        skip: offset,
+        take: limit,
+        include: {
+          _count: { select: { pledges: true } },
+        },
+      }),
+      prisma.communityRequest.count({ where: { tenantId } }),
+    ]);
+
+    res.json({
+      success: true,
+      data: requests.map(r => ({
+        id: r.id,
+        title: r.title,
+        description: r.description,
+        category: r.category,
+        currentFunding: Number(r.currentFunding),
+        goalFunding: Number(r.fundingGoal),
+        pledgeCount: r._count.pledges,
+        status: r.status,
+        upvotes: r.voteCount,
+        createdAt: r.createdAt.toISOString(),
+      })),
+      total,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to retrieve community requests' });
+  }
+});
+
+/**
+ * GET /marketplace/bounties
+ * List active bounties
+ */
+marketplaceRouter.get('/bounties', async (req, res) => {
+  const tenantId = req.user!.tenantId;
+
+  try {
+    const { prisma } = await import('@scholarly/database');
+    const requests = await prisma.communityRequest.findMany({
+      where: {
+        tenantId,
+        bountyStatus: { in: ['open', 'claimed'] },
+      },
+      include: {
+        claims: {
+          select: { id: true, status: true, milestones: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const bounties = requests.map(r => ({
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      amount: Number(r.fundingGoal),
+      category: r.category,
+      status: r.bountyStatus,
+      claimCount: r.claims.length,
+      claimed: r.bountyStatus === 'claimed',
+      createdAt: r.createdAt.toISOString(),
+    }));
+
+    res.json({ success: true, data: bounties });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to retrieve bounties' });
+  }
+});
+
+/**
+ * GET /marketplace/stats
+ * Aggregate marketplace stats
+ */
+marketplaceRouter.get('/stats', async (req, res) => {
+  const tenantId = req.user!.tenantId;
+
+  try {
+    const { prisma } = await import('@scholarly/database');
+    const [totalApps, totalInstalls, communityRequests, activeBounties] = await Promise.all([
+      prisma.marketplaceApp.count({ where: { tenantId, status: 'published' } }),
+      prisma.appInstallation.count({ where: { tenantId, status: 'active' } }),
+      prisma.communityRequest.count({ where: { tenantId, status: 'active' } }),
+      prisma.communityRequest.count({ where: { tenantId, bountyStatus: { in: ['open', 'claimed'] } } }),
+    ]);
+
+    res.json({
+      success: true,
+      data: { totalApps, activeInstalls: totalInstalls, communityRequests, activeBounties },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to retrieve marketplace stats' });
+  }
+});
+
+/**
+ * GET /marketplace/categories
+ * List app categories with counts
+ */
+marketplaceRouter.get('/categories', async (req, res) => {
+  const tenantId = req.user!.tenantId;
+
+  try {
+    const { prisma } = await import('@scholarly/database');
+    const apps = await prisma.marketplaceApp.findMany({
+      where: { tenantId, status: 'published' },
+      select: { category: true },
+    });
+
+    const counts = new Map<string, number>();
+    for (const app of apps) {
+      counts.set(app.category, (counts.get(app.category) || 0) + 1);
+    }
+
+    const categories = Array.from(counts.entries()).map(([id, count]) => ({
+      id: id.toLowerCase().replace(/_/g, '-'),
+      name: id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      count,
+    }));
+
+    res.json({ success: true, data: categories });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to retrieve categories' });
+  }
+});
+
+/**
+ * GET /marketplace/apps/recommendations
+ * AI-powered app recommendations
+ */
+marketplaceRouter.get('/apps/recommendations', async (req, res) => {
+  const tenantId = req.user!.tenantId;
+  const userId = req.user!.id;
+
+  try {
+    const { prisma } = await import('@scholarly/database');
+
+    // Get user's installed apps to exclude
+    const installed = await prisma.appInstallation.findMany({
+      where: { tenantId, userId, status: 'active' },
+      select: { appId: true },
+    });
+    const installedIds = new Set(installed.map(i => i.appId));
+
+    // Get top-rated, most-installed apps not already installed
+    const apps = await prisma.marketplaceApp.findMany({
+      where: {
+        tenantId,
+        status: 'published',
+        id: { notIn: [...installedIds] },
+      },
+      orderBy: [{ rating: 'desc' }, { installs: 'desc' }],
+      take: 6,
+      include: {
+        developer: { select: { name: true } },
+      },
+    });
+
+    const recommendations = apps.map(app => ({
+      app: {
+        id: app.id,
+        name: app.name,
+        developer: app.developer.name,
+        description: app.description || '',
+        rating: app.rating,
+        installs: app.installs,
+        category: app.category,
+      },
+      score: app.rating * 0.6 + Math.min(app.installs / 10000, 1) * 0.4,
+      reason: app.isFeatured ? 'Featured by Scholarly' : 'Popular in your institution',
+    }));
+
+    res.json({ success: true, data: recommendations });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to get recommendations' });
+  }
+});
+
 // ============================================================================
 // Community Request & Bounty Routes
 // ============================================================================

@@ -6717,6 +6717,25 @@ model WebhookDelivery {
   @@index([eventType])
 }
 
+/// Developer API key for programmatic access
+model DeveloperApiKey {
+  id          String    @id @default(cuid())
+  tenantId    String
+  developerId String
+  name        String
+  prefix      String    // "sk_prod_...a4f2"
+  keyHash     String    @unique  // SHA-256 of full key
+  permissions String[]
+  status      String    @default("active")
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([tenantId, developerId])
+  @@index([keyHash])
+}
+
 // ============================================================================
 // A/B EXPERIMENT MODELS
 // ============================================================================

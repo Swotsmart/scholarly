@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Search,
   Star,
@@ -15,145 +16,10 @@ import {
   ChevronDown,
   ArrowLeft,
 } from 'lucide-react';
-
-interface MarketplaceApp {
-  id: string;
-  name: string;
-  developer: string;
-  description: string;
-  rating: number;
-  reviewCount: number;
-  installs: number;
-  pricing: 'Free' | 'Freemium' | 'Premium';
-  priceAmount: string | null;
-  category: string;
-  color: string;
-  letter: string;
-  featured: boolean;
-}
-
-const MOCK_APPS: MarketplaceApp[] = [
-  {
-    id: 'vocabmaster-pro',
-    name: 'VocabMaster Pro',
-    developer: 'LangTech Solutions',
-    description: 'AI-powered vocabulary acquisition with spaced repetition, contextual learning, and Australian English dialect support for Years 3-12 students.',
-    rating: 4.8,
-    reviewCount: 342,
-    installs: 5420,
-    pricing: 'Premium',
-    priceAmount: '$4.99/mo',
-    category: 'Language Learning',
-    color: 'bg-blue-500',
-    letter: 'V',
-    featured: true,
-  },
-  {
-    id: 'chemlab-vr',
-    name: 'ChemLab VR',
-    developer: 'Immersive Edu Labs',
-    description: 'Virtual reality chemistry laboratory aligned with the Australian Curriculum. Conduct experiments safely with photo-realistic simulations and guided lab reports.',
-    rating: 4.9,
-    reviewCount: 189,
-    installs: 3187,
-    pricing: 'Premium',
-    priceAmount: '$9.99/mo',
-    category: 'VR/AR',
-    color: 'bg-emerald-500',
-    letter: 'C',
-    featured: true,
-  },
-  {
-    id: 'quizforge',
-    name: 'QuizForge',
-    developer: 'AssessTech AU',
-    description: 'Intelligent assessment builder with auto-marking, NAPLAN-style question templates, differentiated assessments, and detailed analytics for educators.',
-    rating: 4.7,
-    reviewCount: 567,
-    installs: 8934,
-    pricing: 'Free',
-    priceAmount: null,
-    category: 'Assessment',
-    color: 'bg-purple-500',
-    letter: 'Q',
-    featured: true,
-  },
-  {
-    id: 'readaloud-ai',
-    name: 'ReadAloud AI',
-    developer: 'AccessEd Tech',
-    description: 'Accessibility-first reading assistant with text-to-speech, dyslexia-friendly fonts, adjustable reading speed, and comprehension scaffolding for diverse learners.',
-    rating: 4.5,
-    reviewCount: 231,
-    installs: 1756,
-    pricing: 'Freemium',
-    priceAmount: '$2.99/mo',
-    category: 'Management',
-    color: 'bg-teal-500',
-    letter: 'R',
-    featured: false,
-  },
-  {
-    id: 'mathquest',
-    name: 'MathQuest',
-    developer: 'GameLearn AU',
-    description: 'Gamified mathematics platform covering Foundation to Year 10 with adaptive difficulty, real-world problem scenarios, and alignment to the Australian Curriculum.',
-    rating: 4.6,
-    reviewCount: 412,
-    installs: 2890,
-    pricing: 'Free',
-    priceAmount: null,
-    category: 'STEM',
-    color: 'bg-orange-500',
-    letter: 'M',
-    featured: false,
-  },
-  {
-    id: 'classsync',
-    name: 'ClassSync',
-    developer: 'EduSync Pty Ltd',
-    description: 'All-in-one classroom management platform with attendance tracking, behaviour monitoring, parent communication, and real-time student engagement metrics.',
-    rating: 4.4,
-    reviewCount: 298,
-    installs: 4210,
-    pricing: 'Free',
-    priceAmount: null,
-    category: 'Management',
-    color: 'bg-indigo-500',
-    letter: 'C',
-    featured: false,
-  },
-  {
-    id: 'portfoliogen',
-    name: 'PortfolioGen',
-    developer: 'FolioTech',
-    description: 'Automated portfolio generation tool that curates student work samples, learning reflections, and achievement evidence into beautifully designed digital portfolios.',
-    rating: 4.3,
-    reviewCount: 156,
-    installs: 1523,
-    pricing: 'Premium',
-    priceAmount: '$3.49/mo',
-    category: 'Assessment',
-    color: 'bg-rose-500',
-    letter: 'P',
-    featured: false,
-  },
-  {
-    id: 'culturalbridge',
-    name: 'CulturalBridge',
-    developer: 'BridgeEd Global',
-    description: 'Cultural exchange platform connecting Australian classrooms with schools worldwide. Features virtual pen pals, collaborative projects, and Indigenous cultural modules.',
-    rating: 4.7,
-    reviewCount: 178,
-    installs: 987,
-    pricing: 'Free',
-    priceAmount: null,
-    category: 'Language Learning',
-    color: 'bg-cyan-500',
-    letter: 'C',
-    featured: false,
-  },
-];
+import { useMarketplaceApps } from '@/hooks/use-marketplace';
+import { marketplaceApi } from '@/lib/marketplace-api';
+import { marketplaceTelemetry } from '@/lib/marketplace-telemetry';
+import type { MarketplaceApp } from '@/types/marketplace';
 
 const SORT_OPTIONS = [
   { value: 'popular', label: 'Popular' },
@@ -175,27 +41,26 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function AppListingPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortBy, setSortBy] = useState('popular');
   const [showSortMenu, setShowSortMenu] = useState(false);
 
-  const filteredApps = useMemo(() => {
-    let apps = [...MOCK_APPS];
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-    // Filter by category
+  // Fetch from API
+  const { apps: apiApps, total, isLoading } = useMarketplaceApps(debouncedQuery || undefined);
+
+  const filteredApps = useMemo(() => {
+    let apps = [...apiApps];
+
+    // Filter by category (client-side)
     if (activeCategory !== 'All') {
       apps = apps.filter((app) => app.category === activeCategory);
-    }
-
-    // Filter by search
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      apps = apps.filter(
-        (app) =>
-          app.name.toLowerCase().includes(query) ||
-          app.developer.toLowerCase().includes(query) ||
-          app.description.toLowerCase().includes(query)
-      );
     }
 
     // Sort
@@ -204,7 +69,7 @@ export default function AppListingPage() {
         apps.sort((a, b) => b.installs - a.installs);
         break;
       case 'newest':
-        apps.sort((a, b) => (a.featured ? -1 : 1));
+        apps.sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
         break;
       case 'rating':
         apps.sort((a, b) => b.rating - a.rating);
@@ -219,7 +84,7 @@ export default function AppListingPage() {
     }
 
     return apps;
-  }, [searchQuery, activeCategory, sortBy]);
+  }, [apiApps, activeCategory, sortBy]);
 
   return (
     <div className="space-y-6">
@@ -235,7 +100,7 @@ export default function AppListingPage() {
             <h1 className="heading-2">Browse Apps</h1>
           </div>
           <p className="text-muted-foreground ml-10">
-            Explore {MOCK_APPS.length} educational apps built for Australian schools
+            Explore {total} educational apps built for Australian schools
           </p>
         </div>
       </div>

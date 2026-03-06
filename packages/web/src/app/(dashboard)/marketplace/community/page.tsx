@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   ArrowLeft,
@@ -19,183 +20,75 @@ import {
   CheckCircle2,
   Code,
   Zap,
-  TrendingUp,
   Lightbulb,
   Award,
+  Loader2,
 } from 'lucide-react';
+import { useCommunityRequests } from '@/hooks/use-marketplace';
+import { marketplaceTelemetry } from '@/lib/marketplace-telemetry';
 
-interface FeatureRequest {
-  id: string;
-  title: string;
-  requester: string;
-  requesterRole: string;
-  description: string;
-  currentFunding: number;
-  goalFunding: number;
-  pledgeCount: number;
-  deadline: string;
-  category: string;
-  status: 'active' | 'funded' | 'in_development';
-  upvotes: number;
-}
-
-interface Bounty {
-  id: string;
-  title: string;
-  sponsor: string;
-  sponsorType: string;
-  description: string;
-  amount: number;
-  requiredSkills: string[];
-  deadline: string;
-  claimCount: number;
-  claimed: boolean;
-  milestones: { name: string; reward: number; completed: boolean }[];
-  status: 'open' | 'claimed' | 'completed';
-}
-
-const FEATURE_REQUESTS: FeatureRequest[] = [
-  {
-    id: 'fr-1',
-    title: 'Real-time Collaboration Whiteboard',
-    requester: 'Emily Watson',
-    requesterRole: 'Year 6 Teacher, Canberra Grammar',
-    description: 'A shared digital whiteboard where students and teachers can collaborate in real-time during lessons. Should support drawing, text, images, and sticky notes with infinite canvas. Essential for hybrid classrooms and group brainstorming activities.',
-    currentFunding: 3200,
-    goalFunding: 5000,
-    pledgeCount: 47,
-    deadline: '28 Feb 2026',
-    category: 'Classroom Management',
-    status: 'active',
-    upvotes: 156,
-  },
-  {
-    id: 'fr-2',
-    title: 'Parent-Teacher Conference Scheduler',
-    requester: 'Michael Torres',
-    requesterRole: 'Deputy Principal, Adelaide Hills PS',
-    description: 'An intelligent scheduling tool that coordinates parent-teacher conferences with availability matching, automatic reminders, video conferencing integration, and multilingual support for diverse communities.',
-    currentFunding: 4800,
-    goalFunding: 4800,
-    pledgeCount: 62,
-    deadline: '15 Mar 2026',
-    category: 'Management',
-    status: 'funded',
-    upvotes: 203,
-  },
-  {
-    id: 'fr-3',
-    title: 'Indigenous Language Dictionary',
-    requester: 'Aunty Rose Campbell',
-    requesterRole: 'Cultural Advisor, NT Education',
-    description: 'A comprehensive digital dictionary supporting Australian Indigenous languages including Pitjantjatjara, Yolngu Matha, Warlpiri, and Kriol. Features audio pronunciations by Elders, cultural context notes, and curriculum integration for language revitalisation programs.',
-    currentFunding: 7500,
-    goalFunding: 12000,
-    pledgeCount: 134,
-    deadline: '30 Apr 2026',
-    category: 'Language Learning',
-    status: 'active',
-    upvotes: 412,
-  },
-  {
-    id: 'fr-4',
-    title: 'Special Needs Adaptive Testing',
-    requester: 'Dr. Lisa Pham',
-    requesterRole: 'SENCO, Melbourne Metro Schools',
-    description: 'An assessment tool that dynamically adapts to students with additional learning needs. Supports text-to-speech, simplified language, extended time, visual scaffolding, and alternative response modes. Generates ILP-aligned progress reports.',
-    currentFunding: 2100,
-    goalFunding: 8000,
-    pledgeCount: 38,
-    deadline: '31 Mar 2026',
-    category: 'Accessibility',
-    status: 'active',
-    upvotes: 289,
-  },
-  {
-    id: 'fr-5',
-    title: 'Offline Mode for Rural Schools',
-    requester: 'Tom Bradley',
-    requesterRole: 'Principal, Outback Distance Ed',
-    description: 'Full offline functionality for Scholarly platform features including content delivery, assessment completion, progress tracking, and data sync when connectivity is restored. Critical for schools in remote and regional Australia with unreliable internet access.',
-    currentFunding: 6000,
-    goalFunding: 6000,
-    pledgeCount: 89,
-    deadline: '28 Feb 2026',
-    category: 'Infrastructure',
-    status: 'funded',
-    upvotes: 367,
-  },
-];
-
-const BOUNTIES: Bounty[] = [
-  {
-    id: 'b-1',
-    title: 'SCORM 2004 Content Import Plugin',
-    sponsor: 'NSW Department of Education',
-    sponsorType: 'Government',
-    description: 'Build a plugin that imports SCORM 2004 compliant learning packages into the Scholarly content library. Must support all SCORM data model elements, sequencing rules, and generate progress tracking events compatible with the Scholarly analytics pipeline.',
-    amount: 15000,
-    requiredSkills: ['TypeScript', 'SCORM 2004', 'React', 'Node.js'],
-    deadline: '15 Mar 2026',
-    claimCount: 4,
-    claimed: true,
-    milestones: [
-      { name: 'SCORM parser and manifest reader', reward: 4000, completed: true },
-      { name: 'Content rendering engine', reward: 5000, completed: true },
-      { name: 'Progress tracking integration', reward: 3000, completed: false },
-      { name: 'Testing and documentation', reward: 3000, completed: false },
-    ],
-    status: 'claimed',
-  },
-  {
-    id: 'b-2',
-    title: 'Auslan Sign Language Recognition Module',
-    sponsor: 'Deaf Australia Foundation',
-    sponsorType: 'Non-profit',
-    description: 'Develop a computer vision module that recognises Australian Sign Language (Auslan) gestures via webcam. The module should support fingerspelling, common signs, and integrate with the Scholarly accessibility toolkit to provide real-time sign language feedback.',
-    amount: 25000,
-    requiredSkills: ['Python', 'TensorFlow', 'Computer Vision', 'WebRTC', 'TypeScript'],
-    deadline: '30 Apr 2026',
-    claimCount: 2,
-    claimed: false,
-    milestones: [
-      { name: 'Auslan gesture dataset curation', reward: 5000, completed: false },
-      { name: 'ML model training and validation', reward: 8000, completed: false },
-      { name: 'WebRTC integration and browser SDK', reward: 7000, completed: false },
-      { name: 'Scholarly platform integration', reward: 5000, completed: false },
-    ],
-    status: 'open',
-  },
-  {
-    id: 'b-3',
-    title: 'Aboriginal Astronomy Interactive Sky Map',
-    sponsor: 'CSIRO Education',
-    sponsorType: 'Research',
-    description: 'Create an interactive sky map that overlays Aboriginal astronomical knowledge onto a real-time star chart. Include Dreamtime stories associated with constellations, seasonal calendars, and navigation knowledge from multiple Aboriginal nations.',
-    amount: 18000,
-    requiredSkills: ['Three.js', 'WebGL', 'TypeScript', 'React', 'GIS'],
-    deadline: '31 May 2026',
-    claimCount: 1,
-    claimed: false,
-    milestones: [
-      { name: 'Star chart rendering engine', reward: 5000, completed: false },
-      { name: 'Aboriginal knowledge overlay system', reward: 6000, completed: false },
-      { name: 'Interactive storytelling features', reward: 4000, completed: false },
-      { name: 'Curriculum integration and testing', reward: 3000, completed: false },
-    ],
-    status: 'open',
-  },
-];
-
-const COMMUNITY_STATS = [
-  { label: 'Active Requests', value: '89', icon: Lightbulb, color: 'purple' },
-  { label: 'Total Pledged', value: '142,800 EDU', icon: Coins, color: 'amber' },
-  { label: 'Active Bounties', value: '23', icon: Target, color: 'blue' },
-  { label: 'Completed Apps', value: '34', icon: Award, color: 'green' },
+const COMMUNITY_STATS_CONFIG = [
+  { label: 'Active Requests', icon: Lightbulb, color: 'purple' },
+  { label: 'Total Pledged', icon: Coins, color: 'amber' },
+  { label: 'Active Bounties', icon: Target, color: 'blue' },
+  { label: 'Completed Apps', icon: Award, color: 'green' },
 ];
 
 export default function CommunityPage() {
   const [activeTab, setActiveTab] = useState('requests');
+  const { requests, bounties, isLoading, pledge, claimBounty } = useCommunityRequests();
+  const [pledging, setPledging] = useState<string | null>(null);
+  const [claiming, setClaiming] = useState<string | null>(null);
+
+  // Track tab navigation
+  const handleTabChange = useCallback((tab: string) => {
+    marketplaceTelemetry.trackCommunityView(tab);
+    setActiveTab(tab);
+  }, []);
+
+  const handlePledge = useCallback(async (requestId: string) => {
+    setPledging(requestId);
+    try {
+      await pledge(requestId, 100); // Default pledge amount
+    } finally {
+      setPledging(null);
+    }
+  }, [pledge]);
+
+  const handleClaimBounty = useCallback(async (bountyId: string) => {
+    setClaiming(bountyId);
+    try {
+      await claimBounty(bountyId, 'I would like to claim this bounty.');
+    } finally {
+      setClaiming(null);
+    }
+  }, [claimBounty]);
+
+  // Derive stats from data
+  const activeRequests = requests.filter(r => r.status === 'active').length;
+  const totalPledged = requests.reduce((sum, r) => sum + r.currentFunding, 0);
+  const activeBounties = bounties.filter(b => b.status === 'open').length;
+  const completedBounties = bounties.filter(b => b.status === 'completed').length;
+  const statsValues = [
+    String(activeRequests),
+    `${totalPledged.toLocaleString()} EDU`,
+    String(activeBounties),
+    String(completedBounties),
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
+        <Skeleton className="h-64" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -224,7 +117,7 @@ export default function CommunityPage() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {COMMUNITY_STATS.map((stat) => {
+        {COMMUNITY_STATS_CONFIG.map((stat, idx) => {
           const Icon = stat.icon;
           return (
             <Card key={stat.label}>
@@ -233,7 +126,7 @@ export default function CommunityPage() {
                   <Icon className={`h-6 w-6 text-${stat.color}-500`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className="text-2xl font-bold">{statsValues[idx]}</p>
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
                 </div>
               </CardContent>
@@ -243,7 +136,7 @@ export default function CommunityPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="requests">Feature Requests</TabsTrigger>
           <TabsTrigger value="bounties">Active Bounties</TabsTrigger>
@@ -251,7 +144,16 @@ export default function CommunityPage() {
 
         {/* Feature Requests */}
         <TabsContent value="requests" className="space-y-4">
-          {FEATURE_REQUESTS.map((request) => {
+          {requests.length === 0 && (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center p-12">
+                <Lightbulb className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                <p className="text-lg font-medium">No feature requests yet</p>
+                <p className="text-sm text-muted-foreground">Be the first to submit a request.</p>
+              </CardContent>
+            </Card>
+          )}
+          {requests.map((request) => {
             const fundingPercentage = Math.round(
               (request.currentFunding / request.goalFunding) * 100
             );
@@ -295,11 +197,7 @@ export default function CommunityPage() {
                       </span>
                       <span className="text-muted-foreground">{fundingPercentage}% funded</span>
                     </div>
-                    <Progress
-                      value={fundingPercentage}
-                      className="h-2"
-                      indicatorClassName={fundingPercentage >= 100 ? 'bg-green-500' : undefined}
-                    />
+                    <Progress value={fundingPercentage} className="h-2" />
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -320,9 +218,14 @@ export default function CommunityPage() {
                     <Button
                       size="sm"
                       variant={request.status === 'funded' ? 'outline' : 'default'}
-                      disabled={request.status === 'funded'}
+                      disabled={request.status === 'funded' || pledging === request.id}
+                      onClick={() => handlePledge(request.id)}
                     >
-                      <Coins className="mr-2 h-4 w-4" />
+                      {pledging === request.id ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Coins className="mr-2 h-4 w-4" />
+                      )}
                       {request.status === 'funded' ? 'Fully Funded' : 'Pledge'}
                     </Button>
                   </div>
@@ -334,7 +237,16 @@ export default function CommunityPage() {
 
         {/* Bounties */}
         <TabsContent value="bounties" className="space-y-4">
-          {BOUNTIES.map((bounty) => {
+          {bounties.length === 0 && (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center p-12">
+                <Target className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                <p className="text-lg font-medium">No bounties available</p>
+                <p className="text-sm text-muted-foreground">Check back later for new opportunities.</p>
+              </CardContent>
+            </Card>
+          )}
+          {bounties.map((bounty) => {
             const completedMilestones = bounty.milestones.filter((m) => m.completed).length;
             const milestoneProgress = Math.round(
               (completedMilestones / bounty.milestones.length) * 100
@@ -430,9 +342,14 @@ export default function CommunityPage() {
                     </div>
                     <Button
                       size="sm"
-                      disabled={bounty.status === 'claimed'}
+                      disabled={bounty.status === 'claimed' || claiming === bounty.id}
+                      onClick={() => handleClaimBounty(bounty.id)}
                     >
-                      <Zap className="mr-2 h-4 w-4" />
+                      {claiming === bounty.id ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Zap className="mr-2 h-4 w-4" />
+                      )}
                       {bounty.status === 'claimed' ? 'Already Claimed' : 'Claim Bounty'}
                     </Button>
                   </div>

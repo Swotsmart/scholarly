@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import {
@@ -49,6 +50,7 @@ import {
   Globe,
   Lock,
   Calendar,
+  Loader2,
 } from 'lucide-react';
 import {
   BarChart,
@@ -58,195 +60,20 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   AreaChart,
   Area,
 } from 'recharts';
+import {
+  useDeveloperPortal,
+  useDeveloperApiKeys,
+  useDeveloperWebhooks,
+  useDeveloperAnalytics,
+} from '@/hooks/use-marketplace';
+import { marketplaceApi } from '@/lib/marketplace-api';
+import { marketplaceTelemetry } from '@/lib/marketplace-telemetry';
+import type { ApiKeyCreateResult } from '@/types/marketplace';
 
-// Developer info
-const DEVELOPER = {
-  name: 'EduTech Solutions',
-  email: 'dev@edutechsolutions.com.au',
-  verified: true,
-  verifiedDate: '14 Sep 2025',
-  memberSince: 'March 2024',
-  appsPublished: 3,
-  totalInstalls: 9653,
-  totalRevenue: 28470,
-  averageRating: 4.6,
-};
-
-// Developer apps
-interface DeveloperApp {
-  id: string;
-  name: string;
-  status: 'draft' | 'in_review' | 'published' | 'suspended';
-  version: string;
-  installs: number;
-  rating: number;
-  reviewCount: number;
-  revenue: number;
-  lastUpdated: string;
-  color: string;
-  letter: string;
-}
-
-const DEVELOPER_APPS: DeveloperApp[] = [
-  {
-    id: 'vocabmaster-pro',
-    name: 'VocabMaster Pro',
-    status: 'published',
-    version: '3.2.1',
-    installs: 5420,
-    rating: 4.8,
-    reviewCount: 342,
-    revenue: 18250,
-    lastUpdated: '15 Jan 2026',
-    color: 'bg-blue-500',
-    letter: 'V',
-  },
-  {
-    id: 'grammar-guru',
-    name: 'Grammar Guru',
-    status: 'published',
-    version: '2.0.4',
-    installs: 3246,
-    rating: 4.5,
-    reviewCount: 189,
-    revenue: 8720,
-    lastUpdated: '8 Jan 2026',
-    color: 'bg-purple-500',
-    letter: 'G',
-  },
-  {
-    id: 'spelling-sprint',
-    name: 'Spelling Sprint',
-    status: 'in_review',
-    version: '1.0.0',
-    installs: 987,
-    rating: 4.4,
-    reviewCount: 56,
-    revenue: 1500,
-    lastUpdated: '20 Jan 2026',
-    color: 'bg-emerald-500',
-    letter: 'S',
-  },
-];
-
-// API Keys
-interface ApiKey {
-  id: string;
-  name: string;
-  prefix: string;
-  createdAt: string;
-  lastUsed: string;
-  permissions: string[];
-  status: 'active' | 'revoked';
-}
-
-const API_KEYS: ApiKey[] = [
-  {
-    id: 'key-1',
-    name: 'Production Key',
-    prefix: 'sk_prod_...a4f2',
-    createdAt: '10 Jan 2026',
-    lastUsed: '29 Jan 2026',
-    permissions: ['read', 'write', 'delete'],
-    status: 'active',
-  },
-  {
-    id: 'key-2',
-    name: 'Development Key',
-    prefix: 'sk_dev_...b8c1',
-    createdAt: '5 Jan 2026',
-    lastUsed: '28 Jan 2026',
-    permissions: ['read', 'write'],
-    status: 'active',
-  },
-  {
-    id: 'key-3',
-    name: 'Testing Key',
-    prefix: 'sk_test_...d3e9',
-    createdAt: '1 Jan 2026',
-    lastUsed: '15 Jan 2026',
-    permissions: ['read'],
-    status: 'revoked',
-  },
-];
-
-// Webhooks
-interface WebhookConfig {
-  id: string;
-  url: string;
-  events: string[];
-  status: 'active' | 'paused' | 'failed';
-  lastTriggered: string;
-  successRate: number;
-  secret: string;
-}
-
-const WEBHOOKS: WebhookConfig[] = [
-  {
-    id: 'wh-1',
-    url: 'https://api.edutechsolutions.com.au/webhooks/scholarly',
-    events: ['app.installed', 'app.uninstalled', 'subscription.created', 'subscription.cancelled'],
-    status: 'active',
-    lastTriggered: '29 Jan 2026, 14:32',
-    successRate: 99.8,
-    secret: 'whsec_a1b2c3d4e5f6...',
-  },
-  {
-    id: 'wh-2',
-    url: 'https://api.edutechsolutions.com.au/webhooks/analytics',
-    events: ['usage.milestone', 'review.created'],
-    status: 'active',
-    lastTriggered: '28 Jan 2026, 09:15',
-    successRate: 100,
-    secret: 'whsec_g7h8i9j0k1l2...',
-  },
-];
-
-// Revenue data
-const REVENUE_DATA = [
-  { month: 'Aug', revenue: 1820 },
-  { month: 'Sep', revenue: 2340 },
-  { month: 'Oct', revenue: 2890 },
-  { month: 'Nov', revenue: 3150 },
-  { month: 'Dec', revenue: 3780 },
-  { month: 'Jan', revenue: 4210 },
-];
-
-// Usage metrics
-const USAGE_DATA = [
-  { date: '23 Jan', requests: 12450, errors: 23 },
-  { date: '24 Jan', requests: 14200, errors: 18 },
-  { date: '25 Jan', requests: 13800, errors: 31 },
-  { date: '26 Jan', requests: 15600, errors: 12 },
-  { date: '27 Jan', requests: 16200, errors: 15 },
-  { date: '28 Jan', requests: 17800, errors: 8 },
-  { date: '29 Jan', requests: 18400, errors: 5 },
-];
-
-// Payouts
-interface PayoutRecord {
-  id: string;
-  date: string;
-  amount: number;
-  apps: string;
-  status: 'completed' | 'pending' | 'processing';
-  method: string;
-}
-
-const PAYOUTS: PayoutRecord[] = [
-  { id: 'po-1', date: '15 Jan 2026', amount: 3780, apps: 'VocabMaster Pro, Grammar Guru', status: 'completed', method: 'Bank Transfer' },
-  { id: 'po-2', date: '15 Dec 2025', amount: 3150, apps: 'VocabMaster Pro, Grammar Guru', status: 'completed', method: 'Bank Transfer' },
-  { id: 'po-3', date: '15 Nov 2025', amount: 2890, apps: 'VocabMaster Pro, Grammar Guru', status: 'completed', method: 'Bank Transfer' },
-  { id: 'po-4', date: '15 Oct 2025', amount: 2340, apps: 'VocabMaster Pro, Grammar Guru', status: 'completed', method: 'Bank Transfer' },
-  { id: 'po-5', date: '15 Sep 2025', amount: 1820, apps: 'VocabMaster Pro', status: 'completed', method: 'Bank Transfer' },
-];
-
-// Webhook events
+// Webhook events reference
 const WEBHOOK_EVENTS = [
   { id: 'app.installed', name: 'App Installed', description: 'Triggered when a user installs your app' },
   { id: 'app.uninstalled', name: 'App Uninstalled', description: 'Triggered when a user uninstalls your app' },
@@ -258,7 +85,7 @@ const WEBHOOK_EVENTS = [
   { id: 'payout.processed', name: 'Payout Processed', description: 'Triggered when a payout is processed' },
 ];
 
-// API Documentation links
+// API documentation links
 const API_DOCS = [
   { title: 'Getting Started', description: 'Quick start guide for the Scholarly API', icon: PlayCircle, href: '#' },
   { title: 'Authentication', description: 'OAuth 2.0 and API key authentication', icon: Lock, href: '#' },
@@ -284,33 +111,102 @@ const PAYOUT_STATUS_CONFIG: Record<string, { label: string; className: string }>
 
 const WEBHOOK_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   active: { label: 'Active', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
-  paused: { label: 'Paused', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-  failed: { label: 'Failed', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+  disabled: { label: 'Disabled', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
+  suspended: { label: 'Suspended', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
 };
-
-const STATS = [
-  { label: 'Total Apps', value: String(DEVELOPER.appsPublished), icon: Store, color: 'blue' },
-  { label: 'Total Installs', value: DEVELOPER.totalInstalls.toLocaleString(), icon: Download, color: 'green' },
-  { label: 'Revenue (EDU)', value: DEVELOPER.totalRevenue.toLocaleString(), icon: Coins, color: 'amber' },
-  { label: 'Average Rating', value: String(DEVELOPER.averageRating), icon: Star, color: 'purple' },
-];
 
 export default function DeveloperPortalPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [showWebhookDialog, setShowWebhookDialog] = useState(false);
+  const [showNewKeyResult, setShowNewKeyResult] = useState<ApiKeyCreateResult | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [showKey, setShowKey] = useState<string | null>(null);
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyPermissions, setNewKeyPermissions] = useState<string[]>(['read']);
   const [newWebhookUrl, setNewWebhookUrl] = useState('');
   const [newWebhookEvents, setNewWebhookEvents] = useState<string[]>([]);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState('7d');
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [creatingWebhook, setCreatingWebhook] = useState(false);
+
+  // Data hooks
+  const { profile, stats, apps, isLoading: portalLoading } = useDeveloperPortal();
+  const { keys, createKey, revokeKey } = useDeveloperApiKeys();
+  const { webhooks, createWebhook, deleteWebhook, testWebhook } = useDeveloperWebhooks();
+  const { usage, revenue, payouts, isLoading: analyticsLoading } = useDeveloperAnalytics(analyticsPeriod);
+
+  // Track tab changes
+  const handleTabChange = useCallback((tab: string) => {
+    marketplaceTelemetry.trackDeveloperTab(tab);
+    setActiveTab(tab);
+  }, []);
 
   const handleCopyKey = (keyId: string, keyValue: string) => {
     navigator.clipboard.writeText(keyValue);
     setCopiedKey(keyId);
     setTimeout(() => setCopiedKey(null), 2000);
   };
+
+  const handleCreateKey = useCallback(async () => {
+    if (!newKeyName.trim()) return;
+    setCreatingKey(true);
+    try {
+      const result = await createKey(newKeyName, newKeyPermissions);
+      setShowApiKeyDialog(false);
+      setShowNewKeyResult(result);
+      setNewKeyName('');
+      setNewKeyPermissions(['read']);
+    } finally {
+      setCreatingKey(false);
+    }
+  }, [newKeyName, newKeyPermissions, createKey]);
+
+  const handleCreateWebhook = useCallback(async () => {
+    if (!newWebhookUrl.trim() || newWebhookEvents.length === 0) return;
+    setCreatingWebhook(true);
+    try {
+      await createWebhook(newWebhookUrl, newWebhookEvents);
+      setShowWebhookDialog(false);
+      setNewWebhookUrl('');
+      setNewWebhookEvents([]);
+    } finally {
+      setCreatingWebhook(false);
+    }
+  }, [newWebhookUrl, newWebhookEvents, createWebhook]);
+
+  // Derived stats
+  const devStats = stats ? [
+    { label: 'Total Apps', value: String(stats.appsPublished), icon: Store, color: 'blue' },
+    { label: 'Total Installs', value: stats.totalInstalls.toLocaleString(), icon: Download, color: 'green' },
+    { label: 'Revenue (EDU)', value: stats.totalRevenue.toLocaleString(), icon: Coins, color: 'amber' },
+    { label: 'Average Rating', value: String(stats.averageRating), icon: Star, color: 'purple' },
+  ] : [
+    { label: 'Total Apps', value: '0', icon: Store, color: 'blue' },
+    { label: 'Total Installs', value: '0', icon: Download, color: 'green' },
+    { label: 'Revenue (EDU)', value: '0', icon: Coins, color: 'amber' },
+    { label: 'Average Rating', value: '0', icon: Star, color: 'purple' },
+  ];
+
+  // Usage summary
+  const totalRequests = usage.reduce((sum, d) => sum + d.requests, 0);
+  const totalErrors = usage.reduce((sum, d) => sum + d.errors, 0);
+  const successRate = totalRequests > 0 ? ((1 - totalErrors / totalRequests) * 100).toFixed(2) : '0';
+
+  if (portalLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-24" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
+        <Skeleton className="h-96" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -353,14 +249,17 @@ export default function DeveloperPortalPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-lg">{DEVELOPER.name}</h3>
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  Verified Developer
-                </Badge>
+                <h3 className="font-semibold text-lg">{profile?.name ?? 'Developer'}</h3>
+                {profile?.verified && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                {profile?.verified && (
+                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    Verified Developer
+                  </Badge>
+                )}
               </div>
               <p className="text-sm text-muted-foreground">
-                Verified since {DEVELOPER.verifiedDate} &middot; Member since {DEVELOPER.memberSince} &middot; {DEVELOPER.email}
+                {profile?.verifiedDate && <>Verified since {profile.verifiedDate} &middot; </>}
+                Member since {profile?.memberSince ?? 'N/A'} &middot; {profile?.email ?? ''}
               </p>
             </div>
           </div>
@@ -373,7 +272,7 @@ export default function DeveloperPortalPage() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {STATS.map((stat) => {
+        {devStats.map((stat) => {
           const Icon = stat.icon;
           return (
             <Card key={stat.label}>
@@ -392,7 +291,7 @@ export default function DeveloperPortalPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-flex">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="api-docs">API Docs</TabsTrigger>
@@ -415,67 +314,75 @@ export default function DeveloperPortalPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-medium">App</th>
-                      <th className="px-4 py-3 text-left font-medium">Status</th>
-                      <th className="px-4 py-3 text-left font-medium">Version</th>
-                      <th className="px-4 py-3 text-right font-medium">Installs</th>
-                      <th className="px-4 py-3 text-right font-medium">Rating</th>
-                      <th className="px-4 py-3 text-right font-medium">Revenue (EDU)</th>
-                      <th className="px-4 py-3 text-left font-medium">Last Updated</th>
-                      <th className="px-4 py-3 text-right font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {DEVELOPER_APPS.map((app) => {
-                      const statusConfig = STATUS_CONFIG[app.status];
-                      return (
-                        <tr key={app.id} className="hover:bg-muted/50">
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <div className={`${app.color} h-8 w-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0`}>
-                                {app.letter}
+              {apps.length === 0 ? (
+                <div className="text-center py-8">
+                  <Store className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+                  <p className="text-lg font-medium">No apps yet</p>
+                  <p className="text-sm text-muted-foreground">Create your first app to get started.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-medium">App</th>
+                        <th className="px-4 py-3 text-left font-medium">Status</th>
+                        <th className="px-4 py-3 text-left font-medium">Version</th>
+                        <th className="px-4 py-3 text-right font-medium">Installs</th>
+                        <th className="px-4 py-3 text-right font-medium">Rating</th>
+                        <th className="px-4 py-3 text-right font-medium">Revenue (EDU)</th>
+                        <th className="px-4 py-3 text-left font-medium">Last Updated</th>
+                        <th className="px-4 py-3 text-right font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {apps.map((app) => {
+                        const statusConfig = STATUS_CONFIG[app.status] ?? STATUS_CONFIG.draft;
+                        return (
+                          <tr key={app.id} className="hover:bg-muted/50">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className={`${app.color} h-8 w-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0`}>
+                                  {app.letter}
+                                </div>
+                                <span className="font-medium">{app.name}</span>
                               </div>
-                              <span className="font-medium">{app.name}</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge className={statusConfig.className}>
-                              {statusConfig.label}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3 font-mono text-xs">{app.version}</td>
-                          <td className="px-4 py-3 text-right">{app.installs.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                              <span>{app.rating}</span>
-                              <span className="text-muted-foreground">({app.reviewCount})</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-right font-medium">
-                            {app.revenue.toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
-                            {app.lastUpdated}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <Button variant="ghost" size="sm" asChild>
-                              <Link href={`/marketplace/apps/${app.id}`}>
-                                View
-                                <ExternalLink className="ml-1 h-3 w-3" />
-                              </Link>
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge className={statusConfig.className}>
+                                {statusConfig.label}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 font-mono text-xs">{app.version}</td>
+                            <td className="px-4 py-3 text-right">{app.installs.toLocaleString()}</td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                                <span>{app.rating}</span>
+                                <span className="text-muted-foreground">({app.reviewCount})</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right font-medium">
+                              {app.revenue.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-muted-foreground">
+                              {app.lastUpdated}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <Button variant="ghost" size="sm" asChild>
+                                <Link href={`/marketplace/apps/${app.id}`}>
+                                  View
+                                  <ExternalLink className="ml-1 h-3 w-3" />
+                                </Link>
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -490,16 +397,22 @@ export default function DeveloperPortalPage() {
                   </CardTitle>
                   <CardDescription>EDU token earnings over the past 6 months</CardDescription>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <ArrowUpRight className="h-4 w-4 text-green-500" />
-                  <span className="text-green-600 dark:text-green-400 font-medium">+11.4% this month</span>
-                </div>
+                {revenue.length >= 2 && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <ArrowUpRight className="h-4 w-4 text-green-500" />
+                    <span className="text-green-600 dark:text-green-400 font-medium">
+                      {revenue.length >= 2
+                        ? `${(((revenue[revenue.length - 1].revenue - revenue[revenue.length - 2].revenue) / revenue[revenue.length - 2].revenue) * 100).toFixed(1)}% this month`
+                        : ''}
+                    </span>
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={REVENUE_DATA}>
+                  <BarChart data={revenue}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis
                       dataKey="month"
@@ -627,84 +540,81 @@ console.log(user);`}
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {API_KEYS.map((key) => (
-                  <div
-                    key={key.id}
-                    className={`p-4 rounded-lg border ${
-                      key.status === 'revoked' ? 'opacity-60' : ''
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Key className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{key.name}</span>
-                          <Badge
-                            className={
-                              key.status === 'active'
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                            }
-                          >
-                            {key.status === 'active' ? 'Active' : 'Revoked'}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <code className="text-sm bg-muted px-2 py-1 rounded">
-                            {showKey === key.id ? 'sk_prod_abc123def456ghi789...' : key.prefix}
-                          </code>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowKey(showKey === key.id ? null : key.id)}
-                          >
-                            {showKey === key.id ? (
-                              <EyeOff className="h-3 w-3" />
-                            ) : (
-                              <Eye className="h-3 w-3" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCopyKey(key.id, key.prefix)}
-                          >
-                            {copiedKey === key.id ? (
-                              <Check className="h-3 w-3 text-green-500" />
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                          </Button>
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                          <span>Created: {key.createdAt}</span>
-                          <span>Last used: {key.lastUsed}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          {key.permissions.map((perm) => (
-                            <Badge key={perm} variant="outline" className="text-xs">
-                              {perm}
+              {keys.length === 0 ? (
+                <div className="text-center py-8">
+                  <Key className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+                  <p className="text-lg font-medium">No API keys</p>
+                  <p className="text-sm text-muted-foreground">Create your first API key to start making requests.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {keys.map((key) => (
+                    <div
+                      key={key.id}
+                      className={`p-4 rounded-lg border ${
+                        key.status === 'revoked' ? 'opacity-60' : ''
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Key className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{key.name}</span>
+                            <Badge
+                              className={
+                                key.status === 'active'
+                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                  : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                              }
+                            >
+                              {key.status === 'active' ? 'Active' : 'Revoked'}
                             </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {key.status === 'active' && (
-                          <>
-                            <Button variant="ghost" size="sm">
-                              <RefreshCw className="h-4 w-4" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <code className="text-sm bg-muted px-2 py-1 rounded">
+                              {key.prefix}
+                            </code>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCopyKey(key.id, key.prefix)}
+                            >
+                              {copiedKey === key.id ? (
+                                <Check className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
                             </Button>
-                            <Button variant="ghost" size="sm" className="text-destructive">
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                            <span>Created: {key.createdAt}</span>
+                            {key.lastUsedAt && <span>Last used: {key.lastUsedAt}</span>}
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            {key.permissions.map((perm) => (
+                              <Badge key={perm} variant="outline" className="text-xs">
+                                {perm}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {key.status === 'active' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive"
+                              onClick={() => revokeKey(key.id)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                          </>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -740,51 +650,70 @@ console.log(user);`}
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {WEBHOOKS.map((webhook) => {
-                  const statusConfig = WEBHOOK_STATUS_CONFIG[webhook.status];
-                  return (
-                    <div key={webhook.id} className="p-4 rounded-lg border">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-muted-foreground" />
-                            <code className="text-sm font-medium">{webhook.url}</code>
-                            <Badge className={statusConfig.className}>
-                              {statusConfig.label}
-                            </Badge>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {webhook.events.map((event) => (
-                              <Badge key={event} variant="outline" className="text-xs">
-                                {event}
+              {webhooks.length === 0 ? (
+                <div className="text-center py-8">
+                  <Webhook className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+                  <p className="text-lg font-medium">No webhooks configured</p>
+                  <p className="text-sm text-muted-foreground">Add an endpoint to start receiving event notifications.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {webhooks.map((webhook) => {
+                    const statusConfig = WEBHOOK_STATUS_CONFIG[webhook.status] ?? WEBHOOK_STATUS_CONFIG.active;
+                    return (
+                      <div key={webhook.id} className="p-4 rounded-lg border">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Globe className="h-4 w-4 text-muted-foreground" />
+                              <code className="text-sm font-medium">{webhook.url}</code>
+                              <Badge className={statusConfig.className}>
+                                {statusConfig.label}
                               </Badge>
-                            ))}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {webhook.events.map((event) => (
+                                <Badge key={event} variant="outline" className="text-xs">
+                                  {event}
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              {webhook.lastDeliveredAt && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  Last triggered: {webhook.lastDeliveredAt}
+                                </span>
+                              )}
+                              <span className="flex items-center gap-1">
+                                <Activity className="h-3 w-3" />
+                                {webhook.deliveryCount} deliveries
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              Last triggered: {webhook.lastTriggered}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Activity className="h-3 w-3" />
-                              Success rate: {webhook.successRate}%
-                            </span>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => testWebhook(webhook.id)}
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive"
+                              onClick={() => deleteWebhook(webhook.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Settings className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -821,9 +750,9 @@ console.log(user);`}
                     <Activity className="h-5 w-5" />
                     API Usage Metrics
                   </CardTitle>
-                  <CardDescription>Track your API usage over the past 7 days</CardDescription>
+                  <CardDescription>Track your API usage over the selected period</CardDescription>
                 </div>
-                <Select defaultValue="7d">
+                <Select value={analyticsPeriod} onValueChange={setAnalyticsPeriod}>
                   <SelectTrigger className="w-[120px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -838,7 +767,7 @@ console.log(user);`}
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={USAGE_DATA}>
+                  <AreaChart data={usage}>
                     <defs>
                       <linearGradient id="colorRequests" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -881,20 +810,20 @@ console.log(user);`}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardContent className="p-6 text-center space-y-2">
-                <p className="text-3xl font-bold text-primary">108,450</p>
-                <p className="text-sm text-muted-foreground">Total Requests (7d)</p>
+                <p className="text-3xl font-bold text-primary">{totalRequests.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">Total Requests</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-6 text-center space-y-2">
-                <p className="text-3xl font-bold text-green-600 dark:text-green-400">99.89%</p>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400">{successRate}%</p>
                 <p className="text-sm text-muted-foreground">Success Rate</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-6 text-center space-y-2">
-                <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">112</p>
-                <p className="text-sm text-muted-foreground">Errors (7d)</p>
+                <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{totalErrors.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">Errors</p>
               </CardContent>
             </Card>
             <Card>
@@ -904,43 +833,6 @@ console.log(user);`}
               </CardContent>
             </Card>
           </div>
-
-          {/* Error Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Error Breakdown</CardTitle>
-              <CardDescription>Distribution of API errors by type</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  { code: '429', name: 'Rate Limited', count: 52, percentage: 46 },
-                  { code: '401', name: 'Unauthorized', count: 31, percentage: 28 },
-                  { code: '400', name: 'Bad Request', count: 18, percentage: 16 },
-                  { code: '500', name: 'Server Error', count: 11, percentage: 10 },
-                ].map((error) => (
-                  <div key={error.code} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{error.code}</Badge>
-                        <span className="font-medium">{error.name}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-muted-foreground">{error.percentage}%</span>
-                        <span className="font-medium">{error.count} errors</span>
-                      </div>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-secondary">
-                      <div
-                        className="h-full rounded-full bg-destructive/60"
-                        style={{ width: `${error.percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Payouts Tab */}
@@ -950,7 +842,7 @@ console.log(user);`}
             <Card>
               <CardContent className="p-6 text-center space-y-2">
                 <p className="text-3xl font-bold text-primary">
-                  {PAYOUTS.reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
+                  {payouts.reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
                 </p>
                 <p className="text-sm text-muted-foreground">Total Paid Out (EDU)</p>
               </CardContent>
@@ -958,7 +850,7 @@ console.log(user);`}
             <Card>
               <CardContent className="p-6 text-center space-y-2">
                 <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                  4,210
+                  {revenue.length > 0 ? revenue[revenue.length - 1].revenue.toLocaleString() : '0'}
                 </p>
                 <p className="text-sm text-muted-foreground">Current Month Revenue</p>
               </CardContent>
@@ -991,44 +883,51 @@ console.log(user);`}
               </div>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-medium">Date</th>
-                      <th className="px-4 py-3 text-right font-medium">Amount (EDU)</th>
-                      <th className="px-4 py-3 text-left font-medium">Apps</th>
-                      <th className="px-4 py-3 text-left font-medium">Method</th>
-                      <th className="px-4 py-3 text-left font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {PAYOUTS.map((payout) => {
-                      const payoutStatus = PAYOUT_STATUS_CONFIG[payout.status];
-                      return (
-                        <tr key={payout.id} className="hover:bg-muted/50">
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-muted-foreground" />
-                              {payout.date}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-right font-semibold">
-                            {payout.amount.toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">{payout.apps}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{payout.method}</td>
-                          <td className="px-4 py-3">
-                            <Badge className={payoutStatus.className}>
-                              {payoutStatus.label}
-                            </Badge>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              {payouts.length === 0 ? (
+                <div className="text-center py-8">
+                  <Coins className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+                  <p className="text-lg font-medium">No payouts yet</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-medium">Date</th>
+                        <th className="px-4 py-3 text-right font-medium">Amount (EDU)</th>
+                        <th className="px-4 py-3 text-left font-medium">Apps</th>
+                        <th className="px-4 py-3 text-left font-medium">Method</th>
+                        <th className="px-4 py-3 text-left font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {payouts.map((payout) => {
+                        const payoutStatus = PAYOUT_STATUS_CONFIG[payout.status] ?? PAYOUT_STATUS_CONFIG.completed;
+                        return (
+                          <tr key={payout.id} className="hover:bg-muted/50">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                {payout.date}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right font-semibold">
+                              {payout.amount.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">{payout.apps}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{payout.method}</td>
+                            <td className="px-4 py-3">
+                              <Badge className={payoutStatus.className}>
+                                {payoutStatus.label}
+                              </Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -1051,7 +950,9 @@ console.log(user);`}
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Revenue Share</Label>
-                    <p className="text-sm text-muted-foreground mt-1">70% Developer / 30% Platform</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {profile?.revenueShare ? `${profile.revenueShare}% Developer / ${100 - profile.revenueShare}% Platform` : '70% Developer / 30% Platform'}
+                    </p>
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -1119,9 +1020,58 @@ console.log(user);`}
             <Button variant="outline" onClick={() => setShowApiKeyDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={() => setShowApiKeyDialog(false)}>
+            <Button onClick={handleCreateKey} disabled={creatingKey || !newKeyName.trim()}>
+              {creatingKey && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Key
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Key Result Dialog */}
+      <Dialog open={!!showNewKeyResult} onOpenChange={() => setShowNewKeyResult(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>API Key Created</DialogTitle>
+            <DialogDescription>
+              Copy your API key now. You won&apos;t be able to see it again.
+            </DialogDescription>
+          </DialogHeader>
+          {showNewKeyResult && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Key Name</Label>
+                <p className="text-sm font-medium">{showNewKeyResult.name}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>API Key</Label>
+                <div className="flex items-center gap-2">
+                  <code className="text-sm bg-muted px-3 py-2 rounded flex-1 break-all">
+                    {showNewKeyResult.key}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopyKey('new-key', showNewKeyResult.key)}
+                  >
+                    {copiedKey === 'new-key' ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
+                <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                <p className="text-sm text-amber-700 dark:text-amber-400">
+                  Make sure to copy your API key now. You won&apos;t be able to see it again.
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setShowNewKeyResult(null)}>Done</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1171,7 +1121,11 @@ console.log(user);`}
             <Button variant="outline" onClick={() => setShowWebhookDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={() => setShowWebhookDialog(false)}>
+            <Button
+              onClick={handleCreateWebhook}
+              disabled={creatingWebhook || !newWebhookUrl.trim() || newWebhookEvents.length === 0}
+            >
+              {creatingWebhook && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Add Endpoint
             </Button>
           </DialogFooter>

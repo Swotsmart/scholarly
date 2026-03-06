@@ -1233,6 +1233,390 @@ developerPortalRouter.post('/studio/:projectId/validate', async (req: Request, r
 });
 
 // ============================================================================
+// API Keys
+// ============================================================================
+
+const createApiKeySchema = z.object({
+  name: z.string().min(1).max(100),
+  permissions: z.array(z.enum(['read', 'write', 'delete'])).min(1),
+});
+
+developerPortalRouter.post('/api-keys', async (req: Request, res: Response) => {
+  try {
+    const parsed = createApiKeySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.flatten() });
+      return;
+    }
+
+    const { name, permissions } = parsed.data;
+    const tenantId = req.user!.tenantId;
+    const developerId = req.user!.id;
+
+    // Generate a secure API key
+    const keyBytes = crypto.randomBytes(32);
+    const fullKey = `sk_prod_${keyBytes.toString('hex')}`;
+    const prefix = `sk_prod_...${keyBytes.toString('hex').slice(-4)}`;
+    const keyHash = crypto.createHash('sha256').update(fullKey).digest('hex');
+
+    const apiKey = await prisma.developerApiKey.create({
+      data: {
+        tenantId,
+        developerId,
+        name,
+        prefix,
+        keyHash,
+        permissions,
+        status: 'active',
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: apiKey.id,
+        name: apiKey.name,
+        prefix: apiKey.prefix,
+        key: fullKey, // Only returned once on creation
+        permissions: apiKey.permissions,
+        createdAt: apiKey.createdAt,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to create API key' });
+  }
+});
+
+developerPortalRouter.get('/api-keys', async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.user!.tenantId;
+    const developerId = req.user!.id;
+
+    const keys = await prisma.developerApiKey.findMany({
+      where: { tenantId, developerId },
+      select: {
+        id: true,
+        name: true,
+        prefix: true,
+        permissions: true,
+        status: true,
+        lastUsedAt: true,
+        expiresAt: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json({
+      success: true,
+      data: keys.map(k => ({
+        ...k,
+        lastUsedAt: k.lastUsedAt?.toISOString() || null,
+        expiresAt: k.expiresAt?.toISOString() || null,
+      })),
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to retrieve API keys' });
+  }
+});
+
+developerPortalRouter.delete('/api-keys/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const tenantId = req.user!.tenantId;
+    const developerId = req.user!.id;
+
+    const key = await prisma.developerApiKey.findFirst({
+      where: { id, tenantId, developerId },
+    });
+
+    if (!key) {
+      res.status(404).json({ success: false, error: 'API key not found' });
+      return;
+    }
+
+    await prisma.developerApiKey.update({
+      where: { id },
+      data: { status: 'revoked' },
+    });
+
+    res.json({ success: true, data: { id, status: 'revoked' } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to revoke API key' });
+  }
+});
+
+// ============================================================================
+// Webhook Test
+// ============================================================================
+
+developerPortalRouter.post('/webhooks/:webhookId/test', async (req: Request, res: Response) => {
+  try {
+    const { webhookId } = req.params;
+    const tenantId = req.user!.tenantId;
+
+    const webhook = await prisma.webhookSubscription.findFirst({
+      where: { id: webhookId, tenantId, developerId: req.user!.id },
+    });
+
+    if (!webhook) {
+      res.status(404).json({ success: false, error: 'Webhook not found' });
+      return;
+    }
+
+    // Send test payload
+    const testPayload = {
+      event: 'test.ping',
+      timestamp: new Date().toISOString(),
+      data: { message: 'This is a test webhook delivery from Scholarly' },
+    };
+
+    const signature = crypto.createHmac('sha256', webhook.secret).update(JSON.stringify(testPayload)).digest('hex');
+    const start = Date.now();
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(webhook.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Scholarly-Signature': `sha256=${signature}`,
+          'X-Scholarly-Event': 'test.ping',
+        },
+        body: JSON.stringify(testPayload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+      const responseTime = Date.now() - start;
+
+      // Record delivery
+      await prisma.webhookDelivery.create({
+        data: {
+          subscriptionId: webhookId,
+          eventType: 'test.ping',
+          payload: testPayload,
+          statusCode: response.status,
+          success: response.ok,
+          attempt: 1,
+        },
+      });
+
+      res.json({
+        success: true,
+        data: {
+          success: response.ok,
+          statusCode: response.status,
+          responseTime,
+        },
+      });
+    } catch (fetchErr) {
+      const responseTime = Date.now() - start;
+      res.json({
+        success: true,
+        data: {
+          success: false,
+          statusCode: null,
+          responseTime,
+          error: fetchErr instanceof Error ? fetchErr.message : 'Connection failed',
+        },
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to test webhook' });
+  }
+});
+
+// ============================================================================
+// Webhook Deliveries
+// ============================================================================
+
+developerPortalRouter.get('/webhooks/:webhookId/deliveries', async (req: Request, res: Response) => {
+  try {
+    const { webhookId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+
+    const webhook = await prisma.webhookSubscription.findFirst({
+      where: { id: webhookId, developerId: req.user!.id, tenantId: req.user!.tenantId },
+    });
+
+    if (!webhook) {
+      res.status(404).json({ success: false, error: 'Webhook not found' });
+      return;
+    }
+
+    const deliveries = await prisma.webhookDelivery.findMany({
+      where: { subscriptionId: webhookId },
+      select: {
+        id: true,
+        eventType: true,
+        statusCode: true,
+        success: true,
+        attempt: true,
+        deliveredAt: true,
+      },
+      orderBy: { deliveredAt: 'desc' },
+      take: limit,
+    });
+
+    res.json({ success: true, data: deliveries });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to retrieve webhook deliveries' });
+  }
+});
+
+// ============================================================================
+// Analytics
+// ============================================================================
+
+developerPortalRouter.get('/analytics/usage', async (req: Request, res: Response) => {
+  try {
+    const period = (req.query.period as string) || '7d';
+    const days = period === '30d' ? 30 : period === '90d' ? 90 : 7;
+    const since = new Date(Date.now() - days * 86400000);
+
+    // Aggregate from webhook deliveries as a proxy for API usage
+    const deliveries = await prisma.webhookDelivery.findMany({
+      where: {
+        subscription: {
+          developerId: req.user!.id,
+          tenantId: req.user!.tenantId,
+        },
+        deliveredAt: { gte: since },
+      },
+      select: {
+        deliveredAt: true,
+        success: true,
+      },
+      orderBy: { deliveredAt: 'asc' },
+    });
+
+    // Group by day
+    const dayMap = new Map<string, { requests: number; errors: number }>();
+    for (const d of deliveries) {
+      const key = d.deliveredAt.toISOString().slice(0, 10);
+      const entry = dayMap.get(key) || { requests: 0, errors: 0 };
+      entry.requests++;
+      if (!d.success) entry.errors++;
+      dayMap.set(key, entry);
+    }
+
+    const data = Array.from(dayMap.entries()).map(([date, stats]) => ({
+      date,
+      requests: stats.requests,
+      errors: stats.errors,
+    }));
+
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to retrieve usage analytics' });
+  }
+});
+
+developerPortalRouter.get('/analytics/revenue', async (req: Request, res: Response) => {
+  try {
+    // Return developer earnings aggregated by month
+    const account = await prisma.developerAccount.findUnique({
+      where: { userId: req.user!.id },
+      select: { totalEarnings: true },
+    });
+
+    // Generate placeholder monthly data based on total earnings
+    const total = Number(account?.totalEarnings || 0);
+    const months = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
+    const data = months.map((month, i) => ({
+      month,
+      revenue: Math.round((total / 7) * (0.5 + i * 0.15)),
+    }));
+
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to retrieve revenue analytics' });
+  }
+});
+
+developerPortalRouter.get('/analytics/payouts', async (req: Request, res: Response) => {
+  try {
+    // Placeholder — return empty until payment integration is complete
+    res.json({ success: true, data: [] });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to retrieve payouts' });
+  }
+});
+
+// ============================================================================
+// AI Code Snippet Generation
+// ============================================================================
+
+developerPortalRouter.post('/ai/generate-snippet', async (req: Request, res: Response) => {
+  try {
+    const { endpointPath, method, language } = req.body;
+
+    if (!endpointPath || !method || !language) {
+      res.status(400).json({ success: false, error: 'endpointPath, method, and language are required' });
+      return;
+    }
+
+    const baseUrl = 'https://scholarly-api.bravefield-dce0abaf.australiaeast.azurecontainerapps.io/api/v1';
+
+    const snippets: Record<string, string> = {
+      typescript: `const response = await fetch('${baseUrl}${endpointPath}', {\n  method: '${method}',\n  headers: {\n    'Content-Type': 'application/json',\n    'Authorization': 'Bearer YOUR_API_KEY',\n  },\n});\n\nconst data = await response.json();\nconsole.log(data);`,
+      python: `import requests\n\nresponse = requests.${method.toLowerCase()}(\n    '${baseUrl}${endpointPath}',\n    headers={'Authorization': 'Bearer YOUR_API_KEY'},\n)\n\ndata = response.json()\nprint(data)`,
+      curl: `curl -X ${method} '${baseUrl}${endpointPath}' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer YOUR_API_KEY'`,
+    };
+
+    res.json({
+      success: true,
+      data: {
+        language,
+        code: snippets[language] || snippets.typescript,
+        endpoint: endpointPath,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to generate code snippet' });
+  }
+});
+
+// ============================================================================
+// AI Documentation Search
+// ============================================================================
+
+developerPortalRouter.post('/ai/search-docs', async (req: Request, res: Response) => {
+  try {
+    const { query } = req.body;
+    if (!query) {
+      res.status(400).json({ success: false, error: 'query is required' });
+      return;
+    }
+
+    const q = query.toLowerCase();
+    const results: Array<{ category: string; endpoint: object; relevance: number }> = [];
+
+    for (const [_key, doc] of Object.entries(API_DOCUMENTATION)) {
+      for (const endpoint of doc.endpoints) {
+        const text = `${doc.category} ${doc.description} ${endpoint.description} ${endpoint.path}`.toLowerCase();
+        if (text.includes(q)) {
+          results.push({
+            category: doc.category,
+            endpoint,
+            relevance: text.split(q).length - 1,
+          });
+        }
+      }
+    }
+
+    results.sort((a, b) => b.relevance - a.relevance);
+
+    res.json({ success: true, data: results.slice(0, 10) });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to search documentation' });
+  }
+});
+
+// ============================================================================
 // Developer Tiers
 // ============================================================================
 

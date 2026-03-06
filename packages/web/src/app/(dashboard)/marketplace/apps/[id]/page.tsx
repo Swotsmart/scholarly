@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Star,
@@ -27,213 +28,11 @@ import {
   BarChart3,
   Eye,
   Lock,
+  Loader2,
 } from 'lucide-react';
-
-interface AppDetail {
-  id: string;
-  name: string;
-  developer: string;
-  developerVerified: boolean;
-  description: string;
-  fullDescription: string;
-  rating: number;
-  reviewCount: number;
-  installs: number;
-  pricing: string;
-  priceAmount: string | null;
-  color: string;
-  letter: string;
-  category: string;
-  version: string;
-  lastUpdated: string;
-  size: string;
-  features: string[];
-  educationLevels: string[];
-  platforms: { name: string; icon: string }[];
-}
-
-const APPS_DB: Record<string, AppDetail> = {
-  'vocabmaster-pro': {
-    id: 'vocabmaster-pro',
-    name: 'VocabMaster Pro',
-    developer: 'LangTech Solutions',
-    developerVerified: true,
-    description: 'AI-powered vocabulary acquisition with spaced repetition and Australian English dialect support.',
-    fullDescription: `VocabMaster Pro is a comprehensive vocabulary learning platform designed specifically for Australian schools. Built on cutting-edge spaced repetition algorithms and natural language processing, it adapts to each student's learning pace and retention patterns.
-
-The platform supports the Australian Curriculum English strand from Years 3 through 12, with content mapped to achievement standards and general capabilities. Students engage with contextual vocabulary through reading passages sourced from Australian literature, news articles, and academic texts.
-
-Teachers receive detailed analytics on class-wide vocabulary growth, individual student progress, and areas requiring additional support. The built-in assessment tools generate NAPLAN-aligned vocabulary tasks that can be used for formative and summative assessment purposes.
-
-Key pedagogical features include morphological analysis tools, etymology exploration, contextual sentence generation, and collaborative vocabulary challenges that encourage peer learning and healthy competition.`,
-    rating: 4.8,
-    reviewCount: 342,
-    installs: 5420,
-    pricing: 'Premium',
-    priceAmount: '$4.99/mo',
-    color: 'bg-blue-500',
-    letter: 'V',
-    category: 'Language Learning',
-    version: '3.2.1',
-    lastUpdated: '15 Jan 2026',
-    size: '24 MB',
-    features: [
-      'AI-powered spaced repetition engine',
-      'Australian Curriculum alignment (Years 3-12)',
-      'Contextual vocabulary from Australian literature',
-      'NAPLAN-aligned assessment generation',
-      'Morphological analysis and etymology tools',
-      'Class-wide analytics dashboard',
-      'Collaborative vocabulary challenges',
-      'Offline mode for rural and remote schools',
-    ],
-    educationLevels: ['Years 3-4', 'Years 5-6', 'Years 7-8', 'Years 9-10', 'Years 11-12'],
-    platforms: [
-      { name: 'Web Browser', icon: 'globe' },
-      { name: 'iOS', icon: 'smartphone' },
-      { name: 'Android', icon: 'smartphone' },
-      { name: 'Chromebook', icon: 'monitor' },
-    ],
-  },
-  'chemlab-vr': {
-    id: 'chemlab-vr',
-    name: 'ChemLab VR',
-    developer: 'Immersive Edu Labs',
-    developerVerified: true,
-    description: 'Virtual reality chemistry laboratory aligned with the Australian Curriculum.',
-    fullDescription: `ChemLab VR brings the chemistry laboratory to life through immersive virtual reality experiences. Students can conduct experiments that would be too dangerous, expensive, or impractical in a traditional school laboratory setting.
-
-The platform covers the Australian Curriculum Science chemical sciences strand from Years 7 through 12, including organic chemistry, electrochemistry, and thermodynamics modules. Each experiment includes safety briefings, procedure guides, and post-lab analysis tools.
-
-Teachers can monitor student progress in real-time, view experiment recordings, and access pre-built lesson plans with curriculum-aligned learning objectives. The platform also supports collaborative experiments where multiple students work together in shared virtual lab spaces.`,
-    rating: 4.9,
-    reviewCount: 189,
-    installs: 3187,
-    pricing: 'Premium',
-    priceAmount: '$9.99/mo',
-    color: 'bg-emerald-500',
-    letter: 'C',
-    category: 'VR/AR',
-    version: '2.1.0',
-    lastUpdated: '8 Jan 2026',
-    size: '156 MB',
-    features: [
-      'Photo-realistic VR chemistry experiments',
-      'Australian Curriculum Science alignment',
-      'Real-time teacher monitoring',
-      'Collaborative virtual lab spaces',
-      'Built-in safety training modules',
-      'Post-experiment analysis tools',
-    ],
-    educationLevels: ['Years 7-8', 'Years 9-10', 'Years 11-12'],
-    platforms: [
-      { name: 'Meta Quest', icon: 'monitor' },
-      { name: 'Web Browser (3D)', icon: 'globe' },
-      { name: 'iPad', icon: 'tablet' },
-    ],
-  },
-};
-
-const DEFAULT_APP: AppDetail = APPS_DB['vocabmaster-pro'];
-
-const MOCK_REVIEWS = [
-  {
-    id: 'r1',
-    author: 'Sarah Mitchell',
-    role: 'Year 8 English Teacher',
-    school: 'Westfield Grammar, Melbourne',
-    rating: 5,
-    date: '12 Jan 2026',
-    text: 'Absolutely brilliant for building vocabulary across the curriculum. My students are genuinely excited about learning new words, and the spaced repetition has made a noticeable difference in retention. The Australian content is a massive plus.',
-  },
-  {
-    id: 'r2',
-    author: 'David Chen',
-    role: 'Head of Languages',
-    school: 'Brisbane State High',
-    rating: 5,
-    date: '3 Jan 2026',
-    text: 'We rolled this out across our entire languages faculty and the results have been outstanding. The analytics dashboard gives us precise data on where students are struggling. Worth every cent of the subscription.',
-  },
-  {
-    id: 'r3',
-    author: 'Emma Kowalski',
-    role: 'Year 5 Teacher',
-    school: 'Banksia Primary, Perth',
-    rating: 4,
-    date: '28 Dec 2025',
-    text: 'Great tool for primary-level vocabulary building. The only reason for 4 stars instead of 5 is that some of the morphology features are a bit advanced for my Year 5 students. Would love to see more scaffolding for younger learners.',
-  },
-  {
-    id: 'r4',
-    author: 'James Nguyen',
-    role: 'Learning Support Coordinator',
-    school: 'Sydney Academy',
-    rating: 4,
-    date: '15 Dec 2025',
-    text: 'The adaptive difficulty is excellent for students with additional learning needs. The offline mode is a game-changer for our students in remote communities. Accessibility features are well thought out and genuinely inclusive.',
-  },
-];
-
-const RATING_BREAKDOWN = [
-  { stars: 5, count: 218, percentage: 64 },
-  { stars: 4, count: 89, percentage: 26 },
-  { stars: 3, count: 24, percentage: 7 },
-  { stars: 2, count: 8, percentage: 2 },
-  { stars: 1, count: 3, percentage: 1 },
-];
-
-const CHANGELOG = [
-  {
-    version: '3.2.1',
-    date: '15 Jan 2026',
-    changes: [
-      'Fixed audio playback issue on Chromebook devices',
-      'Improved spaced repetition algorithm accuracy by 12%',
-      'Added 450 new vocabulary items for Years 11-12',
-    ],
-  },
-  {
-    version: '3.2.0',
-    date: '2 Jan 2026',
-    changes: [
-      'New collaborative vocabulary challenges feature',
-      'Added NAPLAN 2026 question format templates',
-      'Performance improvements for offline mode',
-      'Updated Australian Curriculum v9.0 alignment mappings',
-    ],
-  },
-  {
-    version: '3.1.0',
-    date: '15 Nov 2025',
-    changes: [
-      'Introduced morphological analysis tool',
-      'Added etymology exploration for 2,000+ root words',
-      'New class-wide analytics dashboard for teachers',
-      'Support for multiple class groups per teacher account',
-    ],
-  },
-  {
-    version: '3.0.0',
-    date: '1 Oct 2025',
-    changes: [
-      'Major platform redesign with improved accessibility',
-      'AI-powered contextual sentence generation',
-      'New student progress tracking and goal setting',
-      'Integration with Scholarly digital portfolio system',
-      'Added offline mode for rural and remote schools',
-    ],
-  },
-];
-
-const PERMISSIONS = [
-  { name: 'Student Profiles', description: 'Read student name, year level, and learning preferences', icon: Users, level: 'Read' },
-  { name: 'Assessment Data', description: 'Write vocabulary assessment scores and progress data', icon: BarChart3, level: 'Read/Write' },
-  { name: 'Grade Book', description: 'Submit vocabulary scores to the institutional grade book', icon: GraduationCap, level: 'Write' },
-  { name: 'Calendar', description: 'Create vocabulary challenge reminders and due dates', icon: Calendar, level: 'Write' },
-  { name: 'Learning Analytics', description: 'Share engagement metrics with institutional analytics', icon: Eye, level: 'Read/Write' },
-  { name: 'Content Library', description: 'Access shared reading passages and vocabulary lists', icon: BookOpen, level: 'Read' },
-];
+import { useAppDetail } from '@/hooks/use-marketplace';
+import { marketplaceTelemetry } from '@/lib/marketplace-telemetry';
+import type { AppDetail } from '@/types/marketplace';
 
 const platformIcons: Record<string, React.ElementType> = {
   globe: Globe,
@@ -262,12 +61,79 @@ function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'lg
   );
 }
 
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-8 w-32" />
+      <div className="flex gap-6">
+        <Skeleton className="h-24 w-24 rounded-2xl" />
+        <div className="flex-1 space-y-3">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </div>
+      <div className="grid grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-6 w-full" />
+        ))}
+      </div>
+      <Skeleton className="h-64 w-full" />
+    </div>
+  );
+}
+
 export default function AppDetailPage() {
   const params = useParams();
-  const appId = typeof params.id === 'string' ? params.id : 'vocabmaster-pro';
-  const app = APPS_DB[appId] || DEFAULT_APP;
+  const appId = typeof params.id === 'string' ? params.id : null;
+  const { app, isLoading, error, install, uninstall } = useAppDetail(appId);
   const [activeTab, setActiveTab] = useState('overview');
-  const [installed, setInstalled] = useState(false);
+  const [installing, setInstalling] = useState(false);
+
+  // Track page view
+  useState(() => {
+    if (appId) marketplaceTelemetry.trackAppView(appId, '');
+  });
+
+  const handleInstallToggle = useCallback(async () => {
+    if (!app || installing) return;
+    setInstalling(true);
+    try {
+      if ((app as AppDetail & { installed?: boolean }).installed) {
+        await uninstall();
+      } else {
+        await install();
+        marketplaceTelemetry.trackInstallClick(app.id, app.name);
+      }
+    } finally {
+      setInstalling(false);
+    }
+  }, [app, installing, install, uninstall]);
+
+  if (isLoading) return <LoadingSkeleton />;
+
+  if (error || !app) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/marketplace/apps">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Apps
+          </Link>
+        </Button>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center p-12">
+            <p className="text-lg font-medium">{error || 'App not found'}</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              The app you&apos;re looking for doesn&apos;t exist or has been removed.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const installed = (app as AppDetail & { installed?: boolean }).installed ?? false;
 
   return (
     <div className="space-y-6">
@@ -310,8 +176,10 @@ export default function AppDetailPage() {
             <Button
               size="lg"
               variant={installed ? 'outline' : 'default'}
-              onClick={() => setInstalled(!installed)}
+              onClick={handleInstallToggle}
+              disabled={installing}
             >
+              {installing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {installed ? 'Uninstall' : 'Install'}
             </Button>
             {app.priceAmount && (
@@ -378,29 +246,54 @@ export default function AppDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Screenshots Placeholder */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Screenshots</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4 overflow-x-auto pb-2">
-                {['bg-blue-500/20', 'bg-emerald-500/20', 'bg-purple-500/20', 'bg-amber-500/20'].map((bg, i) => (
-                  <div
-                    key={i}
-                    className={`${bg} min-w-[280px] h-[180px] rounded-lg flex items-center justify-center border`}
-                  >
-                    <div className="text-center space-y-2">
-                      <Monitor className="h-8 w-8 mx-auto text-muted-foreground/50" />
-                      <p className="text-xs text-muted-foreground/50 font-medium">
-                        {['Dashboard View', 'Student Interface', 'Analytics Panel', 'Assessment Builder'][i]}
-                      </p>
+          {/* Screenshots */}
+          {app.screenshots && app.screenshots.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Screenshots</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4 overflow-x-auto pb-2">
+                  {app.screenshots.map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-muted min-w-[280px] h-[180px] rounded-lg flex items-center justify-center border"
+                    >
+                      <div className="text-center space-y-2">
+                        <Monitor className="h-8 w-8 mx-auto text-muted-foreground/50" />
+                        <p className="text-xs text-muted-foreground/50 font-medium">
+                          Screenshot {i + 1}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Screenshots</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4 overflow-x-auto pb-2">
+                  {['bg-blue-500/20', 'bg-emerald-500/20', 'bg-purple-500/20', 'bg-amber-500/20'].map((bg, i) => (
+                    <div
+                      key={i}
+                      className={`${bg} min-w-[280px] h-[180px] rounded-lg flex items-center justify-center border`}
+                    >
+                      <div className="text-center space-y-2">
+                        <Monitor className="h-8 w-8 mx-auto text-muted-foreground/50" />
+                        <p className="text-xs text-muted-foreground/50 font-medium">
+                          {['Dashboard View', 'Student Interface', 'Analytics Panel', 'Assessment Builder'][i]}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Features */}
           <Card>
@@ -469,7 +362,7 @@ export default function AppDetailPage() {
                   <p className="text-sm text-muted-foreground">{app.reviewCount} reviews</p>
                 </div>
                 <div className="flex-1 space-y-2">
-                  {RATING_BREAKDOWN.map((item) => (
+                  {(app.ratingBreakdown ?? []).map((item) => (
                     <div key={item.stars} className="flex items-center gap-3">
                       <span className="text-sm font-medium w-12">{item.stars} star</span>
                       <Progress
@@ -488,14 +381,14 @@ export default function AppDetailPage() {
 
           {/* Reviews List */}
           <div className="space-y-4">
-            {MOCK_REVIEWS.map((review) => (
+            {(app.reviews ?? []).map((review) => (
               <Card key={review.id}>
                 <CardContent className="p-6 space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="font-semibold">{review.author}</p>
                       <p className="text-sm text-muted-foreground">
-                        {review.role} &middot; {review.school}
+                        {review.role} {review.school && <>&middot; {review.school}</>}
                       </p>
                     </div>
                     <span className="text-sm text-muted-foreground">{review.date}</span>
@@ -505,12 +398,20 @@ export default function AppDetailPage() {
                 </CardContent>
               </Card>
             ))}
+            {(!app.reviews || app.reviews.length === 0) && (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center p-12">
+                  <p className="text-lg font-medium">No reviews yet</p>
+                  <p className="text-sm text-muted-foreground">Be the first to review this app.</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
 
         {/* Changelog */}
         <TabsContent value="changelog" className="space-y-4">
-          {CHANGELOG.map((release) => (
+          {(app.changelog ?? []).map((release) => (
             <Card key={release.version}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-3">
@@ -537,6 +438,13 @@ export default function AppDetailPage() {
               </CardContent>
             </Card>
           ))}
+          {(!app.changelog || app.changelog.length === 0) && (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center p-12">
+                <p className="text-lg font-medium">No changelog available</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Permissions */}
@@ -553,37 +461,37 @@ export default function AppDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {PERMISSIONS.map((perm) => {
-                  const PIcon = perm.icon;
-                  return (
-                    <div
-                      key={perm.name}
-                      className="flex items-start gap-4 rounded-lg border p-4"
-                    >
-                      <div className="rounded-lg bg-muted p-2.5">
-                        <PIcon className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium">{perm.name}</p>
-                          <Badge
-                            variant="outline"
-                            className={
-                              perm.level === 'Read'
-                                ? 'border-green-200 text-green-700 dark:border-green-800 dark:text-green-400'
-                                : perm.level === 'Write'
-                                ? 'border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400'
-                                : 'border-blue-200 text-blue-700 dark:border-blue-800 dark:text-blue-400'
-                            }
-                          >
-                            {perm.level}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">{perm.description}</p>
-                      </div>
+                {(app.permissions ?? []).map((perm) => (
+                  <div
+                    key={perm.name}
+                    className="flex items-start gap-4 rounded-lg border p-4"
+                  >
+                    <div className="rounded-lg bg-muted p-2.5">
+                      <Shield className="h-5 w-5 text-muted-foreground" />
                     </div>
-                  );
-                })}
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">{perm.name}</p>
+                        <Badge
+                          variant="outline"
+                          className={
+                            perm.level === 'Read'
+                              ? 'border-green-200 text-green-700 dark:border-green-800 dark:text-green-400'
+                              : perm.level === 'Write'
+                              ? 'border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400'
+                              : 'border-blue-200 text-blue-700 dark:border-blue-800 dark:text-blue-400'
+                          }
+                        >
+                          {perm.level}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">{perm.description}</p>
+                    </div>
+                  </div>
+                ))}
+                {(!app.permissions || app.permissions.length === 0) && (
+                  <p className="text-sm text-muted-foreground">No permissions data available.</p>
+                )}
               </div>
             </CardContent>
           </Card>

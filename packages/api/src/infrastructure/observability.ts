@@ -336,6 +336,13 @@ export interface StandardMetrics {
   processUptime: Gauge;
   processMemoryBytes: Gauge;
   processEventLoopLag: Histogram;
+  marketplaceAppInstalls: Counter;
+  marketplaceApiKeyOps: Counter;
+  marketplaceWebhookOps: Counter;
+  marketplaceSearchQueries: Counter;
+  marketplaceBountyOps: Counter;
+  marketplaceApiResponseDuration: Histogram;
+  marketplaceWebhookDeliveryDuration: Histogram;
 }
 
 export function registerStandardMetrics(registry: MetricsRegistry): StandardMetrics {
@@ -381,6 +388,13 @@ export function registerStandardMetrics(registry: MetricsRegistry): StandardMetr
     processUptime: registry.registerGauge('process_uptime_seconds', 'Process uptime'),
     processMemoryBytes: registry.registerGauge('process_memory_bytes', 'Process memory', ['type']),
     processEventLoopLag: registry.registerHistogram('process_event_loop_lag_seconds', 'Event loop lag', [], [0.001, 0.01, 0.05, 0.1, 0.5, 1]),
+    marketplaceAppInstalls: registry.registerCounter('marketplace_app_installs_total', 'App install/uninstall operations', ['action', 'app_id']),
+    marketplaceApiKeyOps: registry.registerCounter('marketplace_api_key_ops_total', 'API key operations', ['action']),
+    marketplaceWebhookOps: registry.registerCounter('marketplace_webhook_ops_total', 'Webhook operations', ['action']),
+    marketplaceSearchQueries: registry.registerCounter('marketplace_search_queries_total', 'Marketplace search queries', ['category']),
+    marketplaceBountyOps: registry.registerCounter('marketplace_bounty_ops_total', 'Bounty operations', ['action']),
+    marketplaceApiResponseDuration: registry.registerHistogram('marketplace_api_response_duration_seconds', 'Marketplace API response latency', ['endpoint'], [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5]),
+    marketplaceWebhookDeliveryDuration: registry.registerHistogram('marketplace_webhook_delivery_duration_seconds', 'Webhook delivery latency', ['event_type'], [0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]),
   };
 }
 

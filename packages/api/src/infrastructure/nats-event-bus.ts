@@ -205,6 +205,14 @@ const STREAM_DEFINITIONS: StreamDefinition[] = [
     retention: RetentionPolicy.Limits,
     storage: StorageType.File,
   },
+  {
+    name: 'SCHOLARLY_MARKETPLACE',
+    subjects: ['scholarly.marketplace.>'],
+    maxAge: nanos(90 * 24 * 60 * 60 * 1000), // 90 days (marketplace events retained longer)
+    maxBytes: 2 * 1024 * 1024 * 1024, // 2 GB
+    retention: RetentionPolicy.Limits,
+    storage: StorageType.File,
+  },
 ];
 
 // ============================================================================
