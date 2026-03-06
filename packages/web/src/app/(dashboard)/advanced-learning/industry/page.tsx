@@ -27,7 +27,7 @@ import {
   HeartHandshake,
   Loader2,
 } from 'lucide-react';
-import { useAdvancedLearning } from '@/hooks/use-advanced-learning';
+import { useIndustry } from '@/hooks/use-advanced-learning';
 
 const FALLBACK_OPPORTUNITIES = [
   {
@@ -197,12 +197,12 @@ function getApplicationStatusBadge(status: string) {
 }
 
 export default function IndustryExperiencePage() {
-  const { data: hookData, isLoading } = useAdvancedLearning();
+  const { industry: hookData, isLoading } = useIndustry();
 
-  const MOCK_OPPORTUNITIES = hookData?.industry?.opportunities?.length ? hookData.industry.opportunities : FALLBACK_OPPORTUNITIES;
-  const MOCK_APPLICATIONS = hookData?.industry?.applications?.length ? hookData.industry.applications : FALLBACK_APPLICATIONS;
-  const MOCK_ACTIVE_PLACEMENT = hookData?.industry?.activePlacement ?? FALLBACK_ACTIVE_PLACEMENT;
-  const PARTNER_COMPANIES = hookData?.industry?.partnerCompanies?.length ? hookData.industry.partnerCompanies : FALLBACK_PARTNER_COMPANIES;
+  const MOCK_OPPORTUNITIES = hookData?.opportunities?.length ? hookData.opportunities : FALLBACK_OPPORTUNITIES;
+  const MOCK_APPLICATIONS = hookData?.applications?.length ? hookData.applications : FALLBACK_APPLICATIONS;
+  const MOCK_ACTIVE_PLACEMENT = hookData?.activePlacement ?? FALLBACK_ACTIVE_PLACEMENT;
+  const PARTNER_COMPANIES = hookData?.partnerCompanies?.length ? hookData.partnerCompanies : FALLBACK_PARTNER_COMPANIES;
   const pageStats = FALLBACK_PAGE_STATS;
 
   if (isLoading) {
