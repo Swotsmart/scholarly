@@ -63,58 +63,51 @@ export function useTutoring(searchParams?: TutorSearchParams, options: UseTutori
   const [isLoading, setIsLoading] = useState(hasFetches);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchTutoringData = useCallback(async () => {
     if (!hasFetches) return;
+    setIsLoading(true);
+    setError(null);
 
-    async function fetchTutoringData() {
-      setIsLoading(true);
-      setError(null);
-      const results = await Promise.allSettled([
-        fetchTutors ? tutoringApi.searchTutors(searchParams) : EMPTY_TUTORS,
-        fetchUpcomingBookings ? tutoringApi.getUpcomingBookings(10) : EMPTY_BOOKINGS,
-        fetchAllBookings ? tutoringApi.getBookings({ role: 'booker' }) : EMPTY_BOOKINGS,
-        fetchCompletedBookings ? tutoringApi.getBookings({ status: 'completed' }) : EMPTY_BOOKINGS,
-        fetchPendingBookings ? tutoringApi.getBookings({ status: 'pending' }) : EMPTY_BOOKINGS,
-        fetchCancelledBookings ? tutoringApi.getBookings({ status: 'cancelled' }) : EMPTY_BOOKINGS,
-      ]);
+    const results = await Promise.allSettled([
+      fetchTutors ? tutoringApi.searchTutors(searchParams) : EMPTY_TUTORS,
+      fetchUpcomingBookings ? tutoringApi.getUpcomingBookings(10) : EMPTY_BOOKINGS,
+      fetchAllBookings ? tutoringApi.getBookings({ role: 'booker' }) : EMPTY_BOOKINGS,
+      fetchCompletedBookings ? tutoringApi.getBookings({ status: 'completed' }) : EMPTY_BOOKINGS,
+      fetchPendingBookings ? tutoringApi.getBookings({ status: 'pending' }) : EMPTY_BOOKINGS,
+      fetchCancelledBookings ? tutoringApi.getBookings({ status: 'cancelled' }) : EMPTY_BOOKINGS,
+    ]);
 
     const errors = results
       .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
       .map(r => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
     if (errors.length > 0) setError(errors.join('; '));
 
-      // Reuse the search result from index 0 to fetch reviews for the first tutor
-      const tutors = results[0].status === 'fulfilled' ? results[0].value.tutors : [];
-      let reviews: TutorReview[] = [];
-      if (fetchTutors && tutors[0]) {
-        try {
-          const reviewResult = await tutoringApi.getTutorReviews(tutors[0].tutorId);
-          reviews = reviewResult.reviews;
-        } catch { /* reviews are non-critical */ }
-      }
-
-    const tutorList = (get<{ tutors: TutorSearchResult[] }>(indices.tutors)?.tutors) ?? [];
+    const tutors = results[0].status === 'fulfilled' ? results[0].value.tutors : [];
     let reviews: TutorReview[] = [];
-    if (fetchReviews && tutorList[0]) {
+    if (fetchTutors && tutors[0]) {
       try {
-        const reviewResult = await tutoringApi.getTutorReviews(tutorList[0].tutorId);
+        const reviewResult = await tutoringApi.getTutorReviews(tutors[0].tutorId);
         reviews = reviewResult.reviews;
       } catch { /* reviews are non-critical */ }
     }
 
     setData({
-      tutors: tutorList,
-      upcomingBookings: (get<{ bookings: Booking[] }>(indices.upcoming)?.bookings) ?? [],
-      allBookings: (get<{ bookings: Booking[] }>(indices.all)?.bookings) ?? [],
-      completedBookings: (get<{ bookings: Booking[] }>(indices.completed)?.bookings) ?? [],
-      pendingBookings: (get<{ bookings: Booking[] }>(indices.pending)?.bookings) ?? [],
-      cancelledBookings: (get<{ bookings: Booking[] }>(indices.cancelled)?.bookings) ?? [],
+      tutors,
+      upcomingBookings: results[1].status === 'fulfilled' ? results[1].value.bookings : [],
+      allBookings: results[2].status === 'fulfilled' ? results[2].value.bookings : [],
+      completedBookings: results[3].status === 'fulfilled' ? results[3].value.bookings : [],
+      pendingBookings: results[4].status === 'fulfilled' ? results[4].value.bookings : [],
+      cancelledBookings: results[5].status === 'fulfilled' ? results[5].value.bookings : [],
       reviews,
     });
     setIsLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(searchParams), fetchTutors, fetchUpcomingBookings, fetchAllBookings,
     fetchCompletedBookings, fetchPendingBookings, fetchCancelledBookings]);
+
+  useEffect(() => {
+    fetchTutoringData();
+  }, [fetchTutoringData]);
 
   return { data, isLoading, error, refetch: fetchTutoringData };
 }
