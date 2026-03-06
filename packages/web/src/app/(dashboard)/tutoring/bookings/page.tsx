@@ -12,7 +12,6 @@ import {
   GraduationCap,
   MessageSquare,
   X,
-  Loader2,
 } from 'lucide-react';
 import { useTutoring } from '@/hooks/use-tutoring';
 
@@ -123,7 +122,7 @@ export default function BookingsPage() {
   // Progressive enhancement: use API data with fallback to hardcoded data
   const upcomingFromApi = data?.upcomingBookings.map((b, i) => ({
     id: b.id,
-    tutor: b.tutor.user.displayName,
+    tutor: b.bookedByUser.displayName,
     subject: b.subjectId,
     topic: b.topicsNeedingHelp?.[0] || b.subjectId,
     date: b.scheduledStart.split('T')[0],
@@ -134,7 +133,7 @@ export default function BookingsPage() {
   }));
   const pastFromApi = data?.completedBookings.map((b) => ({
     id: b.id,
-    tutor: b.tutor.user.displayName,
+    tutor: b.bookedByUser.displayName,
     subject: b.subjectId,
     topic: b.topicsNeedingHelp?.[0] || b.subjectId,
     date: b.scheduledStart.split('T')[0],

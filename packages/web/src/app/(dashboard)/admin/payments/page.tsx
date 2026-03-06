@@ -19,10 +19,8 @@ import {
   XCircle,
   Clock,
   ArrowUpRight,
-  ArrowDownRight,
-  Loader2,
+  ArrowDownRight
 } from 'lucide-react';
-import { useAdmin } from '@/hooks/use-admin';
 
 const FALLBACK_TRANSACTIONS = [
   {
@@ -70,17 +68,9 @@ const FALLBACK_PAYOUT_QUEUE = [
 ];
 
 export default function PaymentsPage() {
-  const { isLoading } = useAdmin();
   const recentTransactions = FALLBACK_TRANSACTIONS;
   const payoutQueue = FALLBACK_PAYOUT_QUEUE;
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
