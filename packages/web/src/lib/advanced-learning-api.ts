@@ -1,3 +1,5 @@
+import type React from 'react';
+
 /**
  * Advanced Learning API Client
  *

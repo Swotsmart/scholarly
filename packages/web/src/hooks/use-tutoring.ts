@@ -5,6 +5,9 @@
  * from the tutoring API. Follows the same pattern as useParent
  * (Promise.allSettled, error-safe).
  *
+ * Accepts an optional `sections` config to avoid over-fetching on pages that
+ * only need a subset of the data (e.g. materials/shared only need isLoading).
+ *
  * Backend routes:
  *   packages/api/src/routes/tutors.ts (302L)
  *   packages/api/src/routes/bookings.ts (358L)

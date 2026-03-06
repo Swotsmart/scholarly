@@ -60,7 +60,7 @@ export function useMicroSchools(config?: { state?: string }) {
 
   const stateFilter = config?.state;
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(() => {
     setIsLoading(true);
     setError(null);
 

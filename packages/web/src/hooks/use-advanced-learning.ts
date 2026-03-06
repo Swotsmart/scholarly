@@ -19,8 +19,16 @@ import {
   advancedLearningApi,
   type AdvancedLearningHubData,
   type EduscrumData,
+  type EduscrumTask,
+  type EduscrumSprint,
+  type EduscrumTeamMember,
+  type EduscrumRetroItem,
   type PblData,
+  type PblProject,
   type IndustryData,
+  type IndustryOpportunity,
+  type IndustryApplication,
+  type IndustryPlacement,
   type WorkExperienceData,
   type EduScrumTask,
   type Sprint,
@@ -39,6 +47,10 @@ import {
   type SupervisorFeedback,
   type SupervisorDetails,
 } from '@/lib/advanced-learning-api';
+
+export type { AdvancedLearningHubData, EduscrumData, PblData, IndustryData, WorkExperienceData };
+
+export type AdvancedLearningSection = 'hub' | 'eduscrum' | 'pbl' | 'industry' | 'workExperience';
 
 export interface AdvancedLearningData {
   hub: AdvancedLearningHubData | null;

@@ -39,6 +39,15 @@ import {
 import { children as staticChildren, weeklySchedule, subjects as staticSubjects, resources as staticResources } from '@/lib/homeschool-api';
 import { useHomeschool } from '@/hooks/use-homeschool';
 
+function computeAge(dateOfBirth: string): number {
+  const today = new Date();
+  const dob = new Date(dateOfBirth);
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+}
+
 // Compliance data
 const complianceItems = [
   {
