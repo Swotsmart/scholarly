@@ -78,7 +78,7 @@ const FALLBACK_RATING_BREAKDOWN = [
 ];
 
 export default function ReviewsPage() {
-  const { data, isLoading } = useTutoring(undefined, ['search', 'reviews']);
+  const { data, isLoading } = useTutoring(undefined, { fetchUpcomingBookings: false, fetchAllBookings: false, fetchCompletedBookings: false, fetchPendingBookings: false, fetchCancelledBookings: false });
 
   // Progressive enhancement: derive reviews from API data
   const reviewsFromApi = data?.reviews.map((r, i) => {

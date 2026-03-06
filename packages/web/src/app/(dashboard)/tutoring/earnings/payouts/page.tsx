@@ -24,7 +24,7 @@ const FALLBACK_PAYOUTS = [
 ];
 
 export default function PayoutsPage() {
-  const { data, isLoading } = useTutoring(undefined, ['bookings']);
+  const { data, isLoading } = useTutoring(undefined, { fetchTutors: false, fetchCompletedBookings: false, fetchPendingBookings: false, fetchCancelledBookings: false });
 
   // Progressive enhancement: no dedicated payouts API yet, using fallback data
   // Derive pending session count from API when available
