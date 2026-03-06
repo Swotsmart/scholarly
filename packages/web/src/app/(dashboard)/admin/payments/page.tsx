@@ -70,7 +70,7 @@ const FALLBACK_PAYOUT_QUEUE = [
 ];
 
 export default function PaymentsPage() {
-  const { isLoading } = useAdmin();
+  const { isLoading } = useAdmin({ skip: true });
   const recentTransactions = FALLBACK_TRANSACTIONS;
   const payoutQueue = FALLBACK_PAYOUT_QUEUE;
 

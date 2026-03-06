@@ -23,7 +23,6 @@ import {
   ExternalLink,
   Lock,
   Globe,
-  Loader2,
 } from 'lucide-react';
 import { useTutoring } from '@/hooks/use-tutoring';
 
@@ -109,7 +108,7 @@ const sharedLinks = [
 
 export default function SharedResourcesPage() {
   // Hook connected for future API integration — currently uses fallback data
-  const { isLoading } = useTutoring();
+  const { isLoading } = useTutoring(undefined, []);
 
   if (isLoading) {
     return (

@@ -64,7 +64,7 @@ const FALLBACK_FRAMEWORKS = [
 ];
 
 export default function StandardsPage() {
-  const { isLoading } = useAdmin();
+  const { isLoading } = useAdmin({ skip: true });
   const frameworks = FALLBACK_FRAMEWORKS;
 
   if (isLoading) {

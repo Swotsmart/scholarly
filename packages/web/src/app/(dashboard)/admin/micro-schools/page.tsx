@@ -69,7 +69,7 @@ const FALLBACK_MICRO_SCHOOLS = [
 ];
 
 export default function MicroSchoolsPage() {
-  const { isLoading } = useAdmin();
+  const { isLoading } = useAdmin({ skip: true });
   const microSchools = FALLBACK_MICRO_SCHOOLS;
 
   if (isLoading) {

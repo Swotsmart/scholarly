@@ -71,7 +71,7 @@ const FALLBACK_PIPELINES = [
 ];
 
 export default function MLPipelinePage() {
-  const { isLoading } = useAdmin();
+  const { isLoading } = useAdmin({ skip: true });
   const models = FALLBACK_MODELS;
   const pipelines = FALLBACK_PIPELINES;
 

@@ -49,7 +49,7 @@ const FALLBACK_LTI_CONNECTIONS = [
 ];
 
 export default function LTIPage() {
-  const { isLoading } = useAdmin();
+  const { isLoading } = useAdmin({ skip: true });
   const ltiConnections = FALLBACK_LTI_CONNECTIONS;
 
   if (isLoading) {

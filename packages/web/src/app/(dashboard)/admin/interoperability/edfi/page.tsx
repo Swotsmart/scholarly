@@ -19,7 +19,7 @@ import {
 import { useAdmin } from '@/hooks/use-admin';
 
 export default function EdFiPage() {
-  const { isLoading } = useAdmin();
+  const { isLoading } = useAdmin({ skip: true });
 
   if (isLoading) {
     return (

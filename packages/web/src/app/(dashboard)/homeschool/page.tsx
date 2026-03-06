@@ -39,6 +39,15 @@ import {
 import { children as staticChildren, weeklySchedule, subjects as staticSubjects, resources as staticResources } from '@/lib/homeschool-api';
 import { useHomeschool } from '@/hooks/use-homeschool';
 
+function computeAge(dateOfBirth: string): number {
+  const today = new Date();
+  const dob = new Date(dateOfBirth);
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+}
+
 // Compliance data
 const complianceItems = [
   {
@@ -144,7 +153,7 @@ export default function HomeschoolPage() {
   const children = family?.children?.map(c => ({
     id: c.id,
     name: c.name,
-    age: c.dateOfBirth ? Math.floor((Date.now() - new Date(c.dateOfBirth).getTime()) / 31557600000) : 0,
+    age: c.dateOfBirth ? computeAge(c.dateOfBirth) : 0,
     yearLevel: c.currentYearLevel,
     avatar: c.name.charAt(0),
     subjects: c.subjectProgress?.map(s => s.subject) ?? [],

@@ -46,7 +46,7 @@ const FALLBACK_FRAMEWORKS = [
 ];
 
 export default function CASEPage() {
-  const { isLoading } = useAdmin();
+  const { isLoading } = useAdmin({ skip: true });
   const connectedFrameworks = FALLBACK_FRAMEWORKS;
 
   if (isLoading) {

@@ -197,7 +197,7 @@ function getApplicationStatusBadge(status: string) {
 }
 
 export default function IndustryExperiencePage() {
-  const { data: hookData, isLoading } = useAdvancedLearning();
+  const { data: hookData, isLoading } = useAdvancedLearning(['industry']);
 
   const MOCK_OPPORTUNITIES = hookData?.industry?.opportunities?.length ? hookData.industry.opportunities : FALLBACK_OPPORTUNITIES;
   const MOCK_APPLICATIONS = hookData?.industry?.applications?.length ? hookData.industry.applications : FALLBACK_APPLICATIONS;

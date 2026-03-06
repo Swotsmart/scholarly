@@ -42,7 +42,7 @@ const FALLBACK_ISSUED_BADGES = [
 ];
 
 export default function BadgesPage() {
-  const { isLoading } = useAdmin();
+  const { isLoading } = useAdmin({ skip: true });
   const issuedBadges = FALLBACK_ISSUED_BADGES;
 
   if (isLoading) {

@@ -85,7 +85,7 @@ async function handleGetComposition(
 }
 
 export default function MenuAnalyticsPage() {
-  const { isLoading } = useAdmin();
+  const { isLoading } = useAdmin({ skip: true });
   const summary = FALLBACK_SUMMARY;
 
   if (isLoading) {

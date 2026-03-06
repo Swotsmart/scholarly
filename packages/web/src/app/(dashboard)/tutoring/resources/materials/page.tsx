@@ -22,7 +22,6 @@ import {
   Image,
   Video,
   FileSpreadsheet,
-  Loader2,
 } from 'lucide-react';
 import { useTutoring } from '@/hooks/use-tutoring';
 
@@ -98,7 +97,7 @@ const getFileIcon = (type: string) => {
 
 export default function MaterialsPage() {
   // Hook connected for future API integration — currently uses fallback data
-  const { isLoading } = useTutoring();
+  const { isLoading } = useTutoring(undefined, []);
 
   if (isLoading) {
     return (

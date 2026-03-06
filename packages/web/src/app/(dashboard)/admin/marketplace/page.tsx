@@ -81,7 +81,7 @@ const FALLBACK_PENDING_REVIEWS = [
 ];
 
 export default function MarketplacePage() {
-  const { isLoading } = useAdmin();
+  const { isLoading } = useAdmin({ skip: true });
   const apps = FALLBACK_APPS;
   const pendingReviews = FALLBACK_PENDING_REVIEWS;
 

@@ -298,7 +298,7 @@ export default function WorkExperiencePage() {
     activities: '',
     reflection: '',
   });
-  const { data: hookData, isLoading } = useAdvancedLearning();
+  const { data: hookData, isLoading } = useAdvancedLearning(['workExperience']);
 
   const MOCK_OPPORTUNITIES = hookData?.workExperience?.opportunities?.length ? hookData.workExperience.opportunities : FALLBACK_OPPORTUNITIES;
   const MOCK_APPLICATIONS = hookData?.workExperience?.applications?.length ? hookData.workExperience.applications : FALLBACK_APPLICATIONS;

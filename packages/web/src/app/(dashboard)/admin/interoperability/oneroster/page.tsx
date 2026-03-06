@@ -33,7 +33,7 @@ const FALLBACK_RECENT_SYNCS = [
 ];
 
 export default function OneRosterPage() {
-  const { isLoading } = useAdmin();
+  const { isLoading } = useAdmin({ skip: true });
   const syncStats = FALLBACK_SYNC_STATS;
   const recentSyncs = FALLBACK_RECENT_SYNCS;
 
