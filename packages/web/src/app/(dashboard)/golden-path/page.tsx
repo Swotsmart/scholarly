@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useGoldenPath } from '@/hooks/use-golden-path';
+import { useAuthStore } from '@/stores/auth-store';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,87 +58,18 @@ function getMasteryLabel(mastery: number): { label: string; color: string; advic
 }
 
 // =============================================================================
-// DATA
+// DOMAIN COLOR MAP
 // =============================================================================
 
-const masteryDomains = [
-  { id: 'md-1', name: 'Algebra', mastery: 85, domain: 'Mathematics', color: 'bg-violet-500' },
-  { id: 'md-2', name: 'Geometry', mastery: 72, domain: 'Mathematics', color: 'bg-violet-500' },
-  { id: 'md-3', name: 'Statistics', mastery: 68, domain: 'Mathematics', color: 'bg-violet-500' },
-  { id: 'md-4', name: 'Calculus', mastery: 45, domain: 'Mathematics', color: 'bg-violet-500' },
-  { id: 'md-5', name: 'Number Theory', mastery: 78, domain: 'Mathematics', color: 'bg-violet-500' },
-  { id: 'md-6', name: 'Biology', mastery: 82, domain: 'Science', color: 'bg-emerald-500' },
-  { id: 'md-7', name: 'Chemistry', mastery: 65, domain: 'Science', color: 'bg-emerald-500' },
-  { id: 'md-8', name: 'Physics', mastery: 58, domain: 'Science', color: 'bg-emerald-500' },
-  { id: 'md-9', name: 'Earth Science', mastery: 74, domain: 'Science', color: 'bg-emerald-500' },
-  { id: 'md-10', name: 'Reading Comp.', mastery: 88, domain: 'English', color: 'bg-blue-500' },
-  { id: 'md-11', name: 'Writing', mastery: 76, domain: 'English', color: 'bg-blue-500' },
-  { id: 'md-12', name: 'Grammar', mastery: 82, domain: 'English', color: 'bg-blue-500' },
-  { id: 'md-13', name: 'Literature', mastery: 70, domain: 'English', color: 'bg-blue-500' },
-  { id: 'md-14', name: 'World History', mastery: 65, domain: 'Humanities', color: 'bg-amber-500' },
-  { id: 'md-15', name: 'Geography', mastery: 72, domain: 'Humanities', color: 'bg-amber-500' },
-  { id: 'md-16', name: 'Civics', mastery: 60, domain: 'Humanities', color: 'bg-amber-500' },
-  { id: 'md-17', name: 'Economics', mastery: 55, domain: 'Humanities', color: 'bg-amber-500' },
-  { id: 'md-18', name: 'Programming', mastery: 78, domain: 'Technology', color: 'bg-indigo-500' },
-  { id: 'md-19', name: 'Digital Literacy', mastery: 92, domain: 'Technology', color: 'bg-indigo-500' },
-  { id: 'md-20', name: 'Data Science', mastery: 48, domain: 'Technology', color: 'bg-indigo-500' },
-  { id: 'md-21', name: 'Music Theory', mastery: 55, domain: 'Arts', color: 'bg-pink-500' },
-  { id: 'md-22', name: 'Visual Arts', mastery: 68, domain: 'Arts', color: 'bg-pink-500' },
-  { id: 'md-23', name: 'Drama', mastery: 62, domain: 'Arts', color: 'bg-pink-500' },
-  { id: 'md-24', name: 'Critical Thinking', mastery: 80, domain: 'Core Skills', color: 'bg-cyan-500' },
-];
-
-const pathNodes = [
-  { id: 'node-1', label: 'Algebra Basics', status: 'completed', mastery: 95 },
-  { id: 'node-2', label: 'Linear Equations', status: 'completed', mastery: 88 },
-  { id: 'node-3', label: 'Quadratic Functions', status: 'current', mastery: 72 },
-  { id: 'node-4', label: 'Polynomial Operations', status: 'upcoming', mastery: 0 },
-  { id: 'node-5', label: 'Advanced Factoring', status: 'upcoming', mastery: 0 },
-  { id: 'node-6', label: 'Complex Numbers', status: 'locked', mastery: 0 },
-];
-
-const recommendations = [
-  {
-    id: 'rec-1',
-    title: 'Practice Quadratic Factoring',
-    type: 'Practice',
-    priority: 'high',
-    reason: 'You scored 72% on quadratics — 15 minutes of targeted practice could push you past 80%, unlocking Polynomial Operations.',
-    duration: '20 min',
-    impact: '+8% mastery',
-    href: '/learning/courses',
-  },
-  {
-    id: 'rec-2',
-    title: 'Review Linear Equation Word Problems',
-    type: 'Review',
-    priority: 'medium',
-    reason: 'It\'s been 12 days since you practised linear equations. A quick review now prevents forgetting and keeps your 88% score strong.',
-    duration: '15 min',
-    impact: 'Prevent decay',
-    href: '/learning/courses',
-  },
-  {
-    id: 'rec-3',
-    title: 'Explore: Physics Applications of Algebra',
-    type: 'Cross-curricular',
-    priority: 'medium',
-    reason: 'Connecting algebra to physics deepens understanding in both areas. Students who make cross-subject links retain 40% more.',
-    duration: '25 min',
-    impact: '+4% in both domains',
-    href: '/learning/courses',
-  },
-  {
-    id: 'rec-4',
-    title: 'Challenge: Algebraic Proofs',
-    type: 'Challenge',
-    priority: 'low',
-    reason: 'Your algebra mastery (85%) shows you\'re ready for advanced reasoning. This challenge will stretch your thinking and unlock new pathways.',
-    duration: '30 min',
-    impact: 'Unlock new pathways',
-    href: '/learning/courses',
-  },
-];
+const DOMAIN_COLORS: Record<string, string> = {
+  Mathematics: 'bg-violet-500',
+  Science: 'bg-emerald-500',
+  English: 'bg-blue-500',
+  Humanities: 'bg-amber-500',
+  Technology: 'bg-indigo-500',
+  Arts: 'bg-pink-500',
+  'Core Skills': 'bg-cyan-500',
+};
 
 const breakSuggestions = [
   { id: 'br-1', type: 'micro', duration: '2 min', activity: 'Eye rest - look at distance', icon: Clock },
@@ -164,7 +96,9 @@ function Guide({ children, className }: { children: React.ReactNode; className?:
 
 export default function GoldenPathPage() {
   const router = useRouter();
-  const { adaptation, isLoading: gpLoading } = useGoldenPath('current');
+  const { user } = useAuthStore();
+  const learnerId = user?.id || 'current';
+  const { adaptation, curiosity, optimizer, isLoading: gpLoading, error: gpError, refresh } = useGoldenPath(learnerId);
   const [difficultyLevel, setDifficultyLevel] = useState('optimal');
   const [showBreakReminder, setShowBreakReminder] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
@@ -172,18 +106,97 @@ export default function GoldenPathPage() {
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [showGuides, setShowGuides] = useState(true);
 
-  const zpdRange = adaptation?.zpd ?? { domain: 'Mathematics', lowerBound: 68, upperBound: 82, currentLevel: 72, optimalDifficulty: 75 };
-  const currentMastery = Math.round((adaptation?.profile?.competencyStates?.[0]?.pKnown ?? 0.72) * 100);
+  // Derive ZPD from API data
+  const zpdRaw = adaptation?.zpd;
+  const zpdRange = useMemo(() => {
+    if (!zpdRaw) return { domain: 'Mathematics', lowerBound: 68, upperBound: 82, currentLevel: 72, optimalDifficulty: 75 };
+    // API returns 0-1, convert to percentage
+    const scale = zpdRaw.lowerBound <= 1 ? 100 : 1;
+    return {
+      domain: zpdRaw.domain,
+      lowerBound: Math.round(zpdRaw.lowerBound * scale),
+      upperBound: Math.round(zpdRaw.upperBound * scale),
+      currentLevel: Math.round(zpdRaw.currentLevel * scale),
+      optimalDifficulty: Math.round(zpdRaw.optimalDifficulty * scale),
+    };
+  }, [zpdRaw]);
+
+  // Derive mastery domains from API competency states
+  const masteryDomains = useMemo(() => {
+    const states = adaptation?.profile?.competencyStates;
+    if (!states || states.length === 0) return [];
+    return states.map(s => ({
+      id: s.id,
+      name: s.name,
+      mastery: Math.round(s.pKnown * 100),
+      domain: s.domain,
+      color: DOMAIN_COLORS[s.domain] || 'bg-slate-500',
+    }));
+  }, [adaptation?.profile?.competencyStates]);
+
+  // Derive path nodes from optimizer result or competencies
+  const pathNodes = useMemo(() => {
+    const selectedPath = optimizer?.result?.selectedPath;
+    if (selectedPath?.steps?.length) {
+      return selectedPath.steps.map((step, i) => ({
+        id: `step-${i}`,
+        label: step.name,
+        status: step.mastery >= 0.85 ? 'completed' : step.mastery > 0 ? (i === selectedPath.steps.findIndex(s => s.mastery < 0.85) ? 'current' : 'upcoming') : (i > 3 ? 'locked' : 'upcoming'),
+        mastery: Math.round(step.mastery * 100),
+      }));
+    }
+    // Fallback: build from competency states sorted by mastery
+    const sorted = [...(adaptation?.profile?.competencyStates || [])].sort((a, b) => b.pKnown - a.pKnown);
+    return sorted.slice(0, 6).map((s, i) => ({
+      id: s.id,
+      label: s.name,
+      status: s.pKnown >= 0.85 ? 'completed' : (i === sorted.findIndex(x => x.pKnown < 0.85) ? 'current' : (s.pKnown > 0 ? 'upcoming' : 'locked')),
+      mastery: Math.round(s.pKnown * 100),
+    }));
+  }, [optimizer?.result?.selectedPath, adaptation?.profile?.competencyStates]);
+
+  // Derive recommendations from curiosity suggestions
+  const recommendations = useMemo(() => {
+    const suggestions = curiosity?.suggestions;
+    if (suggestions && suggestions.length > 0) {
+      return suggestions.map((s, i) => ({
+        id: s.id,
+        title: s.title,
+        type: s.type === 'project' ? 'Challenge' : s.type === 'interactive' ? 'Practice' : 'Review',
+        priority: i === 0 ? 'high' : (i <= 1 ? 'medium' : 'low'),
+        reason: `Matched to your interests in ${s.matchedInterests.join(', ')}. Difficulty ${Math.round(s.difficulty * 100)}% — within your optimal learning zone.`,
+        duration: s.estimatedDuration,
+        impact: `Relevance: ${s.relevanceScore}%`,
+        href: '/learning/courses',
+      }));
+    }
+    // Fallback
+    return [
+      { id: 'rec-1', title: 'Practice current focus area', type: 'Practice', priority: 'high' as const, reason: 'Strengthen your current topic mastery with targeted exercises.', duration: '20 min', impact: '+8% mastery', href: '/learning/courses' },
+      { id: 'rec-2', title: 'Review recent topics', type: 'Review', priority: 'medium' as const, reason: 'Spaced repetition prevents forgetting and reinforces learning.', duration: '15 min', impact: 'Prevent decay', href: '/learning/courses' },
+    ];
+  }, [curiosity?.suggestions]);
+
+  const currentMastery = Math.round((adaptation?.profile?.overallMastery ?? (adaptation?.profile?.competencyStates?.[0]?.pKnown ?? 0.72)) * 100);
   const isInZPD = currentMastery >= zpdRange.lowerBound && currentMastery <= zpdRange.upperBound;
   const currentMasteryInfo = getMasteryLabel(currentMastery);
 
-  const paceAnalytics = {
-    currentPace: 12.5,
-    averagePace: 10.2,
-    weeklyProgress: 8.4,
-    targetPace: 15.0,
-    percentAboveAverage: 22.5,
-  };
+  // Pace analytics from optimizer weights or defaults
+  const paceAnalytics = useMemo(() => {
+    const weights = optimizer?.weights?.weights;
+    if (weights && weights.length > 0) {
+      const efficiency = weights.find(w => w.name === 'Efficiency');
+      const engagement = weights.find(w => w.name === 'Engagement');
+      return {
+        currentPace: efficiency ? Math.round(efficiency.score / 8 * 10) / 10 : 12.5,
+        averagePace: 10.2,
+        weeklyProgress: engagement ? Math.round(engagement.score / 10) : 8.4,
+        targetPace: 15.0,
+        percentAboveAverage: efficiency ? Math.round((efficiency.score / 72 - 1) * 100) : 22.5,
+      };
+    }
+    return { currentPace: 12.5, averagePace: 10.2, weeklyProgress: 8.4, targetPace: 15.0, percentAboveAverage: 22.5 };
+  }, [optimizer?.weights?.weights]);
 
   // Session timer
   const checkBreakTime = useCallback(() => {
@@ -212,19 +225,24 @@ export default function GoldenPathPage() {
   };
 
   // Group domains by subject
-  const domainsBySubject = masteryDomains.reduce(
+  const domainsBySubject = useMemo(() => masteryDomains.reduce(
     (acc, domain) => {
       if (!acc[domain.domain]) acc[domain.domain] = [];
       acc[domain.domain].push(domain);
       return acc;
     },
     {} as Record<string, typeof masteryDomains>
-  );
+  ), [masteryDomains]);
 
   // Compute strengths and growth areas
-  const sortedDomains = [...masteryDomains].sort((a, b) => b.mastery - a.mastery);
+  const sortedDomains = useMemo(() => [...masteryDomains].sort((a, b) => b.mastery - a.mastery), [masteryDomains]);
   const topStrengths = sortedDomains.slice(0, 3);
   const growthAreas = sortedDomains.slice(-3).reverse();
+
+  // Current focus topic
+  const currentNode = pathNodes.find(n => n.status === 'current');
+  const currentTopicName = currentNode?.label || 'your current topic';
+  const topStrengthName = topStrengths[0]?.name || 'your strongest subject';
 
   return (
     <div className="space-y-6">
@@ -304,7 +322,19 @@ export default function GoldenPathPage() {
             <div>
               <h3 className="font-semibold text-sm">Your AI Learning Summary</h3>
               <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                You&apos;re making strong progress in <strong>Algebra</strong> (85% mastery) and <strong>Reading Comprehension</strong> (88%). Your current focus is <strong>Quadratic Functions</strong> at 72% — you&apos;re in your optimal learning zone, so the difficulty is just right. Today, I recommend 20 minutes on quadratic factoring to push past 80% and unlock the next topic. Your pace is 22.5% above your personal average — great momentum!
+                {topStrengths.length >= 2
+                  ? <>You&apos;re making strong progress in <strong>{topStrengths[0].name}</strong> ({topStrengths[0].mastery}% mastery) and <strong>{topStrengths[1].name}</strong> ({topStrengths[1].mastery}%). </>
+                  : <>You&apos;re building your learning profile. </>
+                }
+                {currentNode
+                  ? <>Your current focus is <strong>{currentTopicName}</strong> at {currentNode.mastery}% — {isInZPD ? 'you\'re in your optimal learning zone, so the difficulty is just right' : 'the AI is adjusting difficulty to get you back into your optimal zone'}. </>
+                  : <>The AI is mapping your learning path. </>
+                }
+                {recommendations.length > 0 && <>Today, I recommend starting with &ldquo;{recommendations[0].title}&rdquo; ({recommendations[0].duration}). </>}
+                {paceAnalytics.percentAboveAverage > 0
+                  ? <>Your pace is {paceAnalytics.percentAboveAverage}% above your personal average — great momentum!</>
+                  : <>Keep going — consistency is key to building momentum.</>
+                }
               </p>
               <div className="flex gap-2 mt-3">
                 <Button size="sm" onClick={() => router.push('/learning/courses')}>
@@ -357,7 +387,7 @@ export default function GoldenPathPage() {
             <div>
               <CardTitle className="text-lg">Learning Path</CardTitle>
               <CardDescription>
-                Your current progression through Algebra — each step builds on the last
+                Your current progression through {zpdRange.domain} — each step builds on the last
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -447,12 +477,12 @@ export default function GoldenPathPage() {
                   <Brain className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">Current: Quadratic Functions</p>
+                  <p className="font-medium">Current: {currentTopicName}</p>
                   <p className="text-sm text-muted-foreground">
-                    Mastery: <span className={currentMasteryInfo.color}>{currentMastery}% ({currentMasteryInfo.label})</span> | Optimal range: {zpdRange.lowerBound}%–{zpdRange.upperBound}%
+                    Mastery: <span className={currentMasteryInfo.color}>{currentNode?.mastery ?? currentMastery}% ({getMasteryLabel(currentNode?.mastery ?? currentMastery).label})</span> | Optimal range: {zpdRange.lowerBound}%–{zpdRange.upperBound}%
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {currentMasteryInfo.advice}. Reach 80% to unlock Polynomial Operations.
+                    {getMasteryLabel(currentNode?.mastery ?? currentMastery).advice}. Reach 80% to unlock the next topic.
                   </p>
                 </div>
               </div>
@@ -532,6 +562,18 @@ export default function GoldenPathPage() {
                 </div>
               </div>
 
+              {masteryDomains.length === 0 && gpLoading && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
+                  <p className="text-sm">Loading your mastery data...</p>
+                </div>
+              )}
+              {masteryDomains.length === 0 && !gpLoading && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Brain className="h-6 w-6 mx-auto mb-2" />
+                  <p className="text-sm">Start learning to build your mastery profile. The AI will track your progress across all domains.</p>
+                </div>
+              )}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {Object.entries(domainsBySubject)
                   .filter(([subject]) => !selectedDomain || subject === selectedDomain)
@@ -668,9 +710,9 @@ export default function GoldenPathPage() {
                 Personalized next steps — the AI explains why each activity matters
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm">
-              <RefreshCw className="mr-2 h-3 w-3" />
-              Refresh
+            <Button variant="outline" size="sm" onClick={refresh} disabled={gpLoading}>
+              <RefreshCw className={cn("mr-2 h-3 w-3", gpLoading && "animate-spin")} />
+              {gpLoading ? 'Loading...' : 'Refresh'}
             </Button>
           </div>
         </CardHeader>
