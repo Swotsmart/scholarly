@@ -1,12 +1,10 @@
 /**
  * useMicroSchools Hook — Production
  *
- * Fetches core micro-schools data in parallel using Promise.allSettled for
- * independent failure isolation. If one data source fails, others
- * continue loading — a parent can still browse schools even
- * if the applications endpoint is temporarily down.
+ * Loads core micro-schools data from in-memory static exports in
+ * micro-schools-api.ts. Data is filtered and assigned synchronously.
  *
- * Data fetched (from static exports in micro-schools-api.ts):
+ * Data loaded:
  *   microSchools   — all registered micro-schools with details
  *   applications   — user's micro-school applications
  *   enrollment stats are derived from the schools list
@@ -56,13 +54,12 @@ export function useMicroSchools(config?: { state?: string }) {
     enrollmentStats: null,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const error: string | null = null;
 
   const stateFilter = config?.state;
 
   const fetchData = useCallback(() => {
     setIsLoading(true);
-    setError(null);
 
     const schools = stateFilter ? allSchools.filter((s) => s.state === stateFilter) : allSchools;
     const apps = allApplications;
@@ -72,6 +69,7 @@ export function useMicroSchools(config?: { state?: string }) {
       applications: apps,
       enrollmentStats: computeEnrollmentStats(schools),
     });
+
     setIsLoading(false);
   }, [stateFilter]);
 
