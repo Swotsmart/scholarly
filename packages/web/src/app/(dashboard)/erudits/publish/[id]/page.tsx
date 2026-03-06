@@ -8,9 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import {
   ArrowLeft,
   FileText,
@@ -317,45 +319,46 @@ export default function ManuscriptEditorPage() {
         </div>
       </div>
 
-      {/* Publish Modal */}
-      {showPublishModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowPublishModal(false)}>
-          <div className="w-full max-w-lg rounded-xl bg-background p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-bold mb-1">Publish Manuscript</h2>
-            <p className="text-sm text-muted-foreground mb-6">Select distribution channels for &quot;{manuscript.title}&quot;</p>
+      <Dialog open={showPublishModal} onOpenChange={setShowPublishModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Publish Manuscript</DialogTitle>
+            <DialogDescription>
+              Select distribution channels for &quot;{manuscript.title}&quot;
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-3 mb-6">
-              {CHANNELS.map((channel) => {
-                const Icon = channel.icon;
-                const selected = selectedChannels.includes(channel.value);
-                return (
-                  <button
-                    key={channel.value}
-                    className={`w-full rounded-lg border p-3 text-left transition-colors ${selected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}
-                    onClick={() => toggleChannel(channel.value)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon className={`h-5 w-5 ${selected ? 'text-primary' : 'text-muted-foreground'}`} />
-                      <div>
-                        <p className="font-medium text-sm">{channel.label}</p>
-                        <p className="text-xs text-muted-foreground">{channel.description}</p>
-                      </div>
+          <div className="space-y-3 py-2">
+            {CHANNELS.map((channel) => {
+              const Icon = channel.icon;
+              const selected = selectedChannels.includes(channel.value);
+              return (
+                <button
+                  key={channel.value}
+                  className={`w-full rounded-lg border p-3 text-left transition-colors ${selected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}
+                  onClick={() => toggleChannel(channel.value)}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className={`h-5 w-5 ${selected ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <div>
+                      <p className="font-medium text-sm">{channel.label}</p>
+                      <p className="text-xs text-muted-foreground">{channel.description}</p>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowPublishModal(false)}>Cancel</Button>
-              <Button disabled={selectedChannels.length === 0}>
-                <Send className="mr-2 h-4 w-4" />
-                Publish to {selectedChannels.length} channel{selectedChannels.length !== 1 ? 's' : ''}
-              </Button>
-            </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPublishModal(false)}>Cancel</Button>
+            <Button disabled={selectedChannels.length === 0}>
+              <Send className="mr-2 h-4 w-4" />
+              Publish to {selectedChannels.length} channel{selectedChannels.length !== 1 ? 's' : ''}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

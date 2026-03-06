@@ -39,14 +39,18 @@ interface AdminData {
   recentActivity: AdminActivity[];
 }
 
-export function useAdmin() {
+/**
+ * @param options.skip — skip all fetches, return immediately. Use for pages
+ *   that only need the loading state or don't consume admin data.
+ */
+export function useAdmin(options?: { skip?: boolean }) {
   const [data, setData] = useState<AdminData>({
     stats: null,
     users: [],
     health: null,
     recentActivity: [],
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!options?.skip);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -75,8 +79,9 @@ export function useAdmin() {
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (!options?.skip) fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchData, options?.skip]);
 
   return {
     ...data,

@@ -12,10 +12,8 @@ import {
   ExternalLink,
   Settings,
   Shield,
-  FileText,
-  Loader2,
+  FileText
 } from 'lucide-react';
-import { useAdmin } from '@/hooks/use-admin';
 
 const FALLBACK_ISSUED_BADGES = [
   {
@@ -42,16 +40,8 @@ const FALLBACK_ISSUED_BADGES = [
 ];
 
 export default function BadgesPage() {
-  const { isLoading } = useAdmin();
   const issuedBadges = FALLBACK_ISSUED_BADGES;
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
