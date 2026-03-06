@@ -16,7 +16,6 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
-  Loader2,
 } from 'lucide-react';
 import { useTutoring } from '@/hooks/use-tutoring';
 
@@ -88,7 +87,7 @@ export default function SessionHistoryPage() {
     const durationMin = Math.round((end.getTime() - start.getTime()) / 60000);
     return {
       id: i + 1,
-      student: b.tutor.user.displayName,
+      student: b.bookedByUser.displayName,
       subject: b.subjectId,
       date: start.toLocaleDateString('en-AU', { month: 'short', day: 'numeric', year: 'numeric' }),
       time: `${start.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })} - ${end.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`,

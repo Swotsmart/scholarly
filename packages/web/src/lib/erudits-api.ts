@@ -36,8 +36,9 @@ import type {
   MigrationSource,
 } from '@/types/erudits';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const V1 = `${API_BASE}/api/v1/erudits`;
+const RAW_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const V1_BASE = RAW_BASE.endsWith('/api/v1') ? RAW_BASE : `${RAW_BASE}/api/v1`;
+const V1 = `${V1_BASE}/erudits`;
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 // =============================================================================
