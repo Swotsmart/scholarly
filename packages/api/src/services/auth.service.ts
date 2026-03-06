@@ -238,6 +238,31 @@ export class AuthService extends ScholarlyBaseService {
     });
   }
 
+  /**
+   * Generate tokens for a user after 2FA verification (no password check)
+   */
+  async generateTokensFor2FA(userId: string): Promise<Result<AuthTokens>> {
+    return this.withTiming('generateTokensFor2FA', async () => {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, tenantId: true, roles: true, status: true },
+      });
+
+      if (!user || user.status !== 'active') {
+        return failure({ code: 'AUTH_001', message: 'User not found or inactive' });
+      }
+
+      const tokens = await this.generateTokens(user);
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      });
+
+      return success(tokens);
+    });
+  }
+
   // ============ Token Generation ============
 
   /**

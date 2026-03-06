@@ -68,6 +68,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth-store';
+import { api } from '@/lib/api';
 import { verificationApi, type VerificationStatus, type WWCCVerification } from '@/lib/verification-api';
 
 // ---------------------------------------------------------------------------
@@ -255,6 +256,374 @@ const INVOICES = [
   { id: 'INV-2025-012', date: 'Dec 15, 2025', amount: 49, status: 'paid' },
   { id: 'INV-2025-011', date: 'Nov 15, 2025', amount: 49, status: 'paid' },
 ];
+
+// ---------------------------------------------------------------------------
+// Two-Factor Authentication Card
+// ---------------------------------------------------------------------------
+function TwoFactorCard({ twoFactorEnabled, setTwoFactorEnabled }: { twoFactorEnabled: boolean; setTwoFactorEnabled: (v: boolean) => void }) {
+  const [setupMode, setSetupMode] = useState(false);
+  const [setupData, setSetupData] = useState<{ secret: string; otpauthUri: string; qrCodeUrl: string } | null>(null);
+  const [verifyCode, setVerifyCode] = useState('');
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [showBackupCodes, setShowBackupCodes] = useState(false);
+  const [disableCode, setDisableCode] = useState('');
+  const [disableMode, setDisableMode] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleStartSetup = async () => {
+    setLoading(true);
+    setError('');
+    const res = await api.auth.setup2FA();
+    setLoading(false);
+    if (res.success) {
+      setSetupData(res.data);
+      setSetupMode(true);
+    } else {
+      setError(res.error || 'Failed to start 2FA setup');
+    }
+  };
+
+  const handleVerifySetup = async () => {
+    setLoading(true);
+    setError('');
+    const res = await api.auth.verifySetup2FA(verifyCode);
+    setLoading(false);
+    if (res.success) {
+      setBackupCodes(res.data.backupCodes);
+      setShowBackupCodes(true);
+      setSetupMode(false);
+      setTwoFactorEnabled(true);
+    } else {
+      setError(res.error || 'Invalid verification code');
+    }
+  };
+
+  const handleDisable = async () => {
+    setLoading(true);
+    setError('');
+    const res = await api.auth.disable2FA(disableCode);
+    setLoading(false);
+    if (res.success) {
+      setTwoFactorEnabled(false);
+      setDisableMode(false);
+      setDisableCode('');
+    } else {
+      setError(res.error || 'Invalid code');
+    }
+  };
+
+  if (showBackupCodes) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-600">
+            <CheckCircle2 className="h-5 w-5" />
+            2FA Enabled Successfully
+          </CardTitle>
+          <CardDescription>
+            Save these backup codes in a secure place. Each code can only be used once.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted p-4 font-mono text-sm">
+            {backupCodes.map((code, i) => (
+              <div key={i} className="p-1">{code}</div>
+            ))}
+          </div>
+          <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-600" />
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                If you lose access to your authenticator app, you can use one of these codes to sign in.
+              </p>
+            </div>
+          </div>
+          <Button onClick={() => setShowBackupCodes(false)}>Done</Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (setupMode && setupData) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Set Up Two-Factor Authentication</CardTitle>
+          <CardDescription>
+            Scan the QR code with your authenticator app (Google Authenticator, Authy, 1Password, etc.)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {error && (
+            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertTriangle className="h-4 w-4" />
+              {error}
+            </div>
+          )}
+          <div className="flex flex-col items-center gap-4">
+            <div className="rounded-lg border p-4 bg-white">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={setupData.qrCodeUrl} alt="2FA QR Code" width={200} height={200} />
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">Or enter this code manually:</p>
+              <code className="rounded bg-muted px-3 py-1.5 text-sm font-mono tracking-wider">{setupData.secret}</code>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Enter the 6-digit code from your app</Label>
+            <Input
+              value={verifyCode}
+              onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="000000"
+              className="text-center text-xl tracking-[0.5em] font-mono"
+              maxLength={6}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => { setSetupMode(false); setError(''); }}>Cancel</Button>
+            <Button onClick={handleVerifySetup} disabled={verifyCode.length < 6 || loading}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Verify & Enable
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Two-Factor Authentication (2FA)</CardTitle>
+        <CardDescription>Add an extra layer of security to your account</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {error && (
+          <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertTriangle className="h-4 w-4" />
+            {error}
+          </div>
+        )}
+        <div className="flex items-center justify-between p-4 rounded-lg border">
+          <div className="flex items-center gap-4">
+            <div className={`rounded-lg p-3 ${twoFactorEnabled ? 'bg-green-500/10' : 'bg-muted'}`}>
+              <Lock className={`h-6 w-6 ${twoFactorEnabled ? 'text-green-500' : 'text-muted-foreground'}`} />
+            </div>
+            <div>
+              <p className="font-medium">Authenticator App</p>
+              <p className="text-sm text-muted-foreground">
+                {twoFactorEnabled
+                  ? 'Your account is protected with 2FA'
+                  : 'Protect your account with an authenticator app'}
+              </p>
+            </div>
+          </div>
+          {twoFactorEnabled ? (
+            <div className="flex items-center gap-2">
+              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                <CheckCircle2 className="h-3 w-3 mr-1" />
+                Enabled
+              </Badge>
+              {disableMode ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={disableCode}
+                    onChange={(e) => setDisableCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="Code"
+                    className="w-24 text-center font-mono"
+                    maxLength={6}
+                  />
+                  <Button size="sm" variant="destructive" onClick={handleDisable} disabled={disableCode.length < 6 || loading}>
+                    Confirm
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setDisableMode(false); setDisableCode(''); }}>
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setDisableMode(true)}>
+                  Disable
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Button onClick={handleStartSetup} disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Enable 2FA
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Passkey Management Card
+// ---------------------------------------------------------------------------
+function PasskeyCard() {
+  const [passkeys, setPasskeys] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [newPasskeyName, setNewPasskeyName] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    loadPasskeys();
+  }, []);
+
+  const loadPasskeys = async () => {
+    const res = await api.auth.getPasskeys();
+    if (res.success && res.data) {
+      setPasskeys(res.data.passkeys);
+    }
+  };
+
+  const handleRegister = async () => {
+    setRegistering(true);
+    setError('');
+
+    try {
+      // Get registration options from server
+      const optionsRes = await api.auth.getPasskeyRegisterOptions();
+      if (!optionsRes.success || !optionsRes.data) {
+        setError('Failed to get registration options');
+        setRegistering(false);
+        return;
+      }
+
+      const options = optionsRes.data;
+
+      // Convert base64url strings to ArrayBuffers for WebAuthn API
+      const challenge = Uint8Array.from(atob(options.challenge.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+      const userId = Uint8Array.from(atob(options.user.id.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+
+      const credential = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: options.rp,
+          user: { ...options.user, id: userId },
+          pubKeyCredParams: options.pubKeyCredParams,
+          timeout: options.timeout,
+          attestation: options.attestation,
+          authenticatorSelection: options.authenticatorSelection,
+          excludeCredentials: (options.excludeCredentials || []).map((cred: any) => ({
+            ...cred,
+            id: Uint8Array.from(atob(cred.id.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)),
+          })),
+        },
+      }) as PublicKeyCredential | null;
+
+      if (!credential) {
+        setRegistering(false);
+        return;
+      }
+
+      const response = credential.response as AuthenticatorAttestationResponse;
+
+      // Convert response to base64url for transport
+      const credentialData = {
+        id: credential.id,
+        rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+        response: {
+          clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(response.clientDataJSON))),
+          attestationObject: btoa(String.fromCharCode(...new Uint8Array(response.attestationObject))),
+        },
+        type: credential.type,
+        authenticatorAttachment: (credential as any).authenticatorAttachment,
+      };
+
+      const registerRes = await api.auth.registerPasskey(credentialData, newPasskeyName || 'My Passkey');
+      if (registerRes.success) {
+        setNewPasskeyName('');
+        await loadPasskeys();
+      } else {
+        setError(registerRes.error || 'Failed to register passkey');
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'NotAllowedError') {
+        setError('Passkey registration failed. Make sure your browser supports passkeys.');
+      }
+    } finally {
+      setRegistering(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const res = await api.auth.deletePasskey(id);
+    if (res.success) {
+      setPasskeys(prev => prev.filter(p => p.id !== id));
+    }
+  };
+
+  const supportsWebAuthn = typeof window !== 'undefined' && !!window.PublicKeyCredential;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Zap className="h-5 w-5" />
+          Passkeys
+        </CardTitle>
+        <CardDescription>
+          Sign in without a password using biometrics, security keys, or your device
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {error && (
+          <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertTriangle className="h-4 w-4" />
+            {error}
+          </div>
+        )}
+
+        {passkeys.length > 0 && (
+          <div className="space-y-3">
+            {passkeys.map((pk) => (
+              <div key={pk.id} className="flex items-center justify-between p-3 rounded-lg border">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <Zap className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{pk.friendlyName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {pk.deviceType === 'platform' ? 'This device' : 'Security key'} — Added {new Date(pk.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => handleDelete(pk.id)} className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {supportsWebAuthn ? (
+          <div className="flex items-center gap-2">
+            <Input
+              value={newPasskeyName}
+              onChange={(e) => setNewPasskeyName(e.target.value)}
+              placeholder="Passkey name (e.g., MacBook Pro)"
+              className="flex-1"
+            />
+            <Button onClick={handleRegister} disabled={registering}>
+              {registering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+              Add Passkey
+            </Button>
+          </div>
+        ) : (
+          <div className="rounded-lg bg-muted p-4 text-sm text-muted-foreground text-center">
+            Your browser does not support passkeys.
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Main Component
@@ -698,44 +1067,9 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Two-Factor Authentication (2FA)</CardTitle>
-                <CardDescription>
-                  Add an extra layer of security to your account
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between p-4 rounded-lg border">
-                  <div className="flex items-center gap-4">
-                    <div className={`rounded-lg p-3 ${twoFactorEnabled ? 'bg-green-500/10' : 'bg-muted'}`}>
-                      <Lock className={`h-6 w-6 ${twoFactorEnabled ? 'text-green-500' : 'text-muted-foreground'}`} />
-                    </div>
-                    <div>
-                      <p className="font-medium">Two-Factor Authentication</p>
-                      <p className="text-sm text-muted-foreground">
-                        {twoFactorEnabled
-                          ? 'Your account is protected with 2FA'
-                          : 'Protect your account with authenticator app'}
-                      </p>
-                    </div>
-                  </div>
-                  {twoFactorEnabled ? (
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Enabled
-                      </Badge>
-                      <Button variant="outline" onClick={() => setTwoFactorEnabled(false)}>
-                        Disable
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button onClick={() => setTwoFactorEnabled(true)}>Enable 2FA</Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <TwoFactorCard twoFactorEnabled={twoFactorEnabled} setTwoFactorEnabled={setTwoFactorEnabled} />
+
+            <PasskeyCard />
 
             <Card>
               <CardHeader>

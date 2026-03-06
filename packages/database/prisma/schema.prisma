@@ -150,6 +150,7 @@ model Tenant {
   slug      String    @unique
   domain    String?
   settings  Json      @default("{}")
+  securitySettings Json @default("{}")  // 2FA/Passkey tenant-level policies
   status    String    @default("active") // active, suspended, cancelled
   deletedAt DateTime?
 
@@ -262,12 +263,41 @@ model User {
   // Tutor Onboarding
   onboardingSessions       OnboardingSession[]
 
+  // Two-Factor Authentication & Passkeys
+  twoFactorSecret    String?
+  twoFactorEnabled   Boolean @default(false)
+  twoFactorBackupCodes String[] @default([])
+  passkeys           UserPasskey[]
+
   @@unique([tenantId, email])
   @@index([tenantId])
   @@index([tenantId, status])
   @@index([email])
   @@index([walletAddress])
   @@index([deletedAt])
+}
+
+// ============================================================================
+// TWO-FACTOR AUTHENTICATION & PASSKEYS
+// ============================================================================
+
+model UserPasskey {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  credentialId   String   @unique  // base64url-encoded credential ID
+  publicKey      String             // base64url-encoded public key
+  counter        BigInt   @default(0)
+  deviceType     String   @default("singleDevice") // singleDevice | multiDevice
+  backedUp       Boolean  @default(false)
+  transports     String[] @default([])  // usb, ble, nfc, internal
+  friendlyName   String   @default("Passkey")
+
+  lastUsedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
 }
 
 // ============================================================================

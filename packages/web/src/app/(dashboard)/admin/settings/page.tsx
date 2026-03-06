@@ -227,6 +227,12 @@ export default function AdminSettingsPage() {
   const [securitySettings, setSecuritySettings] = useState({
     ...passwordPolicies,
     ...sessionSettings,
+    // Authentication methods
+    allowTOTP: true,
+    allowPasskeys: true,
+    require2FAAdmins: false,
+    require2FATeachers: false,
+    require2FAAll: false,
   });
 
   const toggleFlag = (id: string) => {
@@ -920,6 +926,99 @@ export default function AdminSettingsPage() {
                   >
                     {securitySettings.trustedDevices ? 'Enabled' : 'Disabled'}
                   </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                Authentication Methods
+              </CardTitle>
+              <CardDescription>Configure two-factor authentication and passkey policies for this tenant</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div>
+                    <p className="font-medium">Allow TOTP Authenticator Apps</p>
+                    <p className="text-sm text-muted-foreground">
+                      Users can set up 2FA with Google Authenticator, Authy, 1Password, etc.
+                    </p>
+                  </div>
+                  <Button
+                    variant={securitySettings.allowTOTP !== false ? 'default' : 'outline'}
+                    onClick={() => setSecuritySettings(prev => ({ ...prev, allowTOTP: prev.allowTOTP === false ? true : false }))}
+                  >
+                    {securitySettings.allowTOTP !== false ? 'Enabled' : 'Disabled'}
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div>
+                    <p className="font-medium">Allow Passkeys</p>
+                    <p className="text-sm text-muted-foreground">
+                      Users can register passkeys (biometrics, security keys, device PIN) for passwordless sign-in
+                    </p>
+                  </div>
+                  <Button
+                    variant={securitySettings.allowPasskeys !== false ? 'default' : 'outline'}
+                    onClick={() => setSecuritySettings(prev => ({ ...prev, allowPasskeys: prev.allowPasskeys === false ? true : false }))}
+                  >
+                    {securitySettings.allowPasskeys !== false ? 'Enabled' : 'Disabled'}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium mb-3">Enforcement Policies</p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div>
+                      <p className="font-medium">Require 2FA for Admins</p>
+                      <p className="text-sm text-muted-foreground">
+                        Platform and tenant admins must enable 2FA before accessing admin features
+                      </p>
+                    </div>
+                    <Button
+                      variant={securitySettings.require2FAAdmins ? 'default' : 'outline'}
+                      onClick={() => setSecuritySettings(prev => ({ ...prev, require2FAAdmins: !prev.require2FAAdmins }))}
+                    >
+                      {securitySettings.require2FAAdmins ? 'Required' : 'Optional'}
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div>
+                      <p className="font-medium">Require 2FA for Teachers</p>
+                      <p className="text-sm text-muted-foreground">
+                        Teachers must enable 2FA to access classroom and grading features
+                      </p>
+                    </div>
+                    <Button
+                      variant={securitySettings.require2FATeachers ? 'default' : 'outline'}
+                      onClick={() => setSecuritySettings(prev => ({ ...prev, require2FATeachers: !prev.require2FATeachers }))}
+                    >
+                      {securitySettings.require2FATeachers ? 'Required' : 'Optional'}
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div>
+                      <p className="font-medium">Require 2FA for All Users</p>
+                      <p className="text-sm text-muted-foreground">
+                        Every user must enable 2FA. This overrides the role-specific settings above.
+                      </p>
+                    </div>
+                    <Button
+                      variant={securitySettings.require2FAAll ? 'destructive' : 'outline'}
+                      onClick={() => setSecuritySettings(prev => ({ ...prev, require2FAAll: !prev.require2FAAll }))}
+                    >
+                      {securitySettings.require2FAAll ? 'Enforced' : 'Not Enforced'}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>

@@ -11,7 +11,7 @@ interface AuthState {
   isAuthenticated: boolean;
 
   // Actions
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; requires2FA?: boolean; userId?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
@@ -44,7 +44,12 @@ export const useAuthStore = create<AuthState>()(
             return { success: false, error: response.error };
           }
 
-          const { user, accessToken } = response.data;
+          // Handle 2FA challenge
+          if ('requires2FA' in response.data && response.data.requires2FA) {
+            return { success: false, requires2FA: true, userId: response.data.userId };
+          }
+
+          const { user, accessToken } = response.data as { user: User; accessToken: string };
           api.setAccessToken(accessToken);
 
           set({

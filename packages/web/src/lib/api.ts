@@ -210,12 +210,19 @@ class ApiClient {
     return this.request<T>(endpoint, { method: 'DELETE' });
   }
 
+  async patch<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
   // ==========================================================================
   // AUTH
   // ==========================================================================
 
   auth = {
-    login: async (email: string, password: string): Promise<ApiResponse<{ user: User; accessToken: string }>> => {
+    login: async (email: string, password: string): Promise<ApiResponse<{ user: User; accessToken: string } | { requires2FA: true; userId: string }>> => {
       if (DEMO_MODE) {
         const user = DEMO_USERS[email as keyof typeof DEMO_USERS];
         if (user && password === 'demo123') {
@@ -271,6 +278,26 @@ class ApiClient {
       }
       return this.post<{ accessToken: string }>('/auth/refresh');
     },
+
+    // 2FA
+    setup2FA: () => this.post<{ secret: string; otpauthUri: string; qrCodeUrl: string }>('/auth/2fa/setup'),
+    verifySetup2FA: (code: string) => this.post<{ backupCodes: string[] }>('/auth/2fa/verify-setup', { code }),
+    verify2FA: (userId: string, code: string, isBackupCode = false) =>
+      this.post<{ user: User; accessToken: string }>('/auth/2fa/verify', { userId, code, isBackupCode }),
+    disable2FA: (code: string) => this.post('/auth/2fa/disable', { code }),
+
+    // Passkeys
+    getPasskeys: () => this.get<{ passkeys: any[] }>('/auth/passkeys'),
+    getPasskeyRegisterOptions: () => this.post<any>('/auth/passkeys/register-options'),
+    registerPasskey: (credential: any, friendlyName?: string) =>
+      this.post<{ passkey: any }>('/auth/passkeys/register', { credential, friendlyName }),
+    deletePasskey: (id: string) => this.delete(`/auth/passkeys/${id}`),
+    renamePasskey: (id: string, friendlyName: string) =>
+      this.patch(`/auth/passkeys/${id}`, { friendlyName }),
+
+    // Tenant security settings
+    getTenantSecurity: () => this.get<{ settings: any }>('/auth/tenant-security'),
+    updateTenantSecurity: (settings: any) => this.put('/auth/tenant-security', settings),
   };
 
   private currentDemoUser: User | null = null;

@@ -580,14 +580,15 @@ export default function TeacherSettingsPage() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
-              <Label>Two-Factor Authentication</Label>
+              <Label>Two-Factor Authentication & Passkeys</Label>
               <p className="text-sm text-muted-foreground">
-                Add an extra layer of security to your account
+                Manage 2FA and passkey settings for your account
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">Not Enabled</Badge>
-              <Button variant="outline" size="sm" onClick={() => alert('Two-factor authentication setup coming soon.')}>Enable</Button>
+              <Button variant="outline" size="sm" asChild>
+                <a href="/settings">Manage in Settings</a>
+              </Button>
             </div>
           </div>
           <div className="flex items-center justify-between rounded-lg border p-4">
