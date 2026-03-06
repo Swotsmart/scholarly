@@ -351,8 +351,16 @@ export interface PdCourse {
   id: string;
   title: string;
   category: string;
-  topic: string;
-  duration: string;
+  /**
+   * Backend fields from PDCourse
+   */
+  topics?: string[];
+  estimatedHours?: number;
+  /**
+   * Legacy/UI view-model fields; kept optional for backward compatibility.
+   */
+  topic?: string;
+  duration?: string;
   description: string;
 }
 
