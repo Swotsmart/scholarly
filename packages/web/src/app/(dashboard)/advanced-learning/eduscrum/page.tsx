@@ -236,7 +236,7 @@ function getLabelColor(label: string) {
 
 export default function EduscrumPage() {
   const [standupResponses, setStandupResponses] = useState<Record<string, string>>({});
-  const { data: hookData, isLoading } = useEduscrum();
+  const { eduscrum: hookData, isLoading } = useEduscrum();
 
   const MOCK_TASKS = hookData?.tasks?.length ? hookData.tasks : FALLBACK_TASKS;
   const CURRENT_SPRINT = hookData?.sprint ?? FALLBACK_SPRINT;

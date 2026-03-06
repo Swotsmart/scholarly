@@ -149,7 +149,7 @@ const FALLBACK_RECENT_ACTIVITY = [
 ];
 
 export default function AdvancedLearningPage() {
-  const { data: hookData, isLoading } = useAdvancedLearningHub();
+  const { hub: hookData, isLoading } = useAdvancedLearningHub();
 
   const stats = hookData?.stats
     ? [

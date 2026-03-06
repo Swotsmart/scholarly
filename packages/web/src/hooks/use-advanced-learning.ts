@@ -1,17 +1,15 @@
 /**
  * Advanced Learning Hooks
  *
- * Per-section hooks for advanced learning data. Each hook fetches only the
- * data needed for its corresponding page, preventing unnecessary API calls.
+ * Per-section hooks that each fetch only the data their page needs.
+ * Follows the same pattern as use-admin.ts (useCallback + Promise.allSettled).
  *
- * - useAdvancedLearningHub   → Hub overview page
- * - useEduscrum              → EduScrum page
- * - usePbl                   → PBL page
- * - useIndustry              → Industry Experience page
- * - useWorkExperience        → Work Experience page
- *
- * The combined useAdvancedLearning hook is retained for backward compatibility
- * but delegates to the section hooks under the hood.
+ * Hooks:
+ *   useAdvancedLearningHub  — hub overview page (1 request)
+ *   useEduscrum             — EduScrum page     (5 requests)
+ *   usePbl                  — PBL page          (1 request)
+ *   useIndustry             — Industry page     (4 requests)
+ *   useWorkExperience       — Work Experience   (5 requests)
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -48,221 +46,200 @@ import {
   type SupervisorDetails,
 } from '@/lib/advanced-learning-api';
 
-export type { AdvancedLearningHubData, EduscrumData, PblData, IndustryData, WorkExperienceData };
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-export type AdvancedLearningSection = 'hub' | 'eduscrum' | 'pbl' | 'industry' | 'workExperience';
+// =============================================================================
+// useAdvancedLearningHub
+// =============================================================================
 
-export interface AdvancedLearningData {
-  hub: AdvancedLearningHubData | null;
-  eduscrum: EduscrumData | null;
-  pbl: PblData | null;
-  industry: IndustryData | null;
-  workExperience: WorkExperienceData | null;
-}
-
-// ---------------------------------------------------------------------------
-// useAdvancedLearningHub — fetches hub overview only
-// ---------------------------------------------------------------------------
 export function useAdvancedLearningHub() {
-  const [data, setData] = useState<AdvancedLearningHubData | null>(null);
+  const [hub, setHub] = useState<AdvancedLearningHubData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    try {
-      const result = await advancedLearningApi.hub.getOverview();
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load hub data');
-    } finally {
-      setIsLoading(false);
-    }
+
+    const results = await Promise.allSettled([advancedLearningApi.hub.getOverview()]);
+
+    const errors = results
+      .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
+    if (errors.length > 0) setError(errors.join('; '));
+
+    setHub(results[0].status === 'fulfilled' ? results[0].value : null);
+    setIsLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, isLoading, error, refetch: fetchData };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { hub, isLoading, error, refetch: fetchData };
 }
 
-// ---------------------------------------------------------------------------
-// useEduscrum — fetches EduScrum section data only
-// ---------------------------------------------------------------------------
+// =============================================================================
+// useEduscrum
+// =============================================================================
+
 export function useEduscrum() {
-  const [data, setData] = useState<EduscrumData | null>(null);
+  const [eduscrum, setEduscrum] = useState<EduscrumData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    try {
-      const results = await Promise.allSettled([
-        advancedLearningApi.eduscrum.getTasks(),
-        advancedLearningApi.eduscrum.getSprint(),
-        advancedLearningApi.eduscrum.getTeam(),
-        advancedLearningApi.eduscrum.getAISuggestions(),
-        advancedLearningApi.eduscrum.getRetroItems(),
-      ]);
 
-      const errors = results
-        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-        .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
-      if (errors.length > 0) setError(errors.join('; '));
+    const results = await Promise.allSettled([
+      advancedLearningApi.eduscrum.getTasks(),
+      advancedLearningApi.eduscrum.getSprint(),
+      advancedLearningApi.eduscrum.getTeam(),
+      advancedLearningApi.eduscrum.getAISuggestions(),
+      advancedLearningApi.eduscrum.getRetroItems(),
+    ]);
 
-      const tasks = results[0].status === 'fulfilled' ? results[0].value.tasks : [] as EduScrumTask[];
-      const sprint = results[1].status === 'fulfilled' ? results[1].value.sprint : null as Sprint | null;
-      const teamMembers = results[2].status === 'fulfilled' ? results[2].value.members : [] as TeamMember[];
-      const aiSuggestions = results[3].status === 'fulfilled' ? results[3].value.suggestions : [] as AiSuggestion[];
-      const retroItems = results[4].status === 'fulfilled' ? results[4].value.retroItems : null as RetroItems | null;
+    const errors = results
+      .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
+    if (errors.length > 0) setError(errors.join('; '));
 
-      setData({ tasks, sprint, burndown: [], teamMembers, aiSuggestions, retroItems, standupPrompts: [] });
-    } finally {
-      setIsLoading(false);
-    }
+    const tasks = results[0].status === 'fulfilled' ? (results[0].value as { tasks: any[] }).tasks : [];
+    const sprint = results[1].status === 'fulfilled' ? (results[1].value as { sprint: any }).sprint : null;
+    const members = results[2].status === 'fulfilled' ? (results[2].value as { members: any[] }).members : [];
+    const suggestions = results[3].status === 'fulfilled' ? (results[3].value as { suggestions: any[] }).suggestions : [];
+    const retroItems = results[4].status === 'fulfilled' ? (results[4].value as { retroItems: any }).retroItems : null;
+
+    setEduscrum({ tasks, sprint, burndown: [], teamMembers: members, aiSuggestions: suggestions, retroItems, standupPrompts: [] });
+    setIsLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, isLoading, error, refetch: fetchData };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { eduscrum, isLoading, error, refetch: fetchData };
 }
 
-// ---------------------------------------------------------------------------
-// usePbl — fetches PBL section data only
-// ---------------------------------------------------------------------------
+// =============================================================================
+// usePbl
+// =============================================================================
+
 export function usePbl() {
-  const [data, setData] = useState<PblData | null>(null);
+  const [pbl, setPbl] = useState<PblData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    try {
-      const projectsResult = await advancedLearningApi.pbl.getProjects();
-      const firstProject = projectsResult.projects[0] as PblProject | undefined;
 
-      setData({
-        project: firstProject ?? null,
-        phases: [],
-        teamMembers: [],
-        milestones: [],
-        artifacts: [],
-        exhibition: null,
-        assessmentRubric: null,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load PBL data');
-    } finally {
-      setIsLoading(false);
-    }
+    const results = await Promise.allSettled([advancedLearningApi.pbl.getProjects()]);
+
+    const errors = results
+      .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
+    if (errors.length > 0) setError(errors.join('; '));
+
+    const projects = results[0].status === 'fulfilled' ? (results[0].value as { projects: any[] }).projects : [];
+
+    setPbl({ project: projects[0] ?? null, phases: [], teamMembers: [], milestones: [], artifacts: [], exhibition: null, assessmentRubric: null });
+    setIsLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, isLoading, error, refetch: fetchData };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { pbl, isLoading, error, refetch: fetchData };
 }
 
-// ---------------------------------------------------------------------------
-// useIndustry — fetches Industry Experience section data only
-// ---------------------------------------------------------------------------
+// =============================================================================
+// useIndustry
+// =============================================================================
+
 export function useIndustry() {
-  const [data, setData] = useState<IndustryData | null>(null);
+  const [industry, setIndustry] = useState<IndustryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    try {
-      const results = await Promise.allSettled([
-        advancedLearningApi.industry.getOpportunities(),
-        advancedLearningApi.industry.getApplications(),
-        advancedLearningApi.industry.getActivePlacement(),
-        advancedLearningApi.industry.getPartners(),
-      ]);
 
-      const errors = results
-        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-        .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
-      if (errors.length > 0) setError(errors.join('; '));
+    const results = await Promise.allSettled([
+      advancedLearningApi.industry.getOpportunities(),
+      advancedLearningApi.industry.getApplications(),
+      advancedLearningApi.industry.getActivePlacement(),
+      advancedLearningApi.industry.getPartners(),
+    ]);
 
-      setData({
-        opportunities: results[0].status === 'fulfilled' ? results[0].value.opportunities : [] as IndustryOpportunity[],
-        applications: results[1].status === 'fulfilled' ? results[1].value.applications : [] as IndustryApplication[],
-        activePlacement: results[2].status === 'fulfilled' ? results[2].value.placement : null as IndustryPlacement | null,
-        partnerCompanies: results[3].status === 'fulfilled' ? results[3].value.partners : [] as PartnerCompany[],
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    const errors = results
+      .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
+    if (errors.length > 0) setError(errors.join('; '));
+
+    setIndustry({
+      opportunities: results[0].status === 'fulfilled' ? (results[0].value as { opportunities: any[] }).opportunities : [],
+      applications: results[1].status === 'fulfilled' ? (results[1].value as { applications: any[] }).applications : [],
+      activePlacement: results[2].status === 'fulfilled' ? (results[2].value as { placement: any }).placement : null,
+      partnerCompanies: results[3].status === 'fulfilled' ? (results[3].value as { partners: any[] }).partners : [],
+    });
+    setIsLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, isLoading, error, refetch: fetchData };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { industry, isLoading, error, refetch: fetchData };
 }
 
-// ---------------------------------------------------------------------------
-// useWorkExperience — fetches Work Experience section data only
-// ---------------------------------------------------------------------------
+// =============================================================================
+// useWorkExperience
+// =============================================================================
+
 export function useWorkExperience() {
-  const [data, setData] = useState<WorkExperienceData | null>(null);
+  const [workExperience, setWorkExperience] = useState<WorkExperienceData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    try {
-      const results = await Promise.allSettled([
-        advancedLearningApi.workExperience.getOpportunities(),
-        advancedLearningApi.workExperience.getApplications(),
-        advancedLearningApi.workExperience.getDocuments(),
-        advancedLearningApi.workExperience.getLogbook(),
-        advancedLearningApi.workExperience.getSupervisorFeedback(),
-      ]);
 
-      const errors = results
-        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-        .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
-      if (errors.length > 0) setError(errors.join('; '));
+    const results = await Promise.allSettled([
+      advancedLearningApi.workExperience.getOpportunities(),
+      advancedLearningApi.workExperience.getApplications(),
+      advancedLearningApi.workExperience.getDocuments(),
+      advancedLearningApi.workExperience.getLogbook(),
+      advancedLearningApi.workExperience.getSupervisorFeedback(),
+    ]);
 
-      setData({
-        opportunities: results[0].status === 'fulfilled' ? results[0].value.opportunities : [] as WorkOpportunity[],
-        applications: results[1].status === 'fulfilled' ? results[1].value.applications : [] as WorkApplication[],
-        documents: results[2].status === 'fulfilled' ? results[2].value.documents : [] as WorkDocument[],
-        logbook: results[3].status === 'fulfilled' ? results[3].value.entries : [] as LogbookEntry[],
-        supervisorFeedback: results[4].status === 'fulfilled' ? results[4].value.feedback : [] as SupervisorFeedback[],
-        supervisorDetails: results[4].status === 'fulfilled' ? results[4].value.supervisor : null as SupervisorDetails | null,
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    const errors = results
+      .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
+    if (errors.length > 0) setError(errors.join('; '));
+
+    const supervisor = results[4].status === 'fulfilled' ? (results[4].value as { feedback: any[]; supervisor: any }) : null;
+
+    setWorkExperience({
+      opportunities: results[0].status === 'fulfilled' ? (results[0].value as { opportunities: any[] }).opportunities : [],
+      applications: results[1].status === 'fulfilled' ? (results[1].value as { applications: any[] }).applications : [],
+      documents: results[2].status === 'fulfilled' ? (results[2].value as { documents: any[] }).documents : [],
+      logbook: results[3].status === 'fulfilled' ? (results[3].value as { entries: any[] }).entries : [],
+      supervisorFeedback: supervisor?.feedback ?? [],
+      supervisorDetails: supervisor?.supervisor ?? null,
+    });
+    setIsLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, isLoading, error, refetch: fetchData };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { workExperience, isLoading, error, refetch: fetchData };
 }
 
-// ---------------------------------------------------------------------------
-// useAdvancedLearning — combined hook retained for backward compatibility
-// Prefer the per-section hooks (useEduscrum, usePbl, etc.) for new usage.
-// ---------------------------------------------------------------------------
-export function useAdvancedLearning() {
-  const hub = useAdvancedLearningHub();
-  const eduscrum = useEduscrum();
-  const pbl = usePbl();
-  const industry = useIndustry();
-  const workExperience = useWorkExperience();
-
-  const isLoading = hub.isLoading || eduscrum.isLoading || pbl.isLoading || industry.isLoading || workExperience.isLoading;
-  const errors = [hub.error, eduscrum.error, pbl.error, industry.error, workExperience.error].filter(Boolean);
-
-  const data: AdvancedLearningData = {
-    hub: hub.data,
-    eduscrum: eduscrum.data,
-    pbl: pbl.data,
-    industry: industry.data,
-    workExperience: workExperience.data,
-  };
-
-  return { data, isLoading, error: errors.length > 0 ? errors.join('; ') : null };
-}
+/* eslint-enable @typescript-eslint/no-explicit-any */

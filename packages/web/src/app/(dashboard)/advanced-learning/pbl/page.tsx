@@ -337,7 +337,7 @@ function getArtifactIcon(type: string) {
 }
 
 export default function PBLPage() {
-  const { data: hookData, isLoading } = usePbl();
+  const { pbl: hookData, isLoading } = usePbl();
   const [selfAssessment, setSelfAssessment] = useState<Record<string, number>>({});
 
   const PBL_PHASES = FALLBACK_PBL_PHASES;

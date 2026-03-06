@@ -298,7 +298,7 @@ export default function WorkExperiencePage() {
     activities: '',
     reflection: '',
   });
-  const { data: hookData, isLoading } = useWorkExperience();
+  const { workExperience: hookData, isLoading } = useWorkExperience();
 
   const MOCK_OPPORTUNITIES = hookData?.opportunities?.length ? hookData.opportunities : FALLBACK_OPPORTUNITIES;
   const MOCK_APPLICATIONS = hookData?.applications?.length ? hookData.applications : FALLBACK_APPLICATIONS;
