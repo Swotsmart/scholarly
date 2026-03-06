@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { teacherApi } from '@/lib/teacher-api';
 import type { LearnerMasteryProfile, LearnerFeatureVector, LearnerPredictions, WellbeingCheck, AIInsight } from '@/types/teacher';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, Mail, Calendar, BookOpen, TrendingUp, Clock, CheckCircle2,
   AlertTriangle, MessageCircle, FileText, Award, Brain, Sparkles, Shield,
@@ -38,6 +39,7 @@ interface StudentDetail {
 
 export default function StudentDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
 
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [mastery, setMastery] = useState<LearnerMasteryProfile | null>(null);
@@ -115,7 +117,17 @@ export default function StudentDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Button variant="ghost" asChild><Link href="/teacher/students"><ArrowLeft className="mr-2 h-4 w-4" />Back to Students</Link></Button>
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" asChild><Link href="/teacher/students"><ArrowLeft className="mr-2 h-4 w-4" />Back to Students</Link></Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => router.push(`/messages?to=${id}`)}>
+            <MessageCircle className="mr-2 h-4 w-4" />Message
+          </Button>
+          <Button onClick={() => router.push(`/teacher/reports?studentId=${id}&action=generate`)}>
+            <FileText className="mr-2 h-4 w-4" />Generate Report
+          </Button>
+        </div>
+      </div>
 
       {/* Profile Header */}
       <div className="flex items-start gap-6">
