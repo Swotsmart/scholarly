@@ -12,7 +12,6 @@ import {
   Clock,
   Building,
   Calendar,
-  Loader2,
 } from 'lucide-react';
 import { useTutoring } from '@/hooks/use-tutoring';
 
@@ -25,7 +24,7 @@ const FALLBACK_PAYOUTS = [
 ];
 
 export default function PayoutsPage() {
-  const { data, isLoading } = useTutoring();
+  const { data, isLoading } = useTutoring(undefined, ['bookings']);
 
   // Progressive enhancement: no dedicated payouts API yet, using fallback data
   // Derive pending session count from API when available

@@ -36,7 +36,7 @@ import {
   ChevronUp,
   Loader2,
 } from 'lucide-react';
-import { useAdvancedLearning } from '@/hooks/use-advanced-learning';
+import { useEduscrum } from '@/hooks/use-advanced-learning';
 
 // Kanban columns
 const KANBAN_COLUMNS = [
@@ -236,14 +236,14 @@ function getLabelColor(label: string) {
 
 export default function EduscrumPage() {
   const [standupResponses, setStandupResponses] = useState<Record<string, string>>({});
-  const { data: hookData, isLoading } = useAdvancedLearning();
+  const { data: hookData, isLoading } = useEduscrum();
 
-  const MOCK_TASKS = hookData?.eduscrum?.tasks?.length ? hookData.eduscrum.tasks : FALLBACK_TASKS;
-  const CURRENT_SPRINT = hookData?.eduscrum?.sprint ?? FALLBACK_SPRINT;
-  const BURNDOWN_DATA = hookData?.eduscrum?.burndown?.length ? hookData.eduscrum.burndown : FALLBACK_BURNDOWN;
-  const TEAM_MEMBERS = hookData?.eduscrum?.teamMembers?.length ? hookData.eduscrum.teamMembers : FALLBACK_TEAM_MEMBERS;
-  const AI_SUGGESTIONS = hookData?.eduscrum?.aiSuggestions?.length ? hookData.eduscrum.aiSuggestions : FALLBACK_AI_SUGGESTIONS;
-  const RETRO_ITEMS = hookData?.eduscrum?.retroItems ?? FALLBACK_RETRO_ITEMS;
+  const MOCK_TASKS = hookData?.tasks?.length ? hookData.tasks : FALLBACK_TASKS;
+  const CURRENT_SPRINT = hookData?.sprint ?? FALLBACK_SPRINT;
+  const BURNDOWN_DATA = hookData?.burndown?.length ? hookData.burndown : FALLBACK_BURNDOWN;
+  const TEAM_MEMBERS = hookData?.teamMembers?.length ? hookData.teamMembers : FALLBACK_TEAM_MEMBERS;
+  const AI_SUGGESTIONS = hookData?.aiSuggestions?.length ? hookData.aiSuggestions : FALLBACK_AI_SUGGESTIONS;
+  const RETRO_ITEMS = hookData?.retroItems ?? FALLBACK_RETRO_ITEMS;
   const pageStats = FALLBACK_PAGE_STATS;
 
   if (isLoading) {
@@ -656,15 +656,16 @@ export default function EduscrumPage() {
             <CardContent className="space-y-4">
               {AI_SUGGESTIONS.map((suggestion, index) => {
                 const Icon = suggestion.icon;
+                const color = suggestion.color ?? 'blue';
                 return (
                   <div
                     key={index}
-                    className={`rounded-lg border p-4 space-y-2 bg-${suggestion.color}-500/5 border-${suggestion.color}-500/20`}
+                    className={`rounded-lg border p-4 space-y-2 bg-${color}-500/5 border-${color}-500/20`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
-                        <div className={`rounded-lg bg-${suggestion.color}-500/10 p-2`}>
-                          <Icon className={`h-4 w-4 text-${suggestion.color}-500`} />
+                        <div className={`rounded-lg bg-${color}-500/10 p-2`}>
+                          {Icon ? <Icon className={`h-4 w-4 text-${color}-500`} /> : <Sparkles className={`h-4 w-4 text-${color}-500`} />}
                         </div>
                         <h4 className="font-medium text-sm">{suggestion.title}</h4>
                       </div>
