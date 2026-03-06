@@ -236,50 +236,72 @@ export interface PblData {
 
 export interface IndustryOpportunity {
   id: string;
-  partnerId: string;
-  partnerName: string;
-  title: string;
   description: string;
-  experienceType: string;
-  skillsRequired: string[];
+  status?: string;
+  applicationDeadline?: string;
+  // API shape (structured)
+  partnerId?: string;
+  partnerName?: string;
+  title?: string;
+  experienceType?: string;
+  skillsRequired?: string[];
   qualificationsRequired?: string[];
   gradeLevel?: string[];
-  duration: { value: number; unit: string };
-  schedule: { type: string; hoursPerWeek?: number };
-  location: {
-    city: string;
-    state: string;
-    country: string;
-    address?: string;
-    isRemoteAvailable: boolean;
-  };
-  isRemote: boolean;
-  compensation: { type: string; amount?: number; currency?: string; creditValue?: number };
-  totalPositions: number;
-  filledPositions: number;
-  applicationDeadline?: string;
-  learningOutcomes: string[];
-  status: string;
+  duration?: string | { value: number; unit: string };
+  schedule?: { type: string; hoursPerWeek?: number };
+  location?: string | { city: string; state: string; country: string; address?: string; isRemoteAvailable: boolean };
+  isRemote?: boolean;
+  compensation?: { type: string; amount?: number; currency?: string; creditValue?: number };
+  totalPositions?: number;
+  filledPositions?: number;
+  learningOutcomes?: string[];
+  // Fallback/display shape (flat)
+  company?: string;
+  role?: string;
+  sector?: string;
+  educationLevel?: string;
+  skills?: string[];
+  companyLogo?: string;
+  salary?: string;
+  spots?: number;
+  applicants?: number;
 }
 
 export interface IndustryApplication {
   id: string;
-  opportunityId: string;
-  applicantId: string;
-  applicantType: string;
-  applicantName: string;
   status: string;
-  submittedAt: string;
+  // API shape
+  opportunityId?: string;
+  applicantId?: string;
+  applicantType?: string;
+  applicantName?: string;
+  submittedAt?: string;
+  // Fallback/display shape
+  company?: string;
+  role?: string;
+  appliedDate?: string;
+  nextStep?: string;
 }
 
 export interface IndustryPlacement {
   id: string;
-  partnerId: string;
-  partnerName: string;
   role: string;
   startDate: string;
   endDate?: string;
-  status: string;
+  status?: string;
+  // API shape
+  partnerId?: string;
+  partnerName?: string;
+  // Fallback/display shape
+  company?: string;
+  supervisor?: string;
+  supervisorRole?: string;
+  hoursLogged?: number;
+  totalHours?: number;
+  location?: string;
+  learningObjectives?: Array<{ name: string; progress: number; status: string }>;
+  weeklyReflections?: number;
+  supervisorRating?: number;
 }
 
 export interface IndustryPartner {

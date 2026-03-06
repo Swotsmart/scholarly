@@ -238,12 +238,12 @@ export default function EduscrumPage() {
   const [standupResponses, setStandupResponses] = useState<Record<string, string>>({});
   const { eduscrum: hookData, isLoading } = useEduscrum();
 
-  const MOCK_TASKS = hookData?.tasks?.length ? hookData.tasks : FALLBACK_TASKS;
-  const CURRENT_SPRINT = hookData?.sprint ?? FALLBACK_SPRINT;
-  const BURNDOWN_DATA = hookData?.burndown?.length ? hookData.burndown : FALLBACK_BURNDOWN;
-  const TEAM_MEMBERS = hookData?.teamMembers?.length ? hookData.teamMembers : FALLBACK_TEAM_MEMBERS;
-  const AI_SUGGESTIONS = hookData?.aiSuggestions?.length ? hookData.aiSuggestions : FALLBACK_AI_SUGGESTIONS;
-  const RETRO_ITEMS = hookData?.retroItems ?? FALLBACK_RETRO_ITEMS;
+  const MOCK_TASKS = (hookData?.tasks?.length ? hookData.tasks : FALLBACK_TASKS) as typeof FALLBACK_TASKS;
+  const CURRENT_SPRINT = (hookData?.sprint ?? FALLBACK_SPRINT) as typeof FALLBACK_SPRINT;
+  const BURNDOWN_DATA = (hookData?.burndown?.length ? hookData.burndown : FALLBACK_BURNDOWN) as typeof FALLBACK_BURNDOWN;
+  const TEAM_MEMBERS = (hookData?.teamMembers?.length ? hookData.teamMembers : FALLBACK_TEAM_MEMBERS) as typeof FALLBACK_TEAM_MEMBERS;
+  const AI_SUGGESTIONS = (hookData?.aiSuggestions?.length ? hookData.aiSuggestions : FALLBACK_AI_SUGGESTIONS) as typeof FALLBACK_AI_SUGGESTIONS;
+  const RETRO_ITEMS = (hookData?.retroItems ?? FALLBACK_RETRO_ITEMS) as typeof FALLBACK_RETRO_ITEMS;
   const pageStats = FALLBACK_PAGE_STATS;
 
   if (isLoading) {

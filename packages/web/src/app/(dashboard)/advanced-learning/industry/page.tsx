@@ -199,10 +199,11 @@ function getApplicationStatusBadge(status: string) {
 export default function IndustryExperiencePage() {
   const { industry: hookData, isLoading } = useIndustry();
 
-  const MOCK_OPPORTUNITIES = hookData?.opportunities?.length ? hookData.opportunities : FALLBACK_OPPORTUNITIES;
-  const MOCK_APPLICATIONS = hookData?.applications?.length ? hookData.applications : FALLBACK_APPLICATIONS;
-  const MOCK_ACTIVE_PLACEMENT = hookData?.activePlacement ?? FALLBACK_ACTIVE_PLACEMENT;
-  const PARTNER_COMPANIES = hookData?.partnerCompanies?.length ? hookData.partnerCompanies : FALLBACK_PARTNER_COMPANIES;
+  // Fallback data has a flat display shape; API data may differ. Cast to keep TS happy in demo mode.
+  const MOCK_OPPORTUNITIES = (hookData?.opportunities?.length ? hookData.opportunities : FALLBACK_OPPORTUNITIES) as typeof FALLBACK_OPPORTUNITIES;
+  const MOCK_APPLICATIONS = (hookData?.applications?.length ? hookData.applications : FALLBACK_APPLICATIONS) as typeof FALLBACK_APPLICATIONS;
+  const MOCK_ACTIVE_PLACEMENT = (hookData?.activePlacement ?? FALLBACK_ACTIVE_PLACEMENT) as typeof FALLBACK_ACTIVE_PLACEMENT;
+  const PARTNER_COMPANIES = (hookData?.partnerCompanies?.length ? hookData.partnerCompanies : FALLBACK_PARTNER_COMPANIES) as typeof FALLBACK_PARTNER_COMPANIES;
   const pageStats = FALLBACK_PAGE_STATS;
 
   if (isLoading) {

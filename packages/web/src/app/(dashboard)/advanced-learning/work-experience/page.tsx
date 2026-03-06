@@ -300,11 +300,11 @@ export default function WorkExperiencePage() {
   });
   const { workExperience: hookData, isLoading } = useWorkExperience();
 
-  const MOCK_OPPORTUNITIES = hookData?.opportunities?.length ? hookData.opportunities : FALLBACK_OPPORTUNITIES;
-  const MOCK_APPLICATIONS = hookData?.applications?.length ? hookData.applications : FALLBACK_APPLICATIONS;
-  const MOCK_DOCUMENTS = hookData?.documents?.length ? hookData.documents : FALLBACK_DOCUMENTS;
-  const MOCK_LOGBOOK = hookData?.logbook?.length ? hookData.logbook : FALLBACK_LOGBOOK;
-  const SUPERVISOR_FEEDBACK = hookData?.supervisorFeedback?.length ? hookData.supervisorFeedback : FALLBACK_SUPERVISOR_FEEDBACK;
+  const MOCK_OPPORTUNITIES = (hookData?.opportunities?.length ? hookData.opportunities : FALLBACK_OPPORTUNITIES) as typeof FALLBACK_OPPORTUNITIES;
+  const MOCK_APPLICATIONS = (hookData?.applications?.length ? hookData.applications : FALLBACK_APPLICATIONS) as typeof FALLBACK_APPLICATIONS;
+  const MOCK_DOCUMENTS = (hookData?.documents?.length ? hookData.documents : FALLBACK_DOCUMENTS) as typeof FALLBACK_DOCUMENTS;
+  const MOCK_LOGBOOK = (hookData?.logbook?.length ? hookData.logbook : FALLBACK_LOGBOOK) as typeof FALLBACK_LOGBOOK;
+  const SUPERVISOR_FEEDBACK = (hookData?.supervisorFeedback?.length ? hookData.supervisorFeedback : FALLBACK_SUPERVISOR_FEEDBACK) as typeof FALLBACK_SUPERVISOR_FEEDBACK;
   const pageStats = FALLBACK_PAGE_STATS;
 
   const filteredOpportunities = MOCK_OPPORTUNITIES.filter(

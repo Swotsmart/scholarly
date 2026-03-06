@@ -341,12 +341,12 @@ export default function PBLPage() {
   const [selfAssessment, setSelfAssessment] = useState<Record<string, number>>({});
 
   const PBL_PHASES = FALLBACK_PBL_PHASES;
-  const CURRENT_PROJECT = hookData?.project ?? FALLBACK_PROJECT;
-  const TEAM_MEMBERS = hookData?.teamMembers?.length ? hookData.teamMembers : FALLBACK_TEAM_MEMBERS;
-  const MILESTONES = hookData?.milestones?.length ? hookData.milestones : FALLBACK_MILESTONES;
-  const ARTIFACTS = hookData?.artifacts?.length ? hookData.artifacts : FALLBACK_ARTIFACTS;
-  const EXHIBITION = hookData?.exhibition ?? FALLBACK_EXHIBITION;
-  const ASSESSMENT_RUBRIC = hookData?.assessmentRubric ?? FALLBACK_ASSESSMENT_RUBRIC;
+  const CURRENT_PROJECT = (hookData?.project ?? FALLBACK_PROJECT) as typeof FALLBACK_PROJECT;
+  const TEAM_MEMBERS = (hookData?.teamMembers?.length ? hookData.teamMembers : FALLBACK_TEAM_MEMBERS) as typeof FALLBACK_TEAM_MEMBERS;
+  const MILESTONES = (hookData?.milestones?.length ? hookData.milestones : FALLBACK_MILESTONES) as typeof FALLBACK_MILESTONES;
+  const ARTIFACTS = (hookData?.artifacts?.length ? hookData.artifacts : FALLBACK_ARTIFACTS) as typeof FALLBACK_ARTIFACTS;
+  const EXHIBITION = (hookData?.exhibition ?? FALLBACK_EXHIBITION) as typeof FALLBACK_EXHIBITION;
+  const ASSESSMENT_RUBRIC = (hookData?.assessmentRubric ?? FALLBACK_ASSESSMENT_RUBRIC) as typeof FALLBACK_ASSESSMENT_RUBRIC;
   const pageStats = FALLBACK_PAGE_STATS;
 
   const currentPhaseIndex = PBL_PHASES.findIndex((p) => p.id === CURRENT_PROJECT.currentPhase);
