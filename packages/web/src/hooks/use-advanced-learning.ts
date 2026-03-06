@@ -13,9 +13,25 @@ import {
   advancedLearningApi,
   type AdvancedLearningHubData,
   type EduscrumData,
+  type EduScrumTask,
+  type EduScrumSprint,
+  type EduScrumTeamMember,
+  type EduScrumAISuggestion,
+  type EduScrumRetroItems,
   type PblData,
+  type PblProject,
   type IndustryData,
+  type IndustryOpportunity,
+  type IndustryApplication,
+  type IndustryPlacement,
+  type IndustryPartner,
   type WorkExperienceData,
+  type WorkOpportunity,
+  type WorkApplication,
+  type WorkDocument,
+  type WorkLogbookEntry,
+  type WorkSupervisorFeedback,
+  type WorkSupervisor,
 } from '@/lib/advanced-learning-api';
 
 export interface AdvancedLearningData {
@@ -79,27 +95,27 @@ export function useAdvancedLearning() {
         const hubData = val<AdvancedLearningHubData>(0);
 
         // EduScrum
-        const eduscrumTasks = val<{ tasks: any[] }>(1);
-        const eduscrumSprint = val<{ sprint: any }>(2);
-        const eduscrumTeam = val<{ members: any[] }>(3);
-        const eduscrumAI = val<{ suggestions: any[] }>(4);
-        const eduscrumRetro = val<{ retroItems: any }>(5);
+        const eduscrumTasks = val<{ tasks: EduScrumTask[] }>(1);
+        const eduscrumSprint = val<{ sprint: EduScrumSprint | null }>(2);
+        const eduscrumTeam = val<{ members: EduScrumTeamMember[] }>(3);
+        const eduscrumAI = val<{ suggestions: EduScrumAISuggestion[] }>(4);
+        const eduscrumRetro = val<{ retroItems: EduScrumRetroItems | null }>(5);
 
         // PBL
-        const pblProjects = val<{ projects: any[] }>(6);
+        const pblProjects = val<{ projects: PblProject[] }>(6);
 
         // Industry
-        const industryOpps = val<{ opportunities: any[] }>(7);
-        const industryApps = val<{ applications: any[] }>(8);
-        const industryPlacement = val<{ placement: any }>(9);
-        const industryPartners = val<{ partners: any[] }>(10);
+        const industryOpps = val<{ opportunities: IndustryOpportunity[] }>(7);
+        const industryApps = val<{ applications: IndustryApplication[] }>(8);
+        const industryPlacement = val<{ placement: IndustryPlacement | null }>(9);
+        const industryPartners = val<{ partners: IndustryPartner[] }>(10);
 
         // Work Experience
-        const weOpps = val<{ opportunities: any[] }>(11);
-        const weApps = val<{ applications: any[] }>(12);
-        const weDocs = val<{ documents: any[] }>(13);
-        const weLog = val<{ entries: any[] }>(14);
-        const weSupervisor = val<{ feedback: any[]; supervisor: any }>(15);
+        const weOpps = val<{ opportunities: WorkOpportunity[] }>(11);
+        const weApps = val<{ applications: WorkApplication[] }>(12);
+        const weDocs = val<{ documents: WorkDocument[] }>(13);
+        const weLog = val<{ entries: WorkLogbookEntry[] }>(14);
+        const weSupervisor = val<{ feedback: WorkSupervisorFeedback[]; supervisor: WorkSupervisor | null }>(15);
 
         setData({
           hub: hubData,
