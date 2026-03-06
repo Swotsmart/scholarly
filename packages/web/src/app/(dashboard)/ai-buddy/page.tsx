@@ -312,7 +312,7 @@ export default function AIBuddyPage() {
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col space-y-4">
       <PageHeader
-        title="AI Buddy"
+        title="Ask Alice"
         description="Your personalized learning companion"
         actions={
           <div className="flex items-center gap-3">

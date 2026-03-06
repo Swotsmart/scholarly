@@ -183,9 +183,9 @@ function getLearnerInsights(): QuickInsight[] {
 
 function getLearnerContinuations(): ContinuationItem[] {
   return [
-    { id: 'lc1', title: 'Introduction to Design Thinking', subtitle: 'Next: Ideation Techniques', progress: 65, href: '/learning/design-thinking', lastActivity: '2 hours ago', nextStepMinutes: 12 },
-    { id: 'lc2', title: 'Algebra Fundamentals', subtitle: 'Next: Quadratic Equations', progress: 40, href: '/learning/algebra', lastActivity: 'Yesterday', nextStepMinutes: 20 },
-    { id: 'lc3', title: 'LinguaFlow — Spanish B1', subtitle: 'Next: Preterite Practice', progress: 55, href: '/linguaflow', lastActivity: '3 days ago', nextStepMinutes: 8 },
+    { id: 'lc1', title: 'Introduction to Design Thinking', subtitle: 'Next: Ideation Techniques', progress: 65, href: '/learning/courses', lastActivity: '2 hours ago', nextStepMinutes: 12 },
+    { id: 'lc2', title: 'Algebra Fundamentals', subtitle: 'Next: Quadratic Equations', progress: 40, href: '/learning/courses', lastActivity: 'Yesterday', nextStepMinutes: 20 },
+    { id: 'lc3', title: 'LinguaFlow — Spanish B1', subtitle: 'Next: Preterite Practice', progress: 55, href: '/linguaflow/grammar', lastActivity: '3 days ago', nextStepMinutes: 8 },
   ];
 }
 
