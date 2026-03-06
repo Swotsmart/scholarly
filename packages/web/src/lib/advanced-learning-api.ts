@@ -140,13 +140,26 @@ export interface PblProject {
   id: string;
   title: string;
   drivingQuestion: string;
-  subject: string;
-  currentPhase: string;
-  milestoneProgress: number;
-  startDate: string;
-  endDate: string;
-  daysRemaining: number;
-  teacher: string;
+  /**
+   * Backend PBLProject fields
+   */
+  description: string;
+  subjectAreas: string[];
+  gradeLevel: string[];
+  estimatedDuration: {
+    value: number;
+    unit: string;
+  };
+  /**
+   * Optional UI projection fields derived from backend data
+   */
+  subject?: string;
+  currentPhase?: string;
+  milestoneProgress?: number;
+  startDate?: string;
+  endDate?: string;
+  daysRemaining?: number;
+  teacher?: string;
 }
 
 export interface PblPhase {
