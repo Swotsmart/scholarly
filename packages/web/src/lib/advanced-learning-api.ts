@@ -12,7 +12,8 @@
 
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const V1 = `${API_BASE}/api/v1`;
+// NEXT_PUBLIC_API_URL may already include /api/v1 (production) or not (local dev)
+const V1 = API_BASE.endsWith('/api/v1') ? API_BASE : `${API_BASE}/api/v1`;
 
 // =============================================================================
 // BASE REQUEST HELPER
