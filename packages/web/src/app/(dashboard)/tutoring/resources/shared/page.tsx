@@ -1,7 +1,7 @@
 'use client';
 
-// Connected to API via useTutoring hook — no dedicated shared resources endpoint yet,
-// so this page uses fallback data. When a resources API is added, wire it here.
+// No dedicated shared resources API yet — this page uses fallback data only.
+// When a shared resources endpoint is added, import useTutoring and wire it here.
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
