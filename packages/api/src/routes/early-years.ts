@@ -55,7 +55,7 @@ earlyYearsTtsRouter.post('/tts', ttsRateLimiter, async (req, res) => {
   const voice = PHONICS_VOICES[data.voicePersona];
 
   try {
-    const response = await fetch(`${voiceServiceUrl}/tts/synthesise`, {
+    const response = await fetch(`${voiceServiceUrl}/api/v1/tts/synthesize`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -452,7 +452,7 @@ earlyYearsRouter.post('/tts', async (req, res) => {
   const voice = PHONICS_VOICES[data.voicePersona];
 
   try {
-    const response = await fetch(`${voiceServiceUrl}/tts/synthesise`, {
+    const response = await fetch(`${voiceServiceUrl}/api/v1/tts/synthesize`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
