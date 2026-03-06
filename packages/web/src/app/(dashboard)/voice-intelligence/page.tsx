@@ -177,9 +177,22 @@ export default function VoiceIntelligencePage() {
       });
       const data = await res.json();
       if (data.success) {
-        setVoices(data.data.voices || []);
-        if (data.data.voices?.length > 0 && !selectedVoice) {
-          setSelectedVoice(data.data.voices[0]);
+        // Map LinguaFlowVoice from API to frontend Voice shape
+        const mapped: Voice[] = (Array.isArray(data.data) ? data.data : []).map((v: any) => ({
+          voiceId: v.id,
+          name: v.displayName,
+          category: v.language,
+          labels: {
+            accent: v.accent,
+            description: `${v.region} ${v.accent}`,
+            age: v.ageRange,
+            gender: v.gender,
+            use_case: v.speakingStyles?.join(', '),
+          },
+        }));
+        setVoices(mapped);
+        if (mapped.length > 0 && !selectedVoice) {
+          setSelectedVoice(mapped[0]);
         }
       } else {
         setError(data.error || 'Failed to fetch voices');
@@ -573,7 +586,7 @@ const audioBlob = await response.blob();`;
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Available Voices</CardTitle>
-                <CardDescription>{voices.length} voices available from Kokoro TTS</CardDescription>
+                <CardDescription>{voices.length} voices available from Kokoro TTS + Edge TTS</CardDescription>
               </div>
               <Button variant="outline" onClick={fetchVoices} disabled={loadingVoices}>
                 <RefreshCw className={`h-4 w-4 mr-2 ${loadingVoices ? 'animate-spin' : ''}`} />
