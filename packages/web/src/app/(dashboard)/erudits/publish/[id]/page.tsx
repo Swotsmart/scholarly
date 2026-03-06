@@ -282,7 +282,14 @@ export default function ManuscriptEditorPage() {
                       >
                         <div className="relative aspect-[2/3] rounded bg-muted flex items-center justify-center mb-3 overflow-hidden">
                           {cover.thumbnailUrl ? (
-                            <NextImage src={cover.thumbnailUrl} alt="Cover" fill className="object-cover rounded" />
+                            <NextImage
+                              src={cover.thumbnailUrl}
+                              alt="Cover"
+                              fill
+                              className="object-cover rounded"
+                              loader={({ src }) => src}
+                              unoptimized
+                            />
                           ) : (
                             <Image className="h-10 w-10 text-muted-foreground/30" />
                           )}
