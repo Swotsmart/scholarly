@@ -41,7 +41,7 @@ import {
   BarChart3,
   Loader2,
 } from 'lucide-react';
-import { useAdvancedLearning } from '@/hooks/use-advanced-learning';
+import { usePbl } from '@/hooks/use-advanced-learning';
 
 // PBL Phases: Investigate -> Design -> Build -> Reflect -> Present
 const FALLBACK_PBL_PHASES = [
@@ -337,16 +337,16 @@ function getArtifactIcon(type: string) {
 }
 
 export default function PBLPage() {
-  const { data: hookData, isLoading } = useAdvancedLearning(['pbl']);
+  const { data: hookData, isLoading } = usePbl();
   const [selfAssessment, setSelfAssessment] = useState<Record<string, number>>({});
 
   const PBL_PHASES = FALLBACK_PBL_PHASES;
-  const CURRENT_PROJECT = hookData?.pbl?.project ?? FALLBACK_PROJECT;
-  const TEAM_MEMBERS = hookData?.pbl?.teamMembers?.length ? hookData.pbl.teamMembers : FALLBACK_TEAM_MEMBERS;
-  const MILESTONES = hookData?.pbl?.milestones?.length ? hookData.pbl.milestones : FALLBACK_MILESTONES;
-  const ARTIFACTS = hookData?.pbl?.artifacts?.length ? hookData.pbl.artifacts : FALLBACK_ARTIFACTS;
-  const EXHIBITION = hookData?.pbl?.exhibition ?? FALLBACK_EXHIBITION;
-  const ASSESSMENT_RUBRIC = hookData?.pbl?.assessmentRubric ?? FALLBACK_ASSESSMENT_RUBRIC;
+  const CURRENT_PROJECT = hookData?.project ?? FALLBACK_PROJECT;
+  const TEAM_MEMBERS = hookData?.teamMembers?.length ? hookData.teamMembers : FALLBACK_TEAM_MEMBERS;
+  const MILESTONES = hookData?.milestones?.length ? hookData.milestones : FALLBACK_MILESTONES;
+  const ARTIFACTS = hookData?.artifacts?.length ? hookData.artifacts : FALLBACK_ARTIFACTS;
+  const EXHIBITION = hookData?.exhibition ?? FALLBACK_EXHIBITION;
+  const ASSESSMENT_RUBRIC = hookData?.assessmentRubric ?? FALLBACK_ASSESSMENT_RUBRIC;
   const pageStats = FALLBACK_PAGE_STATS;
 
   const currentPhaseIndex = PBL_PHASES.findIndex((p) => p.id === CURRENT_PROJECT.currentPhase);

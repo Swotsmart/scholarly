@@ -21,7 +21,7 @@ import {
   FileText,
   Loader2,
 } from 'lucide-react';
-import { useAdvancedLearning } from '@/hooks/use-advanced-learning';
+import { useAdvancedLearningHub } from '@/hooks/use-advanced-learning';
 
 const FALLBACK_STATS = [
   { label: 'Active Sessions', value: '12', icon: Video, color: 'blue' },
@@ -149,19 +149,19 @@ const FALLBACK_RECENT_ACTIVITY = [
 ];
 
 export default function AdvancedLearningPage() {
-  const { data: hookData, isLoading } = useAdvancedLearning(['hub']);
+  const { data: hookData, isLoading } = useAdvancedLearningHub();
 
-  const stats = hookData?.hub?.stats
+  const stats = hookData?.stats
     ? [
-        { label: 'Active Sessions', value: String(hookData.hub.stats.activeSessions), icon: Video, color: 'blue' },
-        { label: 'Completed Reviews', value: String(hookData.hub.stats.completedReviews), icon: CheckCircle2, color: 'emerald' },
-        { label: 'Industry Placements', value: String(hookData.hub.stats.industryPlacements), icon: Building2, color: 'violet' },
-        { label: 'PD Courses Enrolled', value: String(hookData.hub.stats.pdCoursesEnrolled), icon: GraduationCap, color: 'amber' },
+        { label: 'Active Sessions', value: String(hookData.stats.activeSessions), icon: Video, color: 'blue' },
+        { label: 'Completed Reviews', value: String(hookData.stats.completedReviews), icon: CheckCircle2, color: 'emerald' },
+        { label: 'Industry Placements', value: String(hookData.stats.industryPlacements), icon: Building2, color: 'violet' },
+        { label: 'PD Courses Enrolled', value: String(hookData.stats.pdCoursesEnrolled), icon: GraduationCap, color: 'amber' },
       ]
     : FALLBACK_STATS;
   const modules = FALLBACK_MODULES;
-  const recentActivity = hookData?.hub?.recentActivity?.length
-    ? hookData.hub.recentActivity.map((a, i) => ({
+  const recentActivity = hookData?.recentActivity?.length
+    ? hookData.recentActivity.map((a, i) => ({
         action: a.action,
         module: a.module,
         time: a.time,

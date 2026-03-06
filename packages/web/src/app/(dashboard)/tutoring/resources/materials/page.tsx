@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   FileText,
   Search,
@@ -23,7 +22,6 @@ import {
   Video,
   FileSpreadsheet,
 } from 'lucide-react';
-import { useTutoring } from '@/hooks/use-tutoring';
 
 const folders = [
   { id: 1, name: 'Algebra', files: 24, lastModified: '2 days ago' },
@@ -96,29 +94,6 @@ const getFileIcon = (type: string) => {
 };
 
 export default function MaterialsPage() {
-  // Hook connected for future API integration — currently uses fallback data
-  const { isLoading } = useTutoring(undefined, []);
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <FileText className="h-8 w-8" />
-            My Materials
-          </h1>
-          <p className="text-muted-foreground">Manage your tutoring resources and materials</p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-28 rounded-lg" />
-          ))}
-        </div>
-        <Skeleton className="h-48 rounded-lg" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

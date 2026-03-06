@@ -65,10 +65,11 @@ export function useMicroSchools(config?: { state?: string }) {
     setError(null);
 
     const schools = stateFilter ? allSchools.filter((s) => s.state === stateFilter) : allSchools;
+    const apps = allApplications;
 
     setData({
       schools,
-      applications: allApplications,
+      applications: apps,
       enrollmentStats: computeEnrollmentStats(schools),
     });
     setIsLoading(false);

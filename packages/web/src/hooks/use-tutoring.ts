@@ -13,9 +13,22 @@
  *   packages/api/src/routes/bookings.ts (358L)
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { tutoringApi } from '@/lib/tutoring-api';
 import type { TutorSearchResult, TutorSearchParams, Booking, TutorReview } from '@/types/tutoring';
+
+export interface TutoringFetchOptions {
+  /** Fetch tutor search results (default: true) */
+  tutors?: boolean;
+  /** Fetch upcoming bookings (default: true) */
+  upcomingBookings?: boolean;
+  /** Fetch all bookings (default: true) */
+  allBookings?: boolean;
+  /** Fetch completed/pending/cancelled booking breakdowns (default: true) */
+  bookingBreakdown?: boolean;
+  /** Fetch reviews for first tutor result (default: true) */
+  reviews?: boolean;
+}
 
 interface TutoringData {
   tutors: TutorSearchResult[];
@@ -27,73 +40,71 @@ interface TutoringData {
   reviews: TutorReview[];
 }
 
-export type TutoringSection = 'search' | 'bookings' | 'reviews';
+export function useTutoring(searchParams?: TutorSearchParams, options?: TutoringFetchOptions) {
+  const {
+    tutors: fetchTutors = true,
+    upcomingBookings: fetchUpcoming = true,
+    allBookings: fetchAll = true,
+    bookingBreakdown: fetchBreakdown = true,
+    reviews: fetchReviews = true,
+  } = options ?? {};
 
-/**
- * @param searchParams - tutor search parameters
- * @param sections - which data sections to fetch. Defaults to all.
- *   - 'search': fetches tutor search results
- *   - 'bookings': fetches upcoming + all + completed + pending + cancelled bookings
- *   - 'reviews': fetches tutor reviews (requires search results)
- */
-export function useTutoring(searchParams?: TutorSearchParams, sections?: TutoringSection[]) {
   const [data, setData] = useState<TutoringData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const need = (s: TutoringSection) => !sections || sections.includes(s);
+  const fetchTutoringData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-    async function fetchTutoringData() {
-      setIsLoading(true);
-      setError(null);
+    const promises: Promise<unknown>[] = [];
+    const indices = { tutors: -1, upcoming: -1, all: -1, completed: -1, pending: -1, cancelled: -1 };
+    let idx = 0;
 
-      const promises: Promise<unknown>[] = [
-        // 0: search tutors (always lightweight)
-        need('search') ? tutoringApi.searchTutors(searchParams) : Promise.resolve({ tutors: [] }),
-        // 1-5: bookings
-        need('bookings') ? tutoringApi.getUpcomingBookings(10) : Promise.resolve({ bookings: [] }),
-        need('bookings') ? tutoringApi.getBookings({ role: 'booker' }) : Promise.resolve({ bookings: [] }),
-        need('bookings') ? tutoringApi.getBookings({ status: 'completed' }) : Promise.resolve({ bookings: [] }),
-        need('bookings') ? tutoringApi.getBookings({ status: 'pending' }) : Promise.resolve({ bookings: [] }),
-        need('bookings') ? tutoringApi.getBookings({ status: 'cancelled' }) : Promise.resolve({ bookings: [] }),
-      ];
-
-      const results = await Promise.allSettled(promises);
-
-      const errors = results
-        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-        .map(r => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
-      if (errors.length > 0) setError(errors.join('; '));
-
-      type SearchRes = { tutors: TutorSearchResult[] };
-      type BookingRes = { bookings: Booking[] };
-
-      const tutors = results[0].status === 'fulfilled' ? (results[0].value as SearchRes).tutors : [];
-
-      // Fetch reviews using the first tutor from search results
-      let reviews: TutorReview[] = [];
-      if (need('reviews') && tutors[0]) {
-        try {
-          const reviewResult = await tutoringApi.getTutorReviews(tutors[0].tutorId);
-          reviews = reviewResult.reviews;
-        } catch { /* reviews are non-critical */ }
-      }
-
-      setData({
-        tutors,
-        upcomingBookings: results[1].status === 'fulfilled' ? (results[1].value as BookingRes).bookings : [],
-        allBookings: results[2].status === 'fulfilled' ? (results[2].value as BookingRes).bookings : [],
-        completedBookings: results[3].status === 'fulfilled' ? (results[3].value as BookingRes).bookings : [],
-        pendingBookings: results[4].status === 'fulfilled' ? (results[4].value as BookingRes).bookings : [],
-        cancelledBookings: results[5].status === 'fulfilled' ? (results[5].value as BookingRes).bookings : [],
-        reviews,
-      });
-      setIsLoading(false);
+    if (fetchTutors) { promises.push(tutoringApi.searchTutors(searchParams)); indices.tutors = idx++; }
+    if (fetchUpcoming) { promises.push(tutoringApi.getUpcomingBookings(10)); indices.upcoming = idx++; }
+    if (fetchAll) { promises.push(tutoringApi.getBookings({ role: 'booker' })); indices.all = idx++; }
+    if (fetchBreakdown) {
+      promises.push(tutoringApi.getBookings({ status: 'completed' })); indices.completed = idx++;
+      promises.push(tutoringApi.getBookings({ status: 'pending' })); indices.pending = idx++;
+      promises.push(tutoringApi.getBookings({ status: 'cancelled' })); indices.cancelled = idx++;
     }
-    fetchTutoringData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(searchParams), sections?.sort().join(',')]);
 
-  return { data, isLoading, error };
+    const results = await Promise.allSettled(promises);
+
+    const errors = results
+      .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      .map(r => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
+    if (errors.length > 0) setError(errors.join('; '));
+
+    const get = <T,>(i: number): T | null =>
+      i >= 0 && results[i].status === 'fulfilled' ? (results[i] as PromiseFulfilledResult<T>).value : null;
+
+    const tutorList = (get<{ tutors: TutorSearchResult[] }>(indices.tutors)?.tutors) ?? [];
+    let reviews: TutorReview[] = [];
+    if (fetchReviews && tutorList[0]) {
+      try {
+        const reviewResult = await tutoringApi.getTutorReviews(tutorList[0].tutorId);
+        reviews = reviewResult.reviews;
+      } catch { /* reviews are non-critical */ }
+    }
+
+    setData({
+      tutors: tutorList,
+      upcomingBookings: (get<{ bookings: Booking[] }>(indices.upcoming)?.bookings) ?? [],
+      allBookings: (get<{ bookings: Booking[] }>(indices.all)?.bookings) ?? [],
+      completedBookings: (get<{ bookings: Booking[] }>(indices.completed)?.bookings) ?? [],
+      pendingBookings: (get<{ bookings: Booking[] }>(indices.pending)?.bookings) ?? [],
+      cancelledBookings: (get<{ bookings: Booking[] }>(indices.cancelled)?.bookings) ?? [],
+      reviews,
+    });
+    setIsLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(searchParams), fetchTutors, fetchUpcoming, fetchAll, fetchBreakdown, fetchReviews]);
+
+  useEffect(() => {
+    fetchTutoringData();
+  }, [fetchTutoringData]);
+
+  return { data, isLoading, error, refetch: fetchTutoringData };
 }

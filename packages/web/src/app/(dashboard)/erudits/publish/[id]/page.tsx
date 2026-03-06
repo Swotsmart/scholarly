@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import {
   ArrowLeft,
   FileText,
@@ -279,7 +280,7 @@ export default function ManuscriptEditorPage() {
                         key={cover.id}
                         className={`rounded-lg border p-4 ${cover.isSelected ? 'ring-2 ring-primary' : ''}`}
                       >
-                        <div className="aspect-[2/3] rounded bg-muted flex items-center justify-center mb-3 relative overflow-hidden">
+                        <div className="relative aspect-[2/3] rounded bg-muted flex items-center justify-center mb-3 overflow-hidden">
                           {cover.thumbnailUrl ? (
                             <NextImage src={cover.thumbnailUrl} alt="Cover" fill className="object-cover rounded" />
                           ) : (
@@ -311,15 +312,16 @@ export default function ManuscriptEditorPage() {
         </div>
       </div>
 
-      {/* Publish Modal */}
       <Dialog open={showPublishModal} onOpenChange={setShowPublishModal}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Publish Manuscript</DialogTitle>
-            <DialogDescription>Select distribution channels for &quot;{manuscript.title}&quot;</DialogDescription>
+            <DialogDescription>
+              Select distribution channels for &quot;{manuscript.title}&quot;
+            </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3">
+          <div className="space-y-3 py-2">
             {CHANNELS.map((channel) => {
               const Icon = channel.icon;
               const selected = selectedChannels.includes(channel.value);

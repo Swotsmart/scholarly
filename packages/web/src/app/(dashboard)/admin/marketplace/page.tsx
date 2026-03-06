@@ -21,11 +21,9 @@ import {
   Ruler,
   Microscope,
   Languages,
-  Monitor,
-  Loader2,
+  Monitor
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useAdmin } from '@/hooks/use-admin';
 
 const FALLBACK_APPS = [
   {
@@ -81,17 +79,9 @@ const FALLBACK_PENDING_REVIEWS = [
 ];
 
 export default function MarketplacePage() {
-  const { isLoading } = useAdmin({ skip: true });
   const apps = FALLBACK_APPS;
   const pendingReviews = FALLBACK_PENDING_REVIEWS;
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

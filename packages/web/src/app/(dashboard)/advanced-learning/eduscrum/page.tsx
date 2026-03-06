@@ -36,7 +36,7 @@ import {
   ChevronUp,
   Loader2,
 } from 'lucide-react';
-import { useAdvancedLearning } from '@/hooks/use-advanced-learning';
+import { useEduscrum } from '@/hooks/use-advanced-learning';
 
 // Kanban columns
 const KANBAN_COLUMNS = [
@@ -236,14 +236,14 @@ function getLabelColor(label: string) {
 
 export default function EduscrumPage() {
   const [standupResponses, setStandupResponses] = useState<Record<string, string>>({});
-  const { data: hookData, isLoading } = useAdvancedLearning(['eduscrum']);
+  const { data: hookData, isLoading } = useEduscrum();
 
-  const MOCK_TASKS = hookData?.eduscrum?.tasks?.length ? hookData.eduscrum.tasks : FALLBACK_TASKS;
-  const CURRENT_SPRINT = hookData?.eduscrum?.sprint ?? FALLBACK_SPRINT;
-  const BURNDOWN_DATA = hookData?.eduscrum?.burndown?.length ? hookData.eduscrum.burndown : FALLBACK_BURNDOWN;
-  const TEAM_MEMBERS = hookData?.eduscrum?.teamMembers?.length ? hookData.eduscrum.teamMembers : FALLBACK_TEAM_MEMBERS;
-  const AI_SUGGESTIONS = hookData?.eduscrum?.aiSuggestions?.length ? hookData.eduscrum.aiSuggestions : FALLBACK_AI_SUGGESTIONS;
-  const RETRO_ITEMS = hookData?.eduscrum?.retroItems ?? FALLBACK_RETRO_ITEMS;
+  const MOCK_TASKS = hookData?.tasks?.length ? hookData.tasks : FALLBACK_TASKS;
+  const CURRENT_SPRINT = hookData?.sprint ?? FALLBACK_SPRINT;
+  const BURNDOWN_DATA = hookData?.burndown?.length ? hookData.burndown : FALLBACK_BURNDOWN;
+  const TEAM_MEMBERS = hookData?.teamMembers?.length ? hookData.teamMembers : FALLBACK_TEAM_MEMBERS;
+  const AI_SUGGESTIONS = hookData?.aiSuggestions?.length ? hookData.aiSuggestions : FALLBACK_AI_SUGGESTIONS;
+  const RETRO_ITEMS = hookData?.retroItems ?? FALLBACK_RETRO_ITEMS;
   const pageStats = FALLBACK_PAGE_STATS;
 
   if (isLoading) {

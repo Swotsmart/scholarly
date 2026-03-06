@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Share2,
   Search,
@@ -24,7 +23,6 @@ import {
   Lock,
   Globe,
 } from 'lucide-react';
-import { useTutoring } from '@/hooks/use-tutoring';
 
 const sharedResources = [
   {
@@ -107,29 +105,6 @@ const sharedLinks = [
 ];
 
 export default function SharedResourcesPage() {
-  // Hook connected for future API integration — currently uses fallback data
-  const { isLoading } = useTutoring(undefined, []);
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Share2 className="h-8 w-8" />
-            Shared Resources
-          </h1>
-          <p className="text-muted-foreground">Manage resources shared with your students</p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-28 rounded-lg" />
-          ))}
-        </div>
-        <Skeleton className="h-48 rounded-lg" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

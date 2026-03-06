@@ -26,7 +26,7 @@ export function useErudits() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchEruditsData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -50,7 +50,9 @@ export function useErudits() {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchEruditsData();
+  }, [fetchEruditsData]);
 
-  return { data, isLoading, error, refetch: fetchData };
+  return { data, isLoading, error, refetch: fetchEruditsData };
 }
