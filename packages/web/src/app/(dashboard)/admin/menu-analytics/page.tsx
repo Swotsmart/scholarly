@@ -13,8 +13,8 @@ import {
   BarChart3,
   TrendingUp,
   TrendingDown,
-  Users
-Activity,
+  Users,
+  Activity,
   Layers,
   Sprout,
   ArrowUpRight,
