@@ -39,7 +39,7 @@ import {
   Trash2,
   Loader2,
 } from 'lucide-react';
-import { useAdvancedLearning } from '@/hooks/use-advanced-learning';
+import { useWorkExperience } from '@/hooks/use-advanced-learning';
 
 // Mock opportunities
 const FALLBACK_OPPORTUNITIES = [
@@ -298,13 +298,13 @@ export default function WorkExperiencePage() {
     activities: '',
     reflection: '',
   });
-  const { data: hookData, isLoading } = useAdvancedLearning();
+  const { data: hookData, isLoading } = useWorkExperience();
 
-  const MOCK_OPPORTUNITIES = hookData?.workExperience?.opportunities?.length ? hookData.workExperience.opportunities : FALLBACK_OPPORTUNITIES;
-  const MOCK_APPLICATIONS = hookData?.workExperience?.applications?.length ? hookData.workExperience.applications : FALLBACK_APPLICATIONS;
-  const MOCK_DOCUMENTS = hookData?.workExperience?.documents?.length ? hookData.workExperience.documents : FALLBACK_DOCUMENTS;
-  const MOCK_LOGBOOK = hookData?.workExperience?.logbook?.length ? hookData.workExperience.logbook : FALLBACK_LOGBOOK;
-  const SUPERVISOR_FEEDBACK = hookData?.workExperience?.supervisorFeedback?.length ? hookData.workExperience.supervisorFeedback : FALLBACK_SUPERVISOR_FEEDBACK;
+  const MOCK_OPPORTUNITIES = hookData?.opportunities?.length ? hookData.opportunities : FALLBACK_OPPORTUNITIES;
+  const MOCK_APPLICATIONS = hookData?.applications?.length ? hookData.applications : FALLBACK_APPLICATIONS;
+  const MOCK_DOCUMENTS = hookData?.documents?.length ? hookData.documents : FALLBACK_DOCUMENTS;
+  const MOCK_LOGBOOK = hookData?.logbook?.length ? hookData.logbook : FALLBACK_LOGBOOK;
+  const SUPERVISOR_FEEDBACK = hookData?.supervisorFeedback?.length ? hookData.supervisorFeedback : FALLBACK_SUPERVISOR_FEEDBACK;
   const pageStats = FALLBACK_PAGE_STATS;
 
   const filteredOpportunities = MOCK_OPPORTUNITIES.filter(
