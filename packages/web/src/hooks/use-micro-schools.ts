@@ -53,7 +53,7 @@ export function useMicroSchools(config?: { state?: string }) {
     enrollmentStats: null,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const error: string | null = null;
+  const [error, setError] = useState<string | null>(null);
 
   const stateFilter = config?.state;
 
