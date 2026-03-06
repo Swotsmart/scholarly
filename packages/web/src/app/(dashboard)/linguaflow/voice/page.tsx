@@ -158,7 +158,9 @@ export default function VoiceIntelligencePage() {
   ];
 
   const voiceAgents = [
-    { id: 1, name: 'Pierre', language: 'French', role: 'Cafe Waiter', level: 'Beginner', voiceId: 'ff_siwis' },
+    { id: 1, name: 'Pierre', language: 'French', role: 'Cafe Waiter', level: 'Beginner', voiceId: 'edge-fr-FR-HenriNeural' },
+    { id: 9, name: 'Denise', language: 'French', role: 'Museum Guide', level: 'Intermediate', voiceId: 'edge-fr-FR-DeniseNeural' },
+    { id: 10, name: 'Alain', language: 'French', role: 'Boulangerie Owner', level: 'Advanced', voiceId: 'edge-fr-FR-AlainNeural' },
     { id: 2, name: 'Maria', language: 'Spanish', role: 'Hotel Receptionist', level: 'Intermediate', voiceId: 'ef_dora' },
     { id: 3, name: 'Hans', language: 'German', role: 'Museum Guide', level: 'Advanced', voiceId: 'bm_george' },
     { id: 4, name: 'Yuki', language: 'Japanese', role: 'Tea Ceremony Host', level: 'Beginner', voiceId: 'jf_tebukuro' },

@@ -14,6 +14,7 @@
 import { ScholarlyBaseService, Result, isFailure } from './base.service';
 import { prisma } from '@scholarly/database';
 import { log } from '../lib/logger';
+import { EdgeTTS } from '@andresaya/edge-tts';
 
 // ============================================================================
 // TYPES
@@ -165,6 +166,7 @@ export interface LinguaFlowVoice {
   ageRange: 'child' | 'young_adult' | 'adult' | 'senior';
   speakingStyles: string[];
   suitableFor: string[];
+  provider?: 'kokoro' | 'edge-tts';
 }
 
 export interface VoiceCloneRequest {
@@ -279,19 +281,40 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
   // --------------------------------------------------------------------------
 
   /**
-   * Generate speech from text using self-hosted Kokoro TTS
+   * Generate speech using Edge TTS (Microsoft)
+   */
+  private async edgeTTS(text: string, voiceId: string, rate?: string): Promise<Buffer> {
+    // Edge TTS voice IDs stored as "edge-fr-FR-DeniseNeural" → extract "fr-FR-DeniseNeural"
+    const edgeVoiceId = voiceId.startsWith('edge-') ? voiceId.slice(5) : voiceId;
+    const tts = new EdgeTTS();
+    await tts.synthesize(text, edgeVoiceId, {
+      rate: rate || '0%',
+    });
+    return tts.toBuffer();
+  }
+
+  /**
+   * Generate speech from text — routes to Kokoro or Edge TTS based on voice ID
    */
   async textToSpeech(request: TTSRequest): Promise<Result<TTSResponse>> {
     try {
-      const audioData = await this.voiceServiceRequest<Buffer>('/api/v1/tts/synthesize', {
-        body: {
-          text: request.text,
-          voice_id: request.voiceId,
-          language: request.language,
-          speed: request.voiceSettings?.style,
-        },
-        responseType: 'buffer',
-      });
+      let audioData: Buffer;
+
+      if (request.voiceId.startsWith('edge-')) {
+        // Edge TTS provider
+        audioData = await this.edgeTTS(request.text, request.voiceId);
+      } else {
+        // Kokoro TTS (self-hosted)
+        audioData = await this.voiceServiceRequest<Buffer>('/api/v1/tts/synthesize', {
+          body: {
+            text: request.text,
+            voice_id: request.voiceId,
+            language: request.language,
+            speed: request.voiceSettings?.style,
+          },
+          responseType: 'buffer',
+        });
+      }
 
       // Track usage
       await this.trackUsage(request.tenantId, 'tts', request.text.length);
@@ -301,7 +324,7 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
         data: {
           audioData,
           characterCount: request.text.length,
-          creditsUsed: 0, // Self-hosted, no per-character cost
+          creditsUsed: 0,
         },
       };
     } catch (error) {
@@ -583,6 +606,61 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
         { id: 'pf_dora', personaId: 'pf_dora', displayName: 'Dora', language: 'pt', region: 'BR', accent: 'Brazilian Portuguese', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['primary', 'secondary', 'adult'] },
         { id: 'pm_alex', personaId: 'pm_alex', displayName: 'Alexandre', language: 'pt', region: 'BR', accent: 'Brazilian Portuguese', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'] },
         { id: 'pm_santa', personaId: 'pm_santa', displayName: 'Santos', language: 'pt', region: 'BR', accent: 'Brazilian Portuguese', gender: 'male', ageRange: 'senior', speakingStyles: ['narration', 'warm', 'character'], suitableFor: ['primary'] },
+
+        // ================================================================
+        // Edge TTS Voices (Microsoft Neural) — supplements Kokoro gaps
+        // Voice IDs prefixed with "edge-" to route to Edge TTS provider
+        // ================================================================
+
+        // ── French via Edge TTS (16 voices — fills Kokoro's 1-voice gap) ──
+        { id: 'edge-fr-FR-DeniseNeural', personaId: 'edge-fr-FR-DeniseNeural', displayName: 'Denise', language: 'fr', region: 'FR', accent: 'French', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['primary', 'secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-EloiseNeural', personaId: 'edge-fr-FR-EloiseNeural', displayName: 'Eloise', language: 'fr', region: 'FR', accent: 'French', gender: 'female', ageRange: 'child', speakingStyles: ['conversational', 'bright'], suitableFor: ['primary'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-BrigitteNeural', personaId: 'edge-fr-FR-BrigitteNeural', displayName: 'Brigitte', language: 'fr', region: 'FR', accent: 'French', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'professional'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-CelesteNeural', personaId: 'edge-fr-FR-CelesteNeural', displayName: 'Celeste', language: 'fr', region: 'FR', accent: 'French', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-CoralieNeural', personaId: 'edge-fr-FR-CoralieNeural', displayName: 'Coralie', language: 'fr', region: 'FR', accent: 'French', gender: 'female', ageRange: 'young_adult', speakingStyles: ['conversational', 'friendly'], suitableFor: ['primary', 'secondary'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-JacquelineNeural', personaId: 'edge-fr-FR-JacquelineNeural', displayName: 'Jacqueline', language: 'fr', region: 'FR', accent: 'French', gender: 'female', ageRange: 'adult', speakingStyles: ['narration', 'refined'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-JosephineNeural', personaId: 'edge-fr-FR-JosephineNeural', displayName: 'Josephine', language: 'fr', region: 'FR', accent: 'French', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-YvetteNeural', personaId: 'edge-fr-FR-YvetteNeural', displayName: 'Yvette', language: 'fr', region: 'FR', accent: 'French', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'expressive'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-HenriNeural', personaId: 'edge-fr-FR-HenriNeural', displayName: 'Henri', language: 'fr', region: 'FR', accent: 'French', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['primary', 'secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-AlainNeural', personaId: 'edge-fr-FR-AlainNeural', displayName: 'Alain', language: 'fr', region: 'FR', accent: 'French', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'professional'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-ClaudeNeural', personaId: 'edge-fr-FR-ClaudeNeural', displayName: 'Claude', language: 'fr', region: 'FR', accent: 'French', gender: 'male', ageRange: 'adult', speakingStyles: ['narration', 'authoritative'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-JeromeNeural', personaId: 'edge-fr-FR-JeromeNeural', displayName: 'Jerome', language: 'fr', region: 'FR', accent: 'French', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-MauriceNeural', personaId: 'edge-fr-FR-MauriceNeural', displayName: 'Maurice', language: 'fr', region: 'FR', accent: 'French', gender: 'male', ageRange: 'senior', speakingStyles: ['narration', 'calm'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-YvesNeural', personaId: 'edge-fr-FR-YvesNeural', displayName: 'Yves', language: 'fr', region: 'FR', accent: 'French', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'friendly'], suitableFor: ['primary', 'secondary'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-VivienneMultilingualNeural', personaId: 'edge-fr-FR-VivienneMultilingualNeural', displayName: 'Vivienne', language: 'fr', region: 'FR', accent: 'French', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'multilingual'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-FR-RemyMultilingualNeural', personaId: 'edge-fr-FR-RemyMultilingualNeural', displayName: 'Remy', language: 'fr', region: 'FR', accent: 'French', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'multilingual'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+
+        // ── Swiss French via Edge TTS (2 voices) ──
+        { id: 'edge-fr-CH-ArianeNeural', personaId: 'edge-fr-CH-ArianeNeural', displayName: 'Ariane', language: 'fr', region: 'CH', accent: 'Swiss French', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-CH-FabriceNeural', personaId: 'edge-fr-CH-FabriceNeural', displayName: 'Fabrice', language: 'fr', region: 'CH', accent: 'Swiss French', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'calm'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+
+        // ── Belgian French via Edge TTS (2 voices) ──
+        { id: 'edge-fr-BE-CharlineNeural', personaId: 'edge-fr-BE-CharlineNeural', displayName: 'Charline', language: 'fr', region: 'BE', accent: 'Belgian French', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-BE-GerardNeural', personaId: 'edge-fr-BE-GerardNeural', displayName: 'Gerard', language: 'fr', region: 'BE', accent: 'Belgian French', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'friendly'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+
+        // ── Canadian French via Edge TTS (4 voices) ──
+        { id: 'edge-fr-CA-SylvieNeural', personaId: 'edge-fr-CA-SylvieNeural', displayName: 'Sylvie', language: 'fr', region: 'CA', accent: 'Canadian French', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-CA-AntoineNeural', personaId: 'edge-fr-CA-AntoineNeural', displayName: 'Antoine', language: 'fr', region: 'CA', accent: 'Canadian French', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-fr-CA-JeanNeural', personaId: 'edge-fr-CA-JeanNeural', displayName: 'Jean', language: 'fr', region: 'CA', accent: 'Canadian French', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'friendly'], suitableFor: ['primary', 'secondary'], provider: 'edge-tts' },
+        { id: 'edge-fr-CA-ThierryNeural', personaId: 'edge-fr-CA-ThierryNeural', displayName: 'Thierry', language: 'fr', region: 'CA', accent: 'Canadian French', gender: 'male', ageRange: 'adult', speakingStyles: ['narration', 'professional'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+
+        // ── German via Edge TTS (6 voices — Kokoro has none) ──
+        { id: 'edge-de-DE-KatjaNeural', personaId: 'edge-de-DE-KatjaNeural', displayName: 'Katja', language: 'de', region: 'DE', accent: 'German', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['primary', 'secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-de-DE-AmalaNeural', personaId: 'edge-de-DE-AmalaNeural', displayName: 'Amala', language: 'de', region: 'DE', accent: 'German', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'professional'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-de-DE-SeraphinaMultilingualNeural', personaId: 'edge-de-DE-SeraphinaMultilingualNeural', displayName: 'Seraphina', language: 'de', region: 'DE', accent: 'German', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'multilingual'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-de-DE-ConradNeural', personaId: 'edge-de-DE-ConradNeural', displayName: 'Conrad', language: 'de', region: 'DE', accent: 'German', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['primary', 'secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-de-DE-FlorianMultilingualNeural', personaId: 'edge-de-DE-FlorianMultilingualNeural', displayName: 'Florian', language: 'de', region: 'DE', accent: 'German', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'multilingual'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-de-DE-KillianNeural', personaId: 'edge-de-DE-KillianNeural', displayName: 'Killian', language: 'de', region: 'DE', accent: 'German', gender: 'male', ageRange: 'young_adult', speakingStyles: ['conversational', 'friendly'], suitableFor: ['primary', 'secondary'], provider: 'edge-tts' },
+
+        // ── Korean via Edge TTS (4 voices — Kokoro has none) ──
+        { id: 'edge-ko-KR-SunHiNeural', personaId: 'edge-ko-KR-SunHiNeural', displayName: 'Sun-Hi', language: 'ko', region: 'KR', accent: 'Korean', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['primary', 'secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-ko-KR-HyunsuNeural', personaId: 'edge-ko-KR-HyunsuNeural', displayName: 'Hyunsu', language: 'ko', region: 'KR', accent: 'Korean', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-ko-KR-InJoonNeural', personaId: 'edge-ko-KR-InJoonNeural', displayName: 'InJoon', language: 'ko', region: 'KR', accent: 'Korean', gender: 'male', ageRange: 'adult', speakingStyles: ['narration', 'professional'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-ko-KR-BongJinNeural', personaId: 'edge-ko-KR-BongJinNeural', displayName: 'BongJin', language: 'ko', region: 'KR', accent: 'Korean', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'friendly'], suitableFor: ['primary', 'secondary'], provider: 'edge-tts' },
+
+        // ── Arabic via Edge TTS (2 voices — Kokoro has none) ──
+        { id: 'edge-ar-SA-ZariyahNeural', personaId: 'edge-ar-SA-ZariyahNeural', displayName: 'Zariyah', language: 'ar', region: 'SA', accent: 'Arabic', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
+        { id: 'edge-ar-SA-HamedNeural', personaId: 'edge-ar-SA-HamedNeural', displayName: 'Hamed', language: 'ar', region: 'SA', accent: 'Arabic', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'], provider: 'edge-tts' },
       ];
 
       // Apply filters
