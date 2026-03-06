@@ -7697,6 +7697,7 @@ model BookCover {
   updatedAt         DateTime        @updatedAt
 
   manuscriptId      String
+  manuscript        Manuscript      @relation(fields: [manuscriptId], references: [id], onDelete: Cascade)
   source            CoverSource
 
   // ── Image Files ──
