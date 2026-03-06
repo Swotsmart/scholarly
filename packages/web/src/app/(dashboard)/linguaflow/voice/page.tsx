@@ -51,6 +51,9 @@ const LANGUAGE_MAP: Record<string, { label: string; code: string }> = {
   german: { label: 'German', code: 'de-DE' },
   mandarin: { label: 'Mandarin', code: 'zh-CN' },
   japanese: { label: 'Japanese', code: 'ja-JP' },
+  italian: { label: 'Italian', code: 'it-IT' },
+  hindi: { label: 'Hindi', code: 'hi-IN' },
+  portuguese: { label: 'Portuguese', code: 'pt-BR' },
 };
 
 export default function VoiceIntelligencePage() {
@@ -155,9 +158,14 @@ export default function VoiceIntelligencePage() {
   ];
 
   const voiceAgents = [
-    { id: 1, name: 'Pierre', language: 'French', role: 'Cafe Waiter', level: 'Beginner' },
-    { id: 2, name: 'Maria', language: 'Spanish', role: 'Hotel Receptionist', level: 'Intermediate' },
-    { id: 3, name: 'Hans', language: 'German', role: 'Museum Guide', level: 'Advanced' },
+    { id: 1, name: 'Pierre', language: 'French', role: 'Cafe Waiter', level: 'Beginner', voiceId: 'ff_siwis' },
+    { id: 2, name: 'Maria', language: 'Spanish', role: 'Hotel Receptionist', level: 'Intermediate', voiceId: 'ef_dora' },
+    { id: 3, name: 'Hans', language: 'German', role: 'Museum Guide', level: 'Advanced', voiceId: 'bm_george' },
+    { id: 4, name: 'Yuki', language: 'Japanese', role: 'Tea Ceremony Host', level: 'Beginner', voiceId: 'jf_tebukuro' },
+    { id: 5, name: 'Xiaoxiao', language: 'Mandarin', role: 'Market Vendor', level: 'Intermediate', voiceId: 'zf_xiaoxiao' },
+    { id: 6, name: 'Sara', language: 'Italian', role: 'Cooking Teacher', level: 'Beginner', voiceId: 'if_sara' },
+    { id: 7, name: 'Priya', language: 'Hindi', role: 'Travel Guide', level: 'Intermediate', voiceId: 'hf_beta' },
+    { id: 8, name: 'Dora', language: 'Portuguese', role: 'Dance Instructor', level: 'Beginner', voiceId: 'pf_dora' },
   ];
 
   const pronunciationStats = {

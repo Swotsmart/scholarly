@@ -510,12 +510,79 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
     suitableFor?: string;
   }): Promise<Result<LinguaFlowVoice[]>> {
     try {
-      // Kokoro TTS built-in voice personas
+      // Kokoro TTS v1.0 — full voice catalog (62 voices, 9 languages)
       const voices: LinguaFlowVoice[] = [
-        { id: 'af_bella', personaId: 'af_bella', displayName: 'Bella', language: 'en', region: 'neutral', accent: 'neutral', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'narration'], suitableFor: ['primary', 'secondary', 'adult'] },
-        { id: 'am_adam', personaId: 'am_adam', displayName: 'Adam', language: 'en', region: 'neutral', accent: 'neutral', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'narration'], suitableFor: ['primary', 'secondary', 'adult'] },
-        { id: 'af_sarah', personaId: 'af_sarah', displayName: 'Sarah', language: 'en', region: 'neutral', accent: 'neutral', gender: 'female', ageRange: 'young_adult', speakingStyles: ['conversational'], suitableFor: ['primary', 'secondary'] },
-        { id: 'am_michael', personaId: 'am_michael', displayName: 'Michael', language: 'en', region: 'neutral', accent: 'neutral', gender: 'male', ageRange: 'young_adult', speakingStyles: ['conversational'], suitableFor: ['primary', 'secondary'] },
+        // ── American English (20 voices) ──
+        { id: 'af_heart', personaId: 'af_heart', displayName: 'Heart', language: 'en', region: 'US', accent: 'American', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'narration', 'warm'], suitableFor: ['primary', 'secondary', 'adult'] },
+        { id: 'af_alloy', personaId: 'af_alloy', displayName: 'Alloy', language: 'en', region: 'US', accent: 'American', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'neutral'], suitableFor: ['secondary', 'adult'] },
+        { id: 'af_aoede', personaId: 'af_aoede', displayName: 'Aoede', language: 'en', region: 'US', accent: 'American', gender: 'female', ageRange: 'adult', speakingStyles: ['narration', 'expressive'], suitableFor: ['secondary', 'adult'] },
+        { id: 'af_bella', personaId: 'af_bella', displayName: 'Bella', language: 'en', region: 'US', accent: 'American', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'narration', 'warm'], suitableFor: ['primary', 'secondary', 'adult'] },
+        { id: 'af_jessica', personaId: 'af_jessica', displayName: 'Jessica', language: 'en', region: 'US', accent: 'American', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational'], suitableFor: ['secondary', 'adult'] },
+        { id: 'af_kore', personaId: 'af_kore', displayName: 'Kore', language: 'en', region: 'US', accent: 'American', gender: 'female', ageRange: 'adult', speakingStyles: ['narration', 'calm'], suitableFor: ['secondary', 'adult'] },
+        { id: 'af_nicole', personaId: 'af_nicole', displayName: 'Nicole', language: 'en', region: 'US', accent: 'American', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'podcast'], suitableFor: ['secondary', 'adult'] },
+        { id: 'af_nova', personaId: 'af_nova', displayName: 'Nova', language: 'en', region: 'US', accent: 'American', gender: 'female', ageRange: 'young_adult', speakingStyles: ['conversational', 'bright'], suitableFor: ['primary', 'secondary'] },
+        { id: 'af_river', personaId: 'af_river', displayName: 'River', language: 'en', region: 'US', accent: 'American', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'calm'], suitableFor: ['secondary', 'adult'] },
+        { id: 'af_sarah', personaId: 'af_sarah', displayName: 'Sarah', language: 'en', region: 'US', accent: 'American', gender: 'female', ageRange: 'young_adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['primary', 'secondary'] },
+        { id: 'af_sky', personaId: 'af_sky', displayName: 'Sky', language: 'en', region: 'US', accent: 'American', gender: 'female', ageRange: 'young_adult', speakingStyles: ['conversational', 'light'], suitableFor: ['primary', 'secondary'] },
+        { id: 'am_adam', personaId: 'am_adam', displayName: 'Adam', language: 'en', region: 'US', accent: 'American', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'narration'], suitableFor: ['primary', 'secondary', 'adult'] },
+        { id: 'am_echo', personaId: 'am_echo', displayName: 'Echo', language: 'en', region: 'US', accent: 'American', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational'], suitableFor: ['secondary', 'adult'] },
+        { id: 'am_eric', personaId: 'am_eric', displayName: 'Eric', language: 'en', region: 'US', accent: 'American', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'professional'], suitableFor: ['secondary', 'adult'] },
+        { id: 'am_fenrir', personaId: 'am_fenrir', displayName: 'Fenrir', language: 'en', region: 'US', accent: 'American', gender: 'male', ageRange: 'adult', speakingStyles: ['narration', 'deep'], suitableFor: ['secondary', 'adult'] },
+        { id: 'am_liam', personaId: 'am_liam', displayName: 'Liam', language: 'en', region: 'US', accent: 'American', gender: 'male', ageRange: 'young_adult', speakingStyles: ['conversational'], suitableFor: ['primary', 'secondary'] },
+        { id: 'am_michael', personaId: 'am_michael', displayName: 'Michael', language: 'en', region: 'US', accent: 'American', gender: 'male', ageRange: 'young_adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['primary', 'secondary'] },
+        { id: 'am_onyx', personaId: 'am_onyx', displayName: 'Onyx', language: 'en', region: 'US', accent: 'American', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'authoritative'], suitableFor: ['secondary', 'adult'] },
+        { id: 'am_puck', personaId: 'am_puck', displayName: 'Puck', language: 'en', region: 'US', accent: 'American', gender: 'male', ageRange: 'adult', speakingStyles: ['narration', 'expressive'], suitableFor: ['primary', 'secondary', 'adult'] },
+        { id: 'am_santa', personaId: 'am_santa', displayName: 'Santa', language: 'en', region: 'US', accent: 'American', gender: 'male', ageRange: 'senior', speakingStyles: ['narration', 'warm', 'character'], suitableFor: ['primary'] },
+
+        // ── British English (8 voices) ──
+        { id: 'bf_alice', personaId: 'bf_alice', displayName: 'Alice', language: 'en', region: 'GB', accent: 'British', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['primary', 'secondary', 'adult'] },
+        { id: 'bf_emma', personaId: 'bf_emma', displayName: 'Emma', language: 'en', region: 'GB', accent: 'British', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['primary', 'secondary', 'adult'] },
+        { id: 'bf_isabella', personaId: 'bf_isabella', displayName: 'Isabella', language: 'en', region: 'GB', accent: 'British', gender: 'female', ageRange: 'adult', speakingStyles: ['narration', 'refined'], suitableFor: ['secondary', 'adult'] },
+        { id: 'bf_lily', personaId: 'bf_lily', displayName: 'Lily', language: 'en', region: 'GB', accent: 'British', gender: 'female', ageRange: 'young_adult', speakingStyles: ['conversational', 'light'], suitableFor: ['primary', 'secondary'] },
+        { id: 'bm_daniel', personaId: 'bm_daniel', displayName: 'Daniel', language: 'en', region: 'GB', accent: 'British', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'professional'], suitableFor: ['secondary', 'adult'] },
+        { id: 'bm_fable', personaId: 'bm_fable', displayName: 'Fable', language: 'en', region: 'GB', accent: 'British', gender: 'male', ageRange: 'adult', speakingStyles: ['narration', 'storytelling'], suitableFor: ['primary', 'secondary', 'adult'] },
+        { id: 'bm_george', personaId: 'bm_george', displayName: 'George', language: 'en', region: 'GB', accent: 'British', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'authoritative'], suitableFor: ['secondary', 'adult'] },
+        { id: 'bm_lewis', personaId: 'bm_lewis', displayName: 'Lewis', language: 'en', region: 'GB', accent: 'British', gender: 'male', ageRange: 'young_adult', speakingStyles: ['conversational', 'friendly'], suitableFor: ['primary', 'secondary'] },
+
+        // ── French (1 voice) ──
+        { id: 'ff_siwis', personaId: 'ff_siwis', displayName: 'Siwis', language: 'fr', region: 'FR', accent: 'French', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'] },
+
+        // ── Spanish (3 voices) ──
+        { id: 'ef_dora', personaId: 'ef_dora', displayName: 'Dora', language: 'es', region: 'ES', accent: 'European Spanish', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['primary', 'secondary', 'adult'] },
+        { id: 'em_alex', personaId: 'em_alex', displayName: 'Alejandro', language: 'es', region: 'ES', accent: 'European Spanish', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'] },
+        { id: 'em_santa', personaId: 'em_santa', displayName: 'Santiago', language: 'es', region: 'ES', accent: 'European Spanish', gender: 'male', ageRange: 'senior', speakingStyles: ['narration', 'warm', 'character'], suitableFor: ['primary'] },
+
+        // ── Japanese (5 voices) ──
+        { id: 'jf_alpha', personaId: 'jf_alpha', displayName: 'Aoi', language: 'ja', region: 'JP', accent: 'Japanese', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'] },
+        { id: 'jf_gongitsune', personaId: 'jf_gongitsune', displayName: 'Hana', language: 'ja', region: 'JP', accent: 'Japanese', gender: 'female', ageRange: 'young_adult', speakingStyles: ['narration', 'storytelling'], suitableFor: ['primary', 'secondary'] },
+        { id: 'jf_nezumi', personaId: 'jf_nezumi', displayName: 'Sakura', language: 'ja', region: 'JP', accent: 'Japanese', gender: 'female', ageRange: 'young_adult', speakingStyles: ['conversational', 'light'], suitableFor: ['primary', 'secondary'] },
+        { id: 'jf_tebukuro', personaId: 'jf_tebukuro', displayName: 'Yuki', language: 'ja', region: 'JP', accent: 'Japanese', gender: 'female', ageRange: 'adult', speakingStyles: ['narration', 'calm'], suitableFor: ['secondary', 'adult'] },
+        { id: 'jm_kumo', personaId: 'jm_kumo', displayName: 'Ren', language: 'ja', region: 'JP', accent: 'Japanese', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'narration'], suitableFor: ['secondary', 'adult'] },
+
+        // ── Mandarin Chinese (8 voices) ──
+        { id: 'zf_xiaobei', personaId: 'zf_xiaobei', displayName: 'Xiaobei', language: 'zh', region: 'CN', accent: 'Mandarin', gender: 'female', ageRange: 'young_adult', speakingStyles: ['conversational', 'bright'], suitableFor: ['primary', 'secondary'] },
+        { id: 'zf_xiaoni', personaId: 'zf_xiaoni', displayName: 'Xiaoni', language: 'zh', region: 'CN', accent: 'Mandarin', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['secondary', 'adult'] },
+        { id: 'zf_xiaoxiao', personaId: 'zf_xiaoxiao', displayName: 'Xiaoxiao', language: 'zh', region: 'CN', accent: 'Mandarin', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'narration'], suitableFor: ['primary', 'secondary', 'adult'] },
+        { id: 'zf_xiaoyi', personaId: 'zf_xiaoyi', displayName: 'Xiaoyi', language: 'zh', region: 'CN', accent: 'Mandarin', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'professional'], suitableFor: ['secondary', 'adult'] },
+        { id: 'zm_yunjian', personaId: 'zm_yunjian', displayName: 'Yunjian', language: 'zh', region: 'CN', accent: 'Mandarin', gender: 'male', ageRange: 'adult', speakingStyles: ['narration', 'authoritative'], suitableFor: ['secondary', 'adult'] },
+        { id: 'zm_yunxi', personaId: 'zm_yunxi', displayName: 'Yunxi', language: 'zh', region: 'CN', accent: 'Mandarin', gender: 'male', ageRange: 'young_adult', speakingStyles: ['conversational', 'friendly'], suitableFor: ['primary', 'secondary'] },
+        { id: 'zm_yunxia', personaId: 'zm_yunxia', displayName: 'Yunxia', language: 'zh', region: 'CN', accent: 'Mandarin', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'calm'], suitableFor: ['secondary', 'adult'] },
+        { id: 'zm_yunyang', personaId: 'zm_yunyang', displayName: 'Yunyang', language: 'zh', region: 'CN', accent: 'Mandarin', gender: 'male', ageRange: 'adult', speakingStyles: ['narration', 'news'], suitableFor: ['secondary', 'adult'] },
+
+        // ── Hindi (4 voices) ──
+        { id: 'hf_alpha', personaId: 'hf_alpha', displayName: 'Ananya', language: 'hi', region: 'IN', accent: 'Hindi', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'] },
+        { id: 'hf_beta', personaId: 'hf_beta', displayName: 'Priya', language: 'hi', region: 'IN', accent: 'Hindi', gender: 'female', ageRange: 'young_adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['primary', 'secondary'] },
+        { id: 'hm_omega', personaId: 'hm_omega', displayName: 'Arjun', language: 'hi', region: 'IN', accent: 'Hindi', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'professional'], suitableFor: ['secondary', 'adult'] },
+        { id: 'hm_psi', personaId: 'hm_psi', displayName: 'Rohan', language: 'hi', region: 'IN', accent: 'Hindi', gender: 'male', ageRange: 'young_adult', speakingStyles: ['conversational', 'friendly'], suitableFor: ['primary', 'secondary'] },
+
+        // ── Italian (2 voices) ──
+        { id: 'if_sara', personaId: 'if_sara', displayName: 'Sara', language: 'it', region: 'IT', accent: 'Italian', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['secondary', 'adult'] },
+        { id: 'im_nicola', personaId: 'im_nicola', displayName: 'Nicola', language: 'it', region: 'IT', accent: 'Italian', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'] },
+
+        // ── Brazilian Portuguese (3 voices) ──
+        { id: 'pf_dora', personaId: 'pf_dora', displayName: 'Dora', language: 'pt', region: 'BR', accent: 'Brazilian Portuguese', gender: 'female', ageRange: 'adult', speakingStyles: ['conversational', 'warm'], suitableFor: ['primary', 'secondary', 'adult'] },
+        { id: 'pm_alex', personaId: 'pm_alex', displayName: 'Alexandre', language: 'pt', region: 'BR', accent: 'Brazilian Portuguese', gender: 'male', ageRange: 'adult', speakingStyles: ['conversational', 'clear'], suitableFor: ['secondary', 'adult'] },
+        { id: 'pm_santa', personaId: 'pm_santa', displayName: 'Santos', language: 'pt', region: 'BR', accent: 'Brazilian Portuguese', gender: 'male', ageRange: 'senior', speakingStyles: ['narration', 'warm', 'character'], suitableFor: ['primary'] },
       ];
 
       // Apply filters

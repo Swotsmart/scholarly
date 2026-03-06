@@ -46,6 +46,9 @@ const LANGUAGE_CODES: Record<string, string> = {
   german: 'de-DE',
   mandarin: 'zh-CN',
   japanese: 'ja-JP',
+  italian: 'it-IT',
+  hindi: 'hi-IN',
+  portuguese: 'pt-BR',
 };
 
 // Scenario-specific agent greetings
@@ -72,6 +75,46 @@ const AGENT_GREETINGS: Record<string, { text: string; responses: string[] }> = {
       'Bien sur! Nous avons une belle selection. Quelle taille faites-vous?',
       'Celui-ci vous irait tres bien! Voulez-vous l\'essayer?',
       'C\'est 45 euros. Nous acceptons les cartes et les especes.',
+    ],
+  },
+  'Tea Ceremony': {
+    text: 'いらっしゃいませ。お茶会へようこそ。今日はどのお茶をお召し上がりになりますか？',
+    responses: [
+      'はい、抹茶はとても良い選択です。少々お待ちください。',
+      'お菓子も一緒にいかがですか？季節の和菓子がございます。',
+      'どうぞ、ごゆっくりお楽しみください。',
+    ],
+  },
+  'Market Visit': {
+    text: '你好！欢迎来到我们的市场。今天想买什么？',
+    responses: [
+      '这个很新鲜！今天早上刚到的。您要多少？',
+      '一共是二十五块钱。需要袋子吗？',
+      '谢谢光临！欢迎下次再来！',
+    ],
+  },
+  'Cooking Class': {
+    text: 'Buongiorno! Benvenuti alla nostra lezione di cucina italiana. Oggi prepariamo la pasta fresca!',
+    responses: [
+      'Perfetto! Prima cosa, mescoliamo la farina con le uova.',
+      'Molto bene! Ora dobbiamo impastare per dieci minuti.',
+      'Fantastico! La vostra pasta e pronta per la cottura!',
+    ],
+  },
+  'Travel Guide': {
+    text: 'नमस्ते! ताज महल में आपका स्वागत है। क्या आप इसका इतिहास जानना चाहेंगे?',
+    responses: [
+      'यह मुगल सम्राट शाहजहाँ ने अपनी पत्नी की याद में बनवाया था।',
+      'इसे बनने में बाईस साल लगे और बीस हज़ार मज़दूरों ने काम किया।',
+      'अब हम बगीचे की तरफ चलते हैं। वहाँ से बहुत सुंदर दृश्य दिखता है।',
+    ],
+  },
+  'Dance Class': {
+    text: 'Oi! Bem-vindo a aula de samba! Voce ja dançou samba antes?',
+    responses: [
+      'Sem problema! Vamos começar com os passos basicos. Siga meus movimentos.',
+      'Muito bem! Agora vamos adicionar os movimentos dos braços.',
+      'Voce esta indo muito bem! O samba e sobre sentir a musica no coração!',
     ],
   },
 };
