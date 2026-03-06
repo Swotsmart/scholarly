@@ -13,10 +13,10 @@ import {
   Trash2,
   Copy,
   ExternalLink,
-  RefreshCw,
+  RefreshCw
 } from 'lucide-react';
 
-const ltiConnections = [
+const FALLBACK_LTI_CONNECTIONS = [
   {
     id: 1,
     name: 'Canvas LMS',
@@ -47,6 +47,9 @@ const ltiConnections = [
 ];
 
 export default function LTIPage() {
+  const ltiConnections = FALLBACK_LTI_CONNECTIONS;
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

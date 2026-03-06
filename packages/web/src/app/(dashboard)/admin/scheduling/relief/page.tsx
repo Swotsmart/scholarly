@@ -12,16 +12,18 @@ import {
   Search,
   Star,
   Plus,
+  Loader2,
 } from 'lucide-react';
+import { useAdminReliefTeachers } from '@/hooks/use-admin';
 
-const stats = [
+const FALLBACK_STATS = [
   { label: 'Total Relief Teachers', value: '32', icon: Users, color: 'blue' },
   { label: 'Available Today', value: '8', icon: UserCheck, color: 'green' },
   { label: 'Active Assignments', value: '5', icon: ClipboardCheck, color: 'purple' },
   { label: 'Coverage Rate', value: '94%', icon: TrendingUp, color: 'orange' },
 ];
 
-const reliefTeachers = [
+const FALLBACK_RELIEF_TEACHERS = [
   {
     id: 'rt1',
     name: 'Sarah Mitchell',
@@ -109,6 +111,23 @@ function renderStars(rating: number) {
 }
 
 export default function AdminReliefPage() {
+  const { data: apiTeachers, isLoading } = useAdminReliefTeachers();
+  const reliefTeachers = apiTeachers.length > 0
+    ? apiTeachers.map((t) => ({
+        ...t,
+        completedAssignments: 0,
+      }))
+    : FALLBACK_RELIEF_TEACHERS;
+  const stats = FALLBACK_STATS;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

@@ -19,10 +19,10 @@ import {
   XCircle,
   Clock,
   ArrowUpRight,
-  ArrowDownRight,
+  ArrowDownRight
 } from 'lucide-react';
 
-const recentTransactions = [
+const FALLBACK_TRANSACTIONS = [
   {
     id: 'TXN-001',
     user: 'David Smith',
@@ -61,13 +61,17 @@ const recentTransactions = [
   },
 ];
 
-const payoutQueue = [
+const FALLBACK_PAYOUT_QUEUE = [
   { tutor: 'Sarah Chen', amount: 450.00, sessions: 6, status: 'pending' },
   { tutor: 'Michael Brown', amount: 375.00, sessions: 5, status: 'pending' },
   { tutor: 'Lisa Wang', amount: 225.00, sessions: 3, status: 'processing' },
 ];
 
 export default function PaymentsPage() {
+  const recentTransactions = FALLBACK_TRANSACTIONS;
+  const payoutQueue = FALLBACK_PAYOUT_QUEUE;
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

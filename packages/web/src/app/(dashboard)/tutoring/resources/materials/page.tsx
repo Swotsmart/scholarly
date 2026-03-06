@@ -1,5 +1,8 @@
 'use client';
 
+// No dedicated resources API yet — this page uses fallback data only.
+// When a resources endpoint is added, import useTutoring and wire it here.
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

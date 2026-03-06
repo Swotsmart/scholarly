@@ -21,11 +21,11 @@ import {
   Ruler,
   Microscope,
   Languages,
-  Monitor,
+  Monitor
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-const apps = [
+const FALLBACK_APPS = [
   {
     id: 1,
     name: 'Math Visualizer Pro',
@@ -72,13 +72,17 @@ const apps = [
   },
 ];
 
-const pendingReviews = [
+const FALLBACK_PENDING_REVIEWS = [
   { name: 'Music Theory Tutor', developer: 'HarmonyApps', submitted: '2 days ago' },
   { name: 'Geography Explorer', developer: 'WorldMap Studios', submitted: '3 days ago' },
   { name: 'Chemistry Balancer', developer: 'ScienceTools', submitted: '5 days ago' },
 ];
 
 export default function MarketplacePage() {
+  const apps = FALLBACK_APPS;
+  const pendingReviews = FALLBACK_PENDING_REVIEWS;
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

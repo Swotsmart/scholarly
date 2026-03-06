@@ -12,11 +12,11 @@ import {
   Download,
   Search,
   FileText,
-  Globe,
+  Globe
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
-const connectedFrameworks = [
+const FALLBACK_FRAMEWORKS = [
   {
     name: 'Australian Curriculum (ACARA)',
     publisher: 'ACARA',
@@ -44,6 +44,9 @@ const connectedFrameworks = [
 ];
 
 export default function CASEPage() {
+  const connectedFrameworks = FALLBACK_FRAMEWORKS;
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

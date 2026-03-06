@@ -25,9 +25,11 @@ import {
   BookOpen,
   Globe,
   HeartHandshake,
+  Loader2,
 } from 'lucide-react';
+import { useIndustry } from '@/hooks/use-advanced-learning';
 
-const MOCK_OPPORTUNITIES = [
+const FALLBACK_OPPORTUNITIES = [
   {
     id: 'opp_001',
     company: 'CSIRO',
@@ -108,7 +110,7 @@ const MOCK_OPPORTUNITIES = [
   },
 ];
 
-const MOCK_APPLICATIONS = [
+const FALLBACK_APPLICATIONS = [
   {
     id: 'app_001',
     company: 'CSIRO',
@@ -139,7 +141,7 @@ const MOCK_APPLICATIONS = [
   },
 ];
 
-const MOCK_ACTIVE_PLACEMENT = {
+const FALLBACK_ACTIVE_PLACEMENT = {
   id: 'plc_001',
   company: 'ABC',
   role: 'Media Production Assistant',
@@ -161,7 +163,7 @@ const MOCK_ACTIVE_PLACEMENT = {
   supervisorRating: 4.5,
 };
 
-const PARTNER_COMPANIES = [
+const FALLBACK_PARTNER_COMPANIES = [
   { name: 'CSIRO', sector: 'Research' },
   { name: 'BHP', sector: 'Resources' },
   { name: 'ABC', sector: 'Media' },
@@ -172,7 +174,7 @@ const PARTNER_COMPANIES = [
   { name: 'Qantas', sector: 'Aviation' },
 ];
 
-const pageStats = [
+const FALLBACK_PAGE_STATS = [
   { label: 'Open Opportunities', value: '6', icon: Briefcase, color: 'blue' },
   { label: 'My Applications', value: '4', icon: Send, color: 'emerald' },
   { label: 'Hours Logged', value: '120', icon: Clock, color: 'violet' },
@@ -195,6 +197,22 @@ function getApplicationStatusBadge(status: string) {
 }
 
 export default function IndustryExperiencePage() {
+  const { industry: hookData, isLoading } = useIndustry();
+
+  const MOCK_OPPORTUNITIES = hookData?.opportunities?.length ? hookData.opportunities : FALLBACK_OPPORTUNITIES;
+  const MOCK_APPLICATIONS = hookData?.applications?.length ? hookData.applications : FALLBACK_APPLICATIONS;
+  const MOCK_ACTIVE_PLACEMENT = hookData?.activePlacement ?? FALLBACK_ACTIVE_PLACEMENT;
+  const PARTNER_COMPANIES = hookData?.partnerCompanies?.length ? hookData.partnerCompanies : FALLBACK_PARTNER_COMPANIES;
+  const pageStats = FALLBACK_PAGE_STATS;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -285,7 +303,7 @@ export default function IndustryExperiencePage() {
                   </div>
 
                   <div className="flex flex-wrap gap-1.5">
-                    {opp.skills.map((skill) => (
+                    {opp.skills.map((skill: string) => (
                       <Badge key={skill} variant="secondary" className="text-xs">
                         {skill}
                       </Badge>
@@ -414,7 +432,7 @@ export default function IndustryExperiencePage() {
                   Learning Objectives Progress
                 </h4>
                 <div className="space-y-3">
-                  {MOCK_ACTIVE_PLACEMENT.learningObjectives.map((objective) => (
+                  {MOCK_ACTIVE_PLACEMENT.learningObjectives.map((objective: { name: string; progress: number; status: string }) => (
                     <div key={objective.name} className="space-y-1.5">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">{objective.name}</span>

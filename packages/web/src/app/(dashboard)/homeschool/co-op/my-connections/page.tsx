@@ -3,18 +3,49 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Users, MessageSquare, Calendar, MapPin } from 'lucide-react';
+import { Users, MessageSquare, Calendar, MapPin, Loader2 } from 'lucide-react';
+import { useHomeschool } from '@/hooks/use-homeschool';
+
+const FALLBACK_CONNECTIONS = [
+  { id: '1', name: 'The Johnson Family', location: 'Nearby', children: 3, shared: ['Math', 'Science'] },
+  { id: '2', name: 'Smith Homeschool', location: '5km away', children: 2, shared: ['Art', 'Music'] },
+  { id: '3', name: 'Garcia Learning Pod', location: '3km away', children: 4, shared: ['PE', 'Languages'] },
+];
+
+const FALLBACK_PENDING = [
+  { id: '1', name: 'The Williams Family', message: 'Would love to connect for science activities!' },
+];
 
 export default function MyConnectionsPage() {
-  const connections = [
-    { id: 1, name: 'The Johnson Family', location: 'Nearby', children: 3, shared: ['Math', 'Science'] },
-    { id: 2, name: 'Smith Homeschool', location: '5km away', children: 2, shared: ['Art', 'Music'] },
-    { id: 3, name: 'Garcia Learning Pod', location: '3km away', children: 4, shared: ['PE', 'Languages'] },
-  ];
+  const { coops, matches, isLoading } = useHomeschool();
 
-  const pendingRequests = [
-    { id: 1, name: 'The Williams Family', message: 'Would love to connect for science activities!' },
-  ];
+  // Derive connections from co-ops member data when available
+  const connections = coops?.items?.length
+    ? coops.items.map((coop) => ({
+        id: coop.id,
+        name: coop.name,
+        location: coop.primaryLocation?.label ?? 'Local',
+        children: coop._count?.members ?? 0,
+        shared: coop.subjects.slice(0, 3),
+      }))
+    : FALLBACK_CONNECTIONS;
+
+  // Use family matches as pending requests when available
+  const pendingRequests = matches?.length
+    ? matches.map((m) => ({
+        id: m.familyId,
+        name: m.familyName,
+        message: m.matchReasons.join(', '),
+      }))
+    : FALLBACK_PENDING;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

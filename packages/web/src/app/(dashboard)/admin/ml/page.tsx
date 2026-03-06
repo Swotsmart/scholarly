@@ -16,10 +16,10 @@ import {
   Settings,
   TrendingUp,
   AlertTriangle,
-  CheckCircle2,
+  CheckCircle2
 } from 'lucide-react';
 
-const models = [
+const FALLBACK_MODELS = [
   {
     name: 'Student Risk Predictor',
     version: 'v2.3.1',
@@ -62,13 +62,17 @@ const models = [
   },
 ];
 
-const pipelines = [
+const FALLBACK_PIPELINES = [
   { name: 'Daily Feature Extraction', status: 'running', progress: 67, nextRun: 'In 8 hours' },
   { name: 'Weekly Model Retraining', status: 'scheduled', progress: 0, nextRun: 'In 3 days' },
   { name: 'Real-time Inference', status: 'running', progress: 100, nextRun: 'Continuous' },
 ];
 
 export default function MLPipelinePage() {
+  const models = FALLBACK_MODELS;
+  const pipelines = FALLBACK_PIPELINES;
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

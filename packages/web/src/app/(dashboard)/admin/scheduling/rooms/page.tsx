@@ -18,15 +18,17 @@ import {
   Music,
   Palette,
   Dumbbell,
+  Loader2,
 } from 'lucide-react';
+import { useAdminRooms } from '@/hooks/use-admin';
 
-const stats = [
+const FALLBACK_STATS = [
   { label: 'Total Rooms', value: '48', icon: School, color: 'blue' },
   { label: 'Available Now', value: '12', icon: CheckCircle2, color: 'green' },
   { label: 'In Maintenance', value: '3', icon: Wrench, color: 'orange' },
 ];
 
-const rooms = [
+const FALLBACK_ROOMS = [
   {
     id: 'rm1',
     name: 'Room 101',
@@ -166,6 +168,20 @@ function getTypeLabel(type: string) {
 }
 
 export default function AdminRoomsPage() {
+  const { data: apiRooms, isLoading } = useAdminRooms();
+  const rooms = apiRooms.length > 0
+    ? apiRooms.map((r) => ({ ...r, building: '' }))
+    : FALLBACK_ROOMS;
+  const stats = FALLBACK_STATS;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

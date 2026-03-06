@@ -4,14 +4,47 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Users, Plus, BookOpen, TrendingUp, Calendar } from 'lucide-react';
+import { Users, Plus, BookOpen, TrendingUp, Calendar, Loader2 } from 'lucide-react';
+import { useHomeschool } from '@/hooks/use-homeschool';
+
+const FALLBACK_CHILDREN = [
+  { id: 1, name: 'Emma', age: 8, grade: 'Year 3', subjects: 4, progress: 78 },
+  { id: 2, name: 'Liam', age: 11, grade: 'Year 6', subjects: 6, progress: 85 },
+  { id: 3, name: 'Sophie', age: 6, grade: 'Year 1', subjects: 3, progress: 92 },
+];
+
+function computeAge(dateOfBirth: string): number {
+  const today = new Date();
+  const dob = new Date(dateOfBirth);
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+}
 
 export default function HomeschoolChildrenPage() {
-  const children = [
-    { id: 1, name: 'Emma', age: 8, grade: 'Year 3', subjects: 4, progress: 78 },
-    { id: 2, name: 'Liam', age: 11, grade: 'Year 6', subjects: 6, progress: 85 },
-    { id: 3, name: 'Sophie', age: 6, grade: 'Year 1', subjects: 3, progress: 92 },
-  ];
+  const { family, isLoading } = useHomeschool();
+
+  const children = family?.children
+    ? family.children.map((c) => ({
+        id: c.id,
+        name: c.name,
+        age: computeAge(c.dateOfBirth),
+        grade: c.currentYearLevel,
+        subjects: c.subjectProgress?.length || c.interests?.length || 0,
+        progress: c.subjectProgress?.length
+          ? Math.round(c.subjectProgress.reduce((sum, sp) => sum + (sp.completedCodes.length / Math.max(sp.curriculumCodes.length, 1)) * 100, 0) / c.subjectProgress.length)
+          : 0,
+      }))
+    : FALLBACK_CHILDREN;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

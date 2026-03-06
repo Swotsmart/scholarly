@@ -15,10 +15,10 @@ import {
   RefreshCw,
   Globe,
   BookOpen,
-  Shield,
+  Shield
 } from 'lucide-react';
 
-const frameworks = [
+const FALLBACK_FRAMEWORKS = [
   {
     name: 'ACARA',
     fullName: 'Australian Curriculum',
@@ -62,6 +62,9 @@ const frameworks = [
 ];
 
 export default function StandardsPage() {
+  const frameworks = FALLBACK_FRAMEWORKS;
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

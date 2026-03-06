@@ -262,6 +262,12 @@ resource "azurerm_container_app" "scholarly" {
         }
       }
 
+      # Voice service configuration
+      env {
+        name  = "VOICE_SERVICE_URL"
+        value = var.voice_service_url
+      }
+
       env {
         name  = "EMAIL_FROM"
         value = var.email_from

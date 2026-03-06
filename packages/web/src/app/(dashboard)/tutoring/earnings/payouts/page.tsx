@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DollarSign,
   Download,
@@ -12,8 +13,9 @@ import {
   Building,
   Calendar,
 } from 'lucide-react';
+import { useTutoring } from '@/hooks/use-tutoring';
 
-const payouts = [
+const FALLBACK_PAYOUTS = [
   { id: 'PAY-2024-012', amount: 2850.00, date: 'Feb 1, 2026', status: 'completed', method: 'Bank Transfer' },
   { id: 'PAY-2024-011', amount: 3120.00, date: 'Jan 15, 2026', status: 'completed', method: 'Bank Transfer' },
   { id: 'PAY-2024-010', amount: 2680.00, date: 'Jan 1, 2026', status: 'completed', method: 'Bank Transfer' },
@@ -22,6 +24,38 @@ const payouts = [
 ];
 
 export default function PayoutsPage() {
+  const { data, isLoading } = useTutoring(undefined, ['bookings']);
+
+  // Progressive enhancement: no dedicated payouts API yet, using fallback data
+  // Derive pending session count from API when available
+  const pendingSessionCount = data?.completedBookings.length ?? 12;
+  const payouts = FALLBACK_PAYOUTS;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <CreditCard className="h-8 w-8" />
+            Payouts
+          </h1>
+          <p className="text-muted-foreground">Manage your payout history and settings</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-28 rounded-lg" />
+          ))}
+        </div>
+        <Skeleton className="h-32 rounded-lg" />
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-20 rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -49,7 +83,7 @@ export default function PayoutsPage() {
               <span className="text-sm text-muted-foreground">Available Balance</span>
             </div>
             <div className="mt-2 text-2xl font-bold">$892.50</div>
-            <p className="text-xs text-muted-foreground mt-1">12 sessions pending</p>
+            <p className="text-xs text-muted-foreground mt-1">{pendingSessionCount} sessions pending</p>
           </CardContent>
         </Card>
         <Card>

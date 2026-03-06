@@ -14,23 +14,27 @@ import {
   Download,
   Upload,
   School,
-  BookOpen,
+  BookOpen
 } from 'lucide-react';
 
-const syncStats = {
+const FALLBACK_SYNC_STATS = {
   users: { synced: 2847, total: 2850, errors: 3 },
   classes: { synced: 156, total: 156, errors: 0 },
   enrollments: { synced: 8945, total: 8950, errors: 5 },
   courses: { synced: 42, total: 42, errors: 0 },
 };
 
-const recentSyncs = [
+const FALLBACK_RECENT_SYNCS = [
   { type: 'Full Sync', status: 'completed', time: '2 hours ago', records: 12500 },
   { type: 'Delta Sync', status: 'completed', time: '30 minutes ago', records: 45 },
   { type: 'Manual Import', status: 'completed', time: '1 day ago', records: 2300 },
 ];
 
 export default function OneRosterPage() {
+  const syncStats = FALLBACK_SYNC_STATS;
+  const recentSyncs = FALLBACK_RECENT_SYNCS;
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

@@ -12,10 +12,10 @@ import {
   ExternalLink,
   Settings,
   Shield,
-  FileText,
+  FileText
 } from 'lucide-react';
 
-const issuedBadges = [
+const FALLBACK_ISSUED_BADGES = [
   {
     name: '7-Day Learning Streak',
     category: 'Engagement',
@@ -40,6 +40,9 @@ const issuedBadges = [
 ];
 
 export default function BadgesPage() {
+  const issuedBadges = FALLBACK_ISSUED_BADGES;
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

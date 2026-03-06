@@ -34,7 +34,9 @@ import {
   PenLine,
   ChevronDown,
   ChevronUp,
+  Loader2,
 } from 'lucide-react';
+import { useEduscrum } from '@/hooks/use-advanced-learning';
 
 // Kanban columns
 const KANBAN_COLUMNS = [
@@ -44,7 +46,7 @@ const KANBAN_COLUMNS = [
 ];
 
 // Mock learning tasks
-const MOCK_TASKS = [
+const FALLBACK_TASKS = [
   {
     id: 'task_001',
     title: 'Research renewable energy sources',
@@ -118,7 +120,7 @@ const MOCK_TASKS = [
 ];
 
 // Current sprint data
-const CURRENT_SPRINT = {
+const FALLBACK_SPRINT = {
   name: 'Sprint 3: Build Phase',
   goal: 'Complete prototype development and initial testing',
   startDate: '2025-03-11',
@@ -131,7 +133,7 @@ const CURRENT_SPRINT = {
 };
 
 // Burndown data
-const BURNDOWN_DATA = [
+const FALLBACK_BURNDOWN = [
   { day: 'Day 1', ideal: 26, actual: 26 },
   { day: 'Day 2', ideal: 24, actual: 25 },
   { day: 'Day 3', ideal: 22, actual: 23 },
@@ -156,7 +158,7 @@ const STANDUP_PROMPTS = [
 ];
 
 // Team members
-const TEAM_MEMBERS = [
+const FALLBACK_TEAM_MEMBERS = [
   { id: 'tm_001', name: 'Emma T.', role: 'Scrum Master', avatar: 'ET', tasksCompleted: 2, pointsCompleted: 8 },
   { id: 'tm_002', name: 'Liam K.', role: 'Developer', avatar: 'LK', tasksCompleted: 1, pointsCompleted: 5 },
   { id: 'tm_003', name: 'Sophie M.', role: 'Developer', avatar: 'SM', tasksCompleted: 0, pointsCompleted: 0 },
@@ -164,7 +166,7 @@ const TEAM_MEMBERS = [
 ];
 
 // AI Coach suggestions
-const AI_SUGGESTIONS = [
+const FALLBACK_AI_SUGGESTIONS = [
   {
     type: 'warning',
     title: 'Sprint at Risk',
@@ -189,7 +191,7 @@ const AI_SUGGESTIONS = [
 ];
 
 // Retrospective items
-const RETRO_ITEMS = {
+const FALLBACK_RETRO_ITEMS = {
   wentWell: [
     { id: 'ww_001', text: 'Great collaboration during pair programming sessions', votes: 3 },
     { id: 'ww_002', text: 'Daily standups kept everyone aligned', votes: 4 },
@@ -207,15 +209,15 @@ const RETRO_ITEMS = {
   ],
 };
 
-const pageStats = [
+const FALLBACK_PAGE_STATS = [
   { label: 'Sprint Progress', value: '42%', icon: TrendingUp, color: 'blue' },
   { label: 'Story Points', value: '11/26', icon: Zap, color: 'emerald' },
   { label: 'Days Remaining', value: '6', icon: Timer, color: 'amber' },
   { label: 'Team Velocity', value: '18', icon: Target, color: 'violet' },
 ];
 
-function getTasksByStatus(status: string) {
-  return MOCK_TASKS.filter(task => task.status === status);
+function getTasksByStatus(tasks: typeof FALLBACK_TASKS, status: string) {
+  return tasks.filter(task => task.status === status);
 }
 
 function getLabelColor(label: string) {
@@ -234,6 +236,23 @@ function getLabelColor(label: string) {
 
 export default function EduscrumPage() {
   const [standupResponses, setStandupResponses] = useState<Record<string, string>>({});
+  const { eduscrum: hookData, isLoading } = useEduscrum();
+
+  const MOCK_TASKS = hookData?.tasks?.length ? hookData.tasks : FALLBACK_TASKS;
+  const CURRENT_SPRINT = hookData?.sprint ?? FALLBACK_SPRINT;
+  const BURNDOWN_DATA = hookData?.burndown?.length ? hookData.burndown : FALLBACK_BURNDOWN;
+  const TEAM_MEMBERS = hookData?.teamMembers?.length ? hookData.teamMembers : FALLBACK_TEAM_MEMBERS;
+  const AI_SUGGESTIONS = hookData?.aiSuggestions?.length ? hookData.aiSuggestions : FALLBACK_AI_SUGGESTIONS;
+  const RETRO_ITEMS = hookData?.retroItems ?? FALLBACK_RETRO_ITEMS;
+  const pageStats = FALLBACK_PAGE_STATS;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -312,7 +331,7 @@ export default function EduscrumPage() {
         <TabsContent value="board" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             {KANBAN_COLUMNS.map((column) => {
-              const tasks = getTasksByStatus(column.id);
+              const tasks = getTasksByStatus(MOCK_TASKS, column.id);
               const totalPoints = tasks.reduce((sum, task) => sum + task.estimate, 0);
 
               return (
@@ -637,15 +656,16 @@ export default function EduscrumPage() {
             <CardContent className="space-y-4">
               {AI_SUGGESTIONS.map((suggestion, index) => {
                 const Icon = suggestion.icon;
+                const color = suggestion.color ?? 'blue';
                 return (
                   <div
                     key={index}
-                    className={`rounded-lg border p-4 space-y-2 bg-${suggestion.color}-500/5 border-${suggestion.color}-500/20`}
+                    className={`rounded-lg border p-4 space-y-2 bg-${color}-500/5 border-${color}-500/20`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
-                        <div className={`rounded-lg bg-${suggestion.color}-500/10 p-2`}>
-                          <Icon className={`h-4 w-4 text-${suggestion.color}-500`} />
+                        <div className={`rounded-lg bg-${color}-500/10 p-2`}>
+                          {Icon ? <Icon className={`h-4 w-4 text-${color}-500`} /> : <Sparkles className={`h-4 w-4 text-${color}-500`} />}
                         </div>
                         <h4 className="font-medium text-sm">{suggestion.title}</h4>
                       </div>

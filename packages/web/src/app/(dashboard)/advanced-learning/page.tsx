@@ -19,16 +19,18 @@ import {
   Briefcase,
   Award,
   FileText,
+  Loader2,
 } from 'lucide-react';
+import { useAdvancedLearningHub } from '@/hooks/use-advanced-learning';
 
-const stats = [
+const FALLBACK_STATS = [
   { label: 'Active Sessions', value: '12', icon: Video, color: 'blue' },
   { label: 'Completed Reviews', value: '47', icon: CheckCircle2, color: 'emerald' },
   { label: 'Industry Placements', value: '3', icon: Building2, color: 'violet' },
   { label: 'PD Courses Enrolled', value: '5', icon: GraduationCap, color: 'amber' },
 ];
 
-const modules = [
+const FALLBACK_MODULES = [
   {
     title: 'Video Coaching',
     description: 'Record, review, and receive AI-powered feedback on classroom teaching practice through Edthena-style lesson analysis.',
@@ -101,7 +103,7 @@ const modules = [
   },
 ];
 
-const recentActivity = [
+const FALLBACK_RECENT_ACTIVITY = [
   {
     action: 'New AI insight generated for "Year 8 Algebra Introduction" recording',
     module: 'Video Coaching',
@@ -147,6 +149,34 @@ const recentActivity = [
 ];
 
 export default function AdvancedLearningPage() {
+  const { hub: hookData, isLoading } = useAdvancedLearningHub();
+
+  const stats = hookData?.stats
+    ? [
+        { label: 'Active Sessions', value: String(hookData.stats.activeSessions), icon: Video, color: 'blue' },
+        { label: 'Completed Reviews', value: String(hookData.stats.completedReviews), icon: CheckCircle2, color: 'emerald' },
+        { label: 'Industry Placements', value: String(hookData.stats.industryPlacements), icon: Building2, color: 'violet' },
+        { label: 'PD Courses Enrolled', value: String(hookData.stats.pdCoursesEnrolled), icon: GraduationCap, color: 'amber' },
+      ]
+    : FALLBACK_STATS;
+  const modules = FALLBACK_MODULES;
+  const recentActivity = hookData?.recentActivity?.length
+    ? hookData.recentActivity.map((a, i) => ({
+        action: a.action,
+        module: a.module,
+        time: a.time,
+        icon: [Video, MessageSquare, Briefcase, Award, FolderKanban, FileText, Star][i % 7],
+      }))
+    : FALLBACK_RECENT_ACTIVITY;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}

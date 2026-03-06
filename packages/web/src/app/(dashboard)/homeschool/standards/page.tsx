@@ -1,39 +1,64 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, CheckCircle, AlertTriangle, Info } from 'lucide-react';
+import { Shield, CheckCircle, AlertTriangle, Info, Loader2 } from 'lucide-react';
+import { useHomeschool } from '@/hooks/use-homeschool';
+
+const FALLBACK_STANDARDS = [
+  { area: 'English', coverage: 85, aligned: 12, total: 15, status: 'good' },
+  { area: 'Mathematics', coverage: 92, aligned: 18, total: 20, status: 'excellent' },
+  { area: 'Science', coverage: 70, aligned: 8, total: 12, status: 'attention' },
+  { area: 'HASS', coverage: 78, aligned: 7, total: 9, status: 'good' },
+];
+
+function deriveStandardStatus(coverage: number): string {
+  if (coverage >= 90) return 'excellent';
+  if (coverage >= 75) return 'good';
+  return 'attention';
+}
 
 export default function HomeschoolStandardsPage() {
-  const standards = [
-    {
-      area: 'English',
-      coverage: 85,
-      aligned: 12,
-      total: 15,
-      status: 'good'
-    },
-    {
-      area: 'Mathematics',
-      coverage: 92,
-      aligned: 18,
-      total: 20,
-      status: 'excellent'
-    },
-    {
-      area: 'Science',
-      coverage: 70,
-      aligned: 8,
-      total: 12,
-      status: 'attention'
-    },
-    {
-      area: 'HASS',
-      coverage: 78,
-      aligned: 7,
-      total: 9,
-      status: 'good'
-    },
-  ];
+  const { family, isLoading } = useHomeschool();
+
+  // Derive standards coverage per subject across all children
+  const standards = family?.children?.length
+    ? (() => {
+        const subjectMap = new Map<string, { completed: number; total: number }>();
+        for (const child of family.children) {
+          for (const sp of child.subjectProgress ?? []) {
+            const existing = subjectMap.get(sp.subject);
+            if (existing) {
+              existing.completed += sp.completedCodes.length;
+              existing.total += sp.curriculumCodes.length;
+            } else {
+              subjectMap.set(sp.subject, {
+                completed: sp.completedCodes.length,
+                total: sp.curriculumCodes.length,
+              });
+            }
+          }
+        }
+        if (subjectMap.size === 0) return FALLBACK_STANDARDS;
+        return Array.from(subjectMap.entries()).map(([area, { completed, total }]) => {
+          const coverage = total > 0 ? Math.round((completed / total) * 100) : 0;
+          return {
+            area,
+            coverage,
+            aligned: completed,
+            total,
+            status: deriveStandardStatus(coverage),
+          };
+        });
+      })()
+    : FALLBACK_STANDARDS;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -60,16 +85,28 @@ export default function HomeschoolStandardsPage() {
           <CardDescription>Your curriculum coverage across all learning areas</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4 mb-6">
-            <div className="text-4xl font-bold">81%</div>
-            <div className="text-sm text-muted-foreground">
-              <p>45 of 56 standards covered</p>
-              <p className="text-green-500">Meeting registration requirements</p>
-            </div>
-          </div>
-          <div className="w-full bg-muted rounded-full h-3">
-            <div className="bg-primary h-3 rounded-full" style={{ width: '81%' }} />
-          </div>
+          {(() => {
+            const totalAligned = standards.reduce((s, st) => s + st.aligned, 0);
+            const totalStandards = standards.reduce((s, st) => s + st.total, 0);
+            const overallPct = totalStandards > 0 ? Math.round((totalAligned / totalStandards) * 100) : 0;
+            const complianceScore = family?.compliance?.complianceScore ?? overallPct;
+            return (
+              <>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="text-4xl font-bold">{complianceScore}%</div>
+                  <div className="text-sm text-muted-foreground">
+                    <p>{totalAligned} of {totalStandards} standards covered</p>
+                    <p className="text-green-500">
+                      {complianceScore >= 70 ? 'Meeting registration requirements' : 'Below compliance threshold'}
+                    </p>
+                  </div>
+                </div>
+                <div className="w-full bg-muted rounded-full h-3">
+                  <div className="bg-primary h-3 rounded-full" style={{ width: `${complianceScore}%` }} />
+                </div>
+              </>
+            );
+          })()}
         </CardContent>
       </Card>
 

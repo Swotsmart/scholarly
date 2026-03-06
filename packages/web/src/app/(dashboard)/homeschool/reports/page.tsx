@@ -2,15 +2,52 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Calendar, CheckCircle, Clock } from 'lucide-react';
+import { FileText, Download, Calendar, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { useHomeschool } from '@/hooks/use-homeschool';
+
+const FALLBACK_REPORTS = [
+  { id: 1, title: 'Term 1 Progress Report', date: '2026-03-15', status: 'completed', type: 'progress' },
+  { id: 2, title: 'Annual Learning Summary', date: '2025-12-20', status: 'completed', type: 'summary' },
+  { id: 3, title: 'Curriculum Compliance Report', date: '2026-01-10', status: 'completed', type: 'compliance' },
+  { id: 4, title: 'Term 2 Progress Report', date: '2026-06-15', status: 'pending', type: 'progress' },
+];
 
 export default function HomeschoolReportsPage() {
-  const reports = [
-    { id: 1, title: 'Term 1 Progress Report', date: '2026-03-15', status: 'completed', type: 'progress' },
-    { id: 2, title: 'Annual Learning Summary', date: '2025-12-20', status: 'completed', type: 'summary' },
-    { id: 3, title: 'Curriculum Compliance Report', date: '2026-01-10', status: 'completed', type: 'compliance' },
-    { id: 4, title: 'Term 2 Progress Report', date: '2026-06-15', status: 'pending', type: 'progress' },
-  ];
+  const { family, isLoading } = useHomeschool();
+
+  // Derive report data from family compliance + children when available
+  const reports = family
+    ? (() => {
+        const derived = [...FALLBACK_REPORTS];
+        // Update compliance report with real data if available
+        if (family.compliance) {
+          const complianceIdx = derived.findIndex((r) => r.type === 'compliance');
+          if (complianceIdx >= 0) {
+            derived[complianceIdx] = {
+              ...derived[complianceIdx],
+              date: family.compliance.lastReportSubmitted ?? derived[complianceIdx].date,
+              status: family.compliance.complianceScore >= 80 ? 'completed' : 'pending',
+            };
+          }
+        }
+        return derived;
+      })()
+    : FALLBACK_REPORTS;
+
+  // Derive child summary for display
+  const childSummary = family?.children?.map((c) => ({
+    name: c.name,
+    yearLevel: c.currentYearLevel,
+    subjectsCount: c.subjectProgress?.length ?? 0,
+  })) ?? null;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -32,7 +69,7 @@ export default function HomeschoolReportsPage() {
               <div className="h-12 w-12 mx-auto rounded-lg bg-blue-500/10 flex items-center justify-center mb-3">
                 <FileText className="h-6 w-6 text-blue-500" />
               </div>
-              <p className="text-2xl font-bold">4</p>
+              <p className="text-2xl font-bold">{reports.length}</p>
               <p className="text-sm text-muted-foreground">Total Reports</p>
             </div>
           </CardContent>
@@ -43,7 +80,7 @@ export default function HomeschoolReportsPage() {
               <div className="h-12 w-12 mx-auto rounded-lg bg-green-500/10 flex items-center justify-center mb-3">
                 <CheckCircle className="h-6 w-6 text-green-500" />
               </div>
-              <p className="text-2xl font-bold">3</p>
+              <p className="text-2xl font-bold">{reports.filter((r) => r.status === 'completed').length}</p>
               <p className="text-sm text-muted-foreground">Completed</p>
             </div>
           </CardContent>
@@ -54,12 +91,34 @@ export default function HomeschoolReportsPage() {
               <div className="h-12 w-12 mx-auto rounded-lg bg-orange-500/10 flex items-center justify-center mb-3">
                 <Clock className="h-6 w-6 text-orange-500" />
               </div>
-              <p className="text-2xl font-bold">1</p>
+              <p className="text-2xl font-bold">{reports.filter((r) => r.status === 'pending').length}</p>
               <p className="text-sm text-muted-foreground">Pending</p>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {childSummary && childSummary.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Learner Summary</CardTitle>
+            <CardDescription>Children included in reports</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-2">
+              {childSummary.map((child) => (
+                <div key={child.name} className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <p className="font-medium">{child.name}</p>
+                    <p className="text-sm text-muted-foreground">{child.yearLevel}</p>
+                  </div>
+                  <span className="text-sm text-muted-foreground">{child.subjectsCount} subjects</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

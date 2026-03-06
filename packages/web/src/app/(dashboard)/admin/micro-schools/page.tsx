@@ -16,10 +16,10 @@ import {
   Clock,
   Calendar,
   TrendingUp,
-  GraduationCap,
+  GraduationCap
 } from 'lucide-react';
 
-const microSchools = [
+const FALLBACK_MICRO_SCHOOLS = [
   {
     id: 1,
     name: 'Montessori Learning Pod - Sydney',
@@ -67,6 +67,9 @@ const microSchools = [
 ];
 
 export default function MicroSchoolsPage() {
+  const microSchools = FALLBACK_MICRO_SCHOOLS;
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
