@@ -13,10 +13,8 @@ import {
   Trash2,
   Copy,
   ExternalLink,
-  RefreshCw,
-  Loader2,
+  RefreshCw
 } from 'lucide-react';
-import { useAdmin } from '@/hooks/use-admin';
 
 const FALLBACK_LTI_CONNECTIONS = [
   {
@@ -49,16 +47,8 @@ const FALLBACK_LTI_CONNECTIONS = [
 ];
 
 export default function LTIPage() {
-  const { isLoading } = useAdmin();
   const ltiConnections = FALLBACK_LTI_CONNECTIONS;
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

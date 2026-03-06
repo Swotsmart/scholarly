@@ -644,7 +644,7 @@ export default function PBLPage() {
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Contributions</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {member.contributions.map((contrib: { type: string; count: number }) => (
+                      {(member.contributions ?? []).map((contrib: { type: string; count: number }) => (
                         <Badge key={contrib.type} variant="secondary" className="text-xs">
                           {contrib.type}: {contrib.count}
                         </Badge>
@@ -670,8 +670,8 @@ export default function PBLPage() {
             <CardContent>
               <div className="space-y-3">
                 {TEAM_MEMBERS.map((member) => {
-                  const totalContribs = member.contributions.reduce((sum: number, c: { count: number }) => sum + c.count, 0);
-                  const maxContribs = Math.max(...TEAM_MEMBERS.flatMap((m: { contributions: { count: number }[] }) => m.contributions.map((c: { count: number }) => c.count))) * 3;
+                  const totalContribs = (member.contributions ?? []).reduce((sum: number, c: { count: number }) => sum + c.count, 0);
+                  const maxContribs = Math.max(...TEAM_MEMBERS.flatMap((m) => (m.contributions ?? []).map((c: { count: number }) => c.count)), 1) * 3;
                   return (
                     <div key={member.id} className="flex items-center gap-4">
                       <div className="w-32 text-sm font-medium truncate">{member.name}</div>
