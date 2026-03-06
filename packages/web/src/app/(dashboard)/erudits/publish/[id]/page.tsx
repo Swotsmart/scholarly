@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import NextImage from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -277,9 +278,9 @@ export default function ManuscriptEditorPage() {
                         key={cover.id}
                         className={`rounded-lg border p-4 ${cover.isSelected ? 'ring-2 ring-primary' : ''}`}
                       >
-                        <div className="aspect-[2/3] rounded bg-muted flex items-center justify-center mb-3">
+                        <div className="relative aspect-[2/3] rounded bg-muted flex items-center justify-center mb-3 overflow-hidden">
                           {cover.thumbnailUrl ? (
-                            <img src={cover.thumbnailUrl} alt="Cover" className="h-full w-full object-cover rounded" />
+                            <NextImage src={cover.thumbnailUrl} alt="Cover" fill className="object-cover rounded" />
                           ) : (
                             <Image className="h-10 w-10 text-muted-foreground/30" />
                           )}
