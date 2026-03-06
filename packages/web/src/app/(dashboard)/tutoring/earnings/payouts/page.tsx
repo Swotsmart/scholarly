@@ -12,7 +12,6 @@ import {
   Clock,
   Building,
   Calendar,
-  Loader2,
 } from 'lucide-react';
 import { useTutoring } from '@/hooks/use-tutoring';
 

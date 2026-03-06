@@ -64,29 +64,15 @@ export function useMicroSchools(config?: { state?: string }) {
     setIsLoading(true);
     setError(null);
 
-    try {
-      // micro-schools-api uses static exports, wrap in promises for consistency
-      const results = await Promise.allSettled([
-        Promise.resolve(stateFilter ? allSchools.filter((s) => s.state === stateFilter) : allSchools),
-        Promise.resolve(allApplications),
-      ]);
+    const schools = stateFilter ? allSchools.filter((s) => s.state === stateFilter) : allSchools;
+    const apps = allApplications;
 
-      const schools = results[0].status === 'fulfilled' ? results[0].value : [];
-      const apps = results[1].status === 'fulfilled' ? results[1].value : [];
-
-      const errors = results
-        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-        .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)));
-      if (errors.length > 0) setError(errors.join('; '));
-
-      setData({
-        schools,
-        applications: apps,
-        enrollmentStats: computeEnrollmentStats(schools),
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    setData({
+      schools,
+      applications: apps,
+      enrollmentStats: computeEnrollmentStats(schools),
+    });
+    setIsLoading(false);
   }, [stateFilter]);
 
   useEffect(() => {
