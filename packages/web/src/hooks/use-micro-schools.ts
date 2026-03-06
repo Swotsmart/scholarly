@@ -1,10 +1,9 @@
 /**
  * useMicroSchools Hook — Production
  *
- * Loads core micro-schools data from in-memory static exports in
- * micro-schools-api.ts. Data is filtered and assigned synchronously.
+ * Loads core micro-schools data from static in-memory exports.
  *
- * Data loaded:
+ * Data loaded (from static exports in micro-schools-api.ts):
  *   microSchools   — all registered micro-schools with details
  *   applications   — user's micro-school applications
  *   enrollment stats are derived from the schools list
@@ -61,16 +60,21 @@ export function useMicroSchools(config?: { state?: string }) {
   const fetchData = useCallback(() => {
     setIsLoading(true);
 
-    const schools = stateFilter ? allSchools.filter((s) => s.state === stateFilter) : allSchools;
-    const apps = allApplications;
+    try {
+      const schools = stateFilter
+        ? allSchools.filter((s) => s.state === stateFilter)
+        : allSchools;
 
-    setData({
-      schools,
-      applications: apps,
-      enrollmentStats: computeEnrollmentStats(schools),
-    });
-
-    setIsLoading(false);
+      setData({
+        schools,
+        applications: allApplications,
+        enrollmentStats: computeEnrollmentStats(schools),
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsLoading(false);
+    }
   }, [stateFilter]);
 
   useEffect(() => {
