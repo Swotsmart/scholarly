@@ -131,6 +131,10 @@ export default function VoiceIntelligencePage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatedText, setTranslatedText] = useState<string | null>(null);
 
+  // Voice library filters
+  const [voiceLanguageFilter, setVoiceLanguageFilter] = useState('all');
+  const [voiceGenderFilter, setVoiceGenderFilter] = useState('all');
+
   // Pronunciation
   const [pronText, setPronText] = useState('The quick brown fox jumps over the lazy dog.');
   const [pronLanguage, setPronLanguage] = useState('en');
@@ -721,6 +725,35 @@ const audioBlob = await response.blob();`;
               </Button>
             </CardHeader>
             <CardContent>
+              {/* Language & Gender Filters */}
+              {voices.length > 0 && (
+                <div className="flex flex-wrap gap-3 mb-4">
+                  <Select value={voiceLanguageFilter} onValueChange={setVoiceLanguageFilter}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue placeholder="Language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Languages</SelectItem>
+                      {[...new Set(voices.map(v => v.category))].sort().map(lang => (
+                        <SelectItem key={lang} value={lang}>
+                          {TRANSLATION_LANGUAGES.find(l => l.code === lang)?.label || lang} ({voices.filter(v => v.category === lang).length})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={voiceGenderFilter} onValueChange={setVoiceGenderFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Genders</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="neutral">Neutral</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               {loadingVoices ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -732,7 +765,10 @@ const audioBlob = await response.blob();`;
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {voices.map((voice) => (
+                  {voices
+                    .filter(v => voiceLanguageFilter === 'all' || v.category === voiceLanguageFilter)
+                    .filter(v => voiceGenderFilter === 'all' || v.labels.gender === voiceGenderFilter)
+                    .map((voice) => (
                     <Card
                       key={voice.voiceId}
                       className={`cursor-pointer transition-colors hover:bg-muted/50 ${
