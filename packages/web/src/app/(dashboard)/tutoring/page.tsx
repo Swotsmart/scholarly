@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { KycGate } from '@/components/verification/kyc-gate';
 import {
   GraduationCap,
   Users,
@@ -545,6 +546,7 @@ export default function TutoringPage() {
   };
 
   return (
+    <KycGate feature="Tutor profile and booking" requireWwcc={true}>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -747,5 +749,6 @@ export default function TutoringPage() {
         />
       )}
     </div>
+    </KycGate>
   );
 }

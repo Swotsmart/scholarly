@@ -71,6 +71,7 @@ import {
 } from '@/hooks/use-marketplace';
 import { marketplaceApi } from '@/lib/marketplace-api';
 import { marketplaceTelemetry } from '@/lib/marketplace-telemetry';
+import { KycGate } from '@/components/verification/kyc-gate';
 import type { ApiKeyCreateResult } from '@/types/marketplace';
 
 // Webhook events reference
@@ -526,6 +527,7 @@ console.log(user);`}
 
         {/* API Keys Tab */}
         <TabsContent value="api-keys" className="space-y-6">
+          <KycGate feature="API key management">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -632,10 +634,12 @@ console.log(user);`}
               </div>
             </CardContent>
           </Card>
+          </KycGate>
         </TabsContent>
 
         {/* Webhooks Tab */}
         <TabsContent value="webhooks" className="space-y-6">
+          <KycGate feature="Webhook configuration">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -737,6 +741,7 @@ console.log(user);`}
               </div>
             </CardContent>
           </Card>
+          </KycGate>
         </TabsContent>
 
         {/* Analytics Tab */}
@@ -837,6 +842,7 @@ console.log(user);`}
 
         {/* Payouts Tab */}
         <TabsContent value="payouts" className="space-y-6">
+          <KycGate feature="Payouts and revenue management">
           {/* Payout Summary */}
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
@@ -972,6 +978,7 @@ console.log(user);`}
               </div>
             </CardContent>
           </Card>
+          </KycGate>
         </TabsContent>
       </Tabs>
 

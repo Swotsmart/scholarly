@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { KycGate } from '@/components/verification/kyc-gate';
 import {
   Search,
   MapPin,
@@ -230,6 +231,7 @@ export default function MicroSchoolsPage() {
   const totalTeachers = microSchools.reduce((sum, s) => sum + s.teacherCount, 0);
 
   return (
+    <KycGate feature="Micro-school management">
     <div className="space-y-6">
       <PageHeader
         title="Micro-School Dashboard"
@@ -972,5 +974,6 @@ export default function MicroSchoolsPage() {
         </Card>
       )}
     </div>
+    </KycGate>
   );
 }

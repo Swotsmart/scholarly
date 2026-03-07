@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth-store';
@@ -41,6 +41,9 @@ import {
   School,
   ShieldCheck,
   Info,
+  Code2,
+  Home,
+  Globe,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -77,6 +80,30 @@ const ROLES = [
     icon: Briefcase,
     bgColor: 'bg-amber-500/10',
     textColor: 'text-amber-500',
+  },
+  {
+    id: 'developer',
+    label: 'Developer',
+    description: 'Build apps and integrations on the Scholarly platform',
+    icon: Code2,
+    bgColor: 'bg-cyan-500/10',
+    textColor: 'text-cyan-500',
+  },
+  {
+    id: 'homeschool_admin',
+    label: 'Homeschool',
+    description: 'Manage your family\'s homeschool curriculum and progress',
+    icon: Home,
+    bgColor: 'bg-rose-500/10',
+    textColor: 'text-rose-500',
+  },
+  {
+    id: 'micro_school_admin',
+    label: 'Micro-School',
+    description: 'Run and manage a micro-school learning community',
+    icon: School,
+    bgColor: 'bg-teal-500/10',
+    textColor: 'text-teal-500',
   },
 ];
 
@@ -163,6 +190,15 @@ export default function RegisterPage() {
   // Tutor
   const [tutorSubjects, setTutorSubjects] = useState<string[]>([]);
   const [hourlyRate, setHourlyRate] = useState('');
+  // Developer
+  const [companyName, setCompanyName] = useState('');
+  const [website, setWebsite] = useState('');
+  // Homeschool
+  const [numberOfChildren, setNumberOfChildren] = useState('');
+  const [homeschoolYears, setHomeschoolYears] = useState<string[]>([]);
+  // Micro-School
+  const [microSchoolName, setMicroSchoolName] = useState('');
+  const [microSchoolCapacity, setMicroSchoolCapacity] = useState('');
 
   // Step 4: Verification
   const [verificationCode, setVerificationCode] = useState('');
@@ -170,6 +206,15 @@ export default function RegisterPage() {
 
   const { register } = useAuthStore();
   const router = useRouter();
+
+  // Pre-select role from query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const roleParam = params.get('role');
+    if (roleParam && ROLES.find(r => r.id === roleParam) && !role) {
+      setRole(roleParam);
+    }
+  }, []);
 
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
@@ -201,6 +246,15 @@ export default function RegisterPage() {
         if (role === 'tutor') {
           return tutorSubjects.length > 0;
         }
+        if (role === 'developer') {
+          return true; // Company details are optional
+        }
+        if (role === 'homeschool_admin') {
+          return numberOfChildren !== '';
+        }
+        if (role === 'micro_school_admin') {
+          return microSchoolName.trim() !== '';
+        }
         return true;
       case 4:
         return verificationCode.length === 6;
@@ -220,6 +274,8 @@ export default function RegisterPage() {
     teachingSubjects,
     teachingYears,
     tutorSubjects,
+    numberOfChildren,
+    microSchoolName,
     verificationCode,
   ]);
 
@@ -715,6 +771,143 @@ export default function RegisterPage() {
                             <Info className="h-3 w-3" />
                             <span>Identity verification (KYC) is also required for all tutors</span>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Developer Profile */}
+                {role === 'developer' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyName">Company / Organization (optional)</Label>
+                      <Input
+                        id="companyName"
+                        placeholder="Your company name"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        leftIcon={<Briefcase className="h-4 w-4" />}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="website">Website (optional)</Label>
+                      <Input
+                        id="website"
+                        placeholder="https://example.com"
+                        value={website}
+                        onChange={(e) => setWebsite(e.target.value)}
+                        leftIcon={<Globe className="h-4 w-4" />}
+                      />
+                    </div>
+
+                    {/* KYC Notice for Developers */}
+                    <div className="rounded-lg border border-cyan-200 bg-cyan-50 dark:bg-cyan-900/20 dark:border-cyan-900/30 p-4">
+                      <div className="flex items-start gap-3">
+                        <ShieldCheck className="h-5 w-5 text-cyan-600 mt-0.5" />
+                        <div>
+                          <h4 className="font-medium text-sm text-cyan-800 dark:text-cyan-400">
+                            Identity Verification Required
+                          </h4>
+                          <p className="text-sm text-cyan-700 dark:text-cyan-400/80 mt-1">
+                            To publish apps and access API keys, identity verification (KYC) is required.
+                            You can complete this after registration.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Homeschool Profile */}
+                {role === 'homeschool_admin' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="numberOfChildren">Number of Children</Label>
+                      <Input
+                        id="numberOfChildren"
+                        type="number"
+                        placeholder="e.g., 3"
+                        value={numberOfChildren}
+                        onChange={(e) => setNumberOfChildren(e.target.value)}
+                        leftIcon={<Users className="h-4 w-4" />}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Year Levels</Label>
+                      <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                        {YEAR_LEVELS.map((year) => (
+                          <button
+                            key={year}
+                            type="button"
+                            onClick={() => toggleYear(year, homeschoolYears, setHomeschoolYears)}
+                            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                              homeschoolYears.includes(year)
+                                ? 'bg-primary text-primary-foreground border-primary'
+                                : 'border-muted hover:border-primary/50'
+                            }`}
+                          >
+                            {year}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* KYC Notice */}
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-900/30 p-4">
+                      <div className="flex items-start gap-3">
+                        <ShieldCheck className="h-5 w-5 text-rose-600 mt-0.5" />
+                        <div>
+                          <h4 className="font-medium text-sm text-rose-800 dark:text-rose-400">
+                            Identity Verification Required
+                          </h4>
+                          <p className="text-sm text-rose-700 dark:text-rose-400/80 mt-1">
+                            To access curriculum management and student records, identity verification (KYC)
+                            is required. You can complete this after registration.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Micro-School Profile */}
+                {role === 'micro_school_admin' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="microSchoolName">Micro-School Name</Label>
+                      <Input
+                        id="microSchoolName"
+                        placeholder="Enter your micro-school name"
+                        value={microSchoolName}
+                        onChange={(e) => setMicroSchoolName(e.target.value)}
+                        leftIcon={<School className="h-4 w-4" />}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="microSchoolCapacity">Student Capacity (optional)</Label>
+                      <Input
+                        id="microSchoolCapacity"
+                        type="number"
+                        placeholder="e.g., 20"
+                        value={microSchoolCapacity}
+                        onChange={(e) => setMicroSchoolCapacity(e.target.value)}
+                        leftIcon={<Users className="h-4 w-4" />}
+                      />
+                    </div>
+
+                    {/* KYC + KYB Notice */}
+                    <div className="rounded-lg border border-teal-200 bg-teal-50 dark:bg-teal-900/20 dark:border-teal-900/30 p-4">
+                      <div className="flex items-start gap-3">
+                        <ShieldCheck className="h-5 w-5 text-teal-600 mt-0.5" />
+                        <div>
+                          <h4 className="font-medium text-sm text-teal-800 dark:text-teal-400">
+                            Identity &amp; Business Verification Required
+                          </h4>
+                          <p className="text-sm text-teal-700 dark:text-teal-400/80 mt-1">
+                            Running a micro-school requires identity verification (KYC) and business verification (ABN/KYB).
+                            You can complete these after registration.
+                          </p>
                         </div>
                       </div>
                     </div>

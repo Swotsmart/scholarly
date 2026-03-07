@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader, StatsCard } from '@/components/shared';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { KycGate } from '@/components/verification/kyc-gate';
 import {
   Users,
   BookOpen,
@@ -174,6 +175,7 @@ export default function HomeschoolPage() {
   );
 
   return (
+    <KycGate feature="Homeschool curriculum management">
     <div className="space-y-6">
       <PageHeader
         title="Homeschool Family Dashboard"
@@ -828,5 +830,6 @@ export default function HomeschoolPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </KycGate>
   );
 }

@@ -49,6 +49,7 @@ import {
   Sparkles,
   ArrowRight,
 } from 'lucide-react';
+import { KycGate } from '@/components/verification/kyc-gate';
 import { useAuthStore } from '@/stores/auth-store';
 import { useParent } from '@/hooks/use-parent';
 import type { FamilyChild } from '@/types/parent';
@@ -763,6 +764,7 @@ export default function ParentDashboardPage() {
   }
 
   return (
+    <KycGate feature="Parent dashboard access">
     <div className="space-y-6">
       {/* Header with Language Selector (fixed) */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -850,5 +852,6 @@ export default function ParentDashboardPage() {
         panelMap={panelMap}
       />
     </div>
+    </KycGate>
   );
 }
