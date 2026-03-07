@@ -50,22 +50,6 @@ import { toast } from '@/hooks/use-toast';
 // Role definitions with icons - using static Tailwind classes (dynamic classes don't work with Tailwind purge)
 const ROLES = [
   {
-    id: 'student',
-    label: 'Student',
-    description: 'Access courses, track progress, and submit assignments',
-    icon: BookOpen,
-    bgColor: 'bg-blue-500/10',
-    textColor: 'text-blue-500',
-  },
-  {
-    id: 'teacher',
-    label: 'Teacher',
-    description: 'Create courses, manage classes, and grade assignments',
-    icon: GraduationCap,
-    bgColor: 'bg-green-500/10',
-    textColor: 'text-green-500',
-  },
-  {
     id: 'parent',
     label: 'Parent',
     description: "Monitor your child's progress and communicate with teachers",

@@ -81,7 +81,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 
 /* Pricing Grid */
 .pricing-section { padding: var(--space-4xl) 0 var(--space-5xl); }
-.pricing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-xl); margin-top: var(--space-2xl); }
+.pricing-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-xl); margin-top: var(--space-2xl); }
 .pricing-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: var(--space-2xl); display: flex; flex-direction: column; transition: all var(--duration-normal) var(--ease-out); position: relative; }
 .pricing-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: transparent; }
 .pricing-card.featured { border: 2px solid var(--sapphire-500); }
@@ -115,6 +115,9 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
 .footer-links-row a { font-size: 0.8rem; color: rgba(255,255,255,0.5); transition: color var(--duration-fast); }
 .footer-links-row a:hover { color: white; }
 
+@media (max-width: 1280px) {
+  .pricing-grid { grid-template-columns: repeat(3, 1fr); }
+}
 @media (max-width: 1024px) {
   .pricing-grid { grid-template-columns: 1fr 1fr; }
 }
@@ -156,7 +159,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
         Pricing
       </div>
       <h1>A plan for every <em>learning community</em></h1>
-      <p class="inner-hero-desc">Whether you're a homeschool family, a tutoring professional, a micro-school founder, or a large institution — Scholarly scales with you.</p>
+      <p class="inner-hero-desc">Whether you're a homeschool family, a tutoring professional, a micro-school founder, an EdTech developer, or a large institution — Scholarly scales with you.</p>
     </div>
   </div>
 </section>
@@ -244,6 +247,27 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
         </div>
       </div>
 
+      <!-- Developers -->
+      <div class="pricing-card reveal reveal-delay-4">
+        <div class="pricing-card-icon" style="background: #e0f7fa;"><i data-lucide="code-2"></i></div>
+        <h3>Developers</h3>
+        <p class="pricing-best-for">Best for: EdTech builders, integrators</p>
+        <ul class="pricing-features">
+          <li><span class="check">&#10003;</span> REST + WebSocket APIs</li>
+          <li><span class="check">&#10003;</span> TypeScript SDK</li>
+          <li><span class="check">&#10003;</span> NATS event bus integration</li>
+          <li><span class="check">&#10003;</span> OAuth 2.0 authentication</li>
+          <li><span class="check">&#10003;</span> Webhook subscriptions</li>
+          <li><span class="check">&#10003;</span> App Marketplace publishing</li>
+          <li><span class="check">&#10003;</span> Revenue sharing (70/30)</li>
+          <li><span class="check">&#10003;</span> Developer analytics dashboard</li>
+        </ul>
+        <div class="pricing-card-actions">
+          <a href="/register?role=developer" class="btn btn-primary">Start Building <span class="btn-icon">→</span></a>
+          <a href="/developer" class="btn btn-outline">Browse Docs</a>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -269,7 +293,7 @@ button { border: none; background: none; cursor: pointer; font-family: inherit; 
         <a href="index.html">Home</a>
         <a href="index.html#ecosystem">All Services</a>
         <a href="developer-platform.html">Developers</a>
-        <a href="/marketplace/developer?tab=docs" target="_blank">Docs</a>
+        <a href="/developer">Docs</a>
       </div>
     </div>
   </div>

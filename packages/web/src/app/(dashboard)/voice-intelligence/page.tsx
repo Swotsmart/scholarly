@@ -82,6 +82,20 @@ const API_BASE_URL = normalizedApiUrl.endsWith('/api/v1')
 // Page Component
 // =============================================================================
 
+const TRANSLATION_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'fr', label: 'French' },
+  { code: 'de', label: 'German' },
+  { code: 'es', label: 'Spanish' },
+  { code: 'it', label: 'Italian' },
+  { code: 'pt', label: 'Portuguese' },
+  { code: 'ja', label: 'Japanese' },
+  { code: 'zh', label: 'Mandarin Chinese' },
+  { code: 'ko', label: 'Korean' },
+  { code: 'hi', label: 'Hindi' },
+  { code: 'ar', label: 'Arabic' },
+];
+
 const VALID_TABS = ['tts', 'voices', 'cloning', 'pronunciation', 'api'] as const;
 
 export default function VoiceIntelligencePage() {
@@ -109,6 +123,13 @@ export default function VoiceIntelligencePage() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Translation
+  const [translateEnabled, setTranslateEnabled] = useState(false);
+  const [sourceLanguage, setSourceLanguage] = useState('en');
+  const [targetLanguage, setTargetLanguage] = useState('fr');
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedText, setTranslatedText] = useState<string | null>(null);
 
   // Pronunciation
   const [pronText, setPronText] = useState('The quick brown fox jumps over the lazy dog.');
@@ -184,7 +205,9 @@ export default function VoiceIntelligencePage() {
           category: v.language,
           labels: {
             accent: v.accent,
-            description: `${v.region} ${v.accent}`,
+            description: v.region && v.accent && v.region.toLowerCase() !== v.accent.toLowerCase()
+              ? `${v.region} ${v.accent}`
+              : v.accent || v.region || '',
             age: v.ageRange,
             gender: v.gender,
             use_case: v.speakingStyles?.join(', '),
@@ -204,10 +227,59 @@ export default function VoiceIntelligencePage() {
     }
   };
 
+  const translateText = async (): Promise<string | null> => {
+    if (!ttsText.trim()) return null;
+    setIsTranslating(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/voice/translate`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: ttsText,
+          sourceLanguage,
+          targetLanguage,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const translated = data.data?.translatedText || null;
+        setTranslatedText(translated);
+        return translated;
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Translation failed');
+        return null;
+      }
+    } catch {
+      setError('Failed to translate text');
+      return null;
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const generateSpeech = async () => {
     if (!selectedVoice || !ttsText.trim()) return;
     setTtsLoading(true);
     setError(null);
+
+    // If translation is enabled, translate first
+    let textToSpeak = ttsText;
+    if (translateEnabled && sourceLanguage !== targetLanguage) {
+      const translated = await translateText();
+      if (!translated) {
+        setTtsLoading(false);
+        return;
+      }
+      textToSpeak = translated;
+    } else {
+      setTranslatedText(null);
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/voice/tts`, {
         method: 'POST',
@@ -216,7 +288,7 @@ export default function VoiceIntelligencePage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          text: ttsText,
+          text: textToSpeak,
           voiceId: selectedVoice.voiceId,
           voiceSettings: ttsSettings,
         }),
@@ -453,6 +525,57 @@ const audioBlob = await response.blob();`;
                   </p>
                 </div>
 
+                {/* Translation toggle */}
+                <div className="space-y-3 rounded-lg border p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Languages className="h-4 w-4 text-muted-foreground" />
+                      <Label className="cursor-pointer" htmlFor="translate-toggle">Translate before speaking</Label>
+                    </div>
+                    <input
+                      id="translate-toggle"
+                      type="checkbox"
+                      checked={translateEnabled}
+                      onChange={(e) => {
+                        setTranslateEnabled(e.target.checked);
+                        if (!e.target.checked) setTranslatedText(null);
+                      }}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                  </div>
+                  {translateEnabled && (
+                    <div className="flex items-center gap-2">
+                      <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TRANSLATION_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.code} value={lang.code}>{lang.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-sm text-muted-foreground shrink-0">to</span>
+                      <Select value={targetLanguage} onValueChange={setTargetLanguage}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TRANSLATION_LANGUAGES.filter(l => l.code !== sourceLanguage).map((lang) => (
+                            <SelectItem key={lang.code} value={lang.code}>{lang.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {translatedText && (
+                    <div className="rounded-md bg-muted/50 p-2">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Translated text:</p>
+                      <p className="text-sm">{translatedText}</p>
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-2">
                   <Label>Voice</Label>
                   <Select
@@ -494,11 +617,15 @@ const audioBlob = await response.blob();`;
 
                 <Button
                   onClick={generateSpeech}
-                  disabled={ttsLoading || !selectedVoice || !ttsText.trim()}
+                  disabled={ttsLoading || isTranslating || !selectedVoice || !ttsText.trim()}
                   className="w-full"
                 >
-                  {ttsLoading ? (
+                  {isTranslating ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Translating…</>
+                  ) : ttsLoading ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating…</>
+                  ) : translateEnabled && sourceLanguage !== targetLanguage ? (
+                    <><Languages className="mr-2 h-4 w-4" />Translate &amp; Generate</>
                   ) : (
                     <><Volume2 className="mr-2 h-4 w-4" />Generate Speech</>
                   )}

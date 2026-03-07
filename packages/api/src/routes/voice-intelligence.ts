@@ -141,6 +141,84 @@ const handleError = (res: Response, error: any, requestId: string): void => {
 };
 
 // ============================================================================
+// TEXT TRANSLATION ROUTE
+// ============================================================================
+
+const TranslateRequestSchema = z.object({
+  text: z.string().min(1).max(10000),
+  sourceLanguage: z.string().min(2).max(10),
+  targetLanguage: z.string().min(2).max(10),
+});
+
+/**
+ * POST /voice/translate
+ * Translate text from one language to another (for TTS pre-processing)
+ */
+router.post('/translate', authMiddleware, async (req: Request, res: Response) => {
+  const requestId = (req as any).id || 'unknown';
+  try {
+    const body = TranslateRequestSchema.parse(req.body);
+
+    // Use OpenAI for translation via direct API call
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (!openaiKey) {
+      res.status(503).json({
+        success: false,
+        error: 'Translation service not configured',
+        requestId,
+      });
+      return;
+    }
+
+    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a professional translator. Translate the following text from ${body.sourceLanguage} to ${body.targetLanguage}. Return ONLY the translated text, nothing else. Preserve the original tone and meaning. Do not add explanations or notes.`,
+          },
+          { role: 'user', content: body.text },
+        ],
+        temperature: 0.3,
+        max_tokens: 4096,
+      }),
+    });
+
+    if (!openaiRes.ok) {
+      const errData = await openaiRes.json().catch(() => ({}));
+      res.status(502).json({
+        success: false,
+        error: 'Translation failed',
+        details: (errData as any)?.error?.message,
+        requestId,
+      });
+      return;
+    }
+
+    const data = await openaiRes.json() as any;
+    const translatedText = data.choices?.[0]?.message?.content?.trim() || '';
+
+    res.json({
+      success: true,
+      data: {
+        translatedText,
+        sourceLanguage: body.sourceLanguage,
+        targetLanguage: body.targetLanguage,
+        originalText: body.text,
+      },
+    });
+  } catch (error) {
+    handleError(res, error, requestId);
+  }
+});
+
+// ============================================================================
 // TEXT-TO-SPEECH ROUTES
 // ============================================================================
 
