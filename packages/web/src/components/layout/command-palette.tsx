@@ -170,7 +170,7 @@ export function CommandPalette() {
   const { user } = useAuthStore();
   const store = useComposingMenuStore();
   const menuToast = useMenuToast();
-  const role = user?.role || 'learner';
+  const role = user?.role || user?.roles?.[0] || 'learner';
 
   // Keyboard shortcut: Cmd+K / Ctrl+K
   useEffect(() => {
@@ -226,7 +226,7 @@ export function CommandPalette() {
 
   // Filter items by role and query
   const filteredItems = useMemo(() => {
-    const userRole = user?.role || 'learner';
+    const userRole = user?.role || user?.roles?.[0] || 'learner';
     const roleFiltered = commandItems.filter(
       item => !item.role || item.role.includes(userRole)
     );
@@ -242,7 +242,7 @@ export function CommandPalette() {
         item.keywords.some(kw => kw.includes(q))
       )
       .slice(0, 10);
-  }, [query, user?.role]);
+  }, [query, user?.role, user?.roles]);
 
   // Group by section
   const groupedItems = useMemo(() => {

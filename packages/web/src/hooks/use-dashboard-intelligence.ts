@@ -282,7 +282,7 @@ export function useDashboardIntelligence(): DashboardIntelligence {
     const dayOfWeek = now.getDay();
     const tod = getTimeOfDay(hour);
     const dayType: DayType = (dayOfWeek === 0 || dayOfWeek === 6) ? 'weekend' : 'weekday';
-    const role = user?.role || 'learner';
+    const role = user?.role || user?.roles?.[0] || 'learner';
 
     // Build time context per role
     let focusHint: string;

@@ -48,7 +48,8 @@ const nextConfig = {
     return [
       // Landing site pages with clean URLs
       { source: '/site', destination: '/index.html' },
-      { source: '/site/ai-buddy', destination: '/ai-buddy.html' },
+      { source: '/site/ask-issy', destination: '/ask-issy.html' },
+      { source: '/site/ai-buddy', destination: '/ask-issy.html' }, // backwards compat
       { source: '/site/assessment-engine', destination: '/assessment-engine.html' },
       { source: '/site/content-marketplace', destination: '/content-marketplace.html' },
       { source: '/site/curriculum-intelligence', destination: '/curriculum-intelligence.html' },
@@ -64,6 +65,7 @@ const nextConfig = {
       { source: '/site/scheduling-engine', destination: '/scheduling-engine.html' },
       { source: '/site/token-economy', destination: '/token-economy.html' },
       { source: '/site/tutor-booking', destination: '/tutor-booking.html' },
+      { source: '/site/pricing', destination: '/pricing.html' },
     ];
   },
 };

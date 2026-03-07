@@ -213,6 +213,14 @@ const STREAM_DEFINITIONS: StreamDefinition[] = [
     retention: RetentionPolicy.Limits,
     storage: StorageType.File,
   },
+  {
+    name: 'SCHOLARLY_DEMO',
+    subjects: ['scholarly.demo.>'],
+    maxAge: nanos(180 * 24 * 60 * 60 * 1000), // 180 days
+    maxBytes: 5 * 1024 * 1024 * 1024, // 5 GB
+    retention: RetentionPolicy.Limits,
+    storage: StorageType.File,
+  },
 ];
 
 // ============================================================================

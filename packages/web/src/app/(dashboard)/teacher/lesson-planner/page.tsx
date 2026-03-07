@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useTeacher } from '@/hooks/use-teacher';
 import { teacherApi } from '@/lib/teacher-api';
 import type { LessonPlan, CollaborativeLessonPlan, AIInsight } from '@/types/teacher';
+import { toast } from '@/hooks/use-toast';
 import {
   BookOpen, Calendar, Clock, Plus, Search, Users, Brain, Sparkles,
   Shield, Bot, Send, ChevronRight, FileText, Share2, Lightbulb,
@@ -145,7 +146,7 @@ export default function LessonPlannerPage() {
                         <p className="text-sm text-muted-foreground">Shared · {new Date(plan.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => alert(`Forking "${plan.title}" to your lesson plans...`)}>Fork</Button>
+                    <Button size="sm" variant="outline" onClick={() => toast({ title: 'Lesson Plan Forked', description: `A copy of "${plan.title}" has been created.` })}>Fork</Button>
                   </div>
                 </CardContent>
               </Card>

@@ -8,6 +8,7 @@ import { useOnboardingStore } from '@/stores/onboarding-store';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { CommandPalette } from '@/components/layout/command-palette';
+import { DemoBanner } from '@/components/layout/demo-banner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { computeSeeds } from '@/services/seed-engine.service';
 import type { RoleId, DayOfWeek, TimeBlock } from '@/types/seed-engine-types';
@@ -49,16 +50,18 @@ export default function DashboardLayout({
 
   // Phase 1: Initialise composing menu for user role
   useEffect(() => {
-    if (user?.role) {
-      initRole(user.role);
+    const role = user?.role || user?.roles?.[0];
+    if (role) {
+      initRole(role);
     }
-  }, [user?.role, initRole]);
+  }, [user?.role, user?.roles, initRole]);
 
   // Phase 3: Run seed engine on session start (throttled to 30min intervals)
   useEffect(() => {
-    if (!user?.role) return;
+    const userRole = user?.role || user?.roles?.[0];
+    if (!userRole) return;
 
-    const role = user.role as RoleId;
+    const role = userRole as RoleId;
     const menu = roleMenus[role];
     const lastSeedTime = menu?.lastSeedRun
       ? new Date(menu.lastSeedRun).getTime()
@@ -119,14 +122,15 @@ export default function DashboardLayout({
       // Seed engine errors are non-critical; sidebar still works without seeds
       console.error('Seed engine error during computeSeeds:', error);
     }
-  }, [user?.role, roleMenus, addSeeds, onboarding]);
+  }, [user?.role, user?.roles, roleMenus, addSeeds, onboarding]);
 
   // Phase 4: Run decay cycle on session start
   useEffect(() => {
-    if (user?.role) {
-      runDecayCycle(user.role);
+    const role = user?.role || user?.roles?.[0];
+    if (role) {
+      runDecayCycle(role);
     }
-  }, [user?.role, runDecayCycle]);
+  }, [user?.role, user?.roles, runDecayCycle]);
 
   if (isLoading) {
     return (
@@ -153,6 +157,7 @@ export default function DashboardLayout({
 
       {/* Main content area */}
       <div className="flex flex-1 flex-col overflow-hidden">
+        <DemoBanner />
         {/* Header — breadcrumbs + command trigger + notifications + user menu */}
         <Header />
 

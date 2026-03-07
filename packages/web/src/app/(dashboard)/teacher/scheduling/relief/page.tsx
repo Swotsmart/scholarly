@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTeacher } from '@/hooks/use-teacher';
 import { teacherApi } from '@/lib/teacher-api';
 import type { TeacherAbsence, ReliefPrediction } from '@/types/teacher';
+import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Calendar, Users, AlertTriangle, TrendingUp, Brain, Shield, Plus } from 'lucide-react';
 
 export default function ReliefSchedulingPage() {
@@ -39,7 +40,7 @@ export default function ReliefSchedulingPage() {
           <Button variant="ghost" size="sm" asChild><Link href="/teacher/scheduling"><ArrowLeft className="mr-2 h-4 w-4" />Back</Link></Button>
           <div><h1 className="heading-2">Relief Teaching</h1><p className="text-muted-foreground">Manage absences and relief coverage</p></div>
         </div>
-        <Button><Plus className="mr-2 h-4 w-4" />Log Absence</Button>
+        <Button onClick={() => toast({ title: 'Log Absence', description: 'Absence logging form will be available soon.' })}><Plus className="mr-2 h-4 w-4" />Log Absence</Button>
       </div>
 
       {insights.length > 0 && (

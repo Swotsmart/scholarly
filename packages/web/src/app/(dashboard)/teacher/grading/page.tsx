@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ export default function TeacherGradingPage() {
   const [submissions, setSubmissions] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
   const [issyMessage, setIssyMessage] = useState('');
   const [issyResponse, setIssyResponse] = useState<string | null>(null);
   const [issyThinking, setIssyThinking] = useState(false);
@@ -127,7 +129,7 @@ export default function TeacherGradingPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={item.status === 'published' ? 'default' : 'secondary'} className="text-xs capitalize">{item.status}</Badge>
-                  <Button size="sm">Grade <ChevronRight className="ml-1 h-3 w-3" /></Button>
+                  <Button size="sm" onClick={() => router.push(`/teacher/grading/${item.id}`)}>Grade <ChevronRight className="ml-1 h-3 w-3" /></Button>
                 </div>
               </div>
             ))

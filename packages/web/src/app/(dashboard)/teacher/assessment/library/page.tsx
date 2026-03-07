@@ -9,9 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { teacherApi } from '@/lib/teacher-api';
 import type { ContentItem } from '@/types/teacher';
+import { useRouter } from 'next/navigation';
 import { Search, Library, ArrowLeft, Download, Star } from 'lucide-react';
 
 export default function AssessmentLibraryPage() {
+  const router = useRouter();
   const [items, setItems] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -59,7 +61,7 @@ export default function AssessmentLibraryPage() {
                 </div>
                 {item.description && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.description}</p>}
                 <div className="mt-4 flex gap-2">
-                  <Button size="sm" variant="outline" className="flex-1"><Download className="mr-1 h-3.5 w-3.5" />Use</Button>
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => router.push(`/teacher/assessment/builder?template=${item.id}`)}><Download className="mr-1 h-3.5 w-3.5" />Use</Button>
                 </div>
               </CardContent>
             </Card>

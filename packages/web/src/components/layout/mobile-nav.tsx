@@ -43,7 +43,7 @@ export function MobileBottomTabs() {
   const { user } = useAuthStore();
   const store = useComposingMenuStore();
   const pathname = usePathname();
-  const role = user?.role || 'learner';
+  const role = user?.role || user?.roles?.[0] || 'learner';
 
   // Get anchor items from the composing store for the bottom tabs
   const tabs = useMemo(() => {
@@ -169,7 +169,7 @@ export function MobileNav() {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const store = useComposingMenuStore();
-  const role = user?.role || 'learner';
+  const role = user?.role || user?.roles?.[0] || 'learner';
 
   // Get items from the composing store
   const visibleItems = useMemo(
@@ -262,7 +262,7 @@ export function MobileNav() {
           <div className="px-4 py-2 border-b">
             <div className="flex items-center gap-2 text-sm">
               <div className="h-2 w-2 rounded-full bg-green-500" />
-              <span className="text-muted-foreground capitalize">{user.role || 'Learner'}</span>
+              <span className="text-muted-foreground capitalize">{user.role || user.roles?.[0] || 'Learner'}</span>
             </div>
           </div>
         )}

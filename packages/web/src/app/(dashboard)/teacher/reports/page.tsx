@@ -139,7 +139,16 @@ export default function TeacherReportsPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline"><Download className="mr-2 h-4 w-4" />Download</Button>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      const content = `Report: ${report.title}\nType: ${report.type}\nGenerated: ${new Date(report.createdAt).toLocaleDateString()}\nStatus: ${report.status || 'completed'}\n`;
+                      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `${report.title.replace(/[^a-zA-Z0-9]/g, '-')}.csv`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}><Download className="mr-2 h-4 w-4" />Download</Button>
                   </div>
                 </div>
               ))}
@@ -158,7 +167,7 @@ export default function TeacherReportsPage() {
               <CardTitle>Class Summary</CardTitle>
               <CardDescription>Overview of all your classes with AI-assessed trends</CardDescription>
             </div>
-            <Button variant="outline" size="sm"><Printer className="mr-2 h-4 w-4" />Print Report</Button>
+            <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" />Print Report</Button>
           </div>
         </CardHeader>
         <CardContent>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 
 export default function AtRiskStudentsPage() {
+  const router = useRouter();
   const [atRiskData, setAtRiskData] = useState<{ atRiskLearners: AtRiskLearner[]; total: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +103,7 @@ export default function AtRiskStudentsPage() {
                       <p className="text-sm text-muted-foreground mt-2">Flagged {new Date(learner.createdAt).toLocaleDateString()}</p>
                     </div>
                     <div className="flex gap-2 shrink-0">
-                      <Button size="sm" variant="outline"><MessageSquare className="mr-1 h-3.5 w-3.5" />Contact</Button>
+                      <Button size="sm" variant="outline" onClick={() => router.push(`/messages?to=${learner.learnerId}`)}><MessageSquare className="mr-1 h-3.5 w-3.5" />Contact</Button>
                       <Button size="sm" asChild><Link href={`/teacher/students/${learner.learnerId}`}>View Profile <ArrowRight className="ml-1 h-3 w-3" /></Link></Button>
                     </div>
                   </div>

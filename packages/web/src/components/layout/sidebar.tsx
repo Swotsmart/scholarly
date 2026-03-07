@@ -58,7 +58,8 @@ function useUsageTracking() {
   const lastPath = useRef<string>('');
 
   useEffect(() => {
-    if (!user?.role || !pathname) return;
+    const userRole = user?.role || user?.roles?.[0];
+    if (!userRole || !pathname) return;
 
     // Record exit from previous route
     if (lastPath.current && lastPath.current !== pathname) {
@@ -66,9 +67,9 @@ function useUsageTracking() {
       if (elapsed >= MEANINGFUL_USE_MS) {
         const task = findTaskByPath(lastPath.current);
         if (task) {
-          const result = recordUse(user.role, task.ref);
+          const result = recordUse(userRole, task.ref);
           // Fire toast for promotion events
-          menuToast.handleUseResult(result, user.role, task.ref);
+          menuToast.handleUseResult(result, userRole, task.ref);
         }
       }
     }
@@ -76,7 +77,7 @@ function useUsageTracking() {
     // Record entry to new route
     lastPath.current = pathname;
     enteredAt.current = Date.now();
-  }, [pathname, user?.role, recordUse, menuToast]);
+  }, [pathname, user?.role, user?.roles, recordUse, menuToast]);
 }
 
 // =============================================================================
@@ -88,7 +89,7 @@ export function Sidebar() {
   const { user } = useAuthStore();
   const store = useComposingMenuStore();
   const menuToast = useMenuToast();
-  const role = user?.role || 'learner';
+  const role = user?.role || user?.roles?.[0] || 'learner';
 
   // Initialise anchors for this role on mount
   useEffect(() => {
@@ -198,7 +199,7 @@ export function Sidebar() {
         {user && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
             <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-            <span className="capitalize">{user.role || 'Learner'}</span>
+            <span className="capitalize">{user.role || user.roles?.[0] || 'Learner'}</span>
           </div>
         )}
         <div className="relative">

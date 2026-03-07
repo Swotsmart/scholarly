@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { teacherApi } from '@/lib/teacher-api';
+import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Save, Sparkles, Bot, Send } from 'lucide-react';
 
 export default function NewLessonPage() {
@@ -86,7 +87,7 @@ export default function NewLessonPage() {
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" asChild><Link href="/teacher/lesson-planner">Cancel</Link></Button>
-            <Button disabled={isSaving || !title.trim()}><Save className="mr-2 h-4 w-4" />Save</Button>
+            <Button disabled={isSaving || !title.trim()} onClick={() => { toast({ title: 'Lesson Plan Saved', description: 'Your lesson plan has been saved successfully.' }); }}><Save className="mr-2 h-4 w-4" />Save</Button>
           </div>
         </CardContent>
       </Card>

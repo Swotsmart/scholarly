@@ -29,7 +29,7 @@ const ROLE_LABELS: Record<string, string> = {
 export default function MenuSettingsRoute() {
   const { user } = useAuthStore();
   const store = useComposingMenuStore();
-  const role = user?.role || 'learner';
+  const role = user?.role || user?.roles?.[0] || 'learner';
   const roleLabel = ROLE_LABELS[role] || 'Learner';
 
   // Build settings items from store

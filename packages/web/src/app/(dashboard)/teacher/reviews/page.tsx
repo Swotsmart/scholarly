@@ -9,9 +9,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useTeacher } from '@/hooks/use-teacher';
 import { teacherApi } from '@/lib/teacher-api';
 import type { ContentItem } from '@/types/teacher';
+import { useRouter } from 'next/navigation';
 import { Star, FileText, Brain, Shield, ChevronRight } from 'lucide-react';
 
 export default function TeacherReviewsPage() {
+  const router = useRouter();
   const { data: teacherData } = useTeacher({ page: 'reviews' });
   const [items, setItems] = useState<ContentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +42,7 @@ export default function TeacherReviewsPage() {
 
       <div className="space-y-3">
         {isLoading ? [1,2,3].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />) : items.length > 0 ? items.filter(i => i.status === 'published').map(item => (
-          <Card key={item.id}><CardContent className="p-4"><div className="flex items-center justify-between"><div className="flex items-center gap-3"><FileText className="h-5 w-5 text-primary" /><div><p className="font-medium">{item.title}</p><p className="text-sm text-muted-foreground">{item.type} · {item.subject}</p></div></div><Button size="sm" variant="outline">Review <ChevronRight className="ml-1 h-3 w-3" /></Button></div></CardContent></Card>
+          <Card key={item.id}><CardContent className="p-4"><div className="flex items-center justify-between"><div className="flex items-center gap-3"><FileText className="h-5 w-5 text-primary" /><div><p className="font-medium">{item.title}</p><p className="text-sm text-muted-foreground">{item.type} · {item.subject}</p></div></div><Button size="sm" variant="outline" onClick={() => router.push(`/teacher/reviews/assignments?id=${item.id}`)}>Review <ChevronRight className="ml-1 h-3 w-3" /></Button></div></CardContent></Card>
         )) : <Card><CardContent className="p-8 text-center text-muted-foreground">No content available for review.</CardContent></Card>}
       </div>
     </div>

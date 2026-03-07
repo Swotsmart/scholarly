@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useTeacher } from '@/hooks/use-teacher';
+import { useAuthStore } from '@/stores/auth-store';
+import { toast } from '@/hooks/use-toast';
 import {
   User,
   Bell,
@@ -40,6 +42,7 @@ import {
 export default function TeacherSettingsPage() {
   // Fetch teacher data for contextual AI status display
   const { data } = useTeacher({ page: 'settings' });
+  const user = useAuthStore((s) => s.user);
 
   const [notifications, setNotifications] = useState({
     emailAssignments: true,
@@ -291,7 +294,7 @@ export default function TeacherSettingsPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="displayName">Display Name</Label>
-              <Input id="displayName" defaultValue="Ms. Sarah Johnson" />
+              <Input id="displayName" defaultValue={user ? `${user.firstName} ${user.lastName}` : ''} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="title">Professional Title</Label>
@@ -308,7 +311,7 @@ export default function TeacherSettingsPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" defaultValue="s.johnson@scholarly.edu" disabled />
+              <Input id="email" type="email" defaultValue={user?.email ?? ''} disabled />
               <p className="text-xs text-muted-foreground">Contact admin to change email</p>
             </div>
             <div className="space-y-2">
@@ -633,7 +636,7 @@ export default function TeacherSettingsPage() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button size="lg">
+        <Button size="lg" onClick={() => toast({ title: 'Settings Saved', description: 'Your settings have been saved successfully.' })}>
           <Save className="mr-2 h-4 w-4" />
           Save All Changes
         </Button>

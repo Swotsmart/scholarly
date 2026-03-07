@@ -332,7 +332,7 @@ function AdminDashboard() {
 export default function IntelligentDashboardPage() {
   const router = useRouter();
   const { user, isLoading } = useAuthStore();
-  const role = user?.role || 'learner';
+  const role = user?.role || user?.roles?.[0] || 'learner';
 
   useEffect(() => {
     if (isLoading) return;

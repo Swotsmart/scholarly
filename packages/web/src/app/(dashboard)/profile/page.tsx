@@ -87,7 +87,7 @@ export default function ProfilePage() {
               </div>
               <h2 className="mt-4 text-xl font-semibold">{user?.firstName} {user?.lastName}</h2>
               <p className="text-sm text-muted-foreground">{user?.email}</p>
-              <Badge className="mt-2 capitalize">{user?.role?.replace('_', ' ')}</Badge>
+              <Badge className="mt-2 capitalize">{(user?.role || user?.roles?.[0])?.replace('_', ' ')}</Badge>
 
               <Separator className="my-4" />
 

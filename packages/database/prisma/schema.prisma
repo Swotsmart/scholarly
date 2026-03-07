@@ -8530,3 +8530,36 @@ model ContentViolation {
   @@index([tenantId, isResolved])
   @@index([detectedFingerprint])
 }
+
+// ============================================================================
+// DEMO MODE INFRASTRUCTURE
+// ============================================================================
+
+model DemoRegistration {
+  id               String   @id @default(cuid())
+  name             String
+  email            String
+  organization     String?
+  roleInterest     String
+  referralSource   String?
+  ipAddress        String?
+  country          String?
+  region           String?
+  city             String?
+  userAgent        String?
+  referrerUrl      String?
+  utmSource        String?
+  utmMedium        String?
+  utmCampaign      String?
+  timezone         String?
+  screenResolution String?
+  browserLanguage  String?
+  formCompletionMs Int?
+  convertedToReal  Boolean  @default(false)
+  flaggedAsBot     Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([email])
+  @@index([ipAddress])
+  @@index([createdAt])
+}

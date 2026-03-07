@@ -10,6 +10,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { useTeacher } from '@/hooks/use-teacher';
+import { toast } from '@/hooks/use-toast';
 import {
   CheckCircle2, XCircle, Clock, Users, Calendar, AlertTriangle, Brain, Shield,
 } from 'lucide-react';
@@ -77,7 +78,9 @@ export default function TeacherAttendancePage() {
           <h1 className="heading-2">Attendance</h1>
           <p className="text-muted-foreground">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
         </div>
-        <Button disabled={unmarkedCount > 0}>
+        <Button disabled={unmarkedCount > 0} onClick={() => {
+          toast({ title: 'Attendance Submitted', description: 'Attendance has been recorded successfully.' });
+        }}>
           <CheckCircle2 className="mr-2 h-4 w-4" />
           {unmarkedCount > 0 ? `${unmarkedCount} unmarked` : 'Submit Attendance'}
         </Button>

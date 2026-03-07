@@ -59,6 +59,7 @@ import voiceIntelligenceRouter from './routes/voice-intelligence';
 import knowledgeWorkspaceRouter from './routes/knowledge-workspace';
 import { googleDriveRouter } from './routes/google-drive';
 import oneDriveRouter from './routes/onedrive';
+import demoRouter from './routes/demo';
 
 // Sprint Module Routes (Sprints 1-18)
 import { storybookRouter } from './routes/storybook';
@@ -196,6 +197,7 @@ const api = express.Router();
 
 // Public routes
 api.use('/auth', authRateLimiter, authRouter);
+api.use('/demo', demoRouter); // Demo registration (unauthenticated)
 api.use('/early-years', earlyYearsTtsRouter); // Public TTS for phonics audio
 
 // Protected routes

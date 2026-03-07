@@ -39,7 +39,7 @@ export function OnboardingChecklist() {
   const { completedSteps, dismissed, completeStep, dismiss } = useOnboardingStore();
   const [expanded, setExpanded] = useState(true);
 
-  const steps = useMemo(() => getOnboardingStepsForRole(user?.role), [user?.role]);
+  const steps = useMemo(() => getOnboardingStepsForRole(user?.role || user?.roles?.[0]), [user?.role, user?.roles]);
 
   const completedCount = completedSteps.length;
   const totalSteps = steps.length;

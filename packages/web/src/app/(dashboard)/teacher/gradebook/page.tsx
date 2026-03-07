@@ -41,7 +41,23 @@ export default function TeacherGradebookPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="heading-2">Gradebook</h1><p className="text-muted-foreground">Student performance overview with AI-powered insights</p></div>
-        <Button variant="outline"><Download className="mr-2 h-4 w-4" />Export</Button>
+        <Button variant="outline" onClick={() => {
+          const headers = ['Student', 'Status', 'Trust Score', 'At Risk'];
+          const rows = students.map(s => [
+            s.displayName,
+            s.status,
+            String(s.trustScore),
+            atRiskIds.has(s.id) ? 'Yes' : 'No',
+          ]);
+          const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `gradebook-${new Date().toISOString().split('T')[0]}.csv`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }}><Download className="mr-2 h-4 w-4" />Export</Button>
       </div>
 
       {insights.length > 0 && (
