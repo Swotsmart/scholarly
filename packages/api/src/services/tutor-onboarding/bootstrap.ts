@@ -284,20 +284,24 @@ let instance: TutorOnboardingService | null = null;
 export function initializeTutorOnboarding(): void {
   if (instance) return;
 
-  instance = new TutorOnboardingService(
-    new PrismaOnboardingSessionRepository(prisma as never),
-    createPrismaTransaction(),
-    createAuthAdapter(),
-    createHostingAdapter(),
-    createTutorBookingAdapter(),
-    createAIAdapter(),
-    createStripeAdapter(),
-    createGoDaddyAdapter(),
-    createEventBusAdapter(),
-    createCacheAdapter(),
-  );
+  try {
+    instance = new TutorOnboardingService(
+      new PrismaOnboardingSessionRepository(prisma as never),
+      createPrismaTransaction(),
+      createAuthAdapter(),
+      createHostingAdapter(),
+      createTutorBookingAdapter(),
+      createAIAdapter(),
+      createStripeAdapter(),
+      createGoDaddyAdapter(),
+      createEventBusAdapter(),
+      createCacheAdapter(),
+    );
 
-  logger.info('Tutor onboarding service initialized');
+    logger.info('Tutor onboarding service initialized');
+  } catch (error) {
+    logger.warn('Tutor onboarding service initialization failed (missing env vars?) — feature unavailable');
+  }
 }
 
 export function getTutorOnboardingService(): TutorOnboardingService {
