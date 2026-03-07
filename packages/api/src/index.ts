@@ -173,7 +173,7 @@ const internalMonitoringAuth: express.RequestHandler = (req, res, next) => {
   return res.status(401).json({ error: 'Unauthorized' });
 };
 
-app.use(internalMonitoringAuth, metricsRouter);
+app.use('/metrics', internalMonitoringAuth, metricsRouter);
 
 // API documentation (protected in production)
 app.use('/api/docs', internalMonitoringAuth, swaggerRouter);

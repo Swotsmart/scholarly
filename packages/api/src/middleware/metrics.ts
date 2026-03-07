@@ -177,7 +177,7 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
  */
 const metricsRouter = Router();
 
-metricsRouter.get('/metrics', (_req: Request, res: Response) => {
+metricsRouter.get('/', (_req: Request, res: Response) => {
   // Update infrastructure gauges
   const mem = process.memoryUsage();
   registry.gauge('process_heap_used_bytes', 'Heap memory used', {}, mem.heapUsed);
