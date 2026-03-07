@@ -159,9 +159,11 @@ router.post('/translate', authMiddleware, async (req: Request, res: Response) =>
   try {
     const body = TranslateRequestSchema.parse(req.body);
 
-    // Use OpenAI for translation via direct API call
+    // Use Anthropic Claude for translation (falls back to OpenAI if available)
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
-    if (!openaiKey) {
+
+    if (!anthropicKey && !openaiKey) {
       res.status(503).json({
         success: false,
         error: 'Translation service not configured',
@@ -170,39 +172,74 @@ router.post('/translate', authMiddleware, async (req: Request, res: Response) =>
       return;
     }
 
-    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a professional translator. Translate the following text from ${body.sourceLanguage} to ${body.targetLanguage}. Return ONLY the translated text, nothing else. Preserve the original tone and meaning. Do not add explanations or notes.`,
-          },
-          { role: 'user', content: body.text },
-        ],
-        temperature: 0.3,
-        max_tokens: 4096,
-      }),
-    });
+    let translatedText = '';
 
-    if (!openaiRes.ok) {
-      const errData = await openaiRes.json().catch(() => ({}));
-      res.status(502).json({
-        success: false,
-        error: 'Translation failed',
-        details: (errData as any)?.error?.message,
-        requestId,
+    if (anthropicKey) {
+      const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 4096,
+          system: `You are a professional translator. Translate the following text from ${body.sourceLanguage} to ${body.targetLanguage}. Return ONLY the translated text, nothing else. Preserve the original tone and meaning. Do not add explanations or notes.`,
+          messages: [
+            { role: 'user', content: body.text },
+          ],
+        }),
       });
-      return;
-    }
 
-    const data = await openaiRes.json() as any;
-    const translatedText = data.choices?.[0]?.message?.content?.trim() || '';
+      if (!anthropicRes.ok) {
+        const errData = await anthropicRes.json().catch(() => ({}));
+        res.status(502).json({
+          success: false,
+          error: 'Translation failed',
+          details: (errData as any)?.error?.message,
+          requestId,
+        });
+        return;
+      }
+
+      const data = await anthropicRes.json() as any;
+      translatedText = data.content?.[0]?.text?.trim() || '';
+    } else {
+      const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a professional translator. Translate the following text from ${body.sourceLanguage} to ${body.targetLanguage}. Return ONLY the translated text, nothing else. Preserve the original tone and meaning. Do not add explanations or notes.`,
+            },
+            { role: 'user', content: body.text },
+          ],
+          temperature: 0.3,
+          max_tokens: 4096,
+        }),
+      });
+
+      if (!openaiRes.ok) {
+        const errData = await openaiRes.json().catch(() => ({}));
+        res.status(502).json({
+          success: false,
+          error: 'Translation failed',
+          details: (errData as any)?.error?.message,
+          requestId,
+        });
+        return;
+      }
+
+      const data = await openaiRes.json() as any;
+      translatedText = data.choices?.[0]?.message?.content?.trim() || '';
+    }
 
     res.json({
       success: true,
