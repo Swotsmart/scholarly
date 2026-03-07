@@ -616,6 +616,7 @@ export interface User {
   avatarUrl?: string;
   permissions?: string[];
   groups?: string[];
+  isDemo?: boolean;
 }
 
 export interface RegisterData {
