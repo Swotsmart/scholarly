@@ -300,9 +300,14 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
     try {
       let audioData: Buffer;
 
+      // Convert speed (0.25–2.0, default 1.0) to Edge TTS rate percentage
+      const speed = request.voiceSettings?.speed ?? 1.0;
+      const edgeRatePercent = Math.round((speed - 1.0) * 100);
+      const edgeRate = `${edgeRatePercent >= 0 ? '+' : ''}${edgeRatePercent}%`;
+
       if (request.voiceId.startsWith('edge-')) {
         // Edge TTS provider
-        audioData = await this.edgeTTS(request.text, request.voiceId);
+        audioData = await this.edgeTTS(request.text, request.voiceId, edgeRate);
       } else {
         // Kokoro TTS (self-hosted)
         audioData = await this.voiceServiceRequest<Buffer>('/api/v1/tts/synthesize', {
@@ -310,7 +315,7 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
             text: request.text,
             voice_id: request.voiceId,
             language: request.language,
-            speed: request.voiceSettings?.style,
+            speed,
           },
           responseType: 'buffer',
         });

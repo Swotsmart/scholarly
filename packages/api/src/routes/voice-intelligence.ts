@@ -35,6 +35,7 @@ const TTSRequestSchema = z.object({
     similarityBoost: z.number().min(0).max(1).optional(),
     style: z.number().min(0).max(1).optional(),
     useSpeakerBoost: z.boolean().optional(),
+    speed: z.number().min(0.25).max(2.0).optional(),
   }).optional(),
   outputFormat: z.enum([
     'mp3_44100_128',

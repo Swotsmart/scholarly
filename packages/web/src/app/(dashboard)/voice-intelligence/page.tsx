@@ -60,6 +60,7 @@ interface TTSSettings {
   stability: number;
   similarityBoost: number;
   style: number;
+  speed: number;
 }
 
 interface ServiceHealth {
@@ -118,6 +119,7 @@ export default function VoiceIntelligencePage() {
     stability: 0.5,
     similarityBoost: 0.75,
     style: 0.5,
+    speed: 1.0,
   });
   const [ttsLoading, setTtsLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -663,6 +665,22 @@ const audioBlob = await response.blob();`;
                   <CardDescription>Fine-tune the output characteristics</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Speed control — prominent for early years use */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <Label>Speed</Label>
+                      <span className="text-sm text-muted-foreground">{ttsSettings.speed.toFixed(2)}x</span>
+                    </div>
+                    <Slider
+                      value={[ttsSettings.speed]}
+                      onValueChange={([v]) => setTtsSettings(s => ({ ...s, speed: v }))}
+                      min={0.25} max={2.0} step={0.05}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Slower for early learners, faster for fluent speakers (0.25x–2.0x)
+                    </p>
+                  </div>
+
                   {[
                     { key: 'stability' as const, label: 'Stability', hint: 'Higher = more consistent, Lower = more expressive' },
                     { key: 'similarityBoost' as const, label: 'Similarity Boost', hint: 'How closely to match the original voice' },
