@@ -581,7 +581,23 @@ const audioBlob = await response.blob();`;
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Voice</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Voice</Label>
+                    <Select
+                      value={voiceLanguageFilter}
+                      onValueChange={setVoiceLanguageFilter}
+                    >
+                      <SelectTrigger className="w-[160px] h-8 text-xs">
+                        <SelectValue placeholder="Filter language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Languages</SelectItem>
+                        {Array.from(new Set(voices.map(v => v.labels.accent || ''))).filter(Boolean).sort().map(lang => (
+                          <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Select
                     value={selectedVoice?.voiceId}
                     onValueChange={(id) => setSelectedVoice(voices.find(v => v.voiceId === id) || null)}
@@ -590,7 +606,9 @@ const audioBlob = await response.blob();`;
                       <SelectValue placeholder={loadingVoices ? 'Loading voices…' : 'Select a voice'} />
                     </SelectTrigger>
                     <SelectContent>
-                      {voices.map((voice) => (
+                      {voices
+                        .filter(v => voiceLanguageFilter === 'all' || v.labels.accent === voiceLanguageFilter)
+                        .map((voice) => (
                         <SelectItem key={voice.voiceId} value={voice.voiceId}>
                           {voice.name} {voice.labels.accent ? `(${voice.labels.accent})` : ''}
                         </SelectItem>
