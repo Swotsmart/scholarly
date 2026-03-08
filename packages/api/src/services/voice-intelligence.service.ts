@@ -283,12 +283,13 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
   /**
    * Generate speech using Edge TTS (Microsoft)
    */
-  private async edgeTTS(text: string, voiceId: string, rate?: string): Promise<Buffer> {
+  private async edgeTTS(text: string, voiceId: string, rate?: string, pitch?: string): Promise<Buffer> {
     // Edge TTS voice IDs stored as "edge-fr-FR-DeniseNeural" → extract "fr-FR-DeniseNeural"
     const edgeVoiceId = voiceId.startsWith('edge-') ? voiceId.slice(5) : voiceId;
     const tts = new EdgeTTS();
     await tts.synthesize(text, edgeVoiceId, {
-      rate: rate || '0%',
+      rate: rate || '+0%',
+      pitch: pitch || '+0Hz',
     });
     return tts.toBuffer();
   }
@@ -300,22 +301,31 @@ export class VoiceIntelligenceService extends ScholarlyBaseService {
     try {
       let audioData: Buffer;
 
-      // Convert speed (0.25–2.0, default 1.0) to Edge TTS rate percentage
+      // Extract studio parameters with defaults
       const speed = request.voiceSettings?.speed ?? 1.0;
+      const pitch = request.voiceSettings?.pitch ?? 0;
+      const warmth = request.voiceSettings?.warmth ?? 0;
+
+      // Convert speed to Edge TTS rate percentage string
       const edgeRatePercent = Math.round((speed - 1.0) * 100);
       const edgeRate = `${edgeRatePercent >= 0 ? '+' : ''}${edgeRatePercent}%`;
+      // Convert pitch to Edge TTS Hz offset (1 semitone ≈ 10 Hz)
+      const edgePitchHz = Math.round(pitch * 10);
+      const edgePitch = `${edgePitchHz >= 0 ? '+' : ''}${edgePitchHz}Hz`;
 
       if (request.voiceId.startsWith('edge-')) {
-        // Edge TTS provider
-        audioData = await this.edgeTTS(request.text, request.voiceId, edgeRate);
+        // Edge TTS provider (supports rate + pitch natively; warmth N/A)
+        audioData = await this.edgeTTS(request.text, request.voiceId, edgeRate, edgePitch);
       } else {
-        // Kokoro TTS (self-hosted)
+        // Kokoro TTS (self-hosted) — supports pace, pitch, warmth
         audioData = await this.voiceServiceRequest<Buffer>('/api/v1/tts/synthesize', {
           body: {
             text: request.text,
             voice_id: request.voiceId,
             language: request.language,
-            speed,
+            pace: speed,
+            pitch,
+            warmth,
           },
           responseType: 'buffer',
         });

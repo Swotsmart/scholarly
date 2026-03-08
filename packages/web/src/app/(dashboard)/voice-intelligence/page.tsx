@@ -61,6 +61,8 @@ interface TTSSettings {
   similarityBoost: number;
   style: number;
   speed: number;
+  pitch: number;
+  warmth: number;
 }
 
 interface ServiceHealth {
@@ -120,6 +122,8 @@ export default function VoiceIntelligencePage() {
     similarityBoost: 0.75,
     style: 0.5,
     speed: 1.0,
+    pitch: 0,
+    warmth: 0,
   });
   const [ttsLoading, setTtsLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -658,14 +662,51 @@ const audioBlob = await response.blob();`;
             </Card>
 
             <div className="space-y-6">
-              {/* Voice Settings */}
+              {/* Voice Studio */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Voice Settings</CardTitle>
-                  <CardDescription>Fine-tune the output characteristics</CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings2 className="h-5 w-5" />
+                    Voice Studio
+                  </CardTitle>
+                  <CardDescription>Tailor speech output to your learners</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Speed control — prominent for early years use */}
+                  {/* Learner-Level Presets */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Quick Presets</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { label: 'Early Years', desc: 'Slow, warm, gentle', speed: 0.65, pitch: 1, warmth: 3 },
+                        { label: 'Primary', desc: 'Clear, measured pace', speed: 0.85, pitch: 0, warmth: 1 },
+                        { label: 'Secondary', desc: 'Natural, balanced', speed: 1.0, pitch: 0, warmth: 0 },
+                        { label: 'Fluent / Adult', desc: 'Conversational pace', speed: 1.15, pitch: 0, warmth: -1 },
+                      ].map((preset) => (
+                        <button
+                          key={preset.label}
+                          className="flex flex-col items-start rounded-lg border p-3 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
+                          onClick={() => setTtsSettings(s => ({
+                            ...s,
+                            speed: preset.speed,
+                            pitch: preset.pitch,
+                            warmth: preset.warmth,
+                          }))}
+                        >
+                          <span className="text-sm font-medium">{preset.label}</span>
+                          <span className="text-xs text-muted-foreground">{preset.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-4" />
+
+                  {/* Speech Controls */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Speech Controls</Label>
+                  </div>
+
+                  {/* Speed */}
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <Label>Speed</Label>
@@ -677,10 +718,52 @@ const audioBlob = await response.blob();`;
                       min={0.25} max={2.0} step={0.05}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Slower for early learners, faster for fluent speakers (0.25x–2.0x)
+                      Pace of speech (0.25x very slow – 2.0x double speed)
                     </p>
                   </div>
 
+                  {/* Pitch */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <Label>Pitch</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {ttsSettings.pitch > 0 ? '+' : ''}{ttsSettings.pitch} st
+                      </span>
+                    </div>
+                    <Slider
+                      value={[ttsSettings.pitch]}
+                      onValueChange={([v]) => setTtsSettings(s => ({ ...s, pitch: v }))}
+                      min={-6} max={6} step={0.5}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Higher for younger characters, lower for older (±6 semitones)
+                    </p>
+                  </div>
+
+                  {/* Warmth */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <Label>Warmth</Label>
+                      <span className="text-sm text-muted-foreground">
+                        {ttsSettings.warmth > 0 ? '+' : ''}{ttsSettings.warmth.toFixed(1)}
+                      </span>
+                    </div>
+                    <Slider
+                      value={[ttsSettings.warmth]}
+                      onValueChange={([v]) => setTtsSettings(s => ({ ...s, warmth: v }))}
+                      min={-6} max={6} step={0.5}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Warmer for storytelling, brighter for phonics drills (±6)
+                    </p>
+                  </div>
+
+                  <div className="border-t pt-4" />
+
+                  {/* Voice Character (secondary) */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Voice Character</Label>
+                  </div>
                   {[
                     { key: 'stability' as const, label: 'Stability', hint: 'Higher = more consistent, Lower = more expressive' },
                     { key: 'similarityBoost' as const, label: 'Similarity Boost', hint: 'How closely to match the original voice' },
