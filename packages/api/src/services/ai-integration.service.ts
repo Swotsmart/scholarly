@@ -136,7 +136,7 @@ export interface LessonPlanAIOutput {
   }[];
 }
 
-export interface AIBuddyMessage {
+export interface AskIssyMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
@@ -147,7 +147,7 @@ export interface AIBuddyMessage {
   };
 }
 
-export interface AIBuddyContext {
+export interface AskIssyContext {
   userId: string;
   userRole: 'student' | 'teacher' | 'parent';
   yearLevel?: string;
@@ -243,7 +243,7 @@ Focus on meaningful, authentic connections that enhance learning in both subject
 
 Respond in JSON format with an array of connections.`,
 
-  aiBuddyStudent: `You are an encouraging, knowledgeable AI learning buddy for students. Your role is to:
+  askIssyStudent: `You are an encouraging, knowledgeable Ask Issy learning assistant for students. Your role is to:
 - Help students understand concepts in age-appropriate language
 - Guide them through problems without giving direct answers
 - Encourage growth mindset and perseverance
@@ -269,7 +269,7 @@ Conversation so far:
 
 Student: {message}`,
 
-  aiBuddyTeacher: `You are an expert educational AI assistant for teachers. Your role is to:
+  askIssyTeacher: `You are an expert educational AI assistant for teachers. Your role is to:
 - Help with lesson planning and curriculum alignment
 - Suggest differentiation strategies
 - Provide assessment ideas
@@ -648,20 +648,20 @@ ${request.examples.map(e => `Input: ${e.input}\nOutput: ${JSON.stringify(e.outpu
   // ==========================================================================
 
   /**
-   * AI Buddy chat for students
+   * Ask Issy chat for students
    */
-  async aiBuddyStudent(
+  async askIssyStudent(
     tenantId: string,
     message: string,
-    context: AIBuddyContext,
-    conversationHistory: AIBuddyMessage[]
-  ): Promise<Result<AIBuddyMessage>> {
+    context: AskIssyContext,
+    conversationHistory: AskIssyMessage[]
+  ): Promise<Result<AskIssyMessage>> {
     const historyText = conversationHistory
       .slice(-10) // Keep last 10 messages for context
-      .map(m => `${m.role === 'user' ? 'Student' : 'AI Buddy'}: ${m.content}`)
+      .map(m => `${m.role === 'user' ? 'Student' : 'Ask Issy'}: ${m.content}`)
       .join('\n');
 
-    const prompt = PROMPTS.aiBuddyStudent
+    const prompt = PROMPTS.askIssyStudent
       .replace('{yearLevel}', context.yearLevel || 'Not specified')
       .replace('{subjects}', context.subjects?.join(', ') || 'General')
       .replace('{strengths}', context.learningProfile?.strengths?.join(', ') || 'Not specified')
@@ -672,12 +672,12 @@ ${request.examples.map(e => `Input: ${e.input}\nOutput: ${JSON.stringify(e.outpu
 
     const result = await this.complete(tenantId, {
       messages: [{ role: 'user', content: prompt }],
-      systemPrompt: 'You are a friendly, encouraging AI learning buddy. Keep responses concise and engaging.',
+      systemPrompt: 'You are a friendly, encouraging Ask Issy learning assistant. Keep responses concise and engaging.',
       maxTokens: 500,
       temperature: 0.7,
     });
 
-    if (!result.success) return result as Result<AIBuddyMessage>;
+    if (!result.success) return result as Result<AskIssyMessage>;
 
     return success({
       role: 'assistant',
@@ -687,20 +687,20 @@ ${request.examples.map(e => `Input: ${e.input}\nOutput: ${JSON.stringify(e.outpu
   }
 
   /**
-   * AI Buddy chat for teachers
+   * Ask Issy chat for teachers
    */
-  async aiBuddyTeacher(
+  async askIssyTeacher(
     tenantId: string,
     message: string,
-    context: AIBuddyContext,
-    conversationHistory: AIBuddyMessage[]
-  ): Promise<Result<AIBuddyMessage>> {
+    context: AskIssyContext,
+    conversationHistory: AskIssyMessage[]
+  ): Promise<Result<AskIssyMessage>> {
     const historyText = conversationHistory
       .slice(-10)
       .map(m => `${m.role === 'user' ? 'Teacher' : 'AI Assistant'}: ${m.content}`)
       .join('\n');
 
-    const prompt = PROMPTS.aiBuddyTeacher
+    const prompt = PROMPTS.askIssyTeacher
       .replace('{yearLevel}', context.yearLevel || 'Not specified')
       .replace('{subjects}', context.subjects?.join(', ') || 'General')
       .replace('{focus}', context.currentGoals?.join(', ') || 'General teaching support')
@@ -714,7 +714,7 @@ ${request.examples.map(e => `Input: ${e.input}\nOutput: ${JSON.stringify(e.outpu
       temperature: 0.5,
     });
 
-    if (!result.success) return result as Result<AIBuddyMessage>;
+    if (!result.success) return result as Result<AskIssyMessage>;
 
     return success({
       role: 'assistant',

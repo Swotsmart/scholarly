@@ -39,7 +39,7 @@ const dashboardRoutes = [
   { path: '/hosting', name: 'Hosting' },
   { path: '/voice-intelligence', name: 'Voice Intelligence' },
   { path: '/canvas', name: 'S&R Canvas' },
-  { path: '/ai-buddy', name: 'AI Buddy' },
+  { path: '/ask-issy', name: 'Ask Issy' },
   { path: '/showcase', name: 'Showcase' },
   { path: '/design-pitch', name: 'Design Pitch' },
   { path: '/data-lake', name: 'Data Lake' },

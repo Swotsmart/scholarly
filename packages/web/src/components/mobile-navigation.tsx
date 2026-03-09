@@ -143,7 +143,7 @@ export interface MobileSeedCardsProps {
  * from Phase 5 also appear here (with the lock icon).
  *
  * Per the spec, role-specific defaults:
- *   Learner: Home, Learn, AI Buddy, Profile
+ *   Learner: Home, Learn, Ask Issy, Profile
  *   Teacher: Home, Classes, Grading, Students
  *   Parent:  Home, Children, Messages, Progress
  *   Tutor:   Home, Sessions, Students, Earnings

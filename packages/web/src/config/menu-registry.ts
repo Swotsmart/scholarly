@@ -289,7 +289,7 @@ export const roleAnchors: RoleAnchors[] = [
     anchors: [
       { ref: 'D1', position: 0 },         // Home / Dashboard
       { ref: 'L1', position: 1 },         // Courses
-      { ref: 'L3', position: 2 },         // AI Buddy
+      { ref: 'L3', position: 2 },         // Ask Issy
       { ref: 'VI', position: 3 },         // Voice Intelligence
     ],
   },

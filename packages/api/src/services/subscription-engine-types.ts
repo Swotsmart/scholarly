@@ -290,7 +290,7 @@ export const SCHOLARLY_MODULES: PlatformModules = {
   'micro_school': { name: 'Micro-School', description: 'Micro-school management', category: 'community' },
   'tutor_booking': { name: 'Tutor Booking', description: 'Tutor discovery & booking', category: 'tutoring' },
   'content_marketplace': { name: 'Content Marketplace', description: 'Educational content trading', category: 'commerce' },
-  'ai_buddy': { name: 'AI Buddy', description: 'Conversational learning assistant', category: 'ai' },
+  'ask_issy': { name: 'Ask Issy', description: 'Conversational learning assistant', category: 'ai' },
   'content_studio': { name: 'Content Studio', description: 'AI content generation', category: 'ai' },
   'lis_bridge': { name: 'LIS Bridge', description: 'Learning intelligence integration', category: 'intelligence' }
 };

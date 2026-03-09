@@ -304,8 +304,8 @@ const openApiSpec = {
     '/api/v1/dashboard': {
       get: { summary: 'Get dashboard data', tags: ['Dashboard'], responses: { 200: { description: 'Dashboard data' } } },
     },
-    '/api/v1/ai-buddy': {
-      post: { summary: 'Chat with AI Buddy', tags: ['AI'], responses: { 200: { description: 'AI response' } } },
+    '/api/v1/ask-issy': {
+      post: { summary: 'Chat with Ask Issy', tags: ['AI'], responses: { 200: { description: 'AI response' } } },
     },
     '/api/v1/analytics': {
       get: { summary: 'Get analytics', tags: ['Analytics'], responses: { 200: { description: 'Analytics data' } } },

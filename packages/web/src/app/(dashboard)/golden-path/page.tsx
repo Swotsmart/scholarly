@@ -341,7 +341,7 @@ export default function GoldenPathPage() {
                   <Zap className="h-3.5 w-3.5 mr-1.5" />
                   Start today&apos;s focus
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => router.push('/ai-buddy')}>
+                <Button size="sm" variant="outline" onClick={() => router.push('/ask-issy')}>
                   <Brain className="h-3.5 w-3.5 mr-1.5" />
                   Ask Issy for help
                 </Button>

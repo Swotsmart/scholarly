@@ -4,7 +4,7 @@
  * Comprehensive service for early childhood education (ages 3-7).
  * Integrates with existing Scholarly infrastructure:
  * 
- * 1. AI Buddy Extension - Child-friendly personas (Lettie, Numero, etc.)
+ * 1. Ask Issy Extension - Child-friendly personas (Lettie, Numero, etc.)
  * 2. AI Content Studio - Phonics activities, decodable readers
  * 3. Data Lake - Eye tracking, phonics events, session data
  * 4. ML Pipeline - Reading difficulty prediction
@@ -36,7 +36,7 @@ import { log } from '../lib/logger';
 
 // Import existing services for integration
 import { AIIntegrationService, getAIService } from './ai-integration.service';
-import { AIBuddyService, getAIBuddyService, BuddyRole, Conversation } from './ai-buddy.service';
+import { AskIssyService, getAskIssyService, BuddyRole, Conversation } from './ask-issy.service';
 import { AIContentStudioService, getAIContentStudioService } from './ai-content-studio.service';
 import { DataLakeService, getDataLakeService } from './data-lake.service';
 import { MLPipelineService, getMLPipelineService } from './ml-pipeline.service';
@@ -863,7 +863,7 @@ SAFETY RULES (CRITICAL):
 
 export class EarlyYearsService extends ScholarlyBaseService {
   private aiService: AIIntegrationService;
-  private aiBuddyService: AIBuddyService;
+  private askIssyService: AskIssyService;
   private contentStudioService: AIContentStudioService;
   private dataLakeService: DataLakeService;
   private mlPipelineService: MLPipelineService;
@@ -878,7 +878,7 @@ export class EarlyYearsService extends ScholarlyBaseService {
     
     // Initialize integrations with existing services
     this.aiService = getAIService();
-    this.aiBuddyService = getAIBuddyService();
+    this.askIssyService = getAskIssyService();
     this.contentStudioService = getAIContentStudioService();
     this.dataLakeService = getDataLakeService();
     this.mlPipelineService = getMLPipelineService();
@@ -991,7 +991,7 @@ export class EarlyYearsService extends ScholarlyBaseService {
 
   /**
    * Start a conversation with an Early Years character
-   * Extends the AI Buddy service with child-friendly personas
+   * Extends the Ask Issy service with child-friendly personas
    */
   async startCharacterConversation(
     tenantId: string,

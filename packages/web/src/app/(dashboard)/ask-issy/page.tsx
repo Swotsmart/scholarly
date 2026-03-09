@@ -157,7 +157,7 @@ The key steps are:
 3. Those same numbers should add up to b
 4. Use those numbers to split the middle term and factor by grouping`;
 
-export default function AIBuddyPage() {
+export default function AskIssyPage() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
   const [selectedPersona, setSelectedPersona] = useState('tutor');

@@ -255,7 +255,7 @@ test.describe('Zero 404 — All API routes respond', () => {
     '/api/v1/micro-schools',
     '/api/v1/relief',
     '/api/v1/dashboard',
-    '/api/v1/ai-buddy',
+    '/api/v1/ask-issy',
     '/api/v1/portfolio',
     '/api/v1/standards',
     '/api/v1/analytics',

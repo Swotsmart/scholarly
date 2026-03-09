@@ -18,7 +18,7 @@
  *   /api/v1/collaboration  → collaboration.ts (10 endpoints)
  *   /api/v1/standards      → standards-compliance.ts (8 endpoints)
  *   /api/v1/ai-engine      → ai-engine.ts (15+ endpoints)
- *   /api/v1/ai-buddy       → ai-buddy.ts (7 endpoints)
+ *   /api/v1/ask-issy       → ask-issy.ts (7 endpoints)
  */
 
 import type {
@@ -33,7 +33,7 @@ import type {
   ComplianceAuditResult, AITSLAssessment, CurriculumAlignmentResult,
   LearnerMasteryProfile, LearnerFeatureVector, LearnerRecommendations,
   AtRiskLearner, WellbeingCheck, LearnerPredictions,
-  AIBuddySendResponse, AIBuddyConversation, AIInsight,
+  AskIssySendResponse, AskIssyConversation, AIInsight,
   Pagination,
 } from '@/types/teacher';
 
@@ -294,8 +294,8 @@ export const teacherApi = {
     },
   },
 
-  // ── AI Intelligence (ai-engine.ts + ai-buddy.ts) ──
-  // mount: /api/v1/ai-engine and /api/v1/ai-buddy
+  // ── AI Intelligence (ai-engine.ts + ask-issy.ts) ──
+  // mount: /api/v1/ai-engine and /api/v1/ask-issy
   //
   // This namespace is the soul of AI-assisted teaching. Every teacher page
   // calls at least one method here to surface intelligent insights alongside
@@ -333,13 +333,13 @@ export const teacherApi = {
     },
 
     /** Send a message to Ask Issy */
-    async askIssy(message: string, context?: { conversationId?: string; learnerId?: string }): Promise<{ success: boolean; data: AIBuddySendResponse }> {
-      return request('POST', '/ai-buddy/message', { message, context });
+    async askIssy(message: string, context?: { conversationId?: string; learnerId?: string }): Promise<{ success: boolean; data: AskIssySendResponse }> {
+      return request('POST', '/ask-issy/message', { message, context });
     },
 
     /** Get Ask Issy conversation history */
-    async getConversations(): Promise<{ success: boolean; data: AIBuddyConversation[] }> {
-      return request('GET', '/ai-buddy/conversations');
+    async getConversations(): Promise<{ success: boolean; data: AskIssyConversation[] }> {
+      return request('GET', '/ask-issy/conversations');
     },
 
     /**

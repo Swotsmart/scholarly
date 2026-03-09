@@ -2,7 +2,7 @@
  * Language Learning Service - Main Implementation
  * 
  * Integrates with existing Scholarly infrastructure:
- * 1. AI Buddy Extension - Language tutor personas
+ * 1. Ask Issy Extension - Language tutor personas
  * 2. AI Content Studio - Exercise generation
  * 3. Data Lake - SRS tracking, conversation logs
  * 4. ML Pipeline - Proficiency prediction
@@ -25,7 +25,7 @@ import { log } from '../lib/logger';
 
 // Import existing services
 import { AIIntegrationService, getAIService } from './ai-integration.service';
-import { AIBuddyService, getAIBuddyService } from './ai-buddy.service';
+import { AskIssyService, getAskIssyService } from './ask-issy.service';
 import { AIContentStudioService, getAIContentStudioService } from './ai-content-studio.service';
 import { DataLakeService, getDataLakeService } from './data-lake.service';
 import { MLPipelineService, getMLPipelineService } from './ml-pipeline.service';
@@ -51,7 +51,7 @@ import { CONVERSATION_PERSONAS, getPersonaById } from './language-learning-perso
 
 export class LanguageLearningService extends ScholarlyBaseService {
   private aiService: AIIntegrationService;
-  private aiBuddyService: AIBuddyService;
+  private askIssyService: AskIssyService;
   private contentStudioService: AIContentStudioService;
   private dataLakeService: DataLakeService;
   private mlPipelineService: MLPipelineService;
@@ -65,7 +65,7 @@ export class LanguageLearningService extends ScholarlyBaseService {
     super('LanguageLearningService', deps);
     
     this.aiService = getAIService();
-    this.aiBuddyService = getAIBuddyService();
+    this.askIssyService = getAskIssyService();
     this.contentStudioService = getAIContentStudioService();
     this.dataLakeService = getDataLakeService();
     this.mlPipelineService = getMLPipelineService();

@@ -5,7 +5,7 @@ import { navigateTo, waitForPageReady, StateHelper } from '../helpers';
  * Common E2E Tests — Cross-Role Pages
  *
  * Pages accessible to multiple roles: profile, settings, notifications,
- * ai-buddy, analytics, design-pitch, portfolio, and other shared modules.
+ * ask-issy, analytics, design-pitch, portfolio, and other shared modules.
  *
  * Pre-authenticated as: teacher@scholarly.app (default)
  */
@@ -31,8 +31,8 @@ test.describe('Profile & Settings', () => {
 // =============================================================================
 
 test.describe('AI Pages', () => {
-  test('AI buddy loads', async ({ page }) => {
-    await navigateTo(page, '/ai-buddy');
+  test('Ask Issy loads', async ({ page }) => {
+    await navigateTo(page, '/ask-issy');
     await new StateHelper(page).expectNoErrors();
   });
 

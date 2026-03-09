@@ -119,7 +119,7 @@ export const ErrorCodes = {
   SYS_009: 'Configuration error',
   SYS_010: 'Resource not found',
 
-  // ============ AI Buddy (AI_xxx) ============
+  // ============ Ask Issy (AI_xxx) ============
   AI_001: 'AI response generation failed',
   AI_002: 'Conversation not found',
   AI_003: 'Failed to save settings',
@@ -262,7 +262,7 @@ export const ErrorCodeToStatus: Record<ErrorCode, number> = {
   SYS_009: 500,
   SYS_010: 404,
 
-  // AI Buddy - 500/502/404
+  // Ask Issy - 500/502/404
   AI_001: 502,
   AI_002: 404,
   AI_003: 500,

@@ -103,7 +103,7 @@ const WEEKEND_HEURISTICS: Partial<Record<RoleId, Partial<Record<TimeBlock, Array
   },
   learner: {
     morning: [
-      { taskRef: 'L3', score: 0.7 },   // AI Buddy
+      { taskRef: 'L3', score: 0.7 },   // Ask Issy
       { taskRef: 'L1', score: 0.5 },   // Browse courses
     ],
     afternoon: [
@@ -111,7 +111,7 @@ const WEEKEND_HEURISTICS: Partial<Record<RoleId, Partial<Record<TimeBlock, Array
       { taskRef: 'LF4', score: 0.5 },  // Language conversation practice
     ],
     evening: [
-      { taskRef: 'L3', score: 0.8 },   // AI Buddy
+      { taskRef: 'L3', score: 0.8 },   // Ask Issy
       { taskRef: 'AR1', score: 0.7 },  // Arena
     ],
   },
@@ -216,9 +216,9 @@ export const TEMPORAL_HEURISTICS: TemporalHeuristicTable = {
 
   // ─── LEARNER ────────────────────────────────────────────────────────────
   // Morning: Structured learning (courses, calendar)
-  // Midday: AI Buddy, exploratory
+  // Midday: Ask Issy, exploratory
   // Afternoon: Peak engagement — Arena, active learning
-  // Evening: Reflective — AI Buddy, LinguaFlow
+  // Evening: Reflective — Ask Issy, LinguaFlow
   // ───────────────────────────────────────────────────────────────────────
 
   learner: {
@@ -232,10 +232,10 @@ export const TEMPORAL_HEURISTICS: TemporalHeuristicTable = {
     ],
     late_morning: [
       { taskRef: 'L2', score: 0.7 },   // Complete a Lesson
-      { taskRef: 'L3', score: 0.6 },   // AI Buddy
+      { taskRef: 'L3', score: 0.6 },   // Ask Issy
     ],
     midday: [
-      { taskRef: 'L3', score: 0.8 },   // AI Buddy — break time
+      { taskRef: 'L3', score: 0.8 },   // Ask Issy — break time
       { taskRef: 'L1', score: 0.7 },   // Browse Courses
       { taskRef: 'AR1', score: 0.5 },  // Arena — lunchtime competition
     ],
@@ -245,13 +245,13 @@ export const TEMPORAL_HEURISTICS: TemporalHeuristicTable = {
       { taskRef: 'L6', score: 0.6 },   // Design Challenges
     ],
     evening: [
-      { taskRef: 'L3', score: 0.8 },   // AI Buddy — evening chat
+      { taskRef: 'L3', score: 0.8 },   // Ask Issy — evening chat
       { taskRef: 'LF1', score: 0.7 },  // LinguaFlow Voice
       { taskRef: 'LF4', score: 0.6 },  // Conversation practice
       { taskRef: 'AR1', score: 0.6 },  // Arena — evening session
     ],
     night: [
-      { taskRef: 'L3', score: 0.5 },   // AI Buddy — light engagement
+      { taskRef: 'L3', score: 0.5 },   // Ask Issy — light engagement
     ],
   },
 

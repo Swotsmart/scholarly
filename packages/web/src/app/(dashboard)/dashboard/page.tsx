@@ -106,7 +106,7 @@ function LearnerDashboard() {
       {/* Ask Issy FAB */}
       <div className="fixed bottom-6 right-6 z-50">
         <Button size="lg" className="h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600" asChild>
-          <Link href="/ai-buddy">
+          <Link href="/ask-issy">
             <MessageCircle className="h-6 w-6" />
             <span className="sr-only">Ask Issy</span>
           </Link>

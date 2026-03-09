@@ -17,7 +17,7 @@
  *   analytics.ts  — /teacher/dashboard
  *   sessions.ts   — GET / (upcoming)
  *   ai-engine.ts  — /ml/at-risk, /bkt/mastery, /ml/recommendations
- *   ai-buddy.ts   — /message (Ask Issy)
+ *   ask-issy.ts   — /message (Ask Issy)
  */
 
 import { useEffect, useState } from 'react';

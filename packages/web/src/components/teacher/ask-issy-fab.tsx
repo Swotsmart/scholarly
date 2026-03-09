@@ -5,7 +5,7 @@
  *
  * Always-visible AI assistant accessible from every teacher page.
  * Expands into a slide-up chat panel anchored to the bottom-right.
- * Calls /api/v1/ai-buddy/message for contextual AI responses.
+ * Calls /api/v1/ask-issy/message for contextual AI responses.
  *
  * Design goals:
  * - One-tap access from any teacher page

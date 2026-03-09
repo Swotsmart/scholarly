@@ -148,7 +148,7 @@ const prismaClientSingleton = () => {
             'ReliefTeacher', 'ReliefPool', 'ReliefPoolMember', 'TeacherAbsence',
             'ReliefAssignment', 'ReliefBooking', 'AbsenceNotification', 'AbsencePrediction',
             'RefreshToken', 'CredentialNFT', 'EscrowTransaction', 'OnChainReputation',
-            'TokenTransaction', 'AIBuddyConversation', 'AIBuddySettings', 'Portfolio',
+            'TokenTransaction', 'AskIssyConversation', 'AskIssySettings', 'Portfolio',
             'Artifact', 'LearningGoal', 'Achievement', 'LearningJourney', 'EduScrumTeam',
             'EduScrumSprint', 'EduScrumRetrospective', 'ComplianceCheck', 'ComplianceReport',
             'ACARACurriculumCode', 'Notification', 'NotificationPreference', 'AnalyticsEvent',

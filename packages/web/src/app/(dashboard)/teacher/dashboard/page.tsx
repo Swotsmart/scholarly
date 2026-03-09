@@ -356,7 +356,7 @@ function UpcomingAiPanel({ insights, isLoading }: { insights: AIInsight[]; isLoa
 }
 
 // =============================================================================
-// Ask Issy — contextual AI assistant, calls /api/v1/ai-buddy/message
+// Ask Issy — contextual AI assistant, calls /api/v1/ask-issy/message
 // =============================================================================
 
 function AskIssyPanel() {

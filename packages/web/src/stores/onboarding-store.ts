@@ -30,7 +30,7 @@ export interface OnboardingProgress {
 export const learnerOnboardingSteps: OnboardingStep[] = [
   { id: 'profile', title: 'Complete Your Profile', description: 'Tell us about your interests and learning goals so we can personalise your experience.', icon: 'User', href: '/profile', estimatedMinutes: 3 },
   { id: 'first-course', title: 'Start Your First Course', description: 'Browse the course catalogue and enrol in something that excites you.', icon: 'BookOpen', href: '/learning', estimatedMinutes: 5 },
-  { id: 'ai-buddy', title: 'Meet Ask Issy', description: 'Your personal learning assistant is ready to help with questions, explanations, and study tips.', icon: 'Bot', href: '/ai-buddy', estimatedMinutes: 2 },
+  { id: 'ask-issy', title: 'Meet Ask Issy', description: 'Your personal learning assistant is ready to help with questions, explanations, and study tips.', icon: 'Bot', href: '/ask-issy', estimatedMinutes: 2 },
   { id: 'golden-path', title: 'Discover Your Golden Path', description: 'Our adaptive system maps a personalised learning journey tailored to your strengths and gaps.', icon: 'Compass', href: '/golden-path', estimatedMinutes: 5 },
   { id: 'daily-goal', title: 'Set Your Daily Goal', description: 'Choose how much time you want to invest each day — consistency builds mastery.', icon: 'Target', href: '/settings', estimatedMinutes: 1 },
 ];

@@ -5,7 +5,7 @@
  * Types mirror the backend API response shapes from:
  *   dashboard.ts, sessions.ts, curriculum.ts, analytics.ts,
  *   relief.ts, content.ts, ml-pipeline.ts, collaboration.ts,
- *   standards-compliance.ts, ai-engine.ts, ai-buddy.ts
+ *   standards-compliance.ts, ai-engine.ts, ask-issy.ts
  */
 
 // =============================================================================
@@ -514,10 +514,10 @@ export interface WellbeingCheck {
 }
 
 // =============================================================================
-// AI BUDDY (ASK ISSY)
+// ASK ISSY
 // =============================================================================
 
-export interface AIBuddySendResponse {
+export interface AskIssySendResponse {
   message: {
     id: string;
     role: string;
@@ -526,7 +526,7 @@ export interface AIBuddySendResponse {
   conversationId: string;
 }
 
-export interface AIBuddyConversation {
+export interface AskIssyConversation {
   id: string;
   title: string;
   lastMessageAt: string;

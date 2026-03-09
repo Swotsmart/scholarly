@@ -1694,10 +1694,10 @@ model TokenTransaction {
 // ============================================================================
 
 // ============================================================================
-// AI BUDDY MODELS
+// ASK ISSY MODELS
 // ============================================================================
 
-model AIBuddyConversation {
+model AskIssyConversation {
   id       String @id @default(cuid())
   tenantId String
   userId   String
@@ -1718,9 +1718,10 @@ model AIBuddyConversation {
   @@index([userId])
   @@index([status])
   @@index([lastMessageAt])
+  @@map("AIBuddyConversation")
 }
 
-model AIBuddySettings {
+model AskIssySettings {
   id       String @id @default(cuid())
   userId   String
   tenantId String
@@ -1737,6 +1738,7 @@ model AIBuddySettings {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, tenantId])
+  @@map("AIBuddySettings")
 }
 
 // ============================================================================

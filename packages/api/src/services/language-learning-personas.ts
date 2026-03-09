@@ -10,7 +10,7 @@ import { LanguageCode, CEFRLevel, ConversationPersona } from './language-learnin
 /**
  * AI Conversation Personas for Language Learning
  *
- * Integration Point 1: These personas extend the AI Buddy service
+ * Integration Point 1: These personas extend the Ask Issy service
  * with language-specific cultural context and teaching approaches.
  */
 export const CONVERSATION_PERSONAS: Record<LanguageCode, ConversationPersona[]> = {

@@ -1,5 +1,5 @@
 /**
- * AI Buddy Service
+ * Ask Issy Service
  *
  * Essential conversational AI companion for the Scholarly platform.
  * Provides personalized learning support for students, teachers, and parents.
@@ -29,8 +29,8 @@ import { prisma } from '@scholarly/database';
 import { log } from '../lib/logger';
 import {
   AIIntegrationService,
-  AIBuddyContext,
-  AIBuddyMessage,
+  AskIssyContext,
+  AskIssyMessage,
   getAIService
 } from './ai-integration.service';
 
@@ -136,7 +136,7 @@ export interface SendMessageRequest {
 
 export interface SendMessageResponse {
   conversationId: string;
-  message: AIBuddyMessage;
+  message: AskIssyMessage;
   suggestedActions?: SuggestedAction[];
   relatedResources?: { title: string; url: string; type: string }[];
   learningInsight?: string;
@@ -212,7 +212,7 @@ Communication style:
 // SERVICE IMPLEMENTATION
 // ============================================================================
 
-export class AIBuddyService extends ScholarlyBaseService {
+export class AskIssyService extends ScholarlyBaseService {
   private aiService: AIIntegrationService;
 
   constructor(deps: {
@@ -220,7 +220,7 @@ export class AIBuddyService extends ScholarlyBaseService {
     cache: Cache;
     config: ScholarlyConfig;
   }) {
-    super('AIBuddyService', deps);
+    super('AskIssyService', deps);
     this.aiService = getAIService();
   }
 
@@ -271,7 +271,7 @@ export class AIBuddyService extends ScholarlyBaseService {
       // Store conversation
       await this.saveConversation(tenantId, conversation);
 
-      await this.publishEvent('scholarly.ai_buddy.conversation_started', tenantId, {
+      await this.publishEvent('scholarly.ask_issy.conversation_started', tenantId, {
         conversationId: conversation.id,
         userId,
         role,
@@ -349,7 +349,7 @@ export class AIBuddyService extends ScholarlyBaseService {
       const settings = await this.getBuddySettings(tenantId, userId);
 
       // Build AI context
-      const aiContext: AIBuddyContext = {
+      const aiContext: AskIssyContext = {
         userId,
         userRole: role,
         yearLevel: conversation.context.yearLevel,
@@ -373,16 +373,16 @@ export class AIBuddyService extends ScholarlyBaseService {
           timestamp: m.timestamp,
         }));
 
-      let aiResponse: Result<AIBuddyMessage>;
+      let aiResponse: Result<AskIssyMessage>;
       if (role === 'student') {
-        aiResponse = await this.aiService.aiBuddyStudent(
+        aiResponse = await this.aiService.askIssyStudent(
           tenantId,
           request.message,
           aiContext,
           aiMessages
         );
       } else {
-        aiResponse = await this.aiService.aiBuddyTeacher(
+        aiResponse = await this.aiService.askIssyTeacher(
           tenantId,
           request.message,
           aiContext,
@@ -451,7 +451,7 @@ export class AIBuddyService extends ScholarlyBaseService {
       await this.saveConversation(tenantId, conversation);
 
       // Track analytics
-      await this.publishEvent('scholarly.ai_buddy.message_sent', tenantId, {
+      await this.publishEvent('scholarly.ask_issy.message_sent', tenantId, {
         conversationId: conversation.id,
         userId,
         role,
@@ -469,7 +469,7 @@ export class AIBuddyService extends ScholarlyBaseService {
           metadata: {
             suggestedActions,
           },
-        } as AIBuddyMessage,
+        } as AskIssyMessage,
         suggestedActions,
         relatedResources,
         learningInsight,
@@ -616,7 +616,7 @@ export class AIBuddyService extends ScholarlyBaseService {
 
       await this.saveConversation(tenantId, conversation);
 
-      await this.publishEvent('scholarly.ai_buddy.feedback_received', tenantId, {
+      await this.publishEvent('scholarly.ask_issy.feedback_received', tenantId, {
         conversationId,
         messageId,
         helpful: feedback.helpful,
@@ -882,7 +882,7 @@ export class AIBuddyService extends ScholarlyBaseService {
     conversation: Conversation
   ): Promise<SendMessageResponse> {
     // Log safety concern (for review, not shared with parents without proper protocols)
-    await this.publishEvent('scholarly.ai_buddy.safety_concern', tenantId, {
+    await this.publishEvent('scholarly.ask_issy.safety_concern', tenantId, {
       conversationId: conversation.id,
       userId,
       type: safetyCheck.type,
@@ -1093,22 +1093,22 @@ export class AIBuddyService extends ScholarlyBaseService {
 }
 
 // Export singleton
-let buddyServiceInstance: AIBuddyService | null = null;
+let buddyServiceInstance: AskIssyService | null = null;
 
-export function getAIBuddyService(): AIBuddyService {
+export function getAskIssyService(): AskIssyService {
   if (!buddyServiceInstance) {
-    throw new Error('AI Buddy Service not initialized');
+    throw new Error('Ask Issy Service not initialized');
   }
   return buddyServiceInstance;
 }
 
-export function initializeAIBuddyService(deps: {
+export function initializeAskIssyService(deps: {
   eventBus: EventBus;
   cache: Cache;
   config: ScholarlyConfig;
-}): AIBuddyService {
-  buddyServiceInstance = new AIBuddyService(deps);
+}): AskIssyService {
+  buddyServiceInstance = new AskIssyService(deps);
   return buddyServiceInstance;
 }
 
-export { AIBuddyService as default };
+export { AskIssyService as default };

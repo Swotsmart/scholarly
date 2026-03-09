@@ -256,7 +256,7 @@ export function NoResults() {
       title="No Results Found"
       description="Try adjusting your search or filters. If you're looking for something specific, Ask Issy might be able to help."
       secondaryLabel="Ask Issy"
-      secondaryHref="/ai-buddy"
+      secondaryHref="/ask-issy"
       variant="minimal"
     />
   );

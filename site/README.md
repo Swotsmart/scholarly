@@ -11,7 +11,7 @@ This package contains **17 production-ready HTML files** — one landing page an
 ```
 scholarly-site/
 ├── index.html                  ← Landing page (hero, ecosystem overview, developer section)
-├── ai-buddy.html               ← AI conversational tutor
+├── ask-issy.html               ← Ask Issy conversational AI tutor
 ├── golden-learning-path.html   ← Holistic learner profile & adaptive pathways
 ├── curriculum-intelligence.html ← Semantic curriculum engine & knowledge graphs
 ├── tutor-booking.html          ← AI-powered tutor matching & safeguarding
@@ -146,7 +146,7 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    # Clean URLs: /ai-buddy serves ai-buddy.html
+    # Clean URLs: /ask-issy serves ask-issy.html
     location / {
         try_files $uri $uri.html $uri/ =404;
     }
@@ -199,7 +199,7 @@ sed -i 's|#docs|https://docs.scholarly.app|g' *.html
 
 ## Linking Between Pages
 
-All 17 pages are designed to live in the same directory (flat structure, no subfolders). The navigation and cross-links use relative paths like `href="ai-buddy.html"`, so the files must remain siblings. If you need a subfolder structure (e.g., `/services/ai-buddy.html`), you'll need to update the relative links — or use the nginx `try_files` approach above to serve clean URLs from a flat directory.
+All 17 pages are designed to live in the same directory (flat structure, no subfolders). The navigation and cross-links use relative paths like `href="ask-issy.html"`, so the files must remain siblings. If you need a subfolder structure (e.g., `/services/ask-issy.html`), you'll need to update the relative links — or use the nginx `try_files` approach above to serve clean URLs from a flat directory.
 
 **Cross-linking architecture:**
 - The **landing page** links to all 16 inner pages via the mega dropdown navigation, the ecosystem card grid, and the footer
@@ -245,7 +245,7 @@ Internet Explorer is not supported (and doesn't deserve to be).
 | File | Size | Lines |
 |------|------|-------|
 | `index.html` | ~83 KB | ~1,317 |
-| `ai-buddy.html` | ~26 KB | ~310 |
+| `ask-issy.html` | ~26 KB | ~310 |
 | `developer-platform.html` | ~23 KB | ~280 |
 | `curriculum-intelligence.html` | ~23 KB | ~270 |
 | `golden-learning-path.html` | ~24 KB | ~260 |
@@ -261,7 +261,7 @@ Each inner page carries its own accent colour from the design system, creating v
 
 | Colour | Services |
 |--------|----------|
-| **Sapphire** | AI Buddy, Curriculum Intelligence, LIS Bridge, Developer Platform |
+| **Sapphire** | Ask Issy, Curriculum Intelligence, LIS Bridge, Developer Platform |
 | **Amber** | Golden Learning Path, Homeschool Hub, Token Economy, EduScrum |
 | **Teal** | Tutor Booking, Scheduling Engine, Micro-Schools, LinguaFlow, Learning Portfolio |
 | **Rose** | Content Marketplace, Relief Marketplace, Assessment Engine |

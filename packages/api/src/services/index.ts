@@ -129,17 +129,17 @@ export {
   type CompletionResponse,
   type EmbeddingRequest,
   type EmbeddingResponse,
-  type AIBuddyContext,
-  type AIBuddyMessage,
+  type AskIssyContext,
+  type AskIssyMessage,
   type LessonPlanAIInput,
   type LessonPlanAIOutput
 } from './ai-integration.service';
 
-// AI Buddy Service
+// Ask Issy Service
 export {
-  AIBuddyService,
-  initializeAIBuddyService,
-  getAIBuddyService,
+  AskIssyService,
+  initializeAskIssyService,
+  getAskIssyService,
   type Conversation,
   type StoredMessage,
   type LearnerProfile,
@@ -147,7 +147,7 @@ export {
   type BuddyRole,
   type SendMessageRequest,
   type SendMessageResponse
-} from './ai-buddy.service';
+} from './ask-issy.service';
 
 // Digital Portfolio Service
 export {
