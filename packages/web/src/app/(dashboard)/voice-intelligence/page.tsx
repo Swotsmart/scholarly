@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,11 +30,13 @@ import {
   Settings2,
   RefreshCw,
   Download,
-  Copy,
   Check,
   AlertCircle,
-  Sparkles,
   Wand2,
+  BookOpen,
+  Type,
+  SkipBack,
+  SkipForward,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -154,9 +156,20 @@ export default function VoiceIntelligencePage() {
   const [cloneLoading, setCloneLoading] = useState(false);
   const [cloneResult, setCloneResult] = useState<{ cloneId: string; voiceId: string } | null>(null);
 
+  // Karaoke reader
+  const [karaokeText, setKaraokeText] = useState('The cat sat on the mat. She had a big hat.');
+  const [karaokeMode, setKaraokeMode] = useState<'word' | 'letter'>('word');
+  const [karaokeWordIndex, setKaraokeWordIndex] = useState(-1);
+  const [karaokeLetterIndex, setKaraokeLetterIndex] = useState(-1);
+  const [karaokeAudioUrl, setKaraokeAudioUrl] = useState<string | null>(null);
+  const [karaokeIsPlaying, setKaraokeIsPlaying] = useState(false);
+  const [karaokeLoading, setKaraokeLoading] = useState(false);
+  const karaokeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const karaokeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const karaokeStartTimeRef = useRef<number>(0);
+
   // UI
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   // ---------------------------------------------------------------------------
   // Effects
@@ -373,35 +386,147 @@ export default function VoiceIntelligencePage() {
     a.click();
   };
 
-  const copyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  // ---------------------------------------------------------------------------
+  // Karaoke Reader
+  // ---------------------------------------------------------------------------
+
+  const karaokeWords = karaokeText.split(/\s+/).filter(Boolean);
+
+  /** Total letters across all words (for letter-mode timing) */
+  const karaokeTotalLetters = karaokeWords.reduce((sum, w) => sum + w.length, 0);
+
+  const stopKaraoke = useCallback(() => {
+    if (karaokeTimerRef.current) {
+      clearInterval(karaokeTimerRef.current);
+      karaokeTimerRef.current = null;
+    }
+    setKaraokeIsPlaying(false);
+  }, []);
+
+  const generateKaraokeAudio = async () => {
+    if (!selectedVoice || !karaokeText.trim()) return;
+    setKaraokeLoading(true);
+    setError(null);
+    stopKaraoke();
+    setKaraokeWordIndex(-1);
+    setKaraokeLetterIndex(-1);
+
+    try {
+      // Revoke old URL
+      if (karaokeAudioUrl) URL.revokeObjectURL(karaokeAudioUrl);
+
+      const speed = ttsSettings.speed;
+      const pitch = ttsSettings.pitch;
+      const warmth = ttsSettings.warmth;
+
+      const res = await fetch(`${API_BASE_URL}/voice/tts`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: karaokeText,
+          voiceId: selectedVoice.voiceId,
+          voiceSettings: {
+            stability: ttsSettings.stability,
+            similarityBoost: ttsSettings.similarityBoost,
+            style: ttsSettings.style,
+            speed,
+            pitch,
+            warmth,
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(errJson?.error || `TTS failed (${res.status})`);
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setKaraokeAudioUrl(url);
+
+      if (karaokeAudioRef.current) {
+        karaokeAudioRef.current.src = url;
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate karaoke audio');
+    } finally {
+      setKaraokeLoading(false);
+    }
   };
+
+  const playKaraoke = useCallback(() => {
+    if (!karaokeAudioRef.current || !karaokeAudioUrl) return;
+    karaokeAudioRef.current.play();
+    setKaraokeIsPlaying(true);
+    karaokeStartTimeRef.current = Date.now();
+
+    const duration = (karaokeAudioRef.current.duration || 3) * 1000; // ms
+    const wordCount = karaokeWords.length;
+    const totalLetters = karaokeTotalLetters;
+
+    karaokeTimerRef.current = setInterval(() => {
+      const elapsed = Date.now() - karaokeStartTimeRef.current;
+      const progress = elapsed / duration;
+
+      if (karaokeMode === 'word') {
+        const wi = Math.min(Math.floor(progress * wordCount), wordCount - 1);
+        setKaraokeWordIndex(wi);
+        setKaraokeLetterIndex(-1);
+      } else {
+        // Letter mode: distribute time across all letters proportionally
+        const letterPos = Math.min(Math.floor(progress * totalLetters), totalLetters - 1);
+        let cumulative = 0;
+        for (let wi = 0; wi < karaokeWords.length; wi++) {
+          const wordLen = karaokeWords[wi].length;
+          if (cumulative + wordLen > letterPos) {
+            setKaraokeWordIndex(wi);
+            setKaraokeLetterIndex(letterPos - cumulative);
+            break;
+          }
+          cumulative += wordLen;
+        }
+      }
+
+      if (progress >= 1) {
+        stopKaraoke();
+        setKaraokeWordIndex(wordCount - 1);
+        if (karaokeMode === 'letter') {
+          setKaraokeLetterIndex(karaokeWords[wordCount - 1].length - 1);
+        }
+      }
+    }, 30); // ~33fps for smooth letter tracking
+  }, [karaokeAudioUrl, karaokeWords, karaokeTotalLetters, karaokeMode, stopKaraoke]);
+
+  const pauseKaraoke = useCallback(() => {
+    if (karaokeAudioRef.current) karaokeAudioRef.current.pause();
+    stopKaraoke();
+  }, [stopKaraoke]);
+
+  const resetKaraoke = useCallback(() => {
+    if (karaokeAudioRef.current) {
+      karaokeAudioRef.current.pause();
+      karaokeAudioRef.current.currentTime = 0;
+    }
+    stopKaraoke();
+    setKaraokeWordIndex(-1);
+    setKaraokeLetterIndex(-1);
+  }, [stopKaraoke]);
+
+  // Cleanup karaoke timer on unmount
+  useEffect(() => {
+    return () => {
+      if (karaokeTimerRef.current) clearInterval(karaokeTimerRef.current);
+      if (karaokeAudioUrl) URL.revokeObjectURL(karaokeAudioUrl);
+    };
+  }, [karaokeAudioUrl]);
 
   // ---------------------------------------------------------------------------
   // Derived
   // ---------------------------------------------------------------------------
-
-  const sampleCode = `// Text-to-Speech API Example
-const response = await fetch('${API_BASE_URL}/voice/tts', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer YOUR_TOKEN',
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    text: '${ttsText.slice(0, 50)}...',
-    voiceId: '${selectedVoice?.voiceId || 'VOICE_ID'}',
-    voiceSettings: {
-      stability: ${ttsSettings.stability},
-      similarityBoost: ${ttsSettings.similarityBoost},
-      style: ${ttsSettings.style},
-    },
-  }),
-});
-// Response is audio/mpeg binary data
-const audioBlob = await response.blob();`;
 
   const healthColour = {
     healthy: 'text-green-600 dark:text-green-400',
@@ -431,7 +556,7 @@ const audioBlob = await response.blob();`;
             Voice Intelligence
           </h1>
           <p className="text-muted-foreground mt-1">
-            Self-hosted Kokoro TTS · Whisper STT · Chatterbox voice cloning
+            Text-to-speech, pronunciation, voice cloning &amp; karaoke reading tools
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -452,21 +577,6 @@ const audioBlob = await response.blob();`;
           </Button>
         </div>
       </div>
-
-      {/* ── AI Insight Banner ── */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="py-3 px-4 flex items-center gap-3">
-          <Sparkles className="h-4 w-4 text-primary shrink-0" />
-          <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Self-hosted voice pipeline active.</span>
-            {' '}Kokoro TTS replaced ElevenLabs in Sprint 29, reducing narration costs ~98%.
-            Voice cloning (Chatterbox) is available for content creators and platform admins.
-            {health.model && (
-              <span className="ml-2 text-primary font-medium">{health.model}</span>
-            )}
-          </p>
-        </CardContent>
-      </Card>
 
       {/* ── Error Banner ── */}
       {error && (
@@ -504,9 +614,9 @@ const audioBlob = await response.blob();`;
             <Mic className="h-4 w-4" />
             Pronunciation
           </TabsTrigger>
-          <TabsTrigger value="api" className="flex items-center gap-1.5">
-            <Settings2 className="h-4 w-4" />
-            API Reference
+          <TabsTrigger value="karaoke" className="flex items-center gap-1.5">
+            <BookOpen className="h-4 w-4" />
+            Karaoke Reader
           </TabsTrigger>
         </TabsList>
 
@@ -758,75 +868,82 @@ const audioBlob = await response.blob();`;
                     </p>
                   </div>
 
-                  <div className="border-t pt-4" />
-
-                  {/* Voice Character (secondary) */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Voice Character</Label>
-                  </div>
-                  {[
-                    { key: 'stability' as const, label: 'Stability', hint: 'Higher = more consistent, Lower = more expressive' },
-                    { key: 'similarityBoost' as const, label: 'Similarity Boost', hint: 'How closely to match the original voice' },
-                    { key: 'style' as const, label: 'Style', hint: 'Style exaggeration (0 = neutral, 1 = very expressive)' },
-                  ].map(({ key, label, hint }) => (
-                    <div key={key} className="space-y-3">
-                      <div className="flex justify-between">
-                        <Label>{label}</Label>
-                        <span className="text-sm text-muted-foreground">{ttsSettings[key].toFixed(2)}</span>
-                      </div>
-                      <Slider
-                        value={[ttsSettings[key]]}
-                        onValueChange={([v]) => setTtsSettings(s => ({ ...s, [key]: v }))}
-                        min={0} max={1} step={0.01}
-                      />
-                      <p className="text-xs text-muted-foreground">{hint}</p>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              {/* Playback */}
-              <Card>
-                <CardHeader><CardTitle>Playback</CardTitle></CardHeader>
-                <CardContent>
-                  {audioUrl ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <Button variant="outline" size="icon" onClick={togglePlayback}>
-                          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        </Button>
-                        <Button
-                          variant="outline" size="icon"
-                          onClick={() => {
-                            if (audioRef.current) {
-                              audioRef.current.pause();
-                              audioRef.current.currentTime = 0;
-                              setIsPlaying(false);
-                            }
-                          }}
-                        >
-                          <Square className="h-4 w-4" />
-                        </Button>
-                        <div className="flex-1">
-                          <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div className={`h-full bg-primary transition-all ${isPlaying ? 'animate-pulse w-full' : 'w-0'}`} />
-                          </div>
-                        </div>
-                        <Button variant="outline" size="icon" onClick={downloadAudio}>
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <p className="text-sm text-muted-foreground text-center">Audio generated successfully</p>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Volume2 className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                      <p>Generate speech to preview playback</p>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>
+          </div>
+
+          {/* Bottom row: Voice Character + Playback side by side */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Voice Character */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Voice Character</CardTitle>
+                <CardDescription>Fine-tune voice personality traits</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[
+                  { key: 'stability' as const, label: 'Stability', hint: 'Higher = more consistent, Lower = more expressive' },
+                  { key: 'similarityBoost' as const, label: 'Similarity Boost', hint: 'How closely to match the original voice' },
+                  { key: 'style' as const, label: 'Style', hint: 'Style exaggeration (0 = neutral, 1 = very expressive)' },
+                ].map(({ key, label, hint }) => (
+                  <div key={key} className="space-y-3">
+                    <div className="flex justify-between">
+                      <Label>{label}</Label>
+                      <span className="text-sm text-muted-foreground">{ttsSettings[key].toFixed(2)}</span>
+                    </div>
+                    <Slider
+                      value={[ttsSettings[key]]}
+                      onValueChange={([v]) => setTtsSettings(s => ({ ...s, [key]: v }))}
+                      min={0} max={1} step={0.01}
+                    />
+                    <p className="text-xs text-muted-foreground">{hint}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Playback */}
+            <Card>
+              <CardHeader><CardTitle>Playback</CardTitle></CardHeader>
+              <CardContent>
+                {audioUrl ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Button variant="outline" size="icon" onClick={togglePlayback}>
+                        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                      </Button>
+                      <Button
+                        variant="outline" size="icon"
+                        onClick={() => {
+                          if (audioRef.current) {
+                            audioRef.current.pause();
+                            audioRef.current.currentTime = 0;
+                            setIsPlaying(false);
+                          }
+                        }}
+                      >
+                        <Square className="h-4 w-4" />
+                      </Button>
+                      <div className="flex-1">
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div className={`h-full bg-primary transition-all ${isPlaying ? 'animate-pulse w-full' : 'w-0'}`} />
+                        </div>
+                      </div>
+                      <Button variant="outline" size="icon" onClick={downloadAudio}>
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground text-center">Audio generated successfully</p>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Volume2 className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                    <p>Generate speech to preview playback</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
@@ -1103,55 +1220,264 @@ const audioBlob = await response.blob();`;
           </div>
         </TabsContent>
 
-        {/* ══ API Reference Tab ══ */}
-        <TabsContent value="api" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>API Reference</CardTitle>
-              <CardDescription>Voice Intelligence endpoints — all at /api/v1/voice/*</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                {[
-                  { method: 'POST', path: '/voice/tts', desc: 'Text-to-Speech (Kokoro)' },
-                  { method: 'POST', path: '/voice/stt', desc: 'Speech-to-Text (Whisper)' },
-                  { method: 'GET',  path: '/voice/voices', desc: 'List available voices' },
-                  { method: 'POST', path: '/voice/pronunciation/assess', desc: 'Pronunciation assessment' },
-                  { method: 'POST', path: '/voice/agents', desc: 'Create conversation agent' },
-                  { method: 'POST', path: '/voice/sessions', desc: 'Start voice session' },
-                  { method: 'DELETE', path: '/voice/sessions/:id', desc: 'End voice session' },
-                  { method: 'POST', path: '/voice/clones', desc: 'Create voice clone (Chatterbox)' },
-                  { method: 'POST', path: '/voice/dialogues', desc: 'Generate multi-speaker dialogue' },
-                  { method: 'GET',  path: '/voice/ws/stats', desc: 'WebSocket stats (admin)' },
-                ].map((ep) => (
-                  <div key={ep.path} className="flex items-center gap-3 p-2 rounded bg-muted/50">
-                    <Badge
-                      variant={ep.method === 'GET' ? 'secondary' : ep.method === 'DELETE' ? 'destructive' : 'default'}
-                      className="font-mono text-xs w-16 justify-center"
-                    >
-                      {ep.method}
-                    </Badge>
-                    <code className="text-sm flex-1">{ep.path}</code>
-                    <span className="text-sm text-muted-foreground">{ep.desc}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">Example: Text-to-Speech</h3>
-                  <Button variant="outline" size="sm" onClick={() => copyCode(sampleCode)}>
-                    {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
-                    {copied ? 'Copied!' : 'Copy'}
-                  </Button>
+        {/* ══ Karaoke Reader Tab ══ */}
+        <TabsContent value="karaoke" className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Left: Text input + controls */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Karaoke Reader
+                </CardTitle>
+                <CardDescription>
+                  Word and letter tracking for early years reading practice
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Reading text</Label>
+                  <Textarea
+                    value={karaokeText}
+                    onChange={(e) => setKaraokeText(e.target.value)}
+                    placeholder="Enter text for karaoke reading…"
+                    rows={4}
+                    maxLength={2000}
+                  />
+                  <p className="text-xs text-muted-foreground text-right">
+                    {karaokeText.length} / 2000 characters • {karaokeWords.length} words
+                  </p>
                 </div>
-                <pre className="p-4 rounded-lg bg-slate-950 text-slate-50 overflow-x-auto text-sm">
-                  <code>{sampleCode}</code>
-                </pre>
-              </div>
-            </CardContent>
-          </Card>
+
+                {/* Tracking mode toggle */}
+                <div className="space-y-2">
+                  <Label>Tracking mode</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-colors ${
+                        karaokeMode === 'word'
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'hover:bg-accent hover:text-accent-foreground'
+                      }`}
+                      onClick={() => setKaraokeMode('word')}
+                    >
+                      <Type className="h-4 w-4" />
+                      <div>
+                        <span className="text-sm font-medium block">Word</span>
+                        <span className="text-xs text-muted-foreground">Highlights each word</span>
+                      </div>
+                    </button>
+                    <button
+                      className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-colors ${
+                        karaokeMode === 'letter'
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'hover:bg-accent hover:text-accent-foreground'
+                      }`}
+                      onClick={() => setKaraokeMode('letter')}
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      <div>
+                        <span className="text-sm font-medium block">Letter</span>
+                        <span className="text-xs text-muted-foreground">Tracks each letter</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Voice selection reminder */}
+                {!selectedVoice && (
+                  <div className="rounded-lg bg-muted/50 p-3 text-center text-sm text-muted-foreground">
+                    Select a voice in the TTS tab first
+                  </div>
+                )}
+
+                <Button
+                  onClick={generateKaraokeAudio}
+                  disabled={karaokeLoading || !selectedVoice || !karaokeText.trim()}
+                  className="w-full"
+                >
+                  {karaokeLoading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating audio…</>
+                  ) : (
+                    <><Volume2 className="mr-2 h-4 w-4" />Generate Karaoke Audio</>
+                  )}
+                </Button>
+
+                {/* Playback controls */}
+                {karaokeAudioUrl && (
+                  <div className="space-y-4 pt-2">
+                    <div className="flex items-center justify-center gap-3">
+                      <Button variant="outline" size="icon" onClick={resetKaraoke} title="Reset">
+                        <SkipBack className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        onClick={karaokeIsPlaying ? pauseKaraoke : playKaraoke}
+                        className="gap-2 px-6"
+                        size="lg"
+                      >
+                        {karaokeIsPlaying ? (
+                          <><Pause className="h-5 w-5" /> Pause</>
+                        ) : (
+                          <><Play className="h-5 w-5" /> Play</>
+                        )}
+                      </Button>
+                      <Button variant="outline" size="icon" onClick={resetKaraoke} title="Stop">
+                        <Square className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* Audio progress */}
+                    <div className="space-y-1">
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={`h-full bg-primary rounded-full transition-all duration-100 ${karaokeIsPlaying ? '' : ''}`}
+                          style={{
+                            width: karaokeWordIndex >= 0
+                              ? `${Math.min(((karaokeWordIndex + 1) / karaokeWords.length) * 100, 100)}%`
+                              : '0%'
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>
+                          {karaokeWordIndex >= 0
+                            ? `Word ${karaokeWordIndex + 1} of ${karaokeWords.length}`
+                            : 'Ready'
+                          }
+                        </span>
+                        <span>{karaokeIsPlaying ? 'Playing' : karaokeWordIndex >= 0 ? 'Paused' : ''}</span>
+                      </div>
+                    </div>
+
+                    {/* Tracking speed */}
+                    <div className="space-y-2 rounded-lg border p-3">
+                      <div className="flex justify-between">
+                        <Label className="text-sm">Tracking Speed</Label>
+                        <span className="text-sm text-muted-foreground">{ttsSettings.speed.toFixed(2)}x</span>
+                      </div>
+                      <Slider
+                        value={[ttsSettings.speed]}
+                        onValueChange={([v]) => setTtsSettings(s => ({ ...s, speed: v }))}
+                        min={0.25} max={2.0} step={0.05}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Adjusts audio speed and word/letter tracking cadence
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Right: Karaoke display */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Reading Display</CardTitle>
+                <CardDescription>
+                  {karaokeMode === 'word'
+                    ? 'Each word highlights as it is spoken'
+                    : 'Each letter highlights for phonics tracking'
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {karaokeWords.length > 0 ? (
+                  <div className="rounded-xl bg-muted/30 p-6 min-h-[200px] flex flex-wrap items-start content-start gap-x-3 gap-y-4 text-2xl lg:text-3xl leading-relaxed font-medium select-none">
+                    {karaokeWords.map((word, wi) => {
+                      const isActiveWord = wi === karaokeWordIndex;
+                      const isPastWord = wi < karaokeWordIndex;
+
+                      if (karaokeMode === 'letter') {
+                        return (
+                          <span key={wi} className="inline-flex">
+                            {word.split('').map((letter, li) => {
+                              const isActiveLetter = isActiveWord && li === karaokeLetterIndex;
+                              const isPastLetter = isPastWord || (isActiveWord && li < karaokeLetterIndex);
+                              return (
+                                <span
+                                  key={li}
+                                  className={`
+                                    inline-block transition-all duration-100
+                                    ${isActiveLetter
+                                      ? 'text-primary scale-125 font-bold drop-shadow-md'
+                                      : isPastLetter
+                                        ? 'text-primary/50'
+                                        : karaokeWordIndex >= 0
+                                          ? 'text-muted-foreground/40'
+                                          : 'text-foreground'
+                                    }
+                                  `}
+                                >
+                                  {letter}
+                                </span>
+                              );
+                            })}
+                          </span>
+                        );
+                      }
+
+                      // Word mode
+                      return (
+                        <span
+                          key={wi}
+                          className={`
+                            inline-block px-1 py-0.5 rounded-lg transition-all duration-150
+                            ${isActiveWord
+                              ? 'bg-primary text-primary-foreground scale-110 font-bold shadow-lg'
+                              : isPastWord
+                                ? 'text-primary/50'
+                                : karaokeWordIndex >= 0
+                                  ? 'text-muted-foreground/40'
+                                  : 'text-foreground'
+                            }
+                          `}
+                        >
+                          {word}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                    <p>Enter text to see the karaoke display</p>
+                  </div>
+                )}
+
+                {/* Legend */}
+                {karaokeWordIndex >= 0 && (
+                  <div className="flex items-center gap-4 mt-4 pt-4 border-t text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded bg-primary" />
+                      <span>Current {karaokeMode}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded bg-primary/50" />
+                      <span>Already read</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded bg-muted-foreground/40" />
+                      <span>Upcoming</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Hidden audio element for karaoke */}
+          <audio
+            ref={karaokeAudioRef}
+            onEnded={() => {
+              stopKaraoke();
+              setKaraokeWordIndex(karaokeWords.length - 1);
+              if (karaokeMode === 'letter') {
+                setKaraokeLetterIndex((karaokeWords[karaokeWords.length - 1]?.length ?? 1) - 1);
+              }
+            }}
+          />
         </TabsContent>
+
       </Tabs>
     </div>
   );
