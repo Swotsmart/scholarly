@@ -281,10 +281,10 @@ RESPONSE (strict JSON, all fields required):
 const MC_API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
 async function callClaudeAPI<T>(systemPrompt: string, userPrompt: string): Promise<T> {
-  // Get auth token from localStorage (same as api.ts pattern)
+  // Get auth token from localStorage (matches scholarly-auth Zustand persist key)
   let token: string | null = null;
   try {
-    const stored = localStorage.getItem('auth-storage');
+    const stored = localStorage.getItem('scholarly-auth');
     if (stored) {
       const parsed = JSON.parse(stored);
       token = parsed?.state?.accessToken || null;
