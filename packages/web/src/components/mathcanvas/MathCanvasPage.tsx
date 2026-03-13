@@ -21,7 +21,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import {
   Loader2, BarChart2, Compass, Box, BarChart3, Calculator, FlaskConical,
@@ -502,6 +502,36 @@ export default function MathCanvasPage() {
   const [rightTab, setRightTab] = useState<RightTab>('params');
   const [zoom, setZoom] = useState(100);
 
+  // ── Resizable panels ──────────────────────────────────────────────────────
+  const [leftWidth, setLeftWidth] = useState(260);
+  const [rightWidth, setRightWidth] = useState(260);
+  const dragging = useRef<'left' | 'right' | null>(null);
+  const dragStartX = useRef(0);
+  const dragStartW = useRef(0);
+
+  const onDragStart = useCallback((side: 'left' | 'right', e: React.MouseEvent) => {
+    e.preventDefault();
+    dragging.current = side;
+    dragStartX.current = e.clientX;
+    dragStartW.current = side === 'left' ? leftWidth : rightWidth;
+  }, [leftWidth, rightWidth]);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      const dx = e.clientX - dragStartX.current;
+      const newW = Math.max(180, Math.min(450,
+        dragging.current === 'left' ? dragStartW.current + dx : dragStartW.current - dx
+      ));
+      if (dragging.current === 'left') setLeftWidth(newW);
+      else setRightWidth(newW);
+    };
+    const onUp = () => { dragging.current = null; };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, []);
+
   // Mode as extended type — 'dual' is valid here
   const mode = mc.mode as ExtCanvasMode;
 
@@ -533,8 +563,8 @@ export default function MathCanvasPage() {
   return (
     <div style={{
       display: 'grid',
-      gridTemplateRows: '52px 42px 1fr',
-      gridTemplateColumns: '260px 1fr 260px',
+      gridTemplateRows: '52px 42px 1fr 32px',
+      gridTemplateColumns: `${leftWidth}px 4px 1fr 4px ${rightWidth}px`,
       height: 'calc(100vh - 52px)',
       fontFamily: T.fs,
       color: T.tx,
@@ -675,7 +705,7 @@ export default function MathCanvasPage() {
 
       {/* ── LEFT PANEL ─────────────────────────────────────────────────────── */}
       <div style={{
-        borderRight: `1px solid ${T.bd}`, background: T.sf,
+        gridColumn: '1', background: T.sf,
         overflowY: 'auto', padding: 14,
         display: 'flex', flexDirection: 'column', gap: 12,
       }}>
@@ -730,8 +760,19 @@ export default function MathCanvasPage() {
         </div>
       </div>
 
+      {/* ── LEFT DRAG HANDLE ── */}
+      <div
+        onMouseDown={e => onDragStart('left', e)}
+        style={{
+          gridColumn: '2', cursor: 'col-resize', background: T.bd,
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = T.bl)}
+        onMouseLeave={e => (e.currentTarget.style.background = T.bd)}
+      />
+
       {/* ── CANVAS VIEWPORT ────────────────────────────────────────────────── */}
-      <div style={{ position: 'relative', overflow: 'hidden', background: T.bg }}>
+      <div style={{ gridColumn: '3', position: 'relative', overflow: 'hidden', background: T.bg }}>
 
         {showWelcome && <WelcomeOverlay mode={mode} onChip={mc.quickIntent} />}
 
@@ -863,8 +904,19 @@ export default function MathCanvasPage() {
         )}
       </div>
 
+      {/* ── RIGHT DRAG HANDLE ── */}
+      <div
+        onMouseDown={e => onDragStart('right', e)}
+        style={{
+          gridColumn: '4', cursor: 'col-resize', background: T.bd,
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = T.bl)}
+        onMouseLeave={e => (e.currentTarget.style.background = T.bd)}
+      />
+
       {/* ── RIGHT PANEL ────────────────────────────────────────────────────── */}
-      <div style={{ borderLeft: `1px solid ${T.bd}`, background: T.sf, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ gridColumn: '5', background: T.sf, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', borderBottom: `1px solid ${T.bd}` }}>
           {([
             { id: 'params' as RightTab, label: 'Parameters', icon: <Layers size={11} /> },
@@ -992,6 +1044,22 @@ export default function MathCanvasPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── FOOTER ─────────────────────────────────────────────────────────── */}
+      <div style={{
+        gridColumn: '1 / -1',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: 6,
+        fontSize: 10, color: T.tx3,
+        borderTop: `1px solid ${T.bd}`, background: T.sf,
+        padding: '0 16px',
+      }}>
+        <span>&copy; 2026 Swotsmart Holdings All rights reserved</span>
+        <span>&middot;</span>
+        <a href="/terms" style={{ color: T.tx3, textDecoration: 'none' }}>Terms of Use</a>
+        <span>|</span>
+        <a href="/privacy" style={{ color: T.tx3, textDecoration: 'none' }}>Privacy Policy</a>
       </div>
     </div>
   );

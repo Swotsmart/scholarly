@@ -302,7 +302,11 @@ async function callClaudeAPI<T>(systemPrompt: string, userPrompt: string): Promi
 
   if (!res.ok) {
     const errData = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error((errData as any).error || `API ${res.status}: ${res.statusText}`);
+    const errMsg = (errData as any).error;
+    const errStr = typeof errMsg === 'string' ? errMsg
+      : typeof errMsg === 'object' && errMsg?.message ? errMsg.message
+      : `API ${res.status}: ${res.statusText}`;
+    throw new Error(errStr);
   }
 
   const d = await res.json();
