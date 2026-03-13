@@ -275,26 +275,39 @@ RESPONSE (strict JSON, all fields required):
 }
 
 // =============================================================================
-// CLAUDE API CALLER
+// API CALLER — proxied through Scholarly API server
 // =============================================================================
 
+const MC_API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+
 async function callClaudeAPI<T>(systemPrompt: string, userPrompt: string): Promise<T> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  // Get auth token from localStorage (same as api.ts pattern)
+  let token: string | null = null;
+  try {
+    const stored = localStorage.getItem('auth-storage');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      token = parsed?.state?.accessToken || null;
+    }
+  } catch { /* ignore */ }
+
+  const res = await fetch(`${MC_API_BASE}/mathcanvas/generate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
-    }),
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ systemPrompt, userPrompt }),
   });
 
-  if (!res.ok) throw new Error(`Claude API ${res.status}: ${res.statusText}`);
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error((errData as any).error || `API ${res.status}: ${res.statusText}`);
+  }
+
   const d = await res.json();
-  const text = d.content.map((b: { text?: string }) => b.text ?? '').join('');
-  const clean = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-  return JSON.parse(clean) as T;
+  if (!d.success) throw new Error(d.error || 'Generation failed');
+  return d.result as T;
 }
 
 // =============================================================================

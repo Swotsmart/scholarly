@@ -60,6 +60,7 @@ import knowledgeWorkspaceRouter from './routes/knowledge-workspace';
 import { googleDriveRouter } from './routes/google-drive';
 import oneDriveRouter from './routes/onedrive';
 import demoRouter from './routes/demo';
+import { mathCanvasRouter } from './routes/mathcanvas';
 
 // Sprint Module Routes (Sprints 1-18)
 import { storybookRouter } from './routes/storybook';
@@ -236,6 +237,7 @@ api.use('/voice', voiceIntelligenceRouter); // Voice Intelligence with TTS, STT,
 api.use('/workspace', knowledgeWorkspaceRouter); // Knowledge Workspace (AFFiNE) integration
 api.use('/integrations/google-drive', googleDriveRouter); // Google Drive Integration (has webhook route that's public)
 api.use('/integrations/onedrive', oneDriveRouter); // OneDrive/SharePoint Integration
+api.use('/mathcanvas', authMiddleware, mathCanvasRouter); // MathCanvas AI visualization proxy
 
 // Sprint Module Routes (Sprints 1-18)
 api.use('/storybook', authMiddleware, storybookRouter);       // Storybook engine, generation, review, marketplace

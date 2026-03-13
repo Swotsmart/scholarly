@@ -70,8 +70,8 @@ Prisma 5.9 + PostgreSQL. Schema at `prisma/schema.prisma`. Build: tsup (CJS + ES
 |-----|-------------|-------|-------|
 | `scholarly` (prod web) | `scholarly.bravefield-dce0abaf...` | 1-3 | `NEXT_PUBLIC_DEMO_MODE=false` |
 | `scholarly-api` (prod API) | `scholarly-api.bravefield-dce0abaf...` | 1-3 | |
-| `scholarly-staging` (staging web) | `scholarly-staging.bravefield-dce0abaf...` | 0-2 | `NEXT_PUBLIC_DEMO_MODE=true` |
-| `scholarly-staging-api` | `scholarly-staging-api.bravefield-dce0abaf...` | 0-2 | DB: `scholarly_staging` on shared server |
+
+> **Note:** Staging environment (`scholarly-staging`, `scholarly-staging-api`) has been deleted. Recreate when needed.
 
 All FQDNs end with `.australiaeast.azurecontainerapps.io`.
 
@@ -83,14 +83,12 @@ All FQDNs end with `.australiaeast.azurecontainerapps.io`.
 ### Deploy Commands
 ```bash
 TAG=$(git rev-parse --short HEAD)
-# Build
+# Build production web + API
 az acr build --registry scholarlyacr --image scholarly-web:$TAG --platform linux/amd64 --file Dockerfile .
-az acr build --registry scholarlyacr --image scholarly-api:staging-$TAG --platform linux/amd64 --file Dockerfile.api .
-# Deploy staging
-az containerapp update --name scholarly-staging --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-web:$TAG
-az containerapp update --name scholarly-staging-api --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-api:staging-$TAG
+az acr build --registry scholarlyacr --image scholarly-api:$TAG --platform linux/amd64 --file Dockerfile.api .
 # Deploy production
 az containerapp update --name scholarly --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-web:$TAG
+az containerapp update --name scholarly-api --resource-group scholarly-rg --image scholarlyacr.azurecr.io/scholarly-api:$TAG
 ```
 
 ## Environment Variables
