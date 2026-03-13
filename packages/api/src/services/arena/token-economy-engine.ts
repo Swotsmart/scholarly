@@ -88,6 +88,11 @@ export enum EarningCategory {
   MENTORING = 'MENTORING',
   BOUNTY_COMPLETION = 'BOUNTY_COMPLETION',
   TUTORIAL_CREATION = 'TUTORIAL_CREATION',
+
+  // MathCanvas earning categories
+  MATH_VISUALIZATION = 'MATH_VISUALIZATION',
+  MATH_COMPETITION_WIN = 'MATH_COMPETITION_WIN',
+  MATH_CONSTRUCTION = 'MATH_CONSTRUCTION',
 }
 
 export enum SpendingCategory {
@@ -699,6 +704,58 @@ const EARNING_RULES: EarningRule[] = [
     minAge: 16,
     maxAge: 99,
     description: 'Create an educational tutorial for the developer portal',
+  },
+
+  // ── MathCanvas: Visualisation & Competition Tokens ──
+  {
+    category: EarningCategory.MATH_VISUALIZATION,
+    tokenType: TokenType.SPARKS,
+    baseAmount: 5,
+    multiplierFactors: [
+      { condition: 'sessionBroadcast', multiplier: 1.5, description: 'Visualisation shared in live session' },
+      { condition: 'curriculumAligned', multiplier: 1.4, description: 'AI confirmed ACARA/IB objective alignment' },
+      { condition: 'teacherFlagged', multiplier: 1.3, description: 'Teacher spotlighted for class discussion' },
+      { condition: 'forkedByPeer', multiplier: 1.2, description: 'Another student forked their canvas' },
+    ],
+    dailyCap: 35,
+    weeklyCap: 150,
+    cooldownMinutes: 0,
+    minAge: 7,
+    description: 'Earn Sparks for creating and sharing mathematical visualisations in MathCanvas.',
+  },
+  {
+    category: EarningCategory.MATH_COMPETITION_WIN,
+    tokenType: TokenType.GEMS,
+    baseAmount: 12,
+    multiplierFactors: [
+      { condition: 'tournamentFinal', multiplier: 3.0, description: 'Tournament final (school/platform-wide)' },
+      { condition: 'firstPlace', multiplier: 2.0, description: 'First place in competition' },
+      { condition: 'secondPlace', multiplier: 1.4, description: 'Second place in competition' },
+      { condition: 'thirdPlace', multiplier: 1.2, description: 'Third place in competition' },
+      { condition: 'perfectScore', multiplier: 2.5, description: 'Perfect visualisation and construction score' },
+      { condition: 'handicapOvercome', multiplier: 1.5, description: 'Won despite negative BKT handicap' },
+    ],
+    dailyCap: 60,
+    weeklyCap: 250,
+    cooldownMinutes: 30,
+    minAge: 8,
+    description: 'Earn Gems for winning or placing in MathCanvas competitions.',
+  },
+  {
+    category: EarningCategory.MATH_CONSTRUCTION,
+    tokenType: TokenType.VOICE,
+    baseAmount: 8,
+    multiplierFactors: [
+      { condition: 'teamCaptain', multiplier: 1.3, description: 'Led the construction team' },
+      { condition: 'curriculumEvidence', multiplier: 1.4, description: 'Team construction cited 3+ objectives' },
+      { condition: 'teacherEndorsed', multiplier: 1.5, description: 'Teacher endorsed for class showcase' },
+      { condition: 'communityFeatured', multiplier: 2.0, description: 'Construction featured in community gallery' },
+    ],
+    dailyCap: 30,
+    weeklyCap: 100,
+    cooldownMinutes: 60,
+    minAge: 10,
+    description: 'Earn Voice tokens for completing collaborative mathematical construction events.',
   },
 ];
 

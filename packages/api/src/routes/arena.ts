@@ -10,6 +10,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '@scholarly/database';
 import { authMiddleware } from '../middleware/auth';
+import { MathScoringMethods } from '../services/arena/arena-competition-engine';
 
 export const arenaRouter: Router = Router();
 arenaRouter.use(authMiddleware);
@@ -53,6 +54,7 @@ const createCompetitionSchema = z.object({
     'READING_SPRINT', 'ACCURACY_CHALLENGE', 'COMPREHENSION_QUIZ',
     'WORD_BLITZ', 'PHONICS_DUEL', 'TEAM_RELAY', 'STORY_SHOWDOWN',
     'SPELLING_BEE', 'VOCABULARY_CHALLENGE', 'COLLABORATIVE_CREATION',
+    'MATH_CHALLENGE', 'MATH_CONSTRUCTION', 'MATH_RELAY',
   ]),
   title: z.string().min(3).max(200),
   description: z.string().max(2000).optional(),
@@ -122,6 +124,12 @@ const submitRoundSchema = z.object({
   wcpm: z.number().int().min(0),
   comprehensionScore: z.number().min(0).max(100).optional(),
   highlights: z.array(z.string()).optional(),
+  visualisationScore: z.number().min(0).max(100).optional(),
+  constructionScore: z.number().min(0).max(100).optional(),
+  eleganceScore: z.number().min(0).max(100).optional(),
+  curriculumHits: z.number().int().min(0).optional(),
+  stepsToSolution: z.number().int().min(1).optional(),
+  collaborationScore: z.number().min(0).max(100).optional(),
 });
 
 const contributeSchema = z.object({
@@ -2728,4 +2736,70 @@ arenaRouter.get('/pilot/status', async (_req: Request, res: Response) => {
       ],
     },
   });
+});
+
+// ============================================================================
+// Math Canvas Submission
+// ============================================================================
+
+arenaRouter.post('/competitions/:id/math-submit', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const user = req.user!;
+
+    const mathSubmitSchema = z.object({
+      round: z.number().int().min(1),
+      timeSeconds: z.number().min(0),
+      visualisationScore: z.number().min(0).max(100).optional(),
+      constructionScore: z.number().min(0).max(100).optional(),
+      eleganceScore: z.number().min(0).max(100).optional(),
+      curriculumHits: z.number().int().min(0).optional(),
+      stepsToSolution: z.number().int().min(1).optional(),
+      canvasStateHash: z.string().optional(),
+      collaborationScore: z.number().min(0).max(100).optional(),
+    });
+    const body = mathSubmitSchema.parse(req.body);
+
+    const competition = await prisma.arenaCompetition.findFirst({
+      where: { id, tenantId: (user as any).tenantId, status: 'IN_PROGRESS' },
+    });
+    if (!competition) return res.status(404).json({ error: 'Competition not found or not active' });
+
+    const participant = await prisma.arenaParticipant.findFirst({
+      where: { competitionId: id, userId: (user as any).id },
+    });
+    if (!participant) return res.status(403).json({ error: 'Not registered for this competition' });
+
+    const score = MathScoringMethods.calculateMathScore(body, competition as any, {
+      handicapFactor: (participant as any).handicapFactor ?? 1.0,
+    });
+
+    await prisma.arenaRoundScore.create({
+      data: {
+        participantId: participant.id,
+        round: body.round,
+        totalPoints: score.totalPoints,
+        bonusPoints: score.bonusPoints,
+        growthPoints: score.growthPoints,
+        accuracy: body.visualisationScore ?? 0,
+        wcpm: 0,
+        wordsCorrect: 0,
+        wordsAttempted: 0,
+        timeSeconds: body.timeSeconds,
+        submittedAt: score.submittedAt,
+        metadata: JSON.stringify({
+          visualisationScore: body.visualisationScore,
+          constructionScore: body.constructionScore,
+          eleganceScore: body.eleganceScore,
+          curriculumHits: body.curriculumHits,
+          stepsToSolution: body.stepsToSolution,
+          canvasStateHash: body.canvasStateHash,
+        }),
+      },
+    });
+
+    return res.json({ score, message: 'Math round submitted' });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to submit math round' });
+  }
 });

@@ -33,6 +33,9 @@ export enum CompetitionFormat {
   SPELLING_BEE = 'SPELLING_BEE',                   // Individual: spell words from audio prompts
   VOCABULARY_CHALLENGE = 'VOCABULARY_CHALLENGE',     // Individual: match words to meanings
   COLLABORATIVE_CREATION = 'COLLABORATIVE_CREATION', // Community: collectively create a storybook
+  MATH_CHALLENGE = 'MATH_CHALLENGE',
+  MATH_CONSTRUCTION = 'MATH_CONSTRUCTION',
+  MATH_RELAY = 'MATH_RELAY',
 }
 
 export enum CompetitionStatus {
@@ -292,6 +295,45 @@ const DEFAULT_CONFIGS: CompetitionConfig[] = [
     handicapEnabled: false, teacherParticipation: true, teamSize: null,
     description: 'Community event — collectively create a new storybook',
   },
+  {
+    format: CompetitionFormat.MATH_CHALLENGE,
+    minParticipants: 2, maxParticipants: 40, roundCount: 3,
+    roundDurationSeconds: 300,
+    scoringModel: 'HANDICAPPED' as const,
+    allowWagers: true, maxWagerPerParticipant: 50,
+    phonicsPhasesAllowed: [],
+    ageRange: { min: 8, max: 99 },
+    handicapEnabled: true,
+    teacherParticipation: true,
+    teamSize: null,
+    description: 'Individual timed math challenge — visualise and construct in MathCanvas. BKT mastery handicapping ensures fair competition across year levels.',
+  },
+  {
+    format: CompetitionFormat.MATH_CONSTRUCTION,
+    minParticipants: 4, maxParticipants: 32, roundCount: 1,
+    roundDurationSeconds: 1800,
+    scoringModel: 'COLLABORATIVE' as const,
+    allowWagers: false, maxWagerPerParticipant: 0,
+    phonicsPhasesAllowed: [],
+    ageRange: { min: 10, max: 99 },
+    handicapEnabled: false,
+    teacherParticipation: true,
+    teamSize: 4,
+    description: 'Team geometry and algebra construction challenge — collaboratively build a proof, model, or visualisation in MathCanvas.',
+  },
+  {
+    format: CompetitionFormat.MATH_RELAY,
+    minParticipants: 6, maxParticipants: 48, roundCount: 4,
+    roundDurationSeconds: 120,
+    scoringModel: 'GROWTH_BASED' as const,
+    allowWagers: true, maxWagerPerParticipant: 30,
+    phonicsPhasesAllowed: [],
+    ageRange: { min: 9, max: 99 },
+    handicapEnabled: true,
+    teacherParticipation: false,
+    teamSize: 3,
+    description: 'Sequential math relay — each team member visualises one step of a multi-part problem and passes the canvas to the next.',
+  },
 ];
 
 // ─── Scoring Engine ─────────────────────────────────────────────────────────
@@ -307,6 +349,15 @@ export class ScoringEngine {
     participant: Participant,
     baseline: { avgAccuracy: number; avgWcpm: number },
   ): RoundScore {
+    // Math format scoring override
+    if (
+      config.format === CompetitionFormat.MATH_CHALLENGE ||
+      config.format === CompetitionFormat.MATH_CONSTRUCTION ||
+      config.format === CompetitionFormat.MATH_RELAY
+    ) {
+      return MathScoringMethods.calculateMathScore(submission, config as any, participant as any);
+    }
+
     let growthPoints = 0;
     let bonusPoints = 0;
     let totalPoints = 0;
@@ -894,4 +945,75 @@ export class ArenaCompetitionEngine extends ScholarlyBaseService {
   }
 
   getDefaultConfigs(): CompetitionConfig[] { return DEFAULT_CONFIGS; }
+}
+
+export class MathScoringMethods {
+  static calculateMathScore(
+    submission: {
+      round: number; accuracy: number; timeSeconds: number;
+      visualisationScore?: number; constructionScore?: number;
+      eleganceScore?: number; curriculumHits?: number;
+      stepsToSolution?: number; collaborationScore?: number;
+    },
+    config: { format: string; scoringModel: string },
+    participant: { handicapFactor: number },
+  ) {
+    const vis = submission.visualisationScore ?? 0;
+    const constr = submission.constructionScore ?? 0;
+    const eleg = submission.eleganceScore ?? 0;
+    const curHits = submission.curriculumHits ?? 0;
+    const steps = submission.stepsToSolution ?? 10;
+    const collab = submission.collaborationScore ?? 0;
+
+    const weights =
+      config.format === 'MATH_CONSTRUCTION' ? { vis: 0.25, constr: 0.50, eleg: 0.25 } :
+      config.format === 'MATH_RELAY' ? { vis: 0.30, constr: 0.50, eleg: 0.20 } :
+      { vis: 0.40, constr: 0.40, eleg: 0.20 };
+
+    let rawScore = Math.round(
+      vis * weights.vis * 100 + constr * weights.constr * 100 + eleg * weights.eleg * 100,
+    ) / 100;
+    rawScore = Math.min(100, Math.max(0, rawScore));
+
+    let bonusPoints = 0;
+    bonusPoints += Math.min(15, curHits * 3);
+    if (steps <= 3) bonusPoints += 10;
+    else if (steps <= 5) bonusPoints += 5;
+    if ((config.format === 'MATH_CHALLENGE' || config.format === 'MATH_RELAY') && submission.timeSeconds < 60) {
+      bonusPoints += 8;
+    } else if (submission.timeSeconds < 120) {
+      bonusPoints += 4;
+    }
+    if (config.format === 'MATH_CONSTRUCTION') {
+      bonusPoints += Math.round(collab * 0.1);
+    }
+
+    let totalPoints = rawScore + bonusPoints;
+    if (config.scoringModel === 'HANDICAPPED') {
+      totalPoints = Math.round(totalPoints * participant.handicapFactor);
+    }
+
+    return {
+      round: submission.round, accuracy: submission.accuracy,
+      wordsCorrect: 0, wordsAttempted: 0, wcpm: 0,
+      comprehensionScore: constr,
+      timeSeconds: submission.timeSeconds,
+      growthPoints: Math.round(rawScore), bonusPoints, totalPoints,
+      submittedAt: new Date(),
+    };
+  }
+
+  static calculateMathHandicap(domainMasteryAvg: number, isTeacher: boolean = false): number {
+    if (isTeacher) return 0.6;
+    const pct = domainMasteryAvg * 100;
+    if (pct < 40) return 1.30;
+    if (pct < 60) return 1.15;
+    if (pct < 80) return 1.05;
+    if (pct < 90) return 1.00;
+    return 0.90;
+  }
+}
+
+export function isMathFormat(format: string): boolean {
+  return format === 'MATH_CHALLENGE' || format === 'MATH_CONSTRUCTION' || format === 'MATH_RELAY';
 }

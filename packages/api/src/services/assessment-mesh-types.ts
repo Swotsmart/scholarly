@@ -76,7 +76,9 @@ export enum AssessmentFormat {
   /** Observation checklist */
   OBSERVATION = 'observation',
   /** Mixed format assessment */
-  MIXED = 'mixed'
+  MIXED = 'mixed',
+  /** MathCanvas visualisation + construction artifact */
+  MATHCANVAS = 'mathcanvas'
 }
 
 /**
@@ -686,4 +688,56 @@ export interface ProfileRecommendation {
   recommendation: string;
   resources?: string[];
   priority: 'high' | 'medium' | 'low';
+}
+
+// ============================================================================
+// MATHCANVAS ASSESSMENT
+// ============================================================================
+
+/**
+ * Payload submitted when a student completes a MathCanvas session.
+ * Includes the canvas state, auto-scored dimensions, and context.
+ */
+export interface MathCanvasSubmissionPayload {
+  /** base64 SVG or serialised canvas state */
+  svgSnapshot: string;
+  /** student's stated intent */
+  intentText: string;
+  /** list of parameters used (e.g. ['a=2','b=-3']) */
+  paramHistory: string[];
+  /** Issy conversation log */
+  issyChatLog?: { role: string; content: string }[];
+
+  // Auto-scored dimensions (from MathScoringMethods.calculateMathScore)
+  visualisationScore: number;
+  constructionScore: number;
+  eleganceScore: number;
+  curriculumHits: number;
+  stepsToSolution: number;
+
+  // Context
+  strand: 'functions' | 'geometry' | 'statistics' | 'number';
+  /** MathCanvas collaboration session ID */
+  sessionId?: string;
+  /** Arena competition ID if applicable */
+  competitionId?: string;
+  /** delta hash for audit trail */
+  canvasStateHash: string;
+}
+
+/**
+ * Metadata stored in a GradebookItem JSON column for MathCanvas assessments.
+ */
+export interface MathCanvasGradebookMetadata {
+  source: 'mathcanvas';
+  strand: string;
+  visualisationScore: number;
+  constructionScore: number;
+  eleganceScore: number;
+  curriculumHits: number;
+  /** AI rubric grade (A/B/C/D) */
+  rubricGrade?: string;
+  sessionId?: string;
+  competitionId?: string;
+  svgSnapshot?: string;
 }
