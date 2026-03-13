@@ -10,7 +10,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '@scholarly/database';
 import { authMiddleware } from '../middleware/auth';
-import { MathScoringMethods } from '../services/arena/arena-competition-engine';
+import { MathScoringMethods } from '../services/arena/math-scoring';
 
 export const arenaRouter: Router = Router();
 arenaRouter.use(authMiddleware);
