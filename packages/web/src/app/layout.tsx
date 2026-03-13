@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { Open_Sans } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
@@ -56,6 +57,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script
+          id="mathjs-cdn"
+          src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.3/math.min.js"
+          strategy="lazyOnload"
+        />
+      </head>
       <body className={`${openSans.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"

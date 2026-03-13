@@ -32,7 +32,45 @@ export type CompetitionFormat =
   | 'STORY_SHOWDOWN'
   | 'SPELLING_BEE'
   | 'VOCABULARY_CHALLENGE'
-  | 'COLLABORATIVE_CREATION';
+  | 'COLLABORATIVE_CREATION'
+  | 'MATH_CHALLENGE'           // timed individual MathCanvas challenge
+  | 'MATH_CONSTRUCTION'        // collaborative geometry/algebra build
+  | 'MATH_RELAY';              // sequential team problem chain
+
+// Helper: identify math formats
+export function isMathCompetitionFormat(format: CompetitionFormat | string): boolean {
+  return (
+    format === 'MATH_CHALLENGE' ||
+    format === 'MATH_CONSTRUCTION' ||
+    format === 'MATH_RELAY'
+  );
+}
+
+// Math-specific submission payload
+export interface MathRoundSubmission {
+  round:               number;
+  timeSeconds:         number;
+  visualisationScore:  number;   // 0-100: AI-assessed visualisation correctness
+  constructionScore:   number;   // 0-100: construction completeness
+  eleganceScore:       number;   // 0-100: solution elegance
+  curriculumHits:      number;   // Count of ACARA/IB objectives evidenced
+  stepsToSolution:     number;
+  collaborationScore?: number;   // MATH_CONSTRUCTION only
+  canvasStateHash?:    string;   // delta hash for audit trail
+  sessionId?:          string;   // MathCanvas collaboration session ID
+}
+
+// Math-specific score result
+export interface MathRoundScore {
+  round:              number;
+  visualisationScore: number;
+  constructionScore:  number;
+  eleganceScore:      number;
+  growthPoints:       number;
+  bonusPoints:        number;
+  totalPoints:        number;
+  submittedAt:        string;
+}
 
 export type CompetitionStatus =
   | 'SCHEDULED'

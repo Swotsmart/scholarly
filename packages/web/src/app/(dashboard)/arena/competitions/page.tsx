@@ -43,6 +43,8 @@ import {
 import { PageHeader } from '@/components/shared/page-header';
 import { StatsCard } from '@/components/shared/stats-card';
 import { CompetitionCard, ArenaInsightPanel } from '@/components/arena';
+import { Calculator } from 'lucide-react';
+import { isMathCompetitionFormat } from '@/types/arena';
 import { useArenaIntelligence } from '@/hooks/use-arena-intelligence';
 import { arenaApi } from '@/lib/arena-api';
 import type { ArenaCompetition, UserCompetitionStats, CurriculumStandardRef } from '@/types/arena';
@@ -63,6 +65,10 @@ const FORMAT_OPTIONS = [
   { value: 'SPELLING_BEE', label: 'Spelling Bee' },
   { value: 'VOCABULARY_CHALLENGE', label: 'Vocabulary Challenge' },
   { value: 'COLLABORATIVE_CREATION', label: 'Collaborative Creation' },
+  // ── MathCanvas ─────────────────────────────────────────────
+  { value: 'MATH_CHALLENGE',    label: 'Math Challenge' },
+  { value: 'MATH_CONSTRUCTION', label: 'Math Construction' },
+  { value: 'MATH_RELAY',        label: 'Math Relay' },
 ];
 
 const STATUS_OPTIONS = [

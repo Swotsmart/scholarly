@@ -1,5 +1,8 @@
 'use client';
 
+import { Calculator } from 'lucide-react';
+import { isMathCompetitionFormat } from '@/types/arena';
+
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -65,6 +68,10 @@ const FORMAT_LABELS: Record<string, string> = {
   SPELLING_BEE: 'Spelling Bee',
   VOCABULARY_CHALLENGE: 'Vocabulary Challenge',
   COLLABORATIVE_CREATION: 'Collaborative Creation',
+  // ── MathCanvas ─────────────────────────────────────────────
+  MATH_CHALLENGE:    'Math Challenge',
+  MATH_CONSTRUCTION: 'Math Construction',
+  MATH_RELAY:        'Math Relay',
 };
 
 const SCORING_LABELS: Record<string, string> = {

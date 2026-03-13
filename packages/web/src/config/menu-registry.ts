@@ -27,7 +27,7 @@ import {
   CreditCard, Eye, Kanban, FolderKanban, Building2,
   Trophy, FolderOpen, Crosshair, Rocket, Award,
   Network, Shield, Cpu,
-  Building, Landmark, Store, BarChart3, Map,
+  Building, Landmark, Store, BarChart3, BarChart2, Map,
   Swords, Coins, PenSquare, Palette, Workflow, Play,
   Home, Bell, HelpCircle, Fingerprint,
   Vote, Database, Wand2, Volume2, Globe,
@@ -201,6 +201,17 @@ export const taskRegistry: Record<string, RegisteredTask> = {
     ],
   },
 
+  // ── CLUSTER 10c: MATHCANVAS ──
+  MC1: {
+    ref: 'MC1',
+    name: 'MathCanvas',
+    href: '/tools/mathcanvas',
+    icon: BarChart2,
+    type: 'atomic',
+    cluster: 'learning',
+    description: 'AI-native 2D & true WebGL 3D mathematical surface visualisation — curriculum-aligned, BKT-driven',
+  },
+
   // ── CLUSTER 10b: ERUDITS ──
   ER: {
     ref: 'ER',
@@ -291,6 +302,7 @@ export const roleAnchors: RoleAnchors[] = [
       { ref: 'L1', position: 1 },         // Courses
       { ref: 'L3', position: 2 },         // Ask Issy
       { ref: 'VI', position: 3 },         // Voice Intelligence
+      { ref: 'MC1', position: 4 },        // MathCanvas
     ],
   },
   {
