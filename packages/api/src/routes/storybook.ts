@@ -15,6 +15,250 @@ export const storybookRouter: Router = Router();
 storybookRouter.use(authMiddleware);
 
 // ============================================================================
+// Phonics Phase GPC Reference Data
+// ============================================================================
+
+const PHASE_GPCS: Record<number, { name: string; graphemes: string[]; sightWords: string[] }> = {
+  1: {
+    name: 'Phase 1 — s, a, t, p, i, n',
+    graphemes: ['s', 'a', 't', 'p', 'i', 'n'],
+    sightWords: ['I', 'the', 'a', 'is', 'to', 'and', 'no', 'go', 'my'],
+  },
+  2: {
+    name: 'Phase 2 — Digraphs',
+    graphemes: ['s', 'a', 't', 'p', 'i', 'n', 'c', 'k', 'e', 'h', 'r', 'm', 'd', 'g', 'o', 'u', 'l', 'f', 'b', 'sh', 'ch', 'th', 'ng', 'ai', 'ee'],
+    sightWords: ['I', 'the', 'a', 'is', 'to', 'and', 'no', 'go', 'my', 'he', 'she', 'we', 'be', 'me', 'was', 'you', 'they', 'all', 'are', 'her', 'said', 'so', 'have', 'like', 'some', 'come', 'were', 'there', 'little', 'one', 'do', 'when', 'out', 'what'],
+  },
+  3: {
+    name: 'Phase 3 — Long vowels',
+    graphemes: ['s', 'a', 't', 'p', 'i', 'n', 'c', 'k', 'e', 'h', 'r', 'm', 'd', 'g', 'o', 'u', 'l', 'f', 'b', 'sh', 'ch', 'th', 'ng', 'ai', 'ee', 'igh', 'oa', 'oo', 'ar', 'or', 'ur', 'ow', 'oi', 'ear', 'air', 'ure', 'er'],
+    sightWords: ['I', 'the', 'a', 'is', 'to', 'and', 'no', 'go', 'my', 'he', 'she', 'we', 'be', 'me', 'was', 'you', 'they', 'all', 'are', 'her', 'said', 'so', 'have', 'like', 'some', 'come', 'were', 'there', 'little', 'one', 'do', 'when', 'out', 'what', 'could', 'would', 'should', 'their', 'people', 'oh', 'Mr', 'Mrs', 'looked', 'called', 'asked'],
+  },
+  4: {
+    name: 'Phase 4 — Adjacent consonants (CCVC, CVCC)',
+    graphemes: ['s', 'a', 't', 'p', 'i', 'n', 'c', 'k', 'e', 'h', 'r', 'm', 'd', 'g', 'o', 'u', 'l', 'f', 'b', 'sh', 'ch', 'th', 'ng', 'ai', 'ee', 'igh', 'oa', 'oo', 'ar', 'or', 'ur', 'ow', 'oi', 'ear', 'air', 'ure', 'er', 'bl', 'br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 'sk', 'sl', 'sm', 'sn', 'sp', 'st', 'sw', 'tr', 'tw'],
+    sightWords: ['I', 'the', 'a', 'is', 'to', 'and', 'no', 'go', 'my', 'he', 'she', 'we', 'be', 'me', 'was', 'you', 'they', 'all', 'are', 'her', 'said', 'so', 'have', 'like', 'some', 'come', 'were', 'there', 'little', 'one', 'do', 'when', 'out', 'what'],
+  },
+  5: {
+    name: 'Phase 5 — Alternative spellings',
+    graphemes: ['ay', 'ou', 'ie', 'ea', 'oy', 'ir', 'ue', 'aw', 'wh', 'ph', 'ew', 'oe', 'au', 'ey', 'a_e', 'e_e', 'i_e', 'o_e', 'u_e'],
+    sightWords: ['oh', 'their', 'people', 'Mr', 'Mrs', 'looked', 'called', 'asked', 'water', 'where', 'who', 'again', 'thought', 'through', 'work', 'mouse', 'many', 'laughed', 'because', 'different', 'any', 'eyes', 'friends', 'once', 'please'],
+  },
+  6: {
+    name: 'Phase 6 — Morphemes & fluency',
+    graphemes: ['-s', '-es', '-ing', '-ed', '-er', '-est', '-ly', '-ment', '-ness', '-ful', '-less', '-able', '-tion', '-sion', 'un-', 're-', 'pre-', 'dis-', 'mis-'],
+    sightWords: [],
+  },
+};
+
+// ============================================================================
+// Art Style Mapping (frontend value → Prisma enum)
+// ============================================================================
+
+const ART_STYLE_MAP: Record<string, string> = {
+  watercolour: 'WATERCOLOUR',
+  'flat-vector': 'FLAT_VECTOR',
+  'soft-3d': 'SOFT_3D',
+  crayon: 'CRAYON',
+  papercraft: 'PAPERCRAFT',
+  'storybook-classic': 'STORYBOOK_CLASSIC',
+};
+
+// ============================================================================
+// Async Story Generation (Claude-powered)
+// ============================================================================
+
+async function generateStoryAsync(
+  jobId: string,
+  tenantId: string,
+  userId: string,
+  config: {
+    title: string;
+    phase: number;
+    theme?: string;
+    artStyle?: string;
+    pageCount?: number;
+    language?: string;
+  },
+) {
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  if (!anthropicKey) {
+    await prisma.storyGenerationJob.update({
+      where: { id: jobId },
+      data: { status: 'failed', error: 'AI service not configured (missing ANTHROPIC_API_KEY)' },
+    });
+    return;
+  }
+
+  const pageCount = config.pageCount || 12;
+  const phase = PHASE_GPCS[config.phase] || PHASE_GPCS[2];
+
+  try {
+    // Step 1: Mark as processing (20%)
+    await prisma.storyGenerationJob.update({
+      where: { id: jobId },
+      data: { status: 'processing', progress: 20 },
+    });
+
+    // Step 2: Call Claude to generate story text
+    const systemPrompt = `You are an expert children's literacy author who writes phonics-aligned decodable storybooks for early readers (ages 3-7) in Australia. You must follow strict phonics constraints.
+
+PHONICS PHASE: ${config.phase} — ${phase.name}
+ALLOWED GRAPHEMES: ${phase.graphemes.join(', ')}
+SIGHT WORDS (allowed even if not decodable): ${phase.sightWords.join(', ')}
+
+RULES:
+1. At least 85% of words must be decodable using ONLY the allowed graphemes above, or be from the sight words list.
+2. Use short, simple sentences appropriate for early readers.
+3. Each page should have 1-3 sentences (15-40 words for younger phases, up to 60 for phase 5-6).
+4. Create a coherent, engaging narrative with a clear beginning, middle, and end.
+5. Use repetitive sentence structures to build reading confidence.
+6. Include characters that children can relate to.
+7. The story should be warm, positive, and age-appropriate.
+
+OUTPUT FORMAT: Return a JSON object with this exact structure:
+{
+  "title": "story title",
+  "description": "2-3 sentence description of the story and its phonics focus",
+  "pages": [
+    { "pageNumber": 1, "text": "Page text here." },
+    { "pageNumber": 2, "text": "Page text here." }
+  ],
+  "decodabilityEstimate": 0.90,
+  "keyWords": ["list", "of", "key", "decodable", "words", "practised"]
+}
+
+Return ONLY the JSON object, no markdown fences, no explanation.`;
+
+    const userPrompt = `Write a ${pageCount}-page decodable storybook titled "${config.title}".${config.theme ? ` Theme: ${config.theme}.` : ''} Phase ${config.phase} phonics constraints apply. Each page should be suitable for one illustration spread.`;
+
+    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      }),
+    });
+
+    if (!anthropicRes.ok) {
+      const errBody = await anthropicRes.text();
+      throw new Error(`Anthropic API error ${anthropicRes.status}: ${errBody}`);
+    }
+
+    const anthropicData = await anthropicRes.json() as { content?: { text?: string }[] };
+    const rawText = anthropicData.content?.[0]?.text || '';
+
+    // Update progress — narrative generated (40%)
+    await prisma.storyGenerationJob.update({
+      where: { id: jobId },
+      data: { progress: 40 },
+    });
+
+    // Step 3: Parse the generated JSON
+    let storyData: {
+      title: string;
+      description: string;
+      pages: { pageNumber: number; text: string }[];
+      decodabilityEstimate?: number;
+      keyWords?: string[];
+    };
+    try {
+      // Strip markdown fences if present
+      const cleaned = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      storyData = JSON.parse(cleaned);
+    } catch {
+      throw new Error('Failed to parse story generation output as JSON');
+    }
+
+    if (!storyData.pages || !Array.isArray(storyData.pages) || storyData.pages.length === 0) {
+      throw new Error('Generated story has no pages');
+    }
+
+    // Update progress — validated (60%)
+    await prisma.storyGenerationJob.update({
+      where: { id: jobId },
+      data: { progress: 60 },
+    });
+
+    // Step 4: Create Storybook + StorybookPage records
+    const slug = config.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 80)
+      + '-' + jobId.slice(-6);
+
+    const artStyleEnum = ART_STYLE_MAP[config.artStyle || 'watercolour'] || 'WATERCOLOUR';
+
+    const storybook = await prisma.storybook.create({
+      data: {
+        tenantId,
+        title: storyData.title || config.title,
+        slug,
+        description: storyData.description || null,
+        status: 'DRAFT',
+        creatorId: userId,
+        creatorType: 'ai',
+        phonicsPhase: config.phase,
+        targetGpcs: phase.graphemes,
+        taughtGpcSet: phase.graphemes,
+        decodabilityScore: storyData.decodabilityEstimate || 0,
+        ageGroupMin: config.phase <= 2 ? 3 : config.phase <= 4 ? 5 : 6,
+        ageGroupMax: config.phase <= 2 ? 5 : 7,
+        artStyle: artStyleEnum as any,
+        themes: config.theme ? [config.theme] : [],
+        pageCount: storyData.pages.length,
+        generationModel: 'claude-sonnet-4-20250514',
+        generationPrompt: { systemPrompt, userPrompt },
+      },
+    });
+
+    // Update progress — storybook created (80%)
+    await prisma.storyGenerationJob.update({
+      where: { id: jobId },
+      data: { progress: 80 },
+    });
+
+    // Step 5: Create pages
+    await prisma.storybookPage.createMany({
+      data: storyData.pages.map((page, idx) => ({
+        tenantId,
+        storybookId: storybook.id,
+        pageNumber: page.pageNumber || idx + 1,
+        text: page.text,
+        decodableWords: storyData.keyWords || [],
+      })),
+    });
+
+    // Step 6: Complete
+    await prisma.storyGenerationJob.update({
+      where: { id: jobId },
+      data: {
+        status: 'completed',
+        progress: 100,
+        resultContentId: storybook.id,
+      },
+    });
+
+    console.log(`Story generation completed: job=${jobId} storybook=${storybook.id}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown generation error';
+    console.error(`Story generation failed: job=${jobId}`, error);
+    await prisma.storyGenerationJob.update({
+      where: { id: jobId },
+      data: { status: 'failed', error: message },
+    }).catch(() => {}); // Don't throw if update fails
+  }
+}
+
+// ============================================================================
 // Zod Schemas
 // ============================================================================
 
@@ -109,6 +353,11 @@ storybookRouter.post('/generate', async (req: Request, res: Response) => {
         progress: 0,
         config: params as any,
       },
+    });
+
+    // Fire-and-forget: kick off async generation
+    generateStoryAsync(job.id, req.user!.tenantId, req.user!.id, params as any).catch((err) => {
+      console.error('generateStoryAsync uncaught error:', err);
     });
 
     res.json({

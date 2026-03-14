@@ -60,7 +60,15 @@ export default function StorybookCreatePage() {
         setJob(status);
         if (status.status === 'completed' || status.status === 'failed' || attempts > 60) {
           clearInterval(interval);
-          if (status.status === 'completed') setStep('complete');
+          if (status.status === 'completed') {
+            setStep('complete');
+          } else if (status.status === 'failed') {
+            setError(status.error || 'Story generation failed. Please try again.');
+            setStep('configure');
+          } else if (attempts > 60) {
+            setError('Generation timed out. Please try again.');
+            setStep('configure');
+          }
         }
       } catch {
         clearInterval(interval);
