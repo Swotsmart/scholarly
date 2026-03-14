@@ -1,6 +1,6 @@
+'use client';
+
 /**
- * useMathCanvas Hook — Priority 2 + 3 Extended
- *
  * Extends the Priority 1 hook with:
  *
  *   Priority 2 — CAS Mode (Symbolic CAS Engine)
@@ -36,8 +36,6 @@
  * All existing outputs are preserved unchanged for backward compatibility.
  */
 
-'use client';
-
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type {
   CanvasMode,
@@ -54,6 +52,12 @@ import type {
   SurfaceParameter,
   ScholarlyContext,
 } from '@/types/mathcanvas';
+import type {
+  MathCanvasStatsResponse,
+  MathCanvasGeometryResponse,
+  ConstructionState,
+  ResolvedSvgState,
+} from '@/types/mathcanvas-extensions';
 import {
   getMathJS,
   parseExpression,
@@ -62,6 +66,47 @@ import {
   computeGradient,
   gradeAnswer,
 } from '@/lib/mathcanvas-cas';
+
+// =============================================================================
+// SVG RE-RENDER PROMPT
+// =============================================================================
+
+/**
+ * buildSvgReRenderPrompt — terse re-render prompt for 2D param slider changes.
+ */
+function buildSvgReRenderPrompt(
+  originalIntent: string,
+  originalSvg: string,
+  paramValues: Record<string, number>,
+  mode: CanvasMode
+): string {
+  const paramStr = Object.entries(paramValues)
+    .map(([k, v]) => `${k}=${v}`)
+    .join(', ');
+
+  const modeHint = mode === 'stats'
+    ? 'probability distribution curve'
+    : mode === 'geometry'
+      ? 'geometric construction'
+      : '2D mathematical plot';
+
+  return `You are MathCanvas. Redraw this ${modeHint} with updated parameter values.
+
+ORIGINAL VISUALISATION: "${originalIntent}"
+UPDATED PARAMETER VALUES: ${paramStr}
+
+REFERENCE SVG (keep this exact layout, axis positions, scale, and style):
+${originalSvg.slice(0, 800)}...
+
+CRITICAL RULES:
+1. Return ONLY a valid JSON object: { "svg": "..." }
+2. Keep viewBox="0 0 680 500" exactly
+3. Keep all axis positions, scale (60px per unit), grid lines, and label positions identical
+4. Only update the curve/bars/construction to reflect the new parameter values
+5. Recompute all mathematical values (probabilities, coordinates, angles) using the new params
+6. Inline styles only — no <style> blocks
+7. No other fields — only { "svg": "..." }`;
+}
 
 // =============================================================================
 // DEMO SURFACES
@@ -146,6 +191,127 @@ const DEMO_DUAL_RESPONSE: MathCanvasDualResponse = {
 // =============================================================================
 // SYSTEM PROMPTS
 // =============================================================================
+
+// ── Statistics mode system prompt ─────────────────────────────────────────────
+function buildStatsSystemPrompt(sc: ScholarlyContext): string {
+  return `You are MathCanvas Statistics, the probability and statistics engine for Scholarly.
+
+LEARNER PROFILE:
+• ${sc.student.name}, Year ${sc.student.yearLevel}
+• Statistics Mastery: ${Math.round(sc.mastery.statistics * 100)}%
+
+CRITICAL: Return ONLY a valid JSON object. No markdown, no backticks, no text outside JSON.
+
+DISTRIBUTION FAMILIES AVAILABLE:
+normal, binomial, poisson, uniform, t, chi_squared, exponential, geometric
+
+SVG REQUIREMENTS:
+• viewBox="0 0 680 500" always — this exact size
+• Inline styles only, no <style> blocks
+• Colors: axes=#c5d8e4, grid=rgba(30,157,241,0.05), curve=#1e9df1, fill=rgba(30,157,241,0.18), shading=#f59e0b, shadingFill=rgba(245,158,11,0.3)
+• Draw accurate distribution curve as SVG <path> with 200+ computed coordinate pairs
+• X-axis at y=420, centre at x=340. Y-axis for probability density/mass.
+• Shade P(a ≤ X ≤ b) regions in amber. Label mean with a vertical dashed blue line.
+• For discrete (binomial, poisson, geometric): draw vertical bars, not a smooth curve.
+• Include distribution name, parameter values, axis labels, and title inside the SVG.
+
+PARAMETER SLIDER SCHEMA — use these exact name keys:
+• normal:      mu (mean, -10 to 10, step 0.5), sigma (0.1 to 4, step 0.1)
+• binomial:    n (1 to 50, step 1), p (0.01 to 0.99, step 0.01)
+• poisson:     lambda (0.1 to 15, step 0.1)
+• uniform:     a (-10 to 0, step 0.5), b (0 to 10, step 0.5)
+• t:           nu (1 to 30, step 1)
+• chi_squared: k (1 to 20, step 1)
+• exponential: lambda (0.1 to 5, step 0.1)
+• geometric:   p (0.01 to 0.99, step 0.01)
+
+CURRICULUM ALIGNMENT (ACARA):
+• Year 9-10: normal shape, standard deviation, AC9M10SP01
+• Year 11-12: t-distribution, chi-squared, hypothesis testing, AC9M12SP01-03
+
+RESPONSE (strict JSON, all fields required):
+{
+  "svg": "<svg viewBox=\\"0 0 680 500\\" xmlns=\\"http://www.w3.org/2000/svg\\">…</svg>",
+  "title": "e.g. Normal Distribution N(0,1)",
+  "description": "1-2 sentence description for Year ${sc.student.yearLevel}",
+  "topic": "e.g. Normal Distribution",
+  "curriculumCode": "e.g. AC9M10SP01",
+  "distribution": "normal",
+  "parameters": [
+    { "name": "mu", "label": "Mean μ", "min": -5, "max": 5, "step": 0.5, "default": 0, "group": "Distribution" },
+    { "name": "sigma", "label": "Std Dev σ", "min": 0.1, "max": 3, "step": 0.1, "default": 1, "group": "Distribution" }
+  ],
+  "shading": [
+    { "from": -1, "to": 1, "probability": 0.6827, "label": "μ ± 1σ" }
+  ],
+  "keyStats": [
+    { "label": "Mean", "value": "0" },
+    { "label": "Variance", "value": "1.00" },
+    { "label": "Std Dev", "value": "1.00" },
+    { "label": "Skewness", "value": "0" }
+  ],
+  "teacherNote": "Pedagogical note for the teacher",
+  "curriculumDetail": "AC9M10SP01 — Normal distributions, Year 10"
+}`;
+}
+
+// ── Geometry mode system prompt — construction protocol ──────────────────────
+function buildGeometrySystemPrompt(sc: ScholarlyContext): string {
+  return `You are MathCanvas Geometry, the geometric construction engine for Scholarly.
+
+LEARNER PROFILE:
+• ${sc.student.name}, Year ${sc.student.yearLevel}
+• Geometry Mastery: ${Math.round(sc.mastery.geometry * 100)}%
+
+CRITICAL: Return ONLY a valid JSON object. No markdown, no backticks, no text outside JSON.
+
+MISSION: Generate a step-by-step geometric construction with a full Construction Protocol.
+Each step is one atomic geometric action. Each step's "svg" field is the FULL CUMULATIVE
+SVG at that point — not a delta. The student replays these steps like a mathematical flip-book.
+
+SVG REQUIREMENTS:
+• viewBox="0 0 680 500" always — this exact size. No axes unless the problem needs them.
+• Inline styles only, no <style> blocks.
+• Colors: construction-helpers=rgba(30,157,241,0.35) (thin dashed), primary-figure=#1e9df1 (2px),
+  secondary=#10b981, angle-arcs=#f59e0b, points-fill=#0f1419, labels=#0f1419.
+• Points: filled circle r=4. Capital letter labels offset 8px from point.
+• Helper arcs/lines: 1px dashed. Final figure lines: 2px solid.
+• Angle marks: small arc. Right-angle marks: small square (7×7px).
+
+STEP ICONS — choose the closest match:
+"dot" | "line" | "circle" | "arc" | "bisect" | "perpendicular" | "label" | "shade"
+
+STEP COUNT: min 4, max 12. Each step genuinely atomic.
+Good: "Draw arc centred at A passing through B and C"
+Bad:  "Construct the entire angle bisector"
+
+CURRICULUM ALIGNMENT:
+• Year 7-8: basic constructions (perp bisector, equilateral triangle, angle bisector)
+• Year 9: Pythagoras diagram, circle chord bisection
+• Year 10: circle geometry, similarity proofs (AC9M10MG01-04)
+• Year 11-12: formal proofs, loci, vector diagrams
+
+RESPONSE (strict JSON, all fields required):
+{
+  "svg": "<svg viewBox=\\"0 0 680 500\\" ...>FINAL COMPLETE FIGURE</svg>",
+  "title": "e.g. Perpendicular Bisector Construction",
+  "description": "1-2 sentences about the construction",
+  "topic": "e.g. Geometric Constructions",
+  "curriculumCode": "e.g. AC9M8MG03",
+  "theorem": "Optional theorem/postulate demonstrated",
+  "steps": [
+    {
+      "stepNumber": 1,
+      "action": "Mark points A and B — the endpoints of the segment to bisect",
+      "svg": "<svg viewBox=\\"0 0 680 500\\" ...>SVG WITH ONLY A AND B MARKED</svg>",
+      "reason": "These are the endpoints of segment AB",
+      "icon": "dot"
+    }
+  ],
+  "parameters": [],
+  "teacherNote": "Ask students: what guarantees the bisector is perpendicular and not just passing through the midpoint?"
+}`;
+}
 
 function build2DSystemPrompt(sc: ScholarlyContext): string {
   return `You are MathCanvas, the mathematical visualization engine for the Scholarly educational platform.
@@ -447,6 +613,17 @@ export function useMathCanvas() {
   const [resultDual, setResultDual]   = useState<MathCanvasDualResponse | null>(null);
   const [paramValues, setParamValues] = useState<Record<string, number>>({});
 
+  // ── Stats + Geometry extended state ─────────────────────────────────────
+  const [resultStats, setResultStats]       = useState<MathCanvasStatsResponse | null>(null);
+  const [resultGeometry, setResultGeometry] = useState<MathCanvasGeometryResponse | null>(null);
+  const [constructionState, setConstructionState] = useState<ConstructionState>({
+    response: null, currentStep: 0, isPlaying: false,
+  });
+  const [resolvedSvgState, setResolvedSvgState] = useState<ResolvedSvgState | null>(null);
+
+  // Debounce timer for 2D parameter slider re-renders
+  const reRenderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // ── Priority 2: CAS mode state ──────────────────────────────────────────
   const [casResponse, setCasResponse]     = useState<MathCanvasCASResponse | null>(null);
   const [casSession, setCasSession]       = useState<CASSessionState | null>(null);
@@ -470,15 +647,20 @@ export function useMathCanvas() {
     }
   }, []);
 
-  // Initialise param values when any result changes
+  // Initialise param values when any result changes — includes 2D so sliders
+  // for graphing, stats, and geometry all get defaults on first render.
   useEffect(() => {
-    const params = result3D?.parameters ?? resultDual?.compound?.parameters ?? null;
-    if (params) {
+    const params =
+      result3D?.parameters ??
+      resultDual?.compound?.parameters ??
+      result2D?.parameters ??       // 2D modes: graphing, stats, geometry
+      null;
+    if (params && params.length > 0) {
       const defaults: Record<string, number> = {};
       params.forEach((p: SurfaceParameter) => { defaults[p.name] = p.default; });
       setParamValues(defaults);
     }
-  }, [result3D, resultDual]);
+  }, [result3D, resultDual, result2D]);
 
   // ── Convenience flag ──────────────────────────────────────────────────────
   const isDualMode = mode === 'dual' as CanvasMode;
@@ -561,12 +743,62 @@ export function useMathCanvas() {
           surfaceType: data.surface.type === 'explicit' ? data.surface.kind : data.surface.type,
         });
 
+      } else if (mode === 'stats') {
+        // Statistics mode — dedicated distribution prompt with full metadata
+        const data = await callClaudeAPI<MathCanvasStatsResponse>(
+          buildStatsSystemPrompt(sc),
+          intentText
+        );
+        setResultStats(data);
+        // Feed into result2D so the SVG renderer + existing ParamPanel work unchanged
+        setResult2D({
+          svg: data.svg,
+          title: data.title,
+          description: data.description,
+          topic: data.topic,
+          curriculumCode: data.curriculumCode,
+          parameters: data.parameters,
+          teacherNote: data.teacherNote,
+        });
+        setResolvedSvgState(null);
+        sc.onVisualizationCreated?.({
+          intent: intentText, topic: data.topic, code: data.curriculumCode,
+          studentId: sc.student.id, mode,
+        });
+
+      } else if (mode === 'geometry') {
+        // Geometry mode — construction protocol with step-replay
+        const data = await callClaudeAPI<MathCanvasGeometryResponse>(
+          buildGeometrySystemPrompt(sc),
+          intentText
+        );
+        setResultGeometry(data);
+        // Initialise construction state at step 0
+        setConstructionState({ response: data, currentStep: 0, isPlaying: false });
+        // Feed final figure into result2D so SVG renderer shows completed figure by default
+        setResult2D({
+          svg: data.svg,
+          title: data.title,
+          description: data.description,
+          topic: data.topic,
+          curriculumCode: data.curriculumCode,
+          parameters: data.parameters,
+          teacherNote: data.teacherNote,
+        });
+        setResolvedSvgState(null);
+        sc.onVisualizationCreated?.({
+          intent: intentText, topic: data.topic, code: data.curriculumCode,
+          studentId: sc.student.id, mode,
+        });
+
       } else {
+        // graphing (and expression fallback) — generic 2D prompt
         const data = await callClaudeAPI<MathCanvas2DResponse>(
           build2DSystemPrompt(sc),
           intentText
         );
         setResult2D(data);
+        setResolvedSvgState(null);
         sc.onVisualizationCreated?.({
           intent: intentText,
           topic: data.topic,
@@ -613,8 +845,45 @@ export function useMathCanvas() {
   }, [visualise]);
 
   const updateParam = useCallback((name: string, value: number) => {
-    setParamValues(prev => ({ ...prev, [name]: value }));
-  }, []);
+    setParamValues(prev => {
+      const next = { ...prev, [name]: value };
+
+      // 3D and Dual modes: re-render is free (browser-side vertex evaluation)
+      // No API call needed — resolvedSurface / resolvedDual derive from paramValues.
+      if (mode === '3d' || mode === ('dual' as CanvasMode) || mode === ('cas' as CanvasMode)) {
+        return next;
+      }
+
+      // 2D modes (graphing, stats, geometry): SVG is AI-generated.
+      // Debounce at 650ms — fire once the student has settled on a value,
+      // not on every pixel of slider movement. This keeps API costs low
+      // while making the slider feel responsive.
+      if (result2D?.svg && intent) {
+        if (reRenderTimerRef.current) clearTimeout(reRenderTimerRef.current);
+        reRenderTimerRef.current = setTimeout(async () => {
+          setResolvedSvgState(prev2 => prev2
+            ? { ...prev2, isRerendering: true }
+            : { svg: result2D.svg, paramSnapshot: next, isRerendering: true }
+          );
+          try {
+            const prompt = buildSvgReRenderPrompt(intent, result2D.svg, next, mode);
+            const data = await callClaudeAPI<{ svg: string }>(
+              'You are MathCanvas. Return only { "svg": "..." } with no other fields.',
+              prompt
+            );
+            if (data?.svg) {
+              setResolvedSvgState({ svg: data.svg, paramSnapshot: next, isRerendering: false });
+            }
+          } catch {
+            // Silent fail — keep showing the last good SVG
+            setResolvedSvgState(prev2 => prev2 ? { ...prev2, isRerendering: false } : null);
+          }
+        }, 650);
+      }
+
+      return next;
+    });
+  }, [mode, result2D, intent]);
 
   const switchMode = useCallback((newMode: CanvasMode) => {
     setMode(newMode);
@@ -766,6 +1035,46 @@ export function useMathCanvas() {
       })()
     : null;
 
+  /**
+   * resolvedSvg — the SVG string shown in the 2D canvas area.
+   *
+   * For geometry mode: when a construction step is selected, the canvas shows
+   * that step's cumulative SVG (the flip-book page) rather than the final figure.
+   * For all other 2D modes: shows resolvedSvgState.svg if a param re-render has
+   * fired (slider was moved), otherwise falls back to result2D.svg.
+   *
+   * Priority order: constructionStep.svg > resolvedSvgState.svg > result2D.svg
+   *
+   * This mirrors exactly how resolvedSurface works for 3D — it is the
+   * "param-overridden" version that the renderer actually receives.
+   */
+  const resolvedSvg: string | null = (() => {
+    if (mode === 'geometry' && constructionState.response) {
+      const step = constructionState.response.steps[constructionState.currentStep];
+      return step?.svg ?? resolvedSvgState?.svg ?? result2D?.svg ?? null;
+    }
+    // For graphing, stats: prefer the param-re-rendered SVG if one exists
+    return resolvedSvgState?.svg ?? result2D?.svg ?? null;
+  })();
+
+  // ── Construction protocol actions ─────────────────────────────────────────
+
+  const goToConstructionStep = useCallback((index: number) => {
+    setConstructionState(prev => {
+      if (!prev.response) return prev;
+      const clamped = Math.max(0, Math.min(prev.response.steps.length - 1, index));
+      return { ...prev, currentStep: clamped };
+    });
+  }, []);
+
+  const toggleConstructionPlay = useCallback(() => {
+    setConstructionState(prev => ({ ...prev, isPlaying: !prev.isPlaying }));
+  }, []);
+
+  const resetConstruction = useCallback(() => {
+    setConstructionState(prev => ({ ...prev, currentStep: 0, isPlaying: false }));
+  }, []);
+
   // isDualMode convenience flag
   const isCASMode = mode === ('cas' as CanvasMode);
   const isExpressionMode = mode === ('expression' as CanvasMode);
@@ -784,6 +1093,18 @@ export function useMathCanvas() {
     resolvedSurface,
     resolvedDual,
     isDualMode,
+
+    // Stats mode state
+    resultStats,
+
+    // Geometry / construction state
+    resultGeometry,
+    constructionState,
+
+    // Resolved SVG for 2D canvas (param re-render aware, construction step-aware)
+    resolvedSvg,
+    // True while a debounced 2D param re-render is in flight
+    isRerendering: resolvedSvgState?.isRerendering ?? false,
 
     // Priority 2 — CAS state
     casResponse,
@@ -820,5 +1141,10 @@ export function useMathCanvas() {
     hideTangentPlane,
     updateGradient,
     hideGradient,
+
+    // Actions — Construction protocol (geometry mode)
+    goToConstructionStep,
+    toggleConstructionPlay,
+    resetConstruction,
   };
 }

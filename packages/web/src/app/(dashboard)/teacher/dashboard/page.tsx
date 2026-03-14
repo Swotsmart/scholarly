@@ -18,8 +18,9 @@ import {
   Users, Clock, Calendar, BookOpen, AlertTriangle, CheckCircle2, ArrowRight,
   ChevronRight, ClipboardCheck, FileText, Lightbulb, MessageCircle, TrendingUp,
   TrendingDown, AlertCircle, Play, GraduationCap, Brain, Sparkles, PlusCircle,
-  ClipboardList, PenLine, Bot, Send, Heart, Shield,
+  ClipboardList, PenLine, Bot, Send, Heart, Shield, BarChart2, Calculator,
 } from 'lucide-react';
+import { ScholarlyCalculator } from '@/components/calculator';
 
 // =============================================================================
 // Helpers (pure functions, no data)
@@ -413,6 +414,65 @@ function AskIssyPanel() {
 // Panel registry — maps IDs to live-data-powered components
 // =============================================================================
 
+// =============================================================================
+// Math Toolkit Panel
+// =============================================================================
+// Surfaces the Math Toolkit cluster directly on the Teacher Dashboard as a
+// reorderable panel. The teacher gets the calculator without leaving the
+// dashboard, and a direct link into MathCanvas for full visualisation.
+// The collapsible calculator starts closed (defaultExpanded=false) so the
+// panel footprint is minimal until the teacher actively opens it.
+// =============================================================================
+
+function MathToolkitPanel() {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+              <BarChart2 size={14} className="text-blue-500" />
+            </div>
+            <CardTitle className="text-sm">Math Toolkit</CardTitle>
+          </div>
+          <Link
+            href="/tools/mathcanvas"
+            className="flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors"
+          >
+            <BarChart2 size={11} />
+            MathCanvas
+            <ArrowRight size={10} />
+          </Link>
+        </div>
+        <CardDescription className="text-xs">
+          Scientific calculator — use results directly in MathCanvas.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {/* Calculator toolkit link row */}
+        <div className="flex gap-2 mb-3">
+          <Link
+            href="/tools/mathcanvas"
+            className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors text-xs font-semibold text-blue-700 no-underline"
+          >
+            <span className="text-sm">📐</span>
+            MathCanvas
+          </Link>
+          <Link
+            href="/tools/calculator"
+            className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors text-xs font-semibold text-gray-600 no-underline"
+          >
+            <Calculator size={12} />
+            Full Calculator
+          </Link>
+        </div>
+        {/* Collapsible inline calculator */}
+        <ScholarlyCalculator collapsible defaultExpanded={false} />
+      </CardContent>
+    </Card>
+  );
+}
+
 function createPanelMap(data: ReturnType<typeof useTeacher>['data'], isLoading: boolean): Record<TeacherPanelId, () => JSX.Element> {
   return {
     'quick-actions': () => <QuickActionsPanel />,
@@ -420,6 +480,7 @@ function createPanelMap(data: ReturnType<typeof useTeacher>['data'], isLoading: 
     'main-content': () => <MainContentPanel data={data} isLoading={isLoading} />,
     'at-risk-help': () => <AtRiskHelpPanel insights={data?.insights ?? []} isLoading={isLoading} />,
     'upcoming-ai': () => <UpcomingAiPanel insights={data?.insights ?? []} isLoading={isLoading} />,
+    'math-toolkit': () => <MathToolkitPanel />,
   };
 }
 

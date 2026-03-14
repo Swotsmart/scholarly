@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
+import { ScholarlyCalculator } from '@/components/calculator';
 import {
   User,
   Star,
@@ -20,6 +22,8 @@ import {
   Save,
   Camera,
   CheckCircle2,
+  BarChart2,
+  ArrowRight,
 } from 'lucide-react';
 
 export default function TutorProfilePage() {
@@ -197,6 +201,38 @@ export default function TutorProfilePage() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* ── Math Toolkit ──────────────────────────────────────────── */}
+          {/* Tutors use the calculator constantly during sessions —
+              computing worked examples, checking student answers, deriving
+              values to feed into MathCanvas visualisations. defaultExpanded
+              is true here because a tutor actively needs it, unlike the
+              teacher dashboard where it starts collapsed. */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <BarChart2 size={14} className="text-blue-500" />
+                  </div>
+                  <CardTitle className="text-sm">Math Toolkit</CardTitle>
+                </div>
+                <Link
+                  href="/tools/mathcanvas"
+                  className="flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors no-underline"
+                >
+                  MathCanvas <ArrowRight size={10} />
+                </Link>
+              </div>
+              <CardDescription className="text-xs">
+                Use during sessions — pipe results directly into MathCanvas visualisations.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <ScholarlyCalculator collapsible defaultExpanded={true} />
+            </CardContent>
+          </Card>
+
         </div>
       </div>
     </div>

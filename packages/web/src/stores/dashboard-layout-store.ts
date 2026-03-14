@@ -64,11 +64,12 @@ export type TeacherPanelId =
   | 'stats-grid'
   | 'main-content'
   | 'at-risk-help'
-  | 'upcoming-ai';
+  | 'upcoming-ai'
+  | 'math-toolkit';
 
 export const useTeacherDashboardLayout = createPageLayoutStore<TeacherPanelId>(
   'teacher-dashboard',
-  ['quick-actions', 'stats-grid', 'main-content', 'at-risk-help', 'upcoming-ai'],
+  ['quick-actions', 'stats-grid', 'main-content', 'at-risk-help', 'upcoming-ai', 'math-toolkit'],
 );
 
 // Admin dashboard panels

@@ -27,9 +27,13 @@ import {
   Loader2, BarChart2, Compass, Box, BarChart3, Calculator, FlaskConical,
   RotateCcw, Play, Layers, Info, Brain, BookOpen,
   ZoomIn, ZoomOut, Trash2, RefreshCw, GitMerge, Sigma,
+  Maximize2, Minimize2, Expand,
 } from 'lucide-react';
 import { useMathCanvas } from '@/hooks/use-mathcanvas';
 import type { CanvasMode } from '@/types/mathcanvas';
+import { MathCanvasGeometryPanel } from './MathCanvasGeometryPanel';
+import { MathCanvasStatsPanel } from './MathCanvasStatsPanel';
+import { MathCanvasCalculatorFloater } from './MathCanvasCalculatorFloater';
 
 // ── Lazy-load WebGL renderers ─────────────────────────────────────────────────
 
@@ -79,11 +83,11 @@ const MathCanvasExpressionBar = dynamic(
 
 const T = {
   bl: '#1e9df1', blDk: '#1580c8', blLt: '#e3f3fd', blMid: '#b8ddf8',
-  ink: '#0f1419', ink2: '#1c2631', ind: '#6366f1', vio: '#8b5cf6',
+  ink: '#0f1419', ink2: '#1c2631', ind: '#6366f1', indLt: '#eef2ff', indMid: '#c7d2fe', vio: '#8b5cf6',
   em: '#10b981', emLt: '#ecfdf5', emMid: '#a7f3d0',
   am: '#f59e0b', amLt: '#fffbeb', amMid: '#fde68a',
   rd: '#ef4444',
-  bg: '#f7f8f8', sf: '#ffffff', bd: '#e1eaef', bd2: '#c5d8e4', mt: '#e5e5e6',
+  bg: '#f7f8f8', sf: '#ffffff', bd: '#e1eaef', bd2: '#c5d8e4', bdBright: '#d1dce5', mt: '#e5e5e6',
   tx: '#0f1419', tx2: '#536471', tx3: '#8b99a4',
   // Dual-mode accent: violet for surface 2
   vl: '#7c3aed', vlLt: '#f5f3ff', vlMid: '#ddd6fe',
@@ -112,13 +116,37 @@ const MODES: { id: ExtCanvasMode; label: string; icon: React.ReactNode; color: s
 // QUICK-START CHIPS
 // =============================================================================
 
-const CHIPS_2D = [
+// Generic graphing chips (used when mode === 'graphing')
+const CHIPS_GRAPHING = [
   { label: 'sine wave',  prompt: 'Plot y=sin(x) clearly showing its period T=2π and amplitude=1' },
   { label: 'derivative', prompt: 'Plot sin(x) and cos(x), draw tangent line at x=a with slope=cos(a)' },
-  { label: 'normal',     prompt: 'Normal distribution bell curve with sliders for μ and σ, shade area between μ±σ' },
   { label: 'quadratic',  prompt: 'Plot y=x²-4x+3 showing roots, vertex, and axis of symmetry' },
   { label: 'Lissajous',  prompt: 'Lissajous figure x=sin(at), y=sin(bt+δ) with sliders for a, b, δ' },
+  { label: 'circle',     prompt: 'Circle x²+y²=r² with slider for radius r, showing unit circle at r=1' },
 ];
+
+// Statistics distribution chips
+const CHIPS_STATS = [
+  { label: 'normal dist',    prompt: 'Normal distribution N(μ,σ²) with sliders for mean and standard deviation, shade μ±σ region' },
+  { label: 'binomial',       prompt: 'Binomial distribution B(n,p) with sliders for n trials and probability p' },
+  { label: 'Poisson',        prompt: 'Poisson distribution showing probability of k events when mean rate λ=3' },
+  { label: 't-distribution', prompt: 't-distribution with slider for degrees of freedom ν, compare to standard normal' },
+  { label: 'z-scores',       prompt: 'Standard normal N(0,1) shading the 95% confidence interval between z=-1.96 and z=1.96' },
+  { label: 'chi-squared',    prompt: 'Chi-squared distribution χ²(k) with slider for degrees of freedom' },
+];
+
+// Geometry construction chips
+const CHIPS_GEOMETRY = [
+  { label: 'perp bisector',   prompt: 'Construct the perpendicular bisector of segment AB using compass and straightedge — show all construction arcs' },
+  { label: 'angle bisector',  prompt: 'Construct the bisector of angle ABC using compass and straightedge, step by step' },
+  { label: 'equilateral △',   prompt: 'Construct an equilateral triangle on base AB using only compass and straightedge' },
+  { label: 'circle theorem',  prompt: 'Show the inscribed angle theorem: angle at centre is twice the angle at the circumference' },
+  { label: 'Pythagoras',      prompt: 'Construct squares on each side of a right-angled triangle to illustrate Pythagoras theorem' },
+  { label: 'similar triangles', prompt: 'Construct two similar triangles showing the ratio of corresponding sides with a scale factor slider' },
+];
+
+// Keep CHIPS_2D as alias for backward compatibility (WelcomeOverlay default)
+const CHIPS_2D = CHIPS_GRAPHING;
 
 const CHIPS_3D = [
   { label: 'saddle',      prompt: 'Plot the hyperbolic paraboloid (saddle surface) z = x² - y²' },
@@ -407,7 +435,50 @@ function DualInfoPanel({
 // =============================================================================
 
 function WelcomeOverlay({ mode, onChip }: { mode: ExtCanvasMode; onChip: (p: string) => void }) {
-  const chips = mode === '3d' ? CHIPS_3D : mode === 'dual' ? CHIPS_DUAL : CHIPS_2D;
+  const chips =
+    mode === '3d'       ? CHIPS_3D :
+    mode === 'dual'     ? CHIPS_DUAL :
+    mode === 'stats'    ? CHIPS_STATS :
+    mode === 'geometry' ? CHIPS_GEOMETRY :
+    CHIPS_GRAPHING;
+
+  const modeIcons: Record<string, string[]> = {
+    dual:     ['🧊', '⊕', '🧊'],
+    '3d':     ['🧊', '🌐', '📡'],
+    stats:    ['📊', '🔔', '∫'],
+    geometry: ['📐', '✏️', '◯'],
+    graphing: ['📈', '∫', 'f(x)'],
+    expression: ['∿', '=', '📐'],
+  };
+  const iconBgs: Record<string, string[]> = {
+    dual:     [T.emLt, T.vlLt, T.emLt],
+    '3d':     [T.emLt, T.blLt, T.emLt],
+    stats:    [T.amLt, T.vlLt, T.blLt],
+    geometry: [T.indLt, T.emLt, T.blLt],
+    graphing: ['#e3f3fd', '#eef2ff', '#ecfdf5'],
+    expression: ['#e3f3fd', '#eef2ff', '#ecfdf5'],
+  };
+  const modeHeading: Record<string, string> = {
+    dual:       'Compare Two Surfaces',
+    '3d':       'Explore 3D Surfaces',
+    stats:      'Visualise Probability Distributions',
+    geometry:   'Geometric Constructions — Step by Step',
+    graphing:   'What shall we explore?',
+    expression: 'Enter a live expression',
+  };
+  const modeSubtext: Record<string, string> = {
+    dual:     'Ask to see any two surfaces side-by-side. MathCanvas renders both in WebGL and computes the amber intersection curve.',
+    '3d':     'Describe any 3D surface in plain language. MathCanvas renders it as a true WebGL surface you can rotate and zoom.',
+    stats:    'Pick a distribution family or describe one. Sliders let you adjust parameters (μ, σ, n, p, λ) and watch the curve update in real time.',
+    geometry: 'Ask for a geometric construction. MathCanvas generates a step-by-step Construction Protocol — replay each step like a mathematical flip-book.',
+    graphing: 'Describe any mathematical function or relationship. MathCanvas plots it with labeled axes, sliders for key parameters, and curriculum context.',
+    expression: 'Type any function directly into the expression bar above and it renders instantly — no AI call needed.',
+  };
+
+  const icons = modeIcons[mode] ?? modeIcons.graphing;
+  const bgs   = iconBgs[mode]   ?? iconBgs.graphing;
+  const accentHover = mode === 'dual' ? T.vlLt : mode === 'stats' ? T.amLt : mode === 'geometry' ? T.indLt : T.blLt;
+  const accentBorder = mode === 'dual' ? T.vlMid : mode === 'stats' ? T.amMid : mode === 'geometry' ? T.indMid : T.blMid;
 
   return (
     <div style={{
@@ -416,32 +487,19 @@ function WelcomeOverlay({ mode, onChip }: { mode: ExtCanvasMode; onChip: (p: str
     }}>
       <div style={{ maxWidth: 560, textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
-          {mode === 'dual'
-            ? (['🧊', '⊕', '🧊'] as string[]).map((ic, i) => (
-                <div key={i} style={{
-                  width: 40, height: 40, borderRadius: 10,
-                  background: [T.emLt, T.vlLt, T.emLt][i],
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
-                }}>{ic}</div>
-              ))
-            : (['📈', '📐', '∫'] as string[]).map((ic, i) => (
-                <div key={i} style={{
-                  width: 40, height: 40, borderRadius: 10,
-                  background: ['#e3f3fd', '#eef2ff', '#ecfdf5'][i],
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
-                }}>{ic}</div>
-              ))
-          }
+          {icons.map((ic, i) => (
+            <div key={i} style={{
+              width: 40, height: 40, borderRadius: 10,
+              background: bgs[i] ?? '#e3f3fd',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+            }}>{ic}</div>
+          ))}
         </div>
         <div style={{ fontSize: 18, fontWeight: 700, color: T.ink, marginBottom: 6 }}>
-          {mode === 'dual' ? 'Compare Two Surfaces' : mode === '3d' ? 'Explore 3D Surfaces' : 'What shall we explore?'}
+          {modeHeading[mode] ?? 'What shall we explore?'}
         </div>
         <div style={{ fontSize: 12, color: T.tx2, lineHeight: 1.7, marginBottom: 16 }}>
-          {mode === 'dual'
-            ? 'Ask to see any two mathematical surfaces side-by-side. MathCanvas renders both in WebGL and computes the intersection curve — the amber line where both surfaces share the same height.'
-            : mode === '3d'
-              ? 'Describe any 3D surface in plain language. MathCanvas renders it as a true WebGL surface you can rotate, zoom, and interact with.'
-              : 'Describe any mathematical concept in plain language, or pick a quick-start card below.'}
+          {modeSubtext[mode] ?? 'Describe any mathematical concept in plain language, or pick a quick-start card below.'}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginBottom: 16 }}>
           {chips.map(c => (
@@ -455,8 +513,8 @@ function WelcomeOverlay({ mode, onChip }: { mode: ExtCanvasMode; onChip: (p: str
               }}
               onMouseEnter={e => {
                 const btn = e.target as HTMLButtonElement;
-                btn.style.background = mode === 'dual' ? T.vlLt : T.blLt;
-                btn.style.borderColor = mode === 'dual' ? T.vlMid : T.blMid;
+                btn.style.background = accentHover;
+                btn.style.borderColor = accentBorder;
               }}
               onMouseLeave={e => {
                 const btn = e.target as HTMLButtonElement;
@@ -491,7 +549,7 @@ function WelcomeOverlay({ mode, onChip }: { mode: ExtCanvasMode; onChip: (p: str
 // RIGHT PANEL TABS
 // =============================================================================
 
-type RightTab = 'params' | 'issy' | 'info';
+type RightTab = 'params' | 'issy' | 'info' | 'steps' | 'dist';
 
 // =============================================================================
 // MAIN PAGE COMPONENT
@@ -499,8 +557,108 @@ type RightTab = 'params' | 'issy' | 'info';
 
 export default function MathCanvasPage() {
   const mc = useMathCanvas();
+  const mode = mc.mode as ExtCanvasMode;
   const [rightTab, setRightTab] = useState<RightTab>('params');
   const [zoom, setZoom] = useState(100);
+
+  // ── Calculator floater state ───────────────────────────────────────────
+  const [calcOpen, setCalcOpen] = useState(false);
+
+  // ── Fullscreen state ───────────────────────────────────────────────────
+  // isFullscreen: canvas-only — all chrome (header, toolbar, panels, footer) hidden
+  // isFocused:    focused mode — panels hidden, header + toolbar remain
+  // hudVisible:   floating HUD controls fade in on mouse movement in fullscreen
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFocused,    setIsFocused]    = useState(false);
+  const [hudVisible,   setHudVisible]   = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const hudTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-switch to mode-specific tab when a new result arrives
+  useEffect(() => {
+    if (mc.resultGeometry && mode === 'geometry') setRightTab('steps');
+  }, [mc.resultGeometry, mode]);
+  useEffect(() => {
+    if (mc.resultStats && mode === 'stats') setRightTab('dist');
+  }, [mc.resultStats, mode]);
+  // Return to params tab when switching away from geometry/stats
+  useEffect(() => {
+    if (mode !== 'geometry' && mode !== 'stats') setRightTab('params');
+  }, [mode]);
+
+  // C key toggles the calculator floater — only when focus is NOT in an input
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const active = document.activeElement;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+      if (e.key === 'c' || e.key === 'C') setCalcOpen(o => !o);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  // ── Fullscreen keyboard handler ─────────────────────────────────────────
+  // F          → canvas-only fullscreen (all chrome hidden)
+  // Shift+F    → focused fullscreen (panels hidden, toolbar visible)
+  // Escape     → exit either mode
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const active = document.activeElement;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+      if (e.key === 'Escape') {
+        if (isFullscreen || isFocused) {
+          setIsFullscreen(false);
+          setIsFocused(false);
+          if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+        }
+      } else if (e.key === 'f' || e.key === 'F') {
+        if (e.shiftKey) {
+          // Shift+F — focused mode (panels hidden, toolbar stays)
+          setIsFocused(f => !f);
+          setIsFullscreen(false);
+        } else {
+          // F — canvas-only fullscreen
+          const entering = !isFullscreen;
+          setIsFullscreen(entering);
+          setIsFocused(false);
+          if (entering && containerRef.current) {
+            containerRef.current.requestFullscreen().catch(() => {});
+          } else if (!entering && document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+          }
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isFullscreen, isFocused]);
+
+  // ── Sync state when browser exits fullscreen natively (e.g. user presses
+  //    Escape directly via browser — without going through our handler) ────
+  useEffect(() => {
+    const handler = () => {
+      if (!document.fullscreenElement) {
+        setIsFullscreen(false);
+      }
+    };
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
+  // ── HUD fade: show on mouse movement, auto-hide after 2s idle ───────────
+  useEffect(() => {
+    if (!isFullscreen) { setHudVisible(false); return; }
+    const onMove = () => {
+      setHudVisible(true);
+      if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+      hudTimerRef.current = setTimeout(() => setHudVisible(false), 2000);
+    };
+    window.addEventListener('mousemove', onMove);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+    };
+  }, [isFullscreen]);
 
   // ── Resizable panels ──────────────────────────────────────────────────────
   const [leftWidth, setLeftWidth] = useState(260);
@@ -532,9 +690,6 @@ export default function MathCanvasPage() {
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
   }, []);
 
-  // Mode as extended type — 'dual' is valid here
-  const mode = mc.mode as ExtCanvasMode;
-
   const has2DResult   = !!mc.result2D;
   const has3DResult   = !!mc.result3D;
   const hasDualResult = !!mc.resultDual;
@@ -551,7 +706,13 @@ export default function MathCanvasPage() {
   const show3D        = (mode === '3d' || (mode === 'cas' && has3DResult)) && has3DResult && mc.viewMode === '3d';
   const showDual      = mode === 'dual' && hasDualResult;
   const showExpression = mode === 'expression' && hasExprResult;
-  const svgResult     = mode !== '3d' && mode !== 'dual' && mode !== 'cas' && mode !== 'expression' ? mc.result2D : null;
+  // Use resolvedSvg from the hook — for geometry mode this tracks the current
+  // construction step's cumulative SVG; for all other 2D modes it's result2D.svg.
+  // This is the same pattern as resolvedSurface for 3D mode.
+  const activeSvg = mc.resolvedSvg ?? null;
+  const svgResult = (mode !== '3d' && mode !== 'dual' && mode !== 'cas' && mode !== 'expression' && activeSvg)
+    ? { ...mc.result2D!, svg: activeSvg }
+    : null;
 
   // Active quick-start chips for the left panel
   const quickChips = mode === '3d' ? CHIPS_3D
@@ -561,18 +722,27 @@ export default function MathCanvasPage() {
     : CHIPS_2D;
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateRows: '52px 42px 1fr 32px',
-      gridTemplateColumns: `${leftWidth}px 4px 1fr 4px ${rightWidth}px`,
-      height: 'calc(100vh - 52px)',
-      fontFamily: T.fs,
-      color: T.tx,
-      background: T.bg,
-    }}>
+    <div
+      ref={containerRef}
+      style={{
+        display: 'grid',
+        gridTemplateRows: isFullscreen
+          ? '1fr'
+          : isFocused
+            ? '52px 42px 1fr 32px'
+            : '52px 42px 1fr 32px',
+        gridTemplateColumns: (isFullscreen || isFocused)
+          ? '1fr'
+          : `${leftWidth}px 4px 1fr 4px ${rightWidth}px`,
+        height: isFullscreen ? '100vh' : 'calc(100vh - 52px)',
+        fontFamily: T.fs,
+        color: T.tx,
+        background: T.bg,
+      }}
+    >
 
-      {/* ── HEADER ROW ─────────────────────────────────────────────────────── */}
-      <div style={{
+      {/* ── HEADER ROW — hidden in canvas-only fullscreen ──────────────────── */}
+      {!isFullscreen && <div style={{
         gridColumn: '1 / -1', background: T.sf,
         borderBottom: `1px solid ${T.bd}`,
         display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12,
@@ -647,10 +817,10 @@ export default function MathCanvasPage() {
         <span style={{ fontSize: 11, color: T.tx3 }}>
           {mc.sc.student.name} · Year {mc.sc.student.yearLevel}
         </span>
-      </div>
+      </div>}
 
-      {/* ── TOOLBAR ROW ────────────────────────────────────────────────────── */}
-      <div style={{
+      {/* ── TOOLBAR ROW — hidden in canvas-only fullscreen ────────────────── */}
+      {!isFullscreen && <div style={{
         gridColumn: '1 / -1', background: T.sf,
         borderBottom: `1px solid ${T.bd}`,
         display: 'flex', alignItems: 'center', padding: '0 12px', gap: 6,
@@ -701,10 +871,71 @@ export default function MathCanvasPage() {
 
         <div style={{ width: 1, height: 20, background: T.bd, margin: '0 4px' }} />
         <button onClick={mc.clearCanvas} title="Clear" style={{ ...btnStyle }}><Trash2 size={13} /></button>
-      </div>
 
-      {/* ── LEFT PANEL ─────────────────────────────────────────────────────── */}
-      <div style={{
+        <div style={{ width: 1, height: 20, background: T.bd, margin: '0 4px' }} />
+        <button
+          onClick={() => setCalcOpen(o => !o)}
+          title={calcOpen ? 'Close calculator' : 'Open calculator [C]'}
+          style={{
+            ...btnStyle,
+            background: calcOpen ? T.blLt : 'transparent',
+            color: calcOpen ? T.bl : T.tx2,
+            border: calcOpen ? `1px solid ${T.blMid}` : '1px solid transparent',
+            borderRadius: 6, padding: '4px 8px',
+            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
+          }}
+        >
+          <Calculator size={13} />
+          <span style={{ fontFamily: T.fs }}>Calc</span>
+        </button>
+
+        {/* Fullscreen controls — always at far right of toolbar */}
+        <div style={{ width: 1, height: 20, background: T.bd, margin: '0 4px' }} />
+        {/* Focused mode (Shift+F) — panels hidden, toolbar stays */}
+        <button
+          onClick={() => { setIsFocused(f => !f); setIsFullscreen(false); }}
+          title={isFocused ? 'Exit focused mode [Shift+F]' : 'Focused mode — hide panels [Shift+F]'}
+          style={{
+            ...btnStyle,
+            background: isFocused ? T.amLt : 'transparent',
+            color: isFocused ? T.am : T.tx2,
+            border: isFocused ? `1px solid ${T.amMid}` : '1px solid transparent',
+            borderRadius: 6, padding: '4px 8px',
+            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
+          }}
+        >
+          <Expand size={13} />
+          <span style={{ fontFamily: T.fs }}>Focus</span>
+        </button>
+        {/* Canvas-only fullscreen (F) */}
+        <button
+          onClick={() => {
+            const entering = !isFullscreen;
+            setIsFullscreen(entering);
+            setIsFocused(false);
+            if (entering && containerRef.current) {
+              containerRef.current.requestFullscreen().catch(() => {});
+            } else if (!entering && document.fullscreenElement) {
+              document.exitFullscreen().catch(() => {});
+            }
+          }}
+          title={isFullscreen ? 'Exit fullscreen [F or Esc]' : 'Canvas fullscreen [F]'}
+          style={{
+            ...btnStyle,
+            background: isFullscreen ? T.blLt : 'transparent',
+            color: isFullscreen ? T.bl : T.tx2,
+            border: isFullscreen ? `1px solid ${T.blMid}` : '1px solid transparent',
+            borderRadius: 6, padding: '4px 8px',
+            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
+          }}
+        >
+          {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+          <span style={{ fontFamily: T.fs }}>{isFullscreen ? 'Exit' : 'Full'}</span>
+        </button>
+      </div>}
+
+      {/* ── LEFT PANEL — hidden in fullscreen and focused mode ────────────── */}
+      {!isFullscreen && !isFocused && <div style={{
         gridColumn: '1', background: T.sf,
         overflowY: 'auto', padding: 14,
         display: 'flex', flexDirection: 'column', gap: 12,
@@ -758,10 +989,10 @@ export default function MathCanvasPage() {
             ))}
           </div>
         </div>
-      </div>
+      </div>}
 
-      {/* ── LEFT DRAG HANDLE ── */}
-      <div
+      {/* ── LEFT DRAG HANDLE — hidden in fullscreen and focused mode ─────── */}
+      {!isFullscreen && !isFocused && <div
         onMouseDown={e => onDragStart('left', e)}
         style={{
           gridColumn: '2', cursor: 'col-resize', background: T.bd,
@@ -769,10 +1000,108 @@ export default function MathCanvasPage() {
         }}
         onMouseEnter={e => (e.currentTarget.style.background = T.bl)}
         onMouseLeave={e => (e.currentTarget.style.background = T.bd)}
-      />
+      />}
 
       {/* ── CANVAS VIEWPORT ────────────────────────────────────────────────── */}
       <div style={{ gridColumn: '3', position: 'relative', overflow: 'hidden', background: T.bg }}>
+
+        {/* ── Calculator floater — draggable, minimisable ────────────────── */}
+        <MathCanvasCalculatorFloater
+          isOpen={calcOpen}
+          onClose={() => setCalcOpen(false)}
+          onResultReady={(result) => {
+            // Append result to the intent input so the student can pipe
+            // a computed value directly into a visualisation prompt.
+            // e.g. they compute "2*π" → 6.283... → type "plot sin(x) with period 6.283..."
+            mc.setIntent(prev =>
+              prev ? `${prev} ${result}` : result
+            );
+          }}
+        />
+
+        {/* ── Fullscreen HUD ─────────────────────────────────────────────────
+            Only visible in canvas-only fullscreen (isFullscreen=true).
+            Zoom controls and mode badge fade with mouse idle after 2s.
+            Exit button never fades — always accessible.
+            Analogy: video player controls that retreat when you stop moving,
+            but the pause button is always reachable. ─────────────────────── */}
+        {isFullscreen && (
+          <div style={{
+            position: 'absolute', bottom: 20, right: 20,
+            zIndex: 300,
+            display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8,
+            pointerEvents: 'none', // container itself is non-blocking
+          }}>
+            {/* Mode badge + zoom — fade on idle */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              opacity: hudVisible ? 1 : 0.12,
+              transition: 'opacity 0.5s ease',
+              pointerEvents: hudVisible ? 'auto' : 'none',
+            }}>
+              {/* Mode badge */}
+              <div style={{
+                padding: '4px 10px', borderRadius: 20,
+                background: 'rgba(26,35,50,0.88)',
+                backdropFilter: 'blur(6px)',
+                border: `1px solid ${T.bd}`,
+                fontSize: 11, fontWeight: 700, color: T.tx2, fontFamily: T.fs,
+              }}>
+                {mode === '3d' ? '3D Surface'
+                  : mode === 'dual' ? 'Dual Surface'
+                  : mode === 'stats' ? 'Statistics'
+                  : mode === 'geometry' ? 'Geometry'
+                  : mode === 'cas' ? 'CAS'
+                  : 'Graphing'}
+              </div>
+              {/* Zoom controls */}
+              {(mode !== '3d' && mode !== 'dual') && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  background: 'rgba(26,35,50,0.88)',
+                  backdropFilter: 'blur(6px)',
+                  border: `1px solid ${T.bd}`,
+                  borderRadius: 8, padding: '3px 6px',
+                }}>
+                  <button
+                    onClick={() => setZoom(z => Math.max(25, z - 10))}
+                    style={{ background: 'none', border: 'none', color: T.tx2, cursor: 'pointer', padding: '2px 4px', fontSize: 14, lineHeight: 1 }}
+                  >−</button>
+                  <span style={{ fontSize: 11, color: T.tx2, minWidth: 32, textAlign: 'center', fontFamily: T.fm }}>{zoom}%</span>
+                  <button
+                    onClick={() => setZoom(z => Math.min(400, z + 10))}
+                    style={{ background: 'none', border: 'none', color: T.tx2, cursor: 'pointer', padding: '2px 4px', fontSize: 14, lineHeight: 1 }}
+                  >+</button>
+                </div>
+              )}
+            </div>
+
+            {/* Exit fullscreen — always visible at full opacity, always clickable */}
+            <button
+              onClick={() => {
+                setIsFullscreen(false);
+                if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+              }}
+              title="Exit fullscreen [Esc]"
+              style={{
+                pointerEvents: 'auto',
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '7px 14px',
+                background: 'rgba(26,35,50,0.92)',
+                backdropFilter: 'blur(8px)',
+                border: `1px solid ${T.bdBright}`,
+                borderRadius: 8,
+                color: T.tx, fontSize: 12, fontWeight: 700,
+                cursor: 'pointer', fontFamily: T.fs,
+                boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+              }}
+            >
+              <Minimize2 size={13} />
+              Exit Fullscreen
+              <span style={{ fontSize: 10, color: T.tx3, fontFamily: T.fm, marginLeft: 2 }}>Esc</span>
+            </button>
+          </div>
+        )}
 
         {showWelcome && <WelcomeOverlay mode={mode} onChip={mc.quickIntent} />}
 
@@ -849,9 +1178,30 @@ export default function MathCanvasPage() {
         {svgResult && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
             <div
-              style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'center', transition: 'transform 0.2s' }}
+              style={{
+                transform: `scale(${zoom / 100})`,
+                transformOrigin: 'center',
+                transition: 'opacity 0.2s, transform 0.2s',
+                opacity: mc.isRerendering ? 0.65 : 1,
+              }}
               dangerouslySetInnerHTML={{ __html: svgResult.svg }}
             />
+            {/* Re-render pulse — visible while 650ms debounce re-render is in flight.
+                Dims the SVG slightly so the student knows the canvas is updating.
+                Disappears the moment the fresh SVG arrives. */}
+            {mc.isRerendering && (
+              <div style={{
+                position: 'absolute', top: 12, right: 12,
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '4px 10px', borderRadius: 20,
+                background: T.blLt, border: `1px solid ${T.blMid}`,
+                fontSize: 10, fontWeight: 700, color: T.bl,
+                pointerEvents: 'none',
+              }}>
+                <Loader2 size={10} style={{ animation: 'spin 1s linear infinite' }} />
+                Updating…
+              </div>
+            )}
             <SurfaceBadge
               title={svgResult.title}
               description={svgResult.description}
@@ -904,8 +1254,8 @@ export default function MathCanvasPage() {
         )}
       </div>
 
-      {/* ── RIGHT DRAG HANDLE ── */}
-      <div
+      {/* ── RIGHT DRAG HANDLE — hidden in fullscreen and focused mode ────── */}
+      {!isFullscreen && !isFocused && <div
         onMouseDown={e => onDragStart('right', e)}
         style={{
           gridColumn: '4', cursor: 'col-resize', background: T.bd,
@@ -913,13 +1263,21 @@ export default function MathCanvasPage() {
         }}
         onMouseEnter={e => (e.currentTarget.style.background = T.bl)}
         onMouseLeave={e => (e.currentTarget.style.background = T.bd)}
-      />
+      />}
 
-      {/* ── RIGHT PANEL ────────────────────────────────────────────────────── */}
-      <div style={{ gridColumn: '5', background: T.sf, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* ── RIGHT PANEL — hidden in fullscreen and focused mode ───────────── */}
+      {!isFullscreen && !isFocused && <div style={{ gridColumn: '5', background: T.sf, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', borderBottom: `1px solid ${T.bd}` }}>
           {([
             { id: 'params' as RightTab, label: 'Parameters', icon: <Layers size={11} /> },
+            // Construction Protocol tab — geometry mode only, when a response exists
+            ...(mode === 'geometry' && mc.resultGeometry
+              ? [{ id: 'steps' as RightTab, label: 'Steps', icon: <span style={{ fontSize: 11 }}>◯</span> }]
+              : []),
+            // Distribution tab — stats mode only, when a response exists
+            ...(mode === 'stats' && mc.resultStats
+              ? [{ id: 'dist' as RightTab, label: 'Dist', icon: <span style={{ fontSize: 11 }}>∫</span> }]
+              : []),
             { id: 'issy' as RightTab, label: 'Issy', icon: <Brain size={11} /> },
             { id: 'info' as RightTab, label: 'Info', icon: <Info size={11} /> },
           ] as const).map(tab => (
@@ -929,8 +1287,12 @@ export default function MathCanvasPage() {
               style={{
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                 padding: '8px 4px', fontSize: 11, fontWeight: rightTab === tab.id ? 700 : 500,
-                border: 'none', borderBottom: rightTab === tab.id ? `2px solid ${T.bl}` : '2px solid transparent',
-                background: 'none', color: rightTab === tab.id ? T.bl : T.tx2,
+                border: 'none', borderBottom: rightTab === tab.id ? `2px solid ${
+                  tab.id === 'steps' ? T.ind : tab.id === 'dist' ? T.vl : T.bl
+                }` : '2px solid transparent',
+                background: 'none', color: rightTab === tab.id ? (
+                  tab.id === 'steps' ? T.ind : tab.id === 'dist' ? T.vl : T.bl
+                ) : T.tx2,
                 cursor: 'pointer', fontFamily: T.fs,
               }}
             >
@@ -955,6 +1317,21 @@ export default function MathCanvasPage() {
                 });
               }}
             />
+          )}
+
+          {/* ── Construction Protocol tab — geometry mode ── */}
+          {rightTab === 'steps' && mode === 'geometry' && (
+            <MathCanvasGeometryPanel
+              state={mc.constructionState}
+              onStepChange={mc.goToConstructionStep}
+              onPlayPause={mc.toggleConstructionPlay}
+              onReset={mc.resetConstruction}
+            />
+          )}
+
+          {/* ── Distribution metadata tab — stats mode ── */}
+          {rightTab === 'dist' && mode === 'stats' && mc.resultStats && (
+            <MathCanvasStatsPanel response={mc.resultStats} />
           )}
 
           {/* Standard params — shown in all modes except CAS */}
@@ -1044,10 +1421,10 @@ export default function MathCanvasPage() {
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
-      {/* ── FOOTER ─────────────────────────────────────────────────────────── */}
-      <div style={{
+      {/* ── FOOTER — hidden in fullscreen ─────────────────────────────────── */}
+      {!isFullscreen && <div style={{
         gridColumn: '1 / -1',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         gap: 6,
@@ -1060,7 +1437,7 @@ export default function MathCanvasPage() {
         <a href="/terms" style={{ color: T.tx3, textDecoration: 'none' }}>Terms of Use</a>
         <span>|</span>
         <a href="/privacy" style={{ color: T.tx3, textDecoration: 'none' }}>Privacy Policy</a>
-      </div>
+      </div>}
     </div>
   );
 }

@@ -31,6 +31,7 @@ import {
   Swords, Coins, PenSquare, Palette, Workflow, Play,
   Home, Bell, HelpCircle, Fingerprint,
   Vote, Database, Wand2, Volume2, Globe,
+  Calculator,
 } from 'lucide-react';
 
 import type { RegisteredTask, RoleAnchors } from '@/types/composing-menu-types';
@@ -201,14 +202,41 @@ export const taskRegistry: Record<string, RegisteredTask> = {
     ],
   },
 
-  // ── CLUSTER 10c: MATHCANVAS ──
+  // ── CLUSTER 10c: MATH TOOLKIT ─────────────────────────────────────────────
+  // The Math Toolkit is a compound module grouping all mathematical tools.
+  // This cluster boundary is intentional: it creates a clean module API surface
+  // that can be consumed by external LMS integrations — an LMS can mount the
+  // Math Toolkit as a self-contained module by targeting this cluster.
+  //
+  // Tools currently in the toolkit:
+  //   MT-CANVAS     — MathCanvas (AI-native 2D/3D visualisation)
+  //   MT-CALC       — Scientific Calculator (floater inside canvas + standalone)
+  //
+  // Future toolkit additions slot in here as additional children and routes
+  // under /tools/ without affecting any other module.
+  MT: {
+    ref: 'MT',
+    name: 'Math Toolkit',
+    href: '/tools/mathcanvas',
+    icon: BarChart2,
+    type: 'compound',
+    cluster: 'math-toolkit',
+    description: 'AI-native mathematical tools — MathCanvas visualisation, scientific calculator, and more',
+    children: [
+      { name: 'MathCanvas',  href: '/tools/mathcanvas',  icon: BarChart2  },
+      { name: 'Calculator',  href: '/tools/calculator',  icon: Calculator },
+    ],
+  },
+
+  // Retained as alias so any code still referencing MC1 by ref does not break.
+  // The sidebar renders MT; MC1 is a direct-link fallback only.
   MC1: {
     ref: 'MC1',
     name: 'MathCanvas',
     href: '/tools/mathcanvas',
     icon: BarChart2,
     type: 'atomic',
-    cluster: 'learning',
+    cluster: 'math-toolkit',
     description: 'AI-native 2D & true WebGL 3D mathematical surface visualisation — curriculum-aligned, BKT-driven',
   },
 
@@ -320,7 +348,7 @@ export const roleAnchors: RoleAnchors[] = [
       { ref: 'L1', position: 1 },         // Courses
       { ref: 'L3', position: 2 },         // Ask Issy
       { ref: 'VI', position: 3 },         // Voice Intelligence
-      { ref: 'MC1', position: 4 },        // MathCanvas
+      { ref: 'MT', position: 4 },         // Math Toolkit (MathCanvas + Calculator)
       { ref: 'SB', position: 5 },         // Storybook Engine
     ],
   },
@@ -332,7 +360,7 @@ export const roleAnchors: RoleAnchors[] = [
       { ref: 'TEACHER_CLASSES', position: 1 }, // My Classes
       { ref: 'TEACHER_STUDENTS', position: 2 }, // Students
       { ref: 'T2', position: 3 },         // Gradebook
-      { ref: 'VI', position: 4 },         // Voice Intelligence
+      { ref: 'MT', position: 4 },         // Math Toolkit
       { ref: 'SB', position: 5 },         // Storybook Engine
     ],
   },
@@ -352,7 +380,8 @@ export const roleAnchors: RoleAnchors[] = [
       { ref: 'D1', position: 0 },         // Dashboard
       { ref: 'TU5', position: 1 },        // My Students
       { ref: 'TU2', position: 2 },        // Sessions
-      { ref: 'VI', position: 3 },         // Voice Intelligence
+      { ref: 'MT', position: 3 },         // Math Toolkit (calculator during sessions)
+      { ref: 'VI', position: 4 },         // Voice Intelligence
     ],
   },
   {
