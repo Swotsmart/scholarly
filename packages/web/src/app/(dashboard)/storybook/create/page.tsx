@@ -25,10 +25,12 @@ export default function StorybookCreatePage() {
   const [pageCount, setPageCount] = useState('12');
   const [job, setJob] = useState<GenerationJob | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleGenerate() {
     if (!title.trim()) return;
     setIsSubmitting(true);
+    setError(null);
     try {
       const result = await storybookApi.generation.create({
         title: title.trim(),
@@ -41,8 +43,9 @@ export default function StorybookCreatePage() {
       setStep('generating');
       // Poll for status
       pollStatus(result.id);
-    } catch {
-      // Error handling — API client throws with message
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Story generation failed. Please try again.';
+      setError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -167,6 +170,12 @@ export default function StorybookCreatePage() {
                 Every word is validated against the learner&apos;s taught GPC set using our grapheme parser. Stories that fail the 85% decodability threshold are automatically regenerated.
               </p>
             </div>
+
+            {error && (
+              <div className="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4">
+                <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+              </div>
+            )}
 
             <Button onClick={handleGenerate} disabled={!title.trim() || isSubmitting} className="w-full">
               {isSubmitting ? (

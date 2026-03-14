@@ -735,6 +735,7 @@ export default function MathCanvasPage() {
           ? '1fr'
           : `${leftWidth}px 4px 1fr 4px ${rightWidth}px`,
         height: isFullscreen ? '100vh' : 'calc(100vh - 52px)',
+        overflow: 'hidden',
         fontFamily: T.fs,
         color: T.tx,
         background: T.bg,
@@ -930,7 +931,7 @@ export default function MathCanvasPage() {
           }}
         >
           {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-          <span style={{ fontFamily: T.fs }}>{isFullscreen ? 'Exit' : 'Full'}</span>
+          <span style={{ fontFamily: T.fs }}>{isFullscreen ? 'Exit' : 'Full Screen'}</span>
         </button>
       </div>}
 
@@ -1003,7 +1004,7 @@ export default function MathCanvasPage() {
       />}
 
       {/* ── CANVAS VIEWPORT ────────────────────────────────────────────────── */}
-      <div style={{ gridColumn: '3', position: 'relative', overflow: 'hidden', background: T.bg }}>
+      <div style={{ gridColumn: (isFullscreen || isFocused) ? '1' : '3', position: 'relative', overflow: 'hidden', background: T.bg }}>
 
         {/* ── Calculator floater — draggable, minimisable ────────────────── */}
         <MathCanvasCalculatorFloater

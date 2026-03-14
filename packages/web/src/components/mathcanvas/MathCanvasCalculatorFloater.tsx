@@ -191,24 +191,26 @@ export function MathCanvasCalculatorFloater({ isOpen, onClose, onResultReady }: 
   // ── Drag state ─────────────────────────────────────────────────────────
   // Default: top-right of canvas with 16px margin.
   // We initialise lazily on first render so we don't need to know canvas size.
-  const [pos, setPos]         = useState({ x: -1, y: 16 }); // x=-1 signals "not yet placed"
+  const [pos, setPos]         = useState({ x: 16, y: 16 });
   const draggingFloater       = useRef(false);
   const dragOffset            = useRef({ x: 0, y: 0 });
   const floaterRef            = useRef<HTMLDivElement>(null);
   const containerRef          = useRef<HTMLDivElement | null>(null);
 
-  // Measure container (canvas area) for clamping, and set initial x
+  // Measure container (canvas area) for clamping and position top-right
+  const positioned = useRef(false);
   useLayoutEffect(() => {
     if (!isOpen || !floaterRef.current) return;
     const parent = floaterRef.current.parentElement;
     if (!parent) return;
     containerRef.current = parent as HTMLDivElement;
-    if (pos.x === -1) {
+    if (!positioned.current) {
       const W = parent.getBoundingClientRect().width;
       const floaterW = 280;
-      setPos({ x: W - floaterW - 16, y: 16 });
+      setPos({ x: Math.max(16, W - floaterW - 16), y: 16 });
+      positioned.current = true;
     }
-  }, [isOpen, pos.x]);
+  }, [isOpen]);
 
   // ── Drag handlers ───────────────────────────────────────────────────────
   const onTitleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -299,7 +301,7 @@ export function MathCanvasCalculatorFloater({ isOpen, onClose, onResultReady }: 
     if (onResultReady) { onResultReady(display); setInjected(true); setTimeout(() => setInjected(false), 1200); }
   }, [display, onResultReady]);
 
-  if (!isOpen || pos.x === -1) return null;
+  if (!isOpen) return null;
 
   const dispSize = display.length > 18 ? 12 : display.length > 12 ? 15 : 20;
 
