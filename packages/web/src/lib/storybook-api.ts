@@ -40,8 +40,7 @@ import type {
   StoryListItem,
 } from '@/types/storybook';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const V1 = `${API_BASE}/api/v1`;
+const V1 = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 // =============================================================================
@@ -50,10 +49,20 @@ const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const url = `${V1}${path}`;
+  let token: string | null = null;
+  try {
+    const stored = localStorage.getItem('scholarly-auth');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      token = parsed?.state?.accessToken || null;
+    }
+  } catch { /* ignore */ }
   const options: RequestInit = {
     method,
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   };
   if (body) options.body = JSON.stringify(body);
   const response = await fetch(url, options);
