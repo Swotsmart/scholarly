@@ -212,6 +212,24 @@ export const taskRegistry: Record<string, RegisteredTask> = {
     description: 'AI-native 2D & true WebGL 3D mathematical surface visualisation — curriculum-aligned, BKT-driven',
   },
 
+  // ── CLUSTER 10d: STORYBOOK ENGINE ──
+  SB: {
+    ref: 'SB',
+    name: 'Storybook Engine',
+    href: '/storybook',
+    icon: BookOpen,
+    type: 'compound',
+    cluster: 'creator',
+    description: 'AI-powered story creation, illustration, narration, and marketplace',
+    children: [
+      { name: 'Dashboard', href: '/storybook', icon: BookOpen },
+      { name: 'Create', href: '/storybook/create', icon: Sparkles },
+      { name: 'Library', href: '/storybook/library', icon: Library },
+      { name: 'Review', href: '/storybook/review', icon: ClipboardCheck },
+      { name: 'Marketplace', href: '/storybook/marketplace', icon: Store },
+    ],
+  },
+
   // ── CLUSTER 10b: ERUDITS ──
   ER: {
     ref: 'ER',
@@ -303,6 +321,7 @@ export const roleAnchors: RoleAnchors[] = [
       { ref: 'L3', position: 2 },         // Ask Issy
       { ref: 'VI', position: 3 },         // Voice Intelligence
       { ref: 'MC1', position: 4 },        // MathCanvas
+      { ref: 'SB', position: 5 },         // Storybook Engine
     ],
   },
   {
@@ -314,6 +333,7 @@ export const roleAnchors: RoleAnchors[] = [
       { ref: 'TEACHER_STUDENTS', position: 2 }, // Students
       { ref: 'T2', position: 3 },         // Gradebook
       { ref: 'VI', position: 4 },         // Voice Intelligence
+      { ref: 'SB', position: 5 },         // Storybook Engine
     ],
   },
   {
@@ -363,6 +383,7 @@ export const roleAnchors: RoleAnchors[] = [
       { ref: 'D1', position: 0 },         // Dashboard
       { ref: 'CR_DEV', position: 1 },     // My Content
       { ref: 'CR_EARNINGS', position: 2 }, // Earnings
+      { ref: 'SB', position: 3 },         // Storybook Engine
     ],
   },
 ];
