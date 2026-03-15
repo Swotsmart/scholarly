@@ -724,15 +724,45 @@ export default function MathCanvasPage() {
     };
   }, [isFullscreen]);
 
-  // ── Resizable panels ──────────────────────────────────────────────────────
-  const [leftWidth, setLeftWidth] = useState(260);
-  const [rightWidth, setRightWidth] = useState(260);
+  // ── Resizable panels — proportional to viewport ─────────────────────────
+  // Panels default to ~16% of window width, clamped between 180–450px.
+  // On window resize, defaults recalculate so the layout stays proportional.
+  const PANEL_RATIO = 0.16;
+  const PANEL_MIN = 180;
+  const PANEL_MAX = 450;
+  const clampPanel = useCallback((w: number) => Math.max(PANEL_MIN, Math.min(PANEL_MAX, w)), []);
+  const defaultPanelWidth = useCallback(
+    () => clampPanel(Math.round(window.innerWidth * PANEL_RATIO)),
+    [clampPanel],
+  );
+
+  const [leftWidth, setLeftWidth] = useState(() =>
+    typeof window !== 'undefined' ? Math.max(PANEL_MIN, Math.min(PANEL_MAX, Math.round(window.innerWidth * PANEL_RATIO))) : 260
+  );
+  const [rightWidth, setRightWidth] = useState(() =>
+    typeof window !== 'undefined' ? Math.max(PANEL_MIN, Math.min(PANEL_MAX, Math.round(window.innerWidth * PANEL_RATIO))) : 260
+  );
+  const userResized = useRef(false);
+
+  // Recalculate panel widths on window resize (unless user has manually dragged)
+  useEffect(() => {
+    const onResize = () => {
+      if (userResized.current) return;
+      const w = defaultPanelWidth();
+      setLeftWidth(w);
+      setRightWidth(w);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [defaultPanelWidth]);
+
   const dragging = useRef<'left' | 'right' | null>(null);
   const dragStartX = useRef(0);
   const dragStartW = useRef(0);
 
   const onDragStart = useCallback((side: 'left' | 'right', e: React.MouseEvent) => {
     e.preventDefault();
+    userResized.current = true;
     dragging.current = side;
     dragStartX.current = e.clientX;
     dragStartW.current = side === 'left' ? leftWidth : rightWidth;
@@ -742,9 +772,9 @@ export default function MathCanvasPage() {
     const onMove = (e: MouseEvent) => {
       if (!dragging.current) return;
       const dx = e.clientX - dragStartX.current;
-      const newW = Math.max(180, Math.min(450,
+      const newW = clampPanel(
         dragging.current === 'left' ? dragStartW.current + dx : dragStartW.current - dx
-      ));
+      );
       if (dragging.current === 'left') setLeftWidth(newW);
       else setRightWidth(newW);
     };
