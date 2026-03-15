@@ -1238,7 +1238,7 @@ export default function MathCanvasPage() {
         borderBottom: `1px solid ${C.bd}`,
         display: 'flex', alignItems: 'center', padding: '0 12px', gap: 6,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 0, background: C.bg, border: `1px solid ${C.bd}`, borderRadius: 7, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, gap: 0, background: C.bg, border: `1px solid ${C.bd}`, borderRadius: 7, overflow: 'hidden' }}>
           <span style={{ padding: '0 10px', fontSize: 12, color: C.tx3, fontFamily: C.fm, flexShrink: 0 }}>
             {mode === '3d' ? 'z = f(x,y)' : mode === 'dual' ? 'f₁ ∩ f₂' : 'f(x) ='}
           </span>
@@ -1257,6 +1257,8 @@ export default function MathCanvasPage() {
           />
         </div>
 
+        {/* ── Tool buttons group — never shrinks, input absorbs overflow ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
         <button
           onClick={() => mc.visualise(mc.intent)}
           disabled={mc.isLoading || !mc.intent.trim()}
@@ -1435,6 +1437,7 @@ export default function MathCanvasPage() {
         >
           {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
         </button>
+        </div>{/* end tool buttons group */}
       </div>}
 
       {/* ── MATH SOLVER MODAL ─────────────────────────────────────────────────
