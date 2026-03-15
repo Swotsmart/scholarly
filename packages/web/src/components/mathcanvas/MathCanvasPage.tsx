@@ -952,7 +952,6 @@ export default function MathCanvasPage() {
           }}
         >
           <Calculator size={13} />
-          <span style={{ fontFamily: C.fs }}>Calc</span>
         </button>
 
         {/* Fullscreen controls — always at far right of toolbar */}
@@ -971,7 +970,6 @@ export default function MathCanvasPage() {
           }}
         >
           <Expand size={13} />
-          <span style={{ fontFamily: C.fs }}>Focus</span>
         </button>
         {/* Canvas-only fullscreen (F) */}
         <button
@@ -996,7 +994,6 @@ export default function MathCanvasPage() {
           }}
         >
           {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-          <span style={{ fontFamily: C.fs }}>{isFullscreen ? 'Exit' : 'Full Screen'}</span>
         </button>
       </div>}
 
