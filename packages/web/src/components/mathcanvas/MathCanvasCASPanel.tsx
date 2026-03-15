@@ -36,8 +36,8 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { CheckCircle2, Circle, Lock, ChevronDown, ChevronRight, Lightbulb, Send, RefreshCw } from 'lucide-react';
-import { gradeAnswer } from '@/lib/mathcanvas-cas';
+import { CheckCircle2, Circle, Lock, ChevronDown, ChevronRight, Lightbulb, Send, RefreshCw, PartyPopper } from 'lucide-react';
+import { gradeAnswer, gradeMatrixAnswer } from '@/lib/mathcanvas-cas';
 import type { CASTask, CASSessionState } from '@/types/mathcanvas';
 
 const T = {
@@ -173,7 +173,7 @@ export default function MathCanvasCASPanel({
           background: T.emLt, border: `1px solid ${T.emMid}`,
           textAlign: 'center',
         }}>
-          <div style={{ fontSize: 20, marginBottom: 4 }}>🎉</div>
+          <div style={{ marginBottom: 4 }}><PartyPopper size={20} style={{ color: T.em }} /></div>
           <div style={{ fontSize: 14, fontWeight: 700, color: T.em }}>
             Session Complete! {earnedMarks}/{totalMarks} marks
           </div>
@@ -282,14 +282,42 @@ function TaskCard({
             {task.prompt}
           </div>
 
-          {/* Expression context */}
-          <div style={{
-            padding: '6px 10px', borderRadius: 6,
-            background: '#f1f5f9', border: `1px solid ${T.border}`,
-            fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: T.ink,
-          }}>
-            f(x,y) = {task.expression}
-          </div>
+          {/* Expression context — standard algebraic tasks */}
+          {!['matrix_multiply','find_determinant','row_reduce','find_eigenvalues'].includes(task.type) && (
+            <div style={{
+              padding: '6px 10px', borderRadius: 6,
+              background: '#f1f5f9', border: `1px solid ${T.border}`,
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: T.ink,
+            }}>
+              f(x,y) = {task.expression}
+            </div>
+          )}
+
+          {/* Matrix operand display — for matrix task types */}
+          {['matrix_multiply','find_determinant','row_reduce','find_eigenvalues'].includes(task.type) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+              padding: '10px 12px', borderRadius: 8,
+              background: '#f8fafc', border: `1px solid ${T.border}` }}>
+              {task.matrixA && (
+                <MatrixDisplay matrix={task.matrixA} label="A" color={T.bl} />
+              )}
+              {task.type === 'matrix_multiply' && task.matrixB && (
+                <>
+                  <span style={{ fontSize: 20, fontWeight: 300, color: T.muted, lineHeight: 1 }}>×</span>
+                  <MatrixDisplay matrix={task.matrixB} label="B" color={T.vl} />
+                </>
+              )}
+              {task.type === 'find_determinant' && task.matrixA && (
+                <span style={{ fontSize: 12, color: T.muted }}>Find det(A)</span>
+              )}
+              {task.type === 'row_reduce' && (
+                <span style={{ fontSize: 12, color: T.muted }}>Reduce to row echelon form</span>
+              )}
+              {task.type === 'find_eigenvalues' && (
+                <span style={{ fontSize: 12, color: T.muted }}>Find eigenvalues λ of A</span>
+              )}
+            </div>
+          )}
 
           {!isComplete && (
             <>
@@ -301,7 +329,7 @@ function TaskCard({
                     background: T.amLt, border: `1px solid #fde68a`,
                     fontSize: 11, color: '#92400e',
                   }}>
-                    💡 {task.hint}
+                    <Lightbulb size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />{task.hint}
                   </div>
                 ) : (
                   <button
@@ -324,7 +352,15 @@ function TaskCard({
                   value={answer}
                   onChange={e => { setAnswer(e.target.value); setLastFeedback(null); }}
                   onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                  placeholder="Enter your answer…"
+                  placeholder={
+                    task.type === 'matrix_multiply' || task.type === 'row_reduce'
+                      ? 'Enter result matrix, e.g. [[1,2],[3,4]]'
+                      : task.type === 'find_determinant'
+                      ? 'Enter determinant, e.g. -2'
+                      : task.type === 'find_eigenvalues'
+                      ? 'Enter eigenvalues, e.g. 2, -1'
+                      : 'Enter your answer…'
+                  }
                   style={{
                     flex: 1, padding: '6px 10px',
                     border: `1.5px solid ${wasWrong && lastFeedback ? T.red : isActive ? T.vl : T.border}`,
@@ -379,7 +415,7 @@ function TaskCard({
               background: T.emLt, border: `1px solid ${T.emMid}`,
               fontSize: 11, color: '#065f46', lineHeight: 1.6,
             }}>
-              <div style={{ fontWeight: 700, marginBottom: 2 }}>✓ Correct</div>
+              <div style={{ fontWeight: 700, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}><CheckCircle2 size={13} /> Correct</div>
               <div>{task.workedSolution}</div>
             </div>
           )}
@@ -393,6 +429,79 @@ function TaskCard({
 // HELPERS
 // =============================================================================
 
+// =============================================================================
+// MATRIX DISPLAY — renders number[][] as a styled mathematical matrix
+// =============================================================================
+//
+// A matrix like [[1,2],[3,4]] is displayed with large square brackets,
+// aligned columns, and the Scholarly brand token system — no external deps.
+// This is the same "no eval, no library" principle as the rest of MathCanvas:
+// the JSON array Claude returned is safe to parse; we render it ourselves.
+
+function MatrixDisplay({
+  matrix,
+  label,
+  color = T.bl,
+}: {
+  matrix: number[][];
+  label?: string;
+  color?: string;
+}) {
+  if (!matrix || matrix.length === 0) return null;
+  const cols = matrix[0].length;
+  // Column width: at least 32px, widen for larger numbers
+  const maxVal = Math.max(...matrix.flat().map(v => Math.abs(v)));
+  const colW = maxVal >= 100 ? 48 : maxVal >= 10 ? 40 : 32;
+  const cellStyle: React.CSSProperties = {
+    width: colW, textAlign: 'center', padding: '2px 4px',
+    fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: T.ink,
+    lineHeight: 1.8,
+  };
+
+  return (
+    <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+      {label && (
+        <span style={{ fontSize: 11, fontWeight: 700, color, marginBottom: 2 }}>{label}</span>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+        {/* Left bracket */}
+        <div style={{
+          width: 10, height: matrix.length * 30,
+          borderLeft: `2.5px solid ${color}`,
+          borderTop: `2px solid ${color}`,
+          borderBottom: `2px solid ${color}`,
+          borderRadius: '2px 0 0 2px',
+        }} />
+        {/* Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, ${colW}px)`, gap: 0 }}>
+          {matrix.flat().map((v, i) => (
+            <div key={i} style={cellStyle}>{Number.isInteger(v) ? v : v.toFixed(3)}</div>
+          ))}
+        </div>
+        {/* Right bracket */}
+        <div style={{
+          width: 10, height: matrix.length * 30,
+          borderRight: `2.5px solid ${color}`,
+          borderTop: `2px solid ${color}`,
+          borderBottom: `2px solid ${color}`,
+          borderRadius: '0 2px 2px 0',
+        }} />
+      </div>
+    </div>
+  );
+}
+
+/** Parse JSON matrix string safely */
+function tryParseMatrix(s: string): number[][] | null {
+  try {
+    const cleaned = s.trim().replace(/\s+/g, '');
+    const parsed = JSON.parse(cleaned);
+    if (!Array.isArray(parsed) || !parsed.every(r => Array.isArray(r))) return null;
+    return parsed as number[][];
+  } catch { return null; }
+}
+
+
 function taskTypeLabel(type: CASTask['type']): string {
   const labels: Record<CASTask['type'], string> = {
     find_derivative: 'Find the Derivative',
@@ -403,6 +512,10 @@ function taskTypeLabel(type: CASTask['type']): string {
     factorise: 'Factorise',
     evaluate_at_point: 'Evaluate at a Point',
     compare_expressions: 'Are These Equivalent?',
+    matrix_multiply: 'Matrix Multiplication',
+    find_determinant: 'Find the Determinant',
+    row_reduce: 'Row Reduction',
+    find_eigenvalues: 'Find the Eigenvalues',
   };
   return labels[type] ?? type;
 }

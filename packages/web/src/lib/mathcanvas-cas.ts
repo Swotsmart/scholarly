@@ -482,6 +482,8 @@ export interface RubricQuestion {
   variables?: string[];
   /** Expected answer (exact form) */
   expectedAnswer: string;
+  /** Marks available for this question (default 1) */
+  marks?: number;
 }
 
 export interface RubricResult {
@@ -506,6 +508,32 @@ export function gradeAnswer(
   question: RubricQuestion,
   studentAnswer: string,
 ): RubricResult {
+  // Route matrix/vector task types to their own grader
+  const matrixTypes = new Set(['matrix_multiply', 'find_determinant', 'row_reduce', 'find_eigenvalues']);
+  if (matrixTypes.has(question.type as string)) {
+    const mResult = gradeMatrixAnswer(
+      question.type as MatrixTaskType,
+      question.expectedAnswer,
+      studentAnswer,
+      question.marks ?? 1,
+    );
+    return {
+      questionId: question.id,
+      studentAnswer,
+      correct: mResult.correct,
+      equivalence: {
+        equivalent: mResult.correct,
+        method: 'exact' as const,
+        simplified1: mResult.parsedStudent,
+        simplified2: mResult.parsedExpected,
+        explanation: mResult.feedback,
+      },
+      marks: mResult.marks,
+      feedback: mResult.feedback,
+    };
+  }
+
+  // Standard algebraic equivalence grading
   const equivalence = checkEquivalence(studentAnswer, question.expectedAnswer);
 
   const feedback = equivalence.equivalent
@@ -560,3 +588,146 @@ export const EXPRESSION_SUGGESTIONS = {
     'x*y',                  // hyperbolic paraboloid — tangent = plane through origin
   ],
 } as const;
+
+// =============================================================================
+// MATRIX GRADING — Session 6: Vectors & Matrices
+// =============================================================================
+//
+// Matrix task grading follows the same AI-designs / deterministic-grades
+// principle as algebraic CAS tasks. Claude returns the expected answer as:
+//   matrix_multiply / row_reduce  → JSON string  "[[a,b],[c,d]]"
+//   find_determinant               → numeric string "−2"
+//   find_eigenvalues               → comma-separated string "2, −1"
+//
+// The student types the same format. gradeMatrixAnswer() parses both,
+// compares element-wise (matrices) or as sorted value sets (eigenvalues),
+// and returns structured feedback — no LLM involvement.
+//
+// Tolerance: 1e-6 per element to absorb floating-point rounding from
+// students who compute by hand and round intermediate steps.
+
+export type MatrixTaskType =
+  | 'matrix_multiply'
+  | 'find_determinant'
+  | 'row_reduce'
+  | 'find_eigenvalues';
+
+export interface MatrixGradeResult {
+  correct: boolean;
+  marks: number;
+  feedback: string;
+  parsedExpected: string;
+  parsedStudent: string;
+}
+
+/** Parse "[[1,2],[3,4]]" → number[][] or null on failure */
+function parseMatrix(s: string): number[][] | null {
+  try {
+    const cleaned = s.trim().replace(/\s+/g, '');
+    const parsed = JSON.parse(cleaned);
+    if (!Array.isArray(parsed)) return null;
+    if (!parsed.every(row => Array.isArray(row) && row.every(v => typeof v === 'number'))) return null;
+    return parsed as number[][];
+  } catch {
+    return null;
+  }
+}
+
+/** Parse "2, -1" or "2,-1" → sorted number[] or null */
+function parseEigenvalues(s: string): number[] | null {
+  try {
+    const parts = s.split(',').map(p => parseFloat(p.trim()));
+    if (parts.some(isNaN)) return null;
+    return parts.slice().sort((a, b) => a - b);
+  } catch {
+    return null;
+  }
+}
+
+/** Are two matrices equal within tolerance? */
+function matricesEqual(a: number[][], b: number[][], tol = 1e-6): boolean {
+  if (a.length !== b.length) return false;
+  for (let r = 0; r < a.length; r++) {
+    if (a[r].length !== b[r].length) return false;
+    for (let c = 0; c < a[r].length; c++) {
+      if (Math.abs(a[r][c] - b[r][c]) > tol) return false;
+    }
+  }
+  return true;
+}
+
+/** Are two eigenvalue sets equal within tolerance? */
+function eigenvaluesEqual(a: number[], b: number[], tol = 1e-6): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((v, i) => Math.abs(v - b[i]) < tol);
+}
+
+/**
+ * Grade a student's answer for a matrix task type.
+ * Called from the main gradeAnswer() function when task.type is a MatrixTaskType.
+ */
+export function gradeMatrixAnswer(
+  taskType: MatrixTaskType,
+  expectedAnswer: string,
+  studentAnswer: string,
+  marks: number,
+): MatrixGradeResult {
+  const clean = (s: string) => s.trim();
+
+  if (taskType === 'matrix_multiply' || taskType === 'row_reduce') {
+    const expected = parseMatrix(clean(expectedAnswer));
+    const student  = parseMatrix(clean(studentAnswer));
+
+    if (!expected) {
+      return { correct: false, marks: 0, feedback: 'Internal error: expected answer is not a valid matrix.', parsedExpected: expectedAnswer, parsedStudent: studentAnswer };
+    }
+    if (!student) {
+      return { correct: false, marks: 0, feedback: `Enter your answer as a JSON matrix, e.g. [[1,2],[3,4]]. Got: "${studentAnswer}"`, parsedExpected: JSON.stringify(expected), parsedStudent: studentAnswer };
+    }
+    const correct = matricesEqual(expected, student);
+    return {
+      correct, marks: correct ? marks : 0,
+      feedback: correct
+        ? `✓ Correct. ${taskType === 'matrix_multiply' ? 'Row–column products match.' : 'Reduced row echelon form is correct.'}`
+        : `✗ Not quite. Your matrix: ${JSON.stringify(student)}. Expected: ${JSON.stringify(expected)}.`,
+      parsedExpected: JSON.stringify(expected),
+      parsedStudent:  JSON.stringify(student),
+    };
+  }
+
+  if (taskType === 'find_determinant') {
+    const expected = parseFloat(clean(expectedAnswer));
+    const student  = parseFloat(clean(studentAnswer.replace(/−/g, '-')));
+    if (isNaN(expected)) {
+      return { correct: false, marks: 0, feedback: 'Internal error: expected answer is not a number.', parsedExpected: expectedAnswer, parsedStudent: studentAnswer };
+    }
+    if (isNaN(student)) {
+      return { correct: false, marks: 0, feedback: `Enter the determinant as a number, e.g. -2 or 0. Got: "${studentAnswer}"`, parsedExpected: String(expected), parsedStudent: studentAnswer };
+    }
+    const correct = Math.abs(expected - student) < 1e-6;
+    return {
+      correct, marks: correct ? marks : 0,
+      feedback: correct ? `✓ Correct. det(A) = ${expected}.` : `✗ det(A) = ${expected}, not ${student}. Check your cofactor expansion.`,
+      parsedExpected: String(expected), parsedStudent: String(student),
+    };
+  }
+
+  if (taskType === 'find_eigenvalues') {
+    const expected = parseEigenvalues(clean(expectedAnswer));
+    const student  = parseEigenvalues(clean(studentAnswer.replace(/−/g, '-')));
+    if (!expected) {
+      return { correct: false, marks: 0, feedback: 'Internal error: expected eigenvalues cannot be parsed.', parsedExpected: expectedAnswer, parsedStudent: studentAnswer };
+    }
+    if (!student) {
+      return { correct: false, marks: 0, feedback: `Enter eigenvalues separated by commas, e.g. "2, -1". Got: "${studentAnswer}"`, parsedExpected: expectedAnswer, parsedStudent: studentAnswer };
+    }
+    const correct = eigenvaluesEqual(expected, student);
+    return {
+      correct, marks: correct ? marks : 0,
+      feedback: correct ? `✓ Correct. λ = ${expected.join(', ')}.` : `✗ Eigenvalues are ${expected.join(', ')}, not ${student.join(', ')}. Check your characteristic polynomial.`,
+      parsedExpected: expectedAnswer, parsedStudent: studentAnswer,
+    };
+  }
+
+  return { correct: false, marks: 0, feedback: 'Unknown matrix task type.', parsedExpected: expectedAnswer, parsedStudent: studentAnswer };
+}

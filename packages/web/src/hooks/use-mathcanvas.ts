@@ -57,7 +57,19 @@ import type {
   MathCanvasGeometryResponse,
   ConstructionState,
   ResolvedSvgState,
+  ProbabilitySetup,
+  ProbabilityState,
+  ProbabilityBound,
+  DistributionFamily,
 } from '@/types/mathcanvas-extensions';
+import {
+  computeResult as computeProbabilityResult,
+  DISTRIBUTION_PARAM_SCHEMA,
+  distributionDomain,
+  curvePoints,
+  discretePoints,
+  isDiscrete,
+} from '@/lib/probability-engine';
 import {
   getMathJS,
   parseExpression,
@@ -111,6 +123,27 @@ CRITICAL RULES:
 // =============================================================================
 // DEMO SURFACES
 // =============================================================================
+
+/**
+ * Demo ProbabilitySetup — fires when the API is unavailable in probability mode.
+ * Shows a standard normal N(0,1) with P(Z ≤ 1) highlighted — the archetypal
+ * classroom example, suitable for any year level. Unlike stats mode which needs
+ * an SVG, the probability demo is fully functional: all calculations run
+ * in-browser from this struct, so the student can still interact with sliders
+ * and bounds even when the AI parsing step failed.
+ */
+const DEMO_PROBABILITY_SETUP: ProbabilitySetup = {
+  distribution: 'normal',
+  parameters: { mu: 0, sigma: 1 },
+  query: 'less_than',
+  bound: { lower: null, upper: 1 },
+  title: 'Standard Normal N(0, 1) — Demo',
+  description: 'The standard normal distribution with mean 0 and standard deviation 1. Showing P(Z ≤ 1) ≈ 0.8413 — the probability of a value falling within one standard deviation above the mean.',
+  topic: 'Normal Distribution',
+  curriculumCode: 'AC9M10SP01',
+  teacherNote: 'The standard normal is the foundation of all z-score calculations. Ask: what value of z gives exactly P(Z ≤ z) = 0.95?',
+  curriculumDetail: 'AC9M10SP01 — Normal distributions, Year 10',
+};
 
 const DEMO_3D_RESPONSE: MathCanvas3DResponse = {
   surface: {
@@ -255,6 +288,71 @@ RESPONSE (strict JSON, all fields required):
 }`;
 }
 
+// ── Probability Calculator mode system prompt ─────────────────────────────────
+/**
+ * The probability prompt has a radically different job from the stats prompt.
+ * Stats: "draw me a beautiful picture of this distribution."
+ * Probability: "read this natural-language probability question and tell me
+ *               the distribution, parameters, and query type — I'll do the math."
+ *
+ * The AI is the interpreter; the in-browser CDF engine is the calculator.
+ * This separation is intentional — it makes parameter slider changes instant
+ * (no API round-trip) and the answers exact (not approximated by SVG geometry).
+ */
+function buildProbabilitySystemPrompt(sc: ScholarlyContext): string {
+  return `You are MathCanvas Probability, the probability calculator assistant for Scholarly.
+
+LEARNER PROFILE:
+• ${sc.student.name}, Year ${sc.student.yearLevel}
+• Statistics Mastery: ${Math.round(sc.mastery.statistics * 100)}%
+
+CRITICAL: Return ONLY a valid JSON object matching the schema below. No markdown, no backticks, no text outside JSON.
+
+YOUR JOB: Parse the student's natural-language probability question and return a ProbabilitySetup struct.
+The platform will handle ALL actual numerical computation in-browser using a CDF engine.
+Do NOT compute probabilities yourself. Do NOT include SVG. Just identify the distribution and structure the query.
+
+DISTRIBUTION FAMILIES:
+  normal      — parameters: mu (mean), sigma (std dev). Continuous. AC9M10SP01
+  binomial    — parameters: n (trials), p (success prob). Discrete. AC9M10SP02
+  poisson     — parameters: lambda (rate). Discrete. AC9M11SP03
+  uniform     — parameters: a (lower), b (upper). Continuous. AC9M10SP01
+  t           — parameters: nu (degrees of freedom). Continuous. AC9M12SP01
+  chi_squared — parameters: k (degrees of freedom). Continuous. AC9M12SP02
+  exponential — parameters: lambda (rate). Continuous. AC9M11SP03
+  geometric   — parameters: p (success prob). Discrete. AC9M10SP02
+
+QUERY TYPES:
+  less_than     → P(X ≤ b):       bound = { lower: null, upper: b }
+  greater_than  → P(X > a):       bound = { lower: a,    upper: null }
+  between       → P(a ≤ X ≤ b):  bound = { lower: a,    upper: b }
+  exactly       → P(X = k):       bound = { lower: k,    upper: k }   (discrete only)
+  display_only  → no specific query; just show the distribution: bound = { lower: null, upper: null }
+
+DEFAULT PARAMETERS when not specified:
+  normal: mu=0, sigma=1  |  binomial: n=10, p=0.5  |  poisson: lambda=3
+  uniform: a=0, b=1      |  t: nu=5               |  chi_squared: k=3
+  exponential: lambda=1  |  geometric: p=0.5
+
+CURRICULUM ALIGNMENT (ACARA):
+  Year 9-10: normal distribution, standard deviation, binomial basics
+  Year 11-12: t-distribution, chi-squared, Poisson, hypothesis testing
+
+RESPONSE (strict JSON, all fields required):
+{
+  "distribution": "normal",
+  "parameters": { "mu": 70, "sigma": 10 },
+  "query": "less_than",
+  "bound": { "lower": null, "upper": 80 },
+  "title": "e.g. P(Score ≤ 80) — Normal Distribution",
+  "description": "1-2 sentences describing the problem for Year ${sc.student.yearLevel}",
+  "topic": "e.g. Normal Distribution — Cumulative Probability",
+  "curriculumCode": "e.g. AC9M10SP01",
+  "teacherNote": "Pedagogical insight connecting to the broader curriculum strand",
+  "curriculumDetail": "AC9M10SP01 — Normal distributions, Year 10"
+}`;
+}
+
 // ── Geometry mode system prompt — construction protocol ──────────────────────
 function buildGeometrySystemPrompt(sc: ScholarlyContext): string {
   return `You are MathCanvas Geometry, the geometric construction engine for Scholarly.
@@ -332,7 +430,15 @@ SVG REQUIREMENTS:
 • Font: sans-serif for all text labels
 • Include axis arrows, clear curve labels, and a descriptive title inside the SVG
 
-RESPONSE (strict JSON, all fields required):
+MATH EXPRESSION (for Table of Values):
+• If the visualisation has a SINGLE primary curve y = f(x), include "mathExpression" as a math.js-parseable string.
+  Examples: "sin(x)", "x^2 - 3*x + 2", "exp(-x^2/2)", "abs(x)", "log(x+1)"
+• Use math.js syntax: ^ for power, * for multiply, sqrt(), sin(), cos(), tan(), exp(), log(), abs(), PI, E
+• If the curve has parameter sliders, embed current default values: "A*sin(k*x)" where A and k are the default values
+• Set "expressionVariable" to the independent variable name (almost always "x")
+• Omit both fields if the visualisation is parametric, implicit, or has multiple unrelated curves
+
+RESPONSE (strict JSON, all fields required except mathExpression/expressionVariable which are optional):
 {
   "svg": "<svg viewBox=\\"0 0 680 500\\" xmlns=\\"http://www.w3.org/2000/svg\\">…</svg>",
   "title": "Short display title",
@@ -340,7 +446,9 @@ RESPONSE (strict JSON, all fields required):
   "topic": "topic name",
   "curriculumCode": "e.g. AC9M9A04",
   "parameters": [{ "name":"A","label":"Amplitude A","min":0.1,"max":5,"step":0.1,"default":1,"group":"Wave Properties" }],
-  "teacherNote": "Pedagogical note for the teacher"
+  "teacherNote": "Pedagogical note for the teacher",
+  "mathExpression": "sin(x)",
+  "expressionVariable": "x"
 }`;
 }
 
@@ -481,6 +589,44 @@ async function callClaudeAPI<T>(systemPrompt: string, userPrompt: string): Promi
 }
 
 // =============================================================================
+// MATH SOLVER — vision API call to extract expression from image
+// =============================================================================
+
+export async function callMathSolverAPI(imageBase64: string, mimeType: string): Promise<{
+  expression: string | null;
+  naturalLanguage: string;
+  suggestedMode: string;
+  confidence: 'high' | 'medium' | 'low';
+  notes?: string;
+}> {
+  let token: string | null = null;
+  try {
+    const stored = localStorage.getItem('scholarly-auth');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      token = parsed?.state?.accessToken || null;
+    }
+  } catch { /* ignore */ }
+
+  const res = await fetch(`${MC_API_BASE}/mathcanvas/solve`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ imageBase64, mimeType }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Math Solver API ${res.status}`);
+  }
+  const d = await res.json();
+  if (!d.success) throw new Error(d.error || 'Math Solver failed');
+  return d.result;
+}
+
+
+// =============================================================================
 // DEFAULT SCHOLARLY CONTEXT
 // =============================================================================
 
@@ -520,6 +666,17 @@ TASK TYPES AVAILABLE:
 - factorise: factorise a polynomial
 - evaluate_at_point: compute f(a,b) numerically
 - compare_expressions: are two forms equivalent?
+- matrix_multiply: multiply two matrices A × B (show row–column dot products as steps)
+- find_determinant: det(A) for 2×2 (ad-bc) or 3×3 (cofactor expansion along first row)
+- row_reduce: Gaussian elimination — show each row operation step as "R2 ← R2 - 2×R1" etc.
+- find_eigenvalues: form characteristic polynomial det(A - λI) = 0 and solve for λ (Year 12+)
+
+FOR MATRIX TASKS: set matrixA and matrixB as arrays of number arrays, e.g. [[1,2],[3,4]].
+Set expression to a human-readable label like "A×B" or "det(A)".
+expectedAnswer for matrix_multiply: the result matrix as JSON string e.g. "[[19,22],[43,50]]"
+expectedAnswer for find_determinant: numeric string e.g. "-2"
+expectedAnswer for row_reduce: the reduced matrix as JSON string e.g. "[[1,0,2],[0,1,3]]"
+expectedAnswer for find_eigenvalues: comma-separated values e.g. "2, -1" or "3, 3" (repeated)
 
 CRITICAL: expectedAnswer must be exactly what a student would type — a plain expression, no "z =", no LaTeX.
 For derivatives: "2*x + y" not "∂f/∂x = 2x + y"
@@ -532,6 +689,18 @@ RESPONSE JSON SCHEMA:
   "tasks": [
     {
       "id": "task-1",
+      "type": "matrix_multiply",
+      "expression": "A × B",
+      "matrixA": [[1,2],[3,4]],
+      "matrixB": [[5,6],[7,8]],
+      "prompt": "Multiply matrix A by matrix B. Show your row–column working.",
+      "expectedAnswer": "[[19,22],[43,50]]",
+      "hint": "Row 1 of A × Col 1 of B: (1×5)+(2×7) = 19",
+      "marks": 2,
+      "workedSolution": "A×B: R1C1=1×5+2×7=19, R1C2=1×6+2×8=22, R2C1=3×5+4×7=43, R2C2=3×6+4×8=50"
+    },
+    {
+      "id": "task-2",
       "type": "find_derivative",
       "expression": "x^2 + x*y + y^2",
       "prompt": "Find the partial derivative of f with respect to x.",
@@ -541,9 +710,9 @@ RESPONSE JSON SCHEMA:
       "workedSolution": "∂f/∂x: differentiate each term — ∂(x²)/∂x = 2x, ∂(xy)/∂x = y, ∂(y²)/∂x = 0. So ∂f/∂x = 2x + y."
     }
   ],
-  "concepts": ["partial derivatives", "gradient vectors"],
+  "concepts": ["matrix multiplication", "linear algebra"],
   "curriculum": {
-    "strand": "Functions",
+    "strand": "Algebra",
     "yearLevel": "${sc.student.yearLevel}",
     "outcome": "AC9M10A02"
   }
@@ -620,6 +789,14 @@ export function useMathCanvas() {
     response: null, currentStep: 0, isPlaying: false,
   });
   const [resolvedSvgState, setResolvedSvgState] = useState<ResolvedSvgState | null>(null);
+
+  // ── Probability Calculator state ─────────────────────────────────────────
+  const [probabilityState, setProbabilityState] = useState<ProbabilityState>({
+    setup: null,
+    liveParams: {},
+    liveBound: { lower: null, upper: null },
+    result: null,
+  });
 
   // Debounce timer for 2D parameter slider re-renders
   const reRenderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -766,6 +943,34 @@ export function useMathCanvas() {
           studentId: sc.student.id, mode,
         });
 
+      } else if (mode === 'probability') {
+        // Probability Calculator mode — AI interprets intent into ProbabilitySetup;
+        // all CDF/PDF math happens in-browser via probability-engine.ts.
+        // The AI is the navigator (reads the question), the engine is the calculator.
+        const data = await callClaudeAPI<ProbabilitySetup>(
+          buildProbabilitySystemPrompt(sc),
+          intentText
+        );
+        // Build initial liveParams from the AI's chosen parameter values
+        const initParams: Record<string, number> = {};
+        const schema = DISTRIBUTION_PARAM_SCHEMA[data.distribution] ?? [];
+        schema.forEach(p => {
+          initParams[p.name] = data.parameters[p.name] ?? p.default;
+        });
+        // Evaluate initial result using the AI's suggested bound
+        const initBound = data.bound ?? { lower: null, upper: null };
+        const initResult = computeProbabilityResult(data, initBound);
+        setProbabilityState({
+          setup: data,
+          liveParams: initParams,
+          liveBound: initBound,
+          result: initResult,
+        });
+        sc.onVisualizationCreated?.({
+          intent: intentText, topic: data.topic, code: data.curriculumCode,
+          studentId: sc.student.id, mode,
+        });
+
       } else if (mode === 'geometry') {
         // Geometry mode — construction protocol with step-replay
         const data = await callClaudeAPI<MathCanvasGeometryResponse>(
@@ -830,6 +1035,24 @@ export function useMathCanvas() {
         console.warn('3D API call failed, using demo surface:', msg);
         setResult3D(DEMO_3D_RESPONSE);
         setError('Using demo surface — API unavailable');
+      } else if (mode === 'probability') {
+        // Probability mode is unique: the demo is fully interactive even without
+        // the AI, because all calculations run in-browser. The student can still
+        // drag sliders and compute exact P values — they just get N(0,1) as the
+        // starting distribution rather than the one they asked for.
+        console.warn('Probability API call failed, using demo:', msg);
+        const initBound = DEMO_PROBABILITY_SETUP.bound;
+        const initResult = computeProbabilityResult(DEMO_PROBABILITY_SETUP, initBound);
+        const schema = DISTRIBUTION_PARAM_SCHEMA[DEMO_PROBABILITY_SETUP.distribution];
+        const initParams: Record<string, number> = {};
+        schema.forEach(p => { initParams[p.name] = DEMO_PROBABILITY_SETUP.parameters[p.name] ?? p.default; });
+        setProbabilityState({
+          setup: DEMO_PROBABILITY_SETUP,
+          liveParams: initParams,
+          liveBound: initBound,
+          result: initResult,
+        });
+        setError('Using demo distribution — API unavailable');
       } else {
         setError(msg);
       }
@@ -903,9 +1126,66 @@ export function useMathCanvas() {
     setLiveExpressionState(null);
     setTangentPlaneState({ visible: false, point: [0, 0], plane: null });
     setGradientState({ visible: false, point: [0, 0], vector: null });
+    setProbabilityState({ setup: null, liveParams: {}, liveBound: { lower: null, upper: null }, result: null });
     setIntent('');
     setParamValues({});
     setError(null);
+  }, []);
+
+  // ── Probability Calculator actions ────────────────────────────────────────
+
+  /**
+   * Switch to a different distribution family from the right panel without
+   * re-asking the AI. The parameter schema resets to defaults; the bound is
+   * preserved so the student can compare behaviour across families.
+   */
+  const updateProbabilityDistribution = useCallback((dist: DistributionFamily) => {
+    setProbabilityState(prev => {
+      if (!prev.setup) return prev;
+      const schema = DISTRIBUTION_PARAM_SCHEMA[dist] ?? [];
+      const newParams: Record<string, number> = {};
+      schema.forEach(p => { newParams[p.name] = p.default; });
+      const newSetup: ProbabilitySetup = {
+        ...prev.setup,
+        distribution: dist,
+        parameters: newParams,
+        // Reset the title to reflect the new distribution
+        title: `${dist.charAt(0).toUpperCase() + dist.slice(1)} Distribution`,
+      };
+      const newResult = computeProbabilityResult(newSetup, prev.liveBound);
+      return { ...prev, setup: newSetup, liveParams: newParams, result: newResult };
+    });
+  }, []);
+
+  /**
+   * Update a single distribution parameter (slider move in the right panel).
+   * Triggers immediate in-browser CDF recomputation — no debounce needed
+   * because there is no AI round-trip. This is the key UX advantage over
+   * stats mode: the answer updates at 60fps as the slider moves.
+   */
+  const updateProbabilityParam = useCallback((name: string, value: number) => {
+    setProbabilityState(prev => {
+      if (!prev.setup) return prev;
+      const newParams = { ...prev.liveParams, [name]: value };
+      const newSetup: ProbabilitySetup = {
+        ...prev.setup,
+        parameters: newParams,
+      };
+      const newResult = computeProbabilityResult(newSetup, prev.liveBound);
+      return { ...prev, setup: newSetup, liveParams: newParams, result: newResult };
+    });
+  }, []);
+
+  /**
+   * Update the probability query bound (user types in the bound input fields).
+   * Like updateProbabilityParam, this is instant — pure JS arithmetic.
+   */
+  const updateProbabilityBound = useCallback((bound: ProbabilityBound) => {
+    setProbabilityState(prev => {
+      if (!prev.setup) return prev;
+      const newResult = computeProbabilityResult(prev.setup, bound);
+      return { ...prev, liveBound: bound, result: newResult };
+    });
   }, []);
 
   // ── Priority 3: Live expression actions ─────────────────────────────────
@@ -1106,6 +1386,9 @@ export function useMathCanvas() {
     // True while a debounced 2D param re-render is in flight
     isRerendering: resolvedSvgState?.isRerendering ?? false,
 
+    // Probability Calculator state — in-browser CDF engine, no AI round-trip on param change
+    probabilityState,
+
     // Priority 2 — CAS state
     casResponse,
     casSession,
@@ -1146,5 +1429,10 @@ export function useMathCanvas() {
     goToConstructionStep,
     toggleConstructionPlay,
     resetConstruction,
+
+    // Actions — Probability Calculator (probability mode)
+    updateProbabilityDistribution,
+    updateProbabilityParam,
+    updateProbabilityBound,
   };
 }

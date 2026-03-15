@@ -1,0 +1,129 @@
+# =============================================================================
+# Scholarly Platform — Root Docker Compose
+# Orchestrates all services for local development
+# =============================================================================
+# NOTE: This file does not yet exist in the repository root.
+# The packages/erudits/docker-compose.yml and packages/uc-v5/docker-compose.yml
+# are package-level files. This is the root-level compose for the full platform.
+# =============================================================================
+
+version: '3.9'
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       scholarly
+      POSTGRES_USER:     scholarly
+      POSTGRES_PASSWORD: scholarly_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scholarly"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # NATS JetStream
+  # ---------------------------------------------------------------------------
+  nats:
+    image: nats:2.10-alpine
+    restart: unless-stopped
+    command: ["-js", "-m", "8222"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Scholarly API (Express)
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    environment:
+      NODE_ENV:            development
+      DATABASE_URL:        postgresql://scholarly:scholarly_dev@postgres:5432/scholarly
+      REDIS_URL:           redis://redis:6379
+      NATS_URL:            nats://nats:4222
+      JWT_SECRET:          dev-jwt-secret-change-in-prod
+      VOICE_SERVICE_URL:   http://voice-service:8000
+      MATH_KERNEL_URL:     http://mathkernel:8001
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Scholarly Web (Next.js)
+  # ---------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV:             development
+      NEXT_PUBLIC_API_URL:  http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  # ---------------------------------------------------------------------------
+  # MathKernel — SageMath CAS service (Chunk 4)
+  # ---------------------------------------------------------------------------
+  mathkernel:
+    build:
+      context: ./services/mathkernel
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT:             "8001"
+      LOG_LEVEL:        info
+      ALLOWED_ORIGINS:  "*"
+    ports:
+      - "8001:8001"
+    # SageMath startup is slow — allow 90s before health checks begin
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 3
+
+volumes:
+  postgres_data:

@@ -61,6 +61,7 @@ import { googleDriveRouter } from './routes/google-drive';
 import oneDriveRouter from './routes/onedrive';
 import demoRouter from './routes/demo';
 import { mathCanvasRouter } from './routes/mathcanvas';
+import mathcanvasRoutes from './routes/mathcanvas.routes';
 
 // Sprint Module Routes (Sprints 1-18)
 import { storybookRouter } from './routes/storybook';
@@ -250,6 +251,7 @@ api.use('/collaboration', authMiddleware, collaborationRouter); // Collaborative
 api.use('/onboarding', authMiddleware, tutorOnboardingRouter);  // 7-step tutor onboarding pipeline
 
 app.use('/api/v1', api);
+app.use('/api/mathcanvas', mathcanvasRoutes); // MathCanvas REPL/steps proxy (mathkernel microservice)
 
 // Error handling
 app.use(errorHandler);
