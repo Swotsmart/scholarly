@@ -1277,46 +1277,58 @@ export default function MathCanvasPage() {
 
         {mode !== '3d' && mode !== 'dual' && (
           <>
-            <div style={{ width: 1, height: 20, background: C.bd, margin: '0 4px' }} />
-            <button onClick={() => setZoom(z => Math.max(25, z - 10))} style={{ ...btnStyle }}><ZoomOut size={13} /></button>
+            <div style={{ width: 1, height: 22, background: C.bd, margin: '0 2px' }} />
+            <button onClick={() => setZoom(z => Math.max(25, z - 10))} style={{ ...btnStyle }}><ZoomOut size={15} /></button>
             <span style={{ fontSize: 11, color: C.tx2, minWidth: 36, textAlign: 'center' }}>{zoom}%</span>
-            <button onClick={() => setZoom(z => Math.min(400, z + 10))} style={{ ...btnStyle }}><ZoomIn size={13} /></button>
+            <button onClick={() => setZoom(z => Math.min(400, z + 10))} style={{ ...btnStyle }}><ZoomIn size={15} /></button>
           </>
         )}
 
-        <div style={{ width: 1, height: 20, background: C.bd, margin: '0 4px' }} />
-        <button onClick={mc.clearCanvas} title="Clear" style={{ ...btnStyle }}><Trash2 size={13} /></button>
+        <div style={{ width: 1, height: 22, background: C.bd, margin: '0 2px' }} />
+        <button
+          onClick={mc.clearCanvas}
+          title="Clear canvas"
+          style={{
+            ...btnStyle, borderRadius: 6, padding: '5px 10px',
+            display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600,
+          }}
+        >
+          <Trash2 size={15} />
+          <span style={{ fontFamily: C.fs }}>Clear</span>
+        </button>
 
-        <div style={{ width: 1, height: 20, background: C.bd, margin: '0 4px' }} />
+        <div style={{ width: 1, height: 22, background: C.bd, margin: '0 2px' }} />
         <button
           onClick={() => setCalcOpen(o => !o)}
-          title={calcOpen ? 'Close calculator' : 'Open calculator [C]'}
+          title={calcOpen ? 'Close calculator [C]' : 'Open calculator [C]'}
           style={{
             ...btnStyle,
             background: calcOpen ? C.blLt : 'transparent',
             color: calcOpen ? C.bl : C.tx2,
             border: calcOpen ? `1px solid ${C.blMid}` : '1px solid transparent',
-            borderRadius: 6, padding: '4px 8px',
-            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
+            borderRadius: 6, padding: '5px 10px',
+            display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600,
           }}
         >
-          <Calculator size={13} />
+          <Calculator size={16} />
+          <span style={{ fontFamily: C.fs }}>Calc</span>
         </button>
 
         {/* Spreadsheet — data entry grid in the canvas */}
         <button
           onClick={() => setShowSheet(o => !o)}
-          title={showSheet ? 'Close spreadsheet' : 'Open spreadsheet [S]'}
+          title={showSheet ? 'Close spreadsheet [S]' : 'Open spreadsheet [S]'}
           style={{
             ...btnStyle,
             background: showSheet ? C.amLt : 'transparent',
             color: showSheet ? C.am : C.tx2,
             border: showSheet ? `1px solid ${C.amMid}` : '1px solid transparent',
-            borderRadius: 6, padding: '4px 8px',
-            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
+            borderRadius: 6, padding: '5px 10px',
+            display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600,
           }}
         >
-          <LayoutGrid size={13} />
+          <LayoutGrid size={16} />
+          <span style={{ fontFamily: C.fs }}>Data</span>
         </button>
 
         {/* Math Solver — camera/upload to extract equation from image [V] */}
@@ -1328,11 +1340,11 @@ export default function MathCanvasPage() {
             background: solverOpen ? C.blLt : 'transparent',
             color: solverOpen ? C.bl : C.tx2,
             border: solverOpen ? `1px solid ${C.blMid}` : '1px solid transparent',
-            borderRadius: 6, padding: '4px 8px',
-            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
+            borderRadius: 6, padding: '5px 10px',
+            display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600,
           }}
         >
-          <ScanLine size={13} />
+          <Camera size={16} />
           <span style={{ fontFamily: C.fs }}>Solve</span>
         </button>
 
@@ -1345,11 +1357,11 @@ export default function MathCanvasPage() {
             background: annotating ? C.amLt : 'transparent',
             color: annotating ? C.am : C.tx2,
             border: annotating ? `1px solid ${C.amMid}` : '1px solid transparent',
-            borderRadius: 6, padding: '4px 8px',
-            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
+            borderRadius: 6, padding: '5px 10px',
+            display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 600,
           }}
         >
-          <Pencil size={13} />
+          <Pencil size={16} />
           <span style={{ fontFamily: C.fs }}>Draw</span>
         </button>
         {annotating && (
@@ -1359,16 +1371,16 @@ export default function MathCanvasPage() {
               onClick={() => setAnnotationWeight(w => w === 'thin' ? 'thick' : 'thin')}
               title={annotationWeight === 'thin' ? 'Switch to thick brush' : 'Switch to thin brush'}
               style={{
-                ...btnStyle, borderRadius: 6, padding: '4px 8px',
+                ...btnStyle, borderRadius: 6, padding: '5px 10px',
                 background: C.amLt, border: `1px solid ${C.amMid}`,
-                color: C.am, fontSize: 11, fontWeight: 700,
-                display: 'flex', alignItems: 'center', gap: 3,
+                color: C.am, fontSize: 12, fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: 4,
               }}
             >
               {/* Visual weight indicator */}
-              <svg width="14" height="14" viewBox="0 0 14 14">
-                <line x1="2" y1="7" x2="12" y2="7" stroke="#f59e0b"
-                  strokeWidth={annotationWeight === 'thin' ? 1.2 : 3}
+              <svg width="16" height="16" viewBox="0 0 16 16">
+                <line x1="2" y1="8" x2="14" y2="8" stroke={C.am}
+                  strokeWidth={annotationWeight === 'thin' ? 1.5 : 3.5}
                   strokeLinecap="round" />
               </svg>
               <span style={{ fontFamily: C.fs }}>{annotationWeight === 'thin' ? 'Thin' : 'Thick'}</span>
@@ -1378,9 +1390,9 @@ export default function MathCanvasPage() {
               <button
                 onClick={() => setStrokes(prev => prev.slice(0, -1))}
                 title="Undo last stroke [Cmd+Z]"
-                style={{ ...btnStyle, color: C.am, borderRadius: 6, padding: '4px 7px' }}
+                style={{ ...btnStyle, color: C.am, borderRadius: 6, padding: '5px 8px' }}
               >
-                <Undo2 size={13} />
+                <Undo2 size={15} />
               </button>
             )}
             {/* Clear all */}
@@ -1388,16 +1400,16 @@ export default function MathCanvasPage() {
               <button
                 onClick={() => { setStrokes([]); setCurrentStroke(''); }}
                 title="Clear all annotations"
-                style={{ ...btnStyle, color: C.am }}
+                style={{ ...btnStyle, color: C.am, padding: '5px 8px' }}
               >
-                <Eraser size={13} />
+                <Eraser size={15} />
               </button>
             )}
           </>
         )}
 
         {/* Fullscreen controls — always at far right of toolbar */}
-        <div style={{ width: 1, height: 20, background: C.bd, margin: '0 4px' }} />
+        <div style={{ width: 1, height: 22, background: C.bd, margin: '0 2px' }} />
         {/* Focused mode (Shift+F) — panels hidden, toolbar stays */}
         <button
           onClick={() => { setIsFocused(f => !f); setIsFullscreen(false); }}
@@ -1407,11 +1419,11 @@ export default function MathCanvasPage() {
             background: isFocused ? C.amLt : 'transparent',
             color: isFocused ? C.am : C.tx2,
             border: isFocused ? `1px solid ${C.amMid}` : '1px solid transparent',
-            borderRadius: 6, padding: '4px 8px',
-            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
+            borderRadius: 6, padding: '5px 8px',
+            display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600,
           }}
         >
-          <Expand size={13} />
+          <Expand size={16} />
         </button>
         {/* Canvas-only fullscreen (F) */}
         <button
@@ -1431,11 +1443,11 @@ export default function MathCanvasPage() {
             background: isFullscreen ? C.blLt : 'transparent',
             color: isFullscreen ? C.bl : C.tx2,
             border: isFullscreen ? `1px solid ${C.blMid}` : '1px solid transparent',
-            borderRadius: 6, padding: '4px 8px',
-            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
+            borderRadius: 6, padding: '5px 8px',
+            display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600,
           }}
         >
-          {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+          {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
         </button>
         </div>{/* end tool buttons group */}
       </div>}
