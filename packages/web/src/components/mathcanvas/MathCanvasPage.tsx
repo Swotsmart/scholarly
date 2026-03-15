@@ -21,13 +21,17 @@
 
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
+import { useTheme } from 'next-themes';
 import {
   Loader2, BarChart2, Compass, Box, BarChart3, Calculator, FlaskConical,
   RotateCcw, Play, Layers, Info, Brain, BookOpen,
   ZoomIn, ZoomOut, Trash2, RefreshCw, GitMerge, Sigma,
-  Maximize2, Minimize2, Expand,
+  Maximize2, Minimize2, Expand, TrendingUp, Ruler,
+  PieChart, AlertTriangle, Lightbulb, Target, Library,
+  MessageCircle, Circle, GripVertical, Globe,
+  FunctionSquare, Waves, Minus,
 } from 'lucide-react';
 import { useMathCanvas } from '@/hooks/use-mathcanvas';
 import type { CanvasMode } from '@/types/mathcanvas';
@@ -42,10 +46,10 @@ const MathCanvas3DSurface = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full items-center justify-center" style={{ minHeight: 400, background: '#f7f8f8', borderRadius: 8 }}>
+      <div className="flex h-full items-center justify-center bg-muted" style={{ minHeight: 400, borderRadius: 8 }}>
         <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto" style={{ color: '#1e9df1' }} />
-          <p style={{ fontSize: 12, color: '#8b99a4', fontFamily: 'Open Sans, sans-serif' }}>Loading WebGL renderer…</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground" style={{ fontSize: 12, fontFamily: 'Open Sans, sans-serif' }}>Loading WebGL renderer…</p>
         </div>
       </div>
     ),
@@ -57,10 +61,10 @@ const MathCanvasDualSurface = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full items-center justify-center" style={{ minHeight: 400, background: '#f7f8f8', borderRadius: 8 }}>
+      <div className="flex h-full items-center justify-center bg-muted" style={{ minHeight: 400, borderRadius: 8 }}>
         <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto" style={{ color: '#10b981' }} />
-          <p style={{ fontSize: 12, color: '#8b99a4', fontFamily: 'Open Sans, sans-serif' }}>Loading dual surface renderer…</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-emerald-500" />
+          <p className="text-muted-foreground" style={{ fontSize: 12, fontFamily: 'Open Sans, sans-serif' }}>Loading dual surface renderer…</p>
         </div>
       </div>
     ),
@@ -78,10 +82,10 @@ const MathCanvasExpressionBar = dynamic(
 );
 
 // =============================================================================
-// DESIGN TOKENS
+// DESIGN TOKENS — theme-aware (light / dark)
 // =============================================================================
 
-const T = {
+const LIGHT = {
   bl: '#1e9df1', blDk: '#1580c8', blLt: '#e3f3fd', blMid: '#b8ddf8',
   ink: '#0f1419', ink2: '#1c2631', ind: '#6366f1', indLt: '#eef2ff', indMid: '#c7d2fe', vio: '#8b5cf6',
   em: '#10b981', emLt: '#ecfdf5', emMid: '#a7f3d0',
@@ -89,11 +93,40 @@ const T = {
   rd: '#ef4444',
   bg: '#f7f8f8', sf: '#ffffff', bd: '#e1eaef', bd2: '#c5d8e4', bdBright: '#d1dce5', mt: '#e5e5e6',
   tx: '#0f1419', tx2: '#536471', tx3: '#8b99a4',
-  // Dual-mode accent: violet for surface 2
   vl: '#7c3aed', vlLt: '#f5f3ff', vlMid: '#ddd6fe',
-  fs: "'Open Sans', system-ui, sans-serif",
-  fm: "'JetBrains Mono', Menlo, monospace",
+  fs: "'Open Sans', system-ui, sans-serif" as const,
+  fm: "'JetBrains Mono', Menlo, monospace" as const,
+  // Overlay / glass
+  overlayBg: 'rgba(255,255,255,0.95)',
+  overlayBgStrong: 'rgba(255,255,255,0.96)',
+  loadingBg: 'rgba(247,248,248,0.92)',
+  canvasLoadBg: '#f7f8f8',
 };
+
+const DARK: typeof LIGHT = {
+  bl: '#3eaff5', blDk: '#1e9df1', blLt: '#1a2a3a', blMid: '#1e3a52',
+  ink: '#e8ecf0', ink2: '#d0d8e0', ind: '#818cf8', indLt: '#1e1e3a', indMid: '#3b3b6e', vio: '#a78bfa',
+  em: '#34d399', emLt: '#0d2a20', emMid: '#155e3e',
+  am: '#fbbf24', amLt: '#2a2010', amMid: '#5e4a1a',
+  rd: '#f87171',
+  bg: '#0f1419', sf: '#1a2028', bd: '#2a3440', bd2: '#384858', bdBright: '#3a4a58', mt: '#2a3038',
+  tx: '#e8ecf0', tx2: '#9ca8b4', tx3: '#6b7a88',
+  vl: '#a78bfa', vlLt: '#1e1a2e', vlMid: '#3b2e6e',
+  fs: "'Open Sans', system-ui, sans-serif" as const,
+  fm: "'JetBrains Mono', Menlo, monospace" as const,
+  overlayBg: 'rgba(26,32,40,0.95)',
+  overlayBgStrong: 'rgba(26,32,40,0.96)',
+  loadingBg: 'rgba(15,20,25,0.92)',
+  canvasLoadBg: '#1a2028',
+};
+
+function useTokens() {
+  const { resolvedTheme } = useTheme();
+  return useMemo(() => resolvedTheme === 'dark' ? DARK : LIGHT, [resolvedTheme]);
+}
+
+// Static ref for style helpers defined outside the component
+const T = LIGHT;
 
 // =============================================================================
 // MODE CONFIG — 7 modes total
@@ -102,15 +135,17 @@ const T = {
 // We use a type assertion here because 'dual' and 'expression' extend the base CanvasMode
 type ExtCanvasMode = CanvasMode | 'dual' | 'expression';
 
-const MODES: { id: ExtCanvasMode; label: string; icon: React.ReactNode; color: string }[] = [
-  { id: 'graphing', label: '📈 Graphing',   icon: <BarChart2 size={14} />, color: T.bl },
-  { id: 'geometry', label: '📐 Geometry',   icon: <Compass size={14} />,   color: T.ind },
-  { id: '3d',       label: '🧊 3D',          icon: <Box size={14} />,       color: T.em },
-  { id: 'dual',     label: '⊕ Dual',         icon: <GitMerge size={14} />,  color: T.vl },
-  { id: 'stats',    label: '📊 Statistics', icon: <BarChart3 size={14} />,  color: T.am },
-  { id: 'cas',        label: '𝑓 CAS',        icon: <Calculator size={14} />,  color: T.vio },
-  { id: 'expression', label: '∿ Expression', icon: <Sigma size={14} />,      color: T.em },
-];
+function getModes(C: typeof LIGHT): { id: ExtCanvasMode; label: string; icon: React.ReactNode; color: string }[] {
+  return [
+    { id: 'graphing',   label: 'Graphing',   icon: <TrendingUp size={14} />,  color: C.bl },
+    { id: 'geometry',   label: 'Geometry',    icon: <Compass size={14} />,     color: C.ind },
+    { id: '3d',         label: '3D',          icon: <Box size={14} />,         color: C.em },
+    { id: 'dual',       label: 'Dual',        icon: <GitMerge size={14} />,    color: C.vl },
+    { id: 'stats',      label: 'Statistics',  icon: <BarChart3 size={14} />,   color: C.am },
+    { id: 'cas',        label: 'CAS',         icon: <FunctionSquare size={14} />, color: C.vio },
+    { id: 'expression', label: 'Expression',  icon: <Sigma size={14} />,       color: C.em },
+  ];
+}
 
 // =============================================================================
 // QUICK-START CHIPS
@@ -235,12 +270,13 @@ interface ParamPanelProps {
   values: Record<string, number>;
   onChange: (name: string, value: number) => void;
   isDual?: boolean;
+  C: typeof LIGHT;
 }
 
-function ParamPanel({ parameters, values, onChange, isDual }: ParamPanelProps) {
+function ParamPanel({ parameters, values, onChange, isDual, C }: ParamPanelProps) {
   if (!parameters.length) {
     return (
-      <div style={{ textAlign: 'center', padding: '24px 0', color: T.tx3, fontSize: 12 }}>
+      <div style={{ textAlign: 'center', padding: '24px 0', color: C.tx3, fontSize: 12 }}>
         No interactive parameters for this surface.
       </div>
     );
@@ -258,26 +294,26 @@ function ParamPanel({ parameters, values, onChange, isDual }: ParamPanelProps) {
       {Object.entries(groups).map(([groupName, params]) => (
         <div key={groupName}>
           <div style={{
-            fontSize: 10, fontWeight: 700, color: T.tx3,
+            fontSize: 10, fontWeight: 700, color: C.tx3,
             textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8,
             display: 'flex', alignItems: 'center', gap: 5,
           }}>
             {/* In dual mode, colour-code the group header by surface target */}
             {isDual && params[0]?.surfaceTarget === 1 && (
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.am, flexShrink: 0 }} />
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.am, flexShrink: 0 }} />
             )}
             {isDual && params[0]?.surfaceTarget === 2 && (
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.vl, flexShrink: 0 }} />
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.vl, flexShrink: 0 }} />
             )}
             {groupName}
           </div>
           {params.map(p => {
             const val = values[p.name] ?? p.min;
-            const accent = isDual && p.surfaceTarget === 2 ? T.vl : T.bl;
+            const accent = isDual && p.surfaceTarget === 2 ? C.vl : C.bl;
             return (
               <div key={p.name} style={{ marginBottom: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: T.tx2 }}>{p.label}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: C.tx2 }}>{p.label}</span>
                   <input
                     type="number"
                     value={val.toFixed(2)}
@@ -286,14 +322,14 @@ function ParamPanel({ parameters, values, onChange, isDual }: ParamPanelProps) {
                     max={p.max}
                     onChange={e => onChange(p.name, Math.max(p.min, Math.min(p.max, parseFloat(e.target.value) || p.min)))}
                     style={{
-                      width: 60, fontSize: 11, fontFamily: T.fm, fontWeight: 600,
-                      textAlign: 'right', border: `1px solid ${T.bd}`, borderRadius: 4,
-                      padding: '2px 5px', color: accent, background: T.blLt,
+                      width: 60, fontSize: 11, fontFamily: C.fm, fontWeight: 600,
+                      textAlign: 'right', border: `1px solid ${C.bd}`, borderRadius: 4,
+                      padding: '2px 5px', color: accent, background: C.blLt,
                     }}
                   />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 10, color: T.tx3, width: 28 }}>{p.min}</span>
+                  <span style={{ fontSize: 10, color: C.tx3, width: 28 }}>{p.min}</span>
                   <input
                     type="range"
                     min={p.min}
@@ -303,7 +339,7 @@ function ParamPanel({ parameters, values, onChange, isDual }: ParamPanelProps) {
                     onChange={e => onChange(p.name, parseFloat(e.target.value))}
                     style={{ flex: 1, accentColor: accent }}
                   />
-                  <span style={{ fontSize: 10, color: T.tx3, width: 28, textAlign: 'right' }}>{p.max}</span>
+                  <span style={{ fontSize: 10, color: C.tx3, width: 28, textAlign: 'right' }}>{p.max}</span>
                 </div>
               </div>
             );
@@ -324,34 +360,35 @@ interface SurfaceBadgeProps {
   topic: string;
   curriculumCode: string;
   teacherNote?: string;
+  C: typeof LIGHT;
 }
 
-function SurfaceBadge({ title, description, topic, curriculumCode, teacherNote }: SurfaceBadgeProps) {
+function SurfaceBadge({ title, description, topic, curriculumCode, teacherNote, C }: SurfaceBadgeProps) {
   const [showTeacher, setShowTeacher] = useState(false);
   return (
     <div style={{
       position: 'absolute', bottom: 40, left: 12, right: 12,
-      background: 'rgba(255,255,255,0.95)', borderRadius: 8,
-      border: `1px solid ${T.bd}`, padding: '10px 14px',
+      background: C.overlayBg, borderRadius: 8,
+      border: `1px solid ${C.bd}`, padding: '10px 14px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
       backdropFilter: 'blur(4px)', zIndex: 5,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: T.ink }}>{title}</span>
-        <span style={{ fontSize: 10, fontWeight: 600, color: T.bl, background: T.blLt, borderRadius: 4, padding: '1px 6px' }}>{curriculumCode}</span>
-        <span style={{ fontSize: 10, color: T.tx3, background: T.bg, border: `1px solid ${T.bd}`, borderRadius: 4, padding: '1px 6px' }}>{topic}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{title}</span>
+        <span style={{ fontSize: 10, fontWeight: 600, color: C.bl, background: C.blLt, borderRadius: 4, padding: '1px 6px' }}>{curriculumCode}</span>
+        <span style={{ fontSize: 10, color: C.tx3, background: C.bg, border: `1px solid ${C.bd}`, borderRadius: 4, padding: '1px 6px' }}>{topic}</span>
       </div>
-      <div style={{ fontSize: 11, color: T.tx2, lineHeight: 1.5 }}>{description}</div>
+      <div style={{ fontSize: 11, color: C.tx2, lineHeight: 1.5 }}>{description}</div>
       {teacherNote && (
         <>
           <button
             onClick={() => setShowTeacher(v => !v)}
-            style={{ fontSize: 10, color: T.am, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 3, marginTop: 6 }}
+            style={{ fontSize: 10, color: C.am, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 3, marginTop: 6 }}
           >
             <BookOpen size={10} /> Teacher Note {showTeacher ? '▲' : '▼'}
           </button>
           {showTeacher && (
-            <div style={{ fontSize: 11, color: T.am, background: T.amLt, border: `1px solid ${T.amMid}`, borderRadius: 5, padding: '6px 9px', marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: C.am, background: C.amLt, border: `1px solid ${C.amMid}`, borderRadius: 5, padding: '6px 9px', marginTop: 4 }}>
               {teacherNote}
             </div>
           )}
@@ -372,16 +409,17 @@ interface DualInfoPanelProps {
   curriculumCode: string;
   topic: string;
   teacherNote?: string;
+  C: typeof LIGHT;
 }
 
 function DualInfoPanel({
-  title, description, intersectionExplanation, curriculumCode, topic, teacherNote,
+  title, description, intersectionExplanation, curriculumCode, topic, teacherNote, C,
 }: DualInfoPanelProps) {
   const [showTeacher, setShowTeacher] = useState(false);
   return (
     <div style={{
       position: 'absolute', bottom: 0, left: 0, right: 0,
-      background: 'rgba(255,255,255,0.96)', borderTop: `1px solid ${T.bd}`,
+      background: C.overlayBgStrong, borderTop: `1px solid ${C.bd}`,
       padding: '10px 14px', zIndex: 5,
       boxShadow: '0 -2px 10px rgba(0,0,0,0.06)',
     }}>
@@ -389,22 +427,22 @@ function DualInfoPanel({
         {/* Left: surface metadata */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: T.ink }}>{title}</span>
-            <span style={{ fontSize: 10, fontWeight: 600, color: T.bl, background: T.blLt, borderRadius: 4, padding: '1px 6px' }}>{curriculumCode}</span>
-            <span style={{ fontSize: 10, color: T.tx3, background: T.bg, border: `1px solid ${T.bd}`, borderRadius: 4, padding: '1px 6px' }}>{topic}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{title}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: C.bl, background: C.blLt, borderRadius: 4, padding: '1px 6px' }}>{curriculumCode}</span>
+            <span style={{ fontSize: 10, color: C.tx3, background: C.bg, border: `1px solid ${C.bd}`, borderRadius: 4, padding: '1px 6px' }}>{topic}</span>
           </div>
-          <div style={{ fontSize: 11, color: T.tx2, lineHeight: 1.5 }}>{description}</div>
+          <div style={{ fontSize: 11, color: C.tx2, lineHeight: 1.5 }}>{description}</div>
         </div>
 
         {/* Right: intersection explanation */}
         <div style={{
-          flex: '0 0 340px', background: T.amLt,
-          border: `1px solid ${T.amMid}`, borderRadius: 7,
-          padding: '8px 12px', fontSize: 11, color: T.ink, lineHeight: 1.6,
+          flex: '0 0 340px', background: C.amLt,
+          border: `1px solid ${C.amMid}`, borderRadius: 7,
+          padding: '8px 12px', fontSize: 11, color: C.ink, lineHeight: 1.6,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
-            <span style={{ fontSize: 14 }}>∩</span>
-            <strong style={{ color: '#92400e', fontSize: 11 }}>Intersection Curve</strong>
+            <GitMerge size={14} style={{ color: C.am }} />
+            <strong style={{ color: C.am, fontSize: 11 }}>Intersection Curve</strong>
           </div>
           {intersectionExplanation}
         </div>
@@ -415,12 +453,12 @@ function DualInfoPanel({
         <div style={{ marginTop: 6 }}>
           <button
             onClick={() => setShowTeacher(v => !v)}
-            style={{ fontSize: 10, color: T.am, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 3 }}
+            style={{ fontSize: 10, color: C.am, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 3 }}
           >
             <BookOpen size={10} /> Teacher Note {showTeacher ? '▲' : '▼'}
           </button>
           {showTeacher && (
-            <div style={{ fontSize: 11, color: T.am, background: T.amLt, border: `1px solid ${T.amMid}`, borderRadius: 5, padding: '6px 9px', marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: C.am, background: C.amLt, border: `1px solid ${C.amMid}`, borderRadius: 5, padding: '6px 9px', marginTop: 4 }}>
               {teacherNote}
             </div>
           )}
@@ -434,7 +472,7 @@ function DualInfoPanel({
 // WELCOME OVERLAY
 // =============================================================================
 
-function WelcomeOverlay({ mode, onChip }: { mode: ExtCanvasMode; onChip: (p: string) => void }) {
+function WelcomeOverlay({ mode, onChip, C }: { mode: ExtCanvasMode; onChip: (p: string) => void; C: typeof LIGHT }) {
   const chips =
     mode === '3d'       ? CHIPS_3D :
     mode === 'dual'     ? CHIPS_DUAL :
@@ -442,21 +480,29 @@ function WelcomeOverlay({ mode, onChip }: { mode: ExtCanvasMode; onChip: (p: str
     mode === 'geometry' ? CHIPS_GEOMETRY :
     CHIPS_GRAPHING;
 
-  const modeIcons: Record<string, string[]> = {
-    dual:     ['🧊', '⊕', '🧊'],
-    '3d':     ['🧊', '🌐', '📡'],
-    stats:    ['📊', '🔔', '∫'],
-    geometry: ['📐', '✏️', '◯'],
-    graphing: ['📈', '∫', 'f(x)'],
-    expression: ['∿', '=', '📐'],
+  const modeIcons: Record<string, React.ReactNode[]> = {
+    dual:       [<Box key={0} size={18} />, <GitMerge key={1} size={18} />, <Box key={2} size={18} />],
+    '3d':       [<Box key={0} size={18} />, <Globe key={1} size={18} />, <Waves key={2} size={18} />],
+    stats:      [<BarChart3 key={0} size={18} />, <PieChart key={1} size={18} />, <Sigma key={2} size={18} />],
+    geometry:   [<Compass key={0} size={18} />, <Ruler key={1} size={18} />, <Circle key={2} size={18} />],
+    graphing:   [<TrendingUp key={0} size={18} />, <Sigma key={1} size={18} />, <FunctionSquare key={2} size={18} />],
+    expression: [<Waves key={0} size={18} />, <Minus key={1} size={18} />, <Compass key={2} size={18} />],
   };
   const iconBgs: Record<string, string[]> = {
-    dual:     [T.emLt, T.vlLt, T.emLt],
-    '3d':     [T.emLt, T.blLt, T.emLt],
-    stats:    [T.amLt, T.vlLt, T.blLt],
-    geometry: [T.indLt, T.emLt, T.blLt],
-    graphing: ['#e3f3fd', '#eef2ff', '#ecfdf5'],
-    expression: ['#e3f3fd', '#eef2ff', '#ecfdf5'],
+    dual:     [C.emLt, C.vlLt, C.emLt],
+    '3d':     [C.emLt, C.blLt, C.emLt],
+    stats:    [C.amLt, C.vlLt, C.blLt],
+    geometry: [C.indLt, C.emLt, C.blLt],
+    graphing: [C.blLt, C.indLt, C.emLt],
+    expression: [C.blLt, C.indLt, C.emLt],
+  };
+  const iconColors: Record<string, string[]> = {
+    dual:       [C.em, C.vl, C.em],
+    '3d':       [C.em, C.bl, C.em],
+    stats:      [C.am, C.vl, C.bl],
+    geometry:   [C.ind, C.em, C.bl],
+    graphing:   [C.bl, C.ind, C.em],
+    expression: [C.bl, C.ind, C.em],
   };
   const modeHeading: Record<string, string> = {
     dual:       'Compare Two Surfaces',
@@ -475,30 +521,32 @@ function WelcomeOverlay({ mode, onChip }: { mode: ExtCanvasMode; onChip: (p: str
     expression: 'Type any function directly into the expression bar above and it renders instantly — no AI call needed.',
   };
 
-  const icons = modeIcons[mode] ?? modeIcons.graphing;
-  const bgs   = iconBgs[mode]   ?? iconBgs.graphing;
-  const accentHover = mode === 'dual' ? T.vlLt : mode === 'stats' ? T.amLt : mode === 'geometry' ? T.indLt : T.blLt;
-  const accentBorder = mode === 'dual' ? T.vlMid : mode === 'stats' ? T.amMid : mode === 'geometry' ? T.indMid : T.blMid;
+  const icons  = modeIcons[mode]  ?? modeIcons.graphing;
+  const bgs    = iconBgs[mode]    ?? iconBgs.graphing;
+  const colors = iconColors[mode] ?? iconColors.graphing;
+  const accentHover = mode === 'dual' ? C.vlLt : mode === 'stats' ? C.amLt : mode === 'geometry' ? C.indLt : C.blLt;
+  const accentBorder = mode === 'dual' ? C.vlMid : mode === 'stats' ? C.amMid : mode === 'geometry' ? C.indMid : C.blMid;
 
   return (
     <div style={{
       position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: T.bg, borderRadius: 8, zIndex: 10, padding: '24px 32px',
+      background: C.bg, borderRadius: 8, zIndex: 10, padding: '24px 32px',
     }}>
       <div style={{ maxWidth: 560, textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
           {icons.map((ic, i) => (
             <div key={i} style={{
               width: 40, height: 40, borderRadius: 10,
-              background: bgs[i] ?? '#e3f3fd',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+              background: bgs[i] ?? C.blLt,
+              color: colors[i] ?? C.bl,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>{ic}</div>
           ))}
         </div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: T.ink, marginBottom: 6 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: C.ink, marginBottom: 6 }}>
           {modeHeading[mode] ?? 'What shall we explore?'}
         </div>
-        <div style={{ fontSize: 12, color: T.tx2, lineHeight: 1.7, marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: C.tx2, lineHeight: 1.7, marginBottom: 16 }}>
           {modeSubtext[mode] ?? 'Describe any mathematical concept in plain language, or pick a quick-start card below.'}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginBottom: 16 }}>
@@ -508,8 +556,8 @@ function WelcomeOverlay({ mode, onChip }: { mode: ExtCanvasMode; onChip: (p: str
               onClick={() => onChip(c.prompt)}
               style={{
                 padding: '6px 12px', fontSize: 11, fontWeight: 600,
-                background: T.sf, border: `1px solid ${T.bd}`, borderRadius: 20,
-                color: T.tx2, cursor: 'pointer', fontFamily: T.fs,
+                background: C.sf, border: `1px solid ${C.bd}`, borderRadius: 20,
+                color: C.tx2, cursor: 'pointer', fontFamily: C.fs,
               }}
               onMouseEnter={e => {
                 const btn = e.target as HTMLButtonElement;
@@ -518,8 +566,8 @@ function WelcomeOverlay({ mode, onChip }: { mode: ExtCanvasMode; onChip: (p: str
               }}
               onMouseLeave={e => {
                 const btn = e.target as HTMLButtonElement;
-                btn.style.background = T.sf;
-                btn.style.borderColor = T.bd;
+                btn.style.background = C.sf;
+                btn.style.borderColor = C.bd;
               }}
             >
               {c.label}
@@ -528,13 +576,13 @@ function WelcomeOverlay({ mode, onChip }: { mode: ExtCanvasMode; onChip: (p: str
         </div>
         {mode === 'dual' && (
           <div style={{
-            fontSize: 11, color: T.vl, background: T.vlLt, border: `1px solid ${T.vlMid}`,
+            fontSize: 11, color: C.vl, background: C.vlLt, border: `1px solid ${C.vlMid}`,
             borderRadius: 7, padding: '8px 12px', display: 'inline-flex', alignItems: 'flex-start',
             gap: 6, textAlign: 'left',
           }}>
-            <span style={{ fontSize: 16, flexShrink: 0 }}>∩</span>
+            <GitMerge size={16} style={{ flexShrink: 0, marginTop: 1 }} />
             <div>
-              <strong style={{ color: T.ink }}>Intersection algorithm:</strong> Marching squares
+              <strong style={{ color: C.ink }}>Intersection algorithm:</strong> Marching squares
               on the difference surface d(x,y) = f₁(x,y) − f₂(x,y). The amber curve shows every
               point where both surfaces have the same height.
             </div>
@@ -557,9 +605,25 @@ type RightTab = 'params' | 'issy' | 'info' | 'steps' | 'dist';
 
 export default function MathCanvasPage() {
   const mc = useMathCanvas();
+  const C = useTokens();
+  const MODES = useMemo(() => getModes(C), [C]);
   const mode = mc.mode as ExtCanvasMode;
   const [rightTab, setRightTab] = useState<RightTab>('params');
   const [zoom, setZoom] = useState(100);
+
+  // ── Theme-aware style helpers ──────────────────────────────────────────
+  const btnStyle: React.CSSProperties = useMemo(() => ({
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: 28, height: 28, border: `1px solid ${C.bd}`,
+    borderRadius: 6, background: C.sf, cursor: 'pointer', color: C.tx2,
+  }), [C]);
+
+  const btnPrimaryStyle: React.CSSProperties = useMemo(() => ({
+    display: 'inline-flex', alignItems: 'center', gap: 5,
+    padding: '6px 14px', fontSize: 11, fontWeight: 700,
+    background: C.bl, color: '#fff', border: 'none',
+    borderRadius: 7, cursor: 'pointer', fontFamily: C.fs,
+  }), [C]);
 
   // ── Calculator floater state ───────────────────────────────────────────
   const [calcOpen, setCalcOpen] = useState(false);
@@ -736,23 +800,23 @@ export default function MathCanvasPage() {
           : `${leftWidth}px 4px 1fr 4px ${rightWidth}px`,
         height: isFullscreen ? '100vh' : 'calc(100vh - 52px)',
         overflow: 'hidden',
-        fontFamily: T.fs,
-        color: T.tx,
-        background: T.bg,
+        fontFamily: C.fs,
+        color: C.tx,
+        background: C.bg,
       }}
     >
 
       {/* ── HEADER ROW — hidden in canvas-only fullscreen ──────────────────── */}
       {!isFullscreen && <div style={{
-        gridColumn: '1 / -1', background: T.sf,
-        borderBottom: `1px solid ${T.bd}`,
+        gridColumn: '1 / -1', background: C.sf,
+        borderBottom: `1px solid ${C.bd}`,
         display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12,
         boxShadow: '0 1px 2px rgba(0,0,0,0.04)', zIndex: 200,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: T.blLt, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>📐</div>
-          <span style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>MathCanvas</span>
-          <span style={{ fontSize: 10, fontWeight: 700, color: T.bl, background: T.blLt, borderRadius: 4, padding: '2px 6px' }}>AI-Native</span>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: C.blLt, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.bl }}><Compass size={16} /></div>
+          <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>MathCanvas</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: C.bl, background: C.blLt, borderRadius: 4, padding: '2px 6px' }}>AI-Native</span>
         </div>
 
         {/* Mode tabs */}
@@ -765,69 +829,70 @@ export default function MathCanvasPage() {
                 padding: '5px 12px', fontSize: 11, fontWeight: 600,
                 borderRadius: 6, border: 'none', cursor: 'pointer',
                 background: mode === m.id ? m.color : 'transparent',
-                color: mode === m.id ? '#fff' : T.tx2,
-                fontFamily: T.fs, transition: 'all 0.15s',
+                color: mode === m.id ? '#fff' : C.tx2,
+                fontFamily: C.fs, transition: 'all 0.15s',
+                display: 'flex', alignItems: 'center', gap: 4,
               }}
             >
-              {m.label}
+              {m.icon} {m.label}
             </button>
           ))}
         </div>
 
         {/* 2D/3D view toggle (single 3D mode only) */}
         {mode === '3d' && has3DResult && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8, padding: '3px 8px', background: T.bg, border: `1px solid ${T.bd}`, borderRadius: 7 }}>
-            <span style={{ fontSize: 10, color: T.tx3, fontWeight: 600 }}>View:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8, padding: '3px 8px', background: C.bg, border: `1px solid ${C.bd}`, borderRadius: 7 }}>
+            <span style={{ fontSize: 10, color: C.tx3, fontWeight: 600 }}>View:</span>
             <button
               onClick={mc.toggleViewMode}
               style={{
                 fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 5, border: 'none', cursor: 'pointer',
-                background: mc.viewMode === '3d' ? T.em : 'transparent',
-                color: mc.viewMode === '3d' ? '#fff' : T.tx2, fontFamily: T.fs,
+                background: mc.viewMode === '3d' ? C.em : 'transparent',
+                color: mc.viewMode === '3d' ? '#fff' : C.tx2, fontFamily: C.fs,
               }}
             >
-              🧊 WebGL
+              <Box size={10} style={{ marginRight: 3 }} /> WebGL
             </button>
             <button
               onClick={mc.toggleViewMode}
               style={{
                 fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 5, border: 'none', cursor: 'pointer',
-                background: mc.viewMode === '2d' ? T.ind : 'transparent',
-                color: mc.viewMode === '2d' ? '#fff' : T.tx2, fontFamily: T.fs,
+                background: mc.viewMode === '2d' ? C.ind : 'transparent',
+                color: mc.viewMode === '2d' ? '#fff' : C.tx2, fontFamily: C.fs,
               }}
             >
-              📐 2D View
+              <Compass size={10} style={{ marginRight: 3 }} /> 2D View
             </button>
           </div>
         )}
 
         {/* Dual mode legend badge */}
         {mode === 'dual' && hasDualResult && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8, padding: '3px 8px', background: T.bg, border: `1px solid ${T.bd}`, borderRadius: 7, fontSize: 10 }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: T.am, flexShrink: 0 }} />
-            <span style={{ color: T.tx2, fontWeight: 600 }}>{mc.resultDual?.compound.surface1.appearance.label ?? 'Surface 1'}</span>
-            <span style={{ color: T.tx3 }}>·</span>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: T.vl, flexShrink: 0 }} />
-            <span style={{ color: T.tx2, fontWeight: 600 }}>{mc.resultDual?.compound.surface2.appearance.label ?? 'Surface 2'}</span>
-            <span style={{ color: T.tx3 }}>·</span>
-            <span style={{ color: T.am, fontWeight: 700 }}>∩ amber</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8, padding: '3px 8px', background: C.bg, border: `1px solid ${C.bd}`, borderRadius: 7, fontSize: 10 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.am, flexShrink: 0 }} />
+            <span style={{ color: C.tx2, fontWeight: 600 }}>{mc.resultDual?.compound.surface1.appearance.label ?? 'Surface 1'}</span>
+            <span style={{ color: C.tx3 }}>·</span>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: C.vl, flexShrink: 0 }} />
+            <span style={{ color: C.tx2, fontWeight: 600 }}>{mc.resultDual?.compound.surface2.appearance.label ?? 'Surface 2'}</span>
+            <span style={{ color: C.tx3 }}>·</span>
+            <span style={{ color: C.am, fontWeight: 700 }}>∩ amber</span>
           </div>
         )}
 
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 11, color: T.tx3 }}>
+        <span style={{ fontSize: 11, color: C.tx3 }}>
           {mc.sc.student.name} · Year {mc.sc.student.yearLevel}
         </span>
       </div>}
 
       {/* ── TOOLBAR ROW — hidden in canvas-only fullscreen ────────────────── */}
       {!isFullscreen && <div style={{
-        gridColumn: '1 / -1', background: T.sf,
-        borderBottom: `1px solid ${T.bd}`,
+        gridColumn: '1 / -1', background: C.sf,
+        borderBottom: `1px solid ${C.bd}`,
         display: 'flex', alignItems: 'center', padding: '0 12px', gap: 6,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 0, background: T.bg, border: `1px solid ${T.bd}`, borderRadius: 7, overflow: 'hidden' }}>
-          <span style={{ padding: '0 10px', fontSize: 12, color: T.tx3, fontFamily: T.fm, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 0, background: C.bg, border: `1px solid ${C.bd}`, borderRadius: 7, overflow: 'hidden' }}>
+          <span style={{ padding: '0 10px', fontSize: 12, color: C.tx3, fontFamily: C.fm, flexShrink: 0 }}>
             {mode === '3d' ? 'z = f(x,y)' : mode === 'dual' ? 'f₁ ∩ f₂' : 'f(x) ='}
           </span>
           <input
@@ -841,7 +906,7 @@ export default function MathCanvasPage() {
                   ? 'describe a 3D surface e.g. "saddle surface z = x² − y²"'
                   : 'describe or type e.g. y = x²-2x+1'
             }
-            style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent', padding: '0 8px', fontFamily: T.fs, color: T.ink }}
+            style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent', padding: '0 8px', fontFamily: C.fs, color: C.ink }}
           />
         </div>
 
@@ -851,10 +916,10 @@ export default function MathCanvasPage() {
           style={{
             display: 'flex', alignItems: 'center', gap: 5,
             padding: '6px 14px', fontSize: 12, fontWeight: 700,
-            background: mc.isLoading ? T.bd : mode === 'dual' ? T.vl : T.bl,
-            color: mc.isLoading ? T.tx3 : '#fff',
+            background: mc.isLoading ? C.bd : mode === 'dual' ? C.vl : C.bl,
+            color: mc.isLoading ? C.tx3 : '#fff',
             border: 'none', borderRadius: 7, cursor: mc.isLoading ? 'not-allowed' : 'pointer',
-            fontFamily: T.fs, transition: 'background 0.15s',
+            fontFamily: C.fs, transition: 'background 0.15s',
           }}
         >
           {mc.isLoading ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
@@ -863,50 +928,50 @@ export default function MathCanvasPage() {
 
         {mode !== '3d' && mode !== 'dual' && (
           <>
-            <div style={{ width: 1, height: 20, background: T.bd, margin: '0 4px' }} />
+            <div style={{ width: 1, height: 20, background: C.bd, margin: '0 4px' }} />
             <button onClick={() => setZoom(z => Math.max(25, z - 10))} style={{ ...btnStyle }}><ZoomOut size={13} /></button>
-            <span style={{ fontSize: 11, color: T.tx2, minWidth: 36, textAlign: 'center' }}>{zoom}%</span>
+            <span style={{ fontSize: 11, color: C.tx2, minWidth: 36, textAlign: 'center' }}>{zoom}%</span>
             <button onClick={() => setZoom(z => Math.min(400, z + 10))} style={{ ...btnStyle }}><ZoomIn size={13} /></button>
           </>
         )}
 
-        <div style={{ width: 1, height: 20, background: T.bd, margin: '0 4px' }} />
+        <div style={{ width: 1, height: 20, background: C.bd, margin: '0 4px' }} />
         <button onClick={mc.clearCanvas} title="Clear" style={{ ...btnStyle }}><Trash2 size={13} /></button>
 
-        <div style={{ width: 1, height: 20, background: T.bd, margin: '0 4px' }} />
+        <div style={{ width: 1, height: 20, background: C.bd, margin: '0 4px' }} />
         <button
           onClick={() => setCalcOpen(o => !o)}
           title={calcOpen ? 'Close calculator' : 'Open calculator [C]'}
           style={{
             ...btnStyle,
-            background: calcOpen ? T.blLt : 'transparent',
-            color: calcOpen ? T.bl : T.tx2,
-            border: calcOpen ? `1px solid ${T.blMid}` : '1px solid transparent',
+            background: calcOpen ? C.blLt : 'transparent',
+            color: calcOpen ? C.bl : C.tx2,
+            border: calcOpen ? `1px solid ${C.blMid}` : '1px solid transparent',
             borderRadius: 6, padding: '4px 8px',
             display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
           }}
         >
           <Calculator size={13} />
-          <span style={{ fontFamily: T.fs }}>Calc</span>
+          <span style={{ fontFamily: C.fs }}>Calc</span>
         </button>
 
         {/* Fullscreen controls — always at far right of toolbar */}
-        <div style={{ width: 1, height: 20, background: T.bd, margin: '0 4px' }} />
+        <div style={{ width: 1, height: 20, background: C.bd, margin: '0 4px' }} />
         {/* Focused mode (Shift+F) — panels hidden, toolbar stays */}
         <button
           onClick={() => { setIsFocused(f => !f); setIsFullscreen(false); }}
           title={isFocused ? 'Exit focused mode [Shift+F]' : 'Focused mode — hide panels [Shift+F]'}
           style={{
             ...btnStyle,
-            background: isFocused ? T.amLt : 'transparent',
-            color: isFocused ? T.am : T.tx2,
-            border: isFocused ? `1px solid ${T.amMid}` : '1px solid transparent',
+            background: isFocused ? C.amLt : 'transparent',
+            color: isFocused ? C.am : C.tx2,
+            border: isFocused ? `1px solid ${C.amMid}` : '1px solid transparent',
             borderRadius: 6, padding: '4px 8px',
             display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
           }}
         >
           <Expand size={13} />
-          <span style={{ fontFamily: T.fs }}>Focus</span>
+          <span style={{ fontFamily: C.fs }}>Focus</span>
         </button>
         {/* Canvas-only fullscreen (F) */}
         <button
@@ -923,37 +988,37 @@ export default function MathCanvasPage() {
           title={isFullscreen ? 'Exit fullscreen [F or Esc]' : 'Canvas fullscreen [F]'}
           style={{
             ...btnStyle,
-            background: isFullscreen ? T.blLt : 'transparent',
-            color: isFullscreen ? T.bl : T.tx2,
-            border: isFullscreen ? `1px solid ${T.blMid}` : '1px solid transparent',
+            background: isFullscreen ? C.blLt : 'transparent',
+            color: isFullscreen ? C.bl : C.tx2,
+            border: isFullscreen ? `1px solid ${C.blMid}` : '1px solid transparent',
             borderRadius: 6, padding: '4px 8px',
             display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
           }}
         >
           {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-          <span style={{ fontFamily: T.fs }}>{isFullscreen ? 'Exit' : 'Full Screen'}</span>
+          <span style={{ fontFamily: C.fs }}>{isFullscreen ? 'Exit' : 'Full Screen'}</span>
         </button>
       </div>}
 
       {/* ── LEFT PANEL — hidden in fullscreen and focused mode ────────────── */}
       {!isFullscreen && !isFocused && <div style={{
-        gridColumn: '1', background: T.sf,
+        gridColumn: '1', background: C.sf,
         overflowY: 'auto', padding: 14,
         display: 'flex', flexDirection: 'column', gap: 12,
       }}>
         {/* BKT mastery mini-bar */}
-        <div style={{ padding: '10px 12px', background: T.bg, borderRadius: 8, border: `1px solid ${T.bd}` }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: T.tx3, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Mastery</div>
+        <div style={{ padding: '10px 12px', background: C.bg, borderRadius: 8, border: `1px solid ${C.bd}` }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: C.tx3, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Mastery</div>
           {[
-            { label: 'Functions', val: mc.sc.mastery.functions, color: T.bl },
-            { label: 'Geometry',  val: mc.sc.mastery.geometry,  color: T.ind },
-            { label: 'Statistics',val: mc.sc.mastery.statistics, color: T.em },
+            { label: 'Functions', val: mc.sc.mastery.functions, color: C.bl },
+            { label: 'Geometry',  val: mc.sc.mastery.geometry,  color: C.ind },
+            { label: 'Statistics',val: mc.sc.mastery.statistics, color: C.em },
           ].map(({ label, val, color }) => (
             <div key={label} style={{ marginBottom: 7 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: T.tx2, marginBottom: 2 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: C.tx2, marginBottom: 2 }}>
                 <span>{label}</span><span style={{ fontWeight: 700, color }}>{Math.round(val * 100)}%</span>
               </div>
-              <div style={{ height: 4, background: T.bd, borderRadius: 99 }}>
+              <div style={{ height: 4, background: C.bd, borderRadius: 99 }}>
                 <div style={{ height: 4, background: color, borderRadius: 99, width: `${val * 100}%`, transition: 'width 0.4s' }} />
               </div>
             </div>
@@ -962,7 +1027,7 @@ export default function MathCanvasPage() {
 
         {/* Quick starts */}
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: T.tx3, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Quick Start</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: C.tx3, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Quick Start</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {quickChips.map(c => (
               <button
@@ -970,19 +1035,19 @@ export default function MathCanvasPage() {
                 onClick={() => mc.quickIntent(c.prompt)}
                 style={{
                   textAlign: 'left', padding: '7px 10px', fontSize: 11,
-                  background: T.bg, border: `1px solid ${T.bd}`, borderRadius: 6,
-                  color: T.tx2, cursor: 'pointer', fontFamily: T.fs, fontWeight: 500,
+                  background: C.bg, border: `1px solid ${C.bd}`, borderRadius: 6,
+                  color: C.tx2, cursor: 'pointer', fontFamily: C.fs, fontWeight: 500,
                   transition: 'all 0.12s',
                 }}
                 onMouseEnter={e => {
                   const btn = e.target as HTMLButtonElement;
-                  btn.style.background = mode === 'dual' ? T.vlLt : T.blLt;
-                  btn.style.borderColor = mode === 'dual' ? T.vlMid : T.blMid;
+                  btn.style.background = mode === 'dual' ? C.vlLt : C.blLt;
+                  btn.style.borderColor = mode === 'dual' ? C.vlMid : C.blMid;
                 }}
                 onMouseLeave={e => {
                   const btn = e.target as HTMLButtonElement;
-                  btn.style.background = T.bg;
-                  btn.style.borderColor = T.bd;
+                  btn.style.background = C.bg;
+                  btn.style.borderColor = C.bd;
                 }}
               >
                 {c.label}
@@ -996,15 +1061,26 @@ export default function MathCanvasPage() {
       {!isFullscreen && !isFocused && <div
         onMouseDown={e => onDragStart('left', e)}
         style={{
-          gridColumn: '2', cursor: 'col-resize', background: T.bd,
+          gridColumn: '2', cursor: 'col-resize', background: C.bd,
           transition: 'background 0.15s',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          position: 'relative',
         }}
-        onMouseEnter={e => (e.currentTarget.style.background = T.bl)}
-        onMouseLeave={e => (e.currentTarget.style.background = T.bd)}
-      />}
+        onMouseEnter={e => (e.currentTarget.style.background = C.bl)}
+        onMouseLeave={e => (e.currentTarget.style.background = C.bd)}
+      >
+        <div style={{
+          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          display: 'flex', flexDirection: 'column', gap: 2, opacity: 0.5,
+        }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{ width: 3, height: 3, borderRadius: '50%', background: C.tx3 }} />
+          ))}
+        </div>
+      </div>}
 
       {/* ── CANVAS VIEWPORT ────────────────────────────────────────────────── */}
-      <div style={{ gridColumn: (isFullscreen || isFocused) ? '1' : '3', position: 'relative', overflow: 'hidden', background: T.bg }}>
+      <div style={{ gridColumn: (isFullscreen || isFocused) ? '1' : '3', position: 'relative', overflow: 'hidden', background: C.bg }}>
 
         {/* ── Calculator floater — draggable, minimisable ────────────────── */}
         <MathCanvasCalculatorFloater
@@ -1045,8 +1121,8 @@ export default function MathCanvasPage() {
                 padding: '4px 10px', borderRadius: 20,
                 background: 'rgba(26,35,50,0.88)',
                 backdropFilter: 'blur(6px)',
-                border: `1px solid ${T.bd}`,
-                fontSize: 11, fontWeight: 700, color: T.tx2, fontFamily: T.fs,
+                border: `1px solid ${C.bd}`,
+                fontSize: 11, fontWeight: 700, color: C.tx2, fontFamily: C.fs,
               }}>
                 {mode === '3d' ? '3D Surface'
                   : mode === 'dual' ? 'Dual Surface'
@@ -1061,17 +1137,17 @@ export default function MathCanvasPage() {
                   display: 'flex', alignItems: 'center', gap: 4,
                   background: 'rgba(26,35,50,0.88)',
                   backdropFilter: 'blur(6px)',
-                  border: `1px solid ${T.bd}`,
+                  border: `1px solid ${C.bd}`,
                   borderRadius: 8, padding: '3px 6px',
                 }}>
                   <button
                     onClick={() => setZoom(z => Math.max(25, z - 10))}
-                    style={{ background: 'none', border: 'none', color: T.tx2, cursor: 'pointer', padding: '2px 4px', fontSize: 14, lineHeight: 1 }}
+                    style={{ background: 'none', border: 'none', color: C.tx2, cursor: 'pointer', padding: '2px 4px', fontSize: 14, lineHeight: 1 }}
                   >−</button>
-                  <span style={{ fontSize: 11, color: T.tx2, minWidth: 32, textAlign: 'center', fontFamily: T.fm }}>{zoom}%</span>
+                  <span style={{ fontSize: 11, color: C.tx2, minWidth: 32, textAlign: 'center', fontFamily: C.fm }}>{zoom}%</span>
                   <button
                     onClick={() => setZoom(z => Math.min(400, z + 10))}
-                    style={{ background: 'none', border: 'none', color: T.tx2, cursor: 'pointer', padding: '2px 4px', fontSize: 14, lineHeight: 1 }}
+                    style={{ background: 'none', border: 'none', color: C.tx2, cursor: 'pointer', padding: '2px 4px', fontSize: 14, lineHeight: 1 }}
                   >+</button>
                 </div>
               )}
@@ -1090,28 +1166,28 @@ export default function MathCanvasPage() {
                 padding: '7px 14px',
                 background: 'rgba(26,35,50,0.92)',
                 backdropFilter: 'blur(8px)',
-                border: `1px solid ${T.bdBright}`,
+                border: `1px solid ${C.bdBright}`,
                 borderRadius: 8,
-                color: T.tx, fontSize: 12, fontWeight: 700,
-                cursor: 'pointer', fontFamily: T.fs,
+                color: C.tx, fontSize: 12, fontWeight: 700,
+                cursor: 'pointer', fontFamily: C.fs,
                 boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
               }}
             >
               <Minimize2 size={13} />
               Exit Fullscreen
-              <span style={{ fontSize: 10, color: T.tx3, fontFamily: T.fm, marginLeft: 2 }}>Esc</span>
+              <span style={{ fontSize: 10, color: C.tx3, fontFamily: C.fm, marginLeft: 2 }}>Esc</span>
             </button>
           </div>
         )}
 
-        {showWelcome && <WelcomeOverlay mode={mode} onChip={mc.quickIntent} />}
+        {showWelcome && <WelcomeOverlay mode={mode} onChip={mc.quickIntent} C={C} />}
 
         {mc.isLoading && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(247,248,248,0.92)', zIndex: 20 }}>
             <div style={{ textAlign: 'center' }}>
-              <Loader2 size={32} style={{ color: mode === 'dual' ? T.vl : T.bl, animation: 'spin 1s linear infinite', margin: '0 auto 8px' }} />
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>Computing visualization…</div>
-              <div style={{ fontSize: 11, color: T.tx2, marginTop: 3 }}>
+              <Loader2 size={32} style={{ color: mode === 'dual' ? C.vl : C.bl, animation: 'spin 1s linear infinite', margin: '0 auto 8px' }} />
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>Computing visualization…</div>
+              <div style={{ fontSize: 11, color: C.tx2, marginTop: 3 }}>
                 {mode === 'dual' ? 'Computing intersection curve…' : 'Aligning to curriculum'}
               </div>
             </div>
@@ -1119,11 +1195,11 @@ export default function MathCanvasPage() {
         )}
 
         {mc.error && !mc.isLoading && !hasResult && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: T.bg, zIndex: 15 }}>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.bg, zIndex: 15 }}>
             <div style={{ textAlign: 'center', maxWidth: 300 }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>⚠️</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Visualization failed</div>
-              <div style={{ fontSize: 11, color: T.tx2, marginBottom: 14 }}>{mc.error}</div>
+              <AlertTriangle size={32} style={{ color: C.am, marginBottom: 8 }} />
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Visualization failed</div>
+              <div style={{ fontSize: 11, color: C.tx2, marginBottom: 14 }}>{mc.error}</div>
               <button onClick={() => mc.visualise(mc.intent)} style={{ ...btnPrimaryStyle }}>
                 <RefreshCw size={12} /> Retry
               </button>
@@ -1147,6 +1223,7 @@ export default function MathCanvasPage() {
                 topic={mc.result3D.topic}
                 curriculumCode={mc.result3D.curriculumCode}
                 teacherNote={mc.result3D.teacherNote}
+                C={C}
               />
             )}
           </div>
@@ -1171,6 +1248,7 @@ export default function MathCanvasPage() {
               curriculumCode={mc.resultDual!.compound.curriculumCode}
               topic={mc.resultDual!.compound.topic}
               teacherNote={mc.resultDual!.compound.teacherNote}
+              C={C}
             />
           </div>
         )}
@@ -1195,8 +1273,8 @@ export default function MathCanvasPage() {
                 position: 'absolute', top: 12, right: 12,
                 display: 'flex', alignItems: 'center', gap: 5,
                 padding: '4px 10px', borderRadius: 20,
-                background: T.blLt, border: `1px solid ${T.blMid}`,
-                fontSize: 10, fontWeight: 700, color: T.bl,
+                background: C.blLt, border: `1px solid ${C.blMid}`,
+                fontSize: 10, fontWeight: 700, color: C.bl,
                 pointerEvents: 'none',
               }}>
                 <Loader2 size={10} style={{ animation: 'spin 1s linear infinite' }} />
@@ -1209,6 +1287,7 @@ export default function MathCanvasPage() {
               topic={svgResult.topic}
               curriculumCode={svgResult.curriculumCode}
               teacherNote={svgResult.teacherNote}
+              C={C}
             />
           </div>
         )}
@@ -1259,25 +1338,36 @@ export default function MathCanvasPage() {
       {!isFullscreen && !isFocused && <div
         onMouseDown={e => onDragStart('right', e)}
         style={{
-          gridColumn: '4', cursor: 'col-resize', background: T.bd,
+          gridColumn: '4', cursor: 'col-resize', background: C.bd,
           transition: 'background 0.15s',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          position: 'relative',
         }}
-        onMouseEnter={e => (e.currentTarget.style.background = T.bl)}
-        onMouseLeave={e => (e.currentTarget.style.background = T.bd)}
-      />}
+        onMouseEnter={e => (e.currentTarget.style.background = C.bl)}
+        onMouseLeave={e => (e.currentTarget.style.background = C.bd)}
+      >
+        <div style={{
+          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          display: 'flex', flexDirection: 'column', gap: 2, opacity: 0.5,
+        }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{ width: 3, height: 3, borderRadius: '50%', background: C.tx3 }} />
+          ))}
+        </div>
+      </div>}
 
       {/* ── RIGHT PANEL — hidden in fullscreen and focused mode ───────────── */}
-      {!isFullscreen && !isFocused && <div style={{ gridColumn: '5', background: T.sf, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', borderBottom: `1px solid ${T.bd}` }}>
+      {!isFullscreen && !isFocused && <div style={{ gridColumn: '5', background: C.sf, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', borderBottom: `1px solid ${C.bd}` }}>
           {([
             { id: 'params' as RightTab, label: 'Parameters', icon: <Layers size={11} /> },
             // Construction Protocol tab — geometry mode only, when a response exists
             ...(mode === 'geometry' && mc.resultGeometry
-              ? [{ id: 'steps' as RightTab, label: 'Steps', icon: <span style={{ fontSize: 11 }}>◯</span> }]
+              ? [{ id: 'steps' as RightTab, label: 'Steps', icon: <Circle size={11} /> }]
               : []),
             // Distribution tab — stats mode only, when a response exists
             ...(mode === 'stats' && mc.resultStats
-              ? [{ id: 'dist' as RightTab, label: 'Dist', icon: <span style={{ fontSize: 11 }}>∫</span> }]
+              ? [{ id: 'dist' as RightTab, label: 'Dist', icon: <BarChart3 size={11} /> }]
               : []),
             { id: 'issy' as RightTab, label: 'Issy', icon: <Brain size={11} /> },
             { id: 'info' as RightTab, label: 'Info', icon: <Info size={11} /> },
@@ -1289,12 +1379,12 @@ export default function MathCanvasPage() {
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                 padding: '8px 4px', fontSize: 11, fontWeight: rightTab === tab.id ? 700 : 500,
                 border: 'none', borderBottom: rightTab === tab.id ? `2px solid ${
-                  tab.id === 'steps' ? T.ind : tab.id === 'dist' ? T.vl : T.bl
+                  tab.id === 'steps' ? C.ind : tab.id === 'dist' ? C.vl : C.bl
                 }` : '2px solid transparent',
                 background: 'none', color: rightTab === tab.id ? (
-                  tab.id === 'steps' ? T.ind : tab.id === 'dist' ? T.vl : T.bl
-                ) : T.tx2,
-                cursor: 'pointer', fontFamily: T.fs,
+                  tab.id === 'steps' ? C.ind : tab.id === 'dist' ? C.vl : C.bl
+                ) : C.tx2,
+                cursor: 'pointer', fontFamily: C.fs,
               }}
             >
               {tab.icon} {tab.label}
@@ -1348,31 +1438,33 @@ export default function MathCanvasPage() {
               values={mc.paramValues}
               onChange={mc.updateParam}
               isDual={mode === 'dual'}
+              C={C}
             />
           )}
 
           {rightTab === 'issy' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: T.tx3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Ask Issy</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: C.tx3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Ask Issy</div>
               {[
-                { label: '💡 Explain this',    prompt: 'explain' },
-                { label: '🪜 Scaffold me',     prompt: 'scaffold' },
-                { label: '🎯 Challenge me',    prompt: 'challenge' },
-                { label: '📚 Curriculum link', prompt: 'curriculum' },
-                ...(mode === 'dual' ? [{ label: '∩ Explain intersection', prompt: 'intersection' }] : []),
-              ].map(({ label }) => (
+                { label: 'Explain this', icon: <Lightbulb size={12} />, prompt: 'explain' },
+                { label: 'Scaffold me', icon: <Layers size={12} />, prompt: 'scaffold' },
+                { label: 'Challenge me', icon: <Target size={12} />, prompt: 'challenge' },
+                { label: 'Curriculum link', icon: <Library size={12} />, prompt: 'curriculum' },
+                ...(mode === 'dual' ? [{ label: 'Explain intersection', icon: <GitMerge size={12} />, prompt: 'intersection' }] : []),
+              ].map(({ label, icon }) => (
                 <button key={label} style={{
-                  textAlign: 'left', padding: '8px 10px', fontSize: 11, background: T.bg,
-                  border: `1px solid ${T.bd}`, borderRadius: 6, color: T.tx2,
-                  cursor: 'pointer', fontFamily: T.fs,
+                  textAlign: 'left', padding: '8px 10px', fontSize: 11, background: C.bg,
+                  border: `1px solid ${C.bd}`, borderRadius: 6, color: C.tx2,
+                  cursor: 'pointer', fontFamily: C.fs,
+                  display: 'flex', alignItems: 'center', gap: 6,
                 }}>
-                  {label}
+                  {icon} {label}
                 </button>
               ))}
               {/* Suggested exploration from whichever result is active */}
               {(mc.result3D?.suggestedExploration ?? mc.resultDual?.compound.suggestedExploration) && (
-                <div style={{ marginTop: 8, padding: '8px 10px', background: T.blLt, border: `1px solid ${T.blMid}`, borderRadius: 7, fontSize: 11, color: T.ink, lineHeight: 1.6 }}>
-                  <strong style={{ color: T.bl }}>💬 Explore: </strong>
+                <div style={{ marginTop: 8, padding: '8px 10px', background: C.blLt, border: `1px solid ${C.blMid}`, borderRadius: 7, fontSize: 11, color: C.ink, lineHeight: 1.6 }}>
+                  <strong style={{ color: C.bl, display: 'inline-flex', alignItems: 'center', gap: 4 }}><MessageCircle size={12} /> Explore: </strong>
                   {mc.result3D?.suggestedExploration ?? mc.resultDual?.compound.suggestedExploration}
                 </div>
               )}
@@ -1381,7 +1473,7 @@ export default function MathCanvasPage() {
 
           {rightTab === 'info' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: T.tx3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Session Info</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: C.tx3, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Session Info</div>
 
               {mode === 'dual' && mc.resultDual ? (
                 <>
@@ -1394,9 +1486,9 @@ export default function MathCanvasPage() {
                     ['Algorithm', 'Marching Squares'],
                     ['Renderer', 'WebGL / Three.js'],
                   ].map(([k, v]) => (
-                    <div key={k} style={{ background: T.bg, border: `1px solid ${T.bd}`, borderRadius: 6, padding: '7px 10px' }}>
-                      <div style={{ fontSize: 9, color: T.tx3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k}</div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: T.ink, marginTop: 2 }}>{v}</div>
+                    <div key={k} style={{ background: C.bg, border: `1px solid ${C.bd}`, borderRadius: 6, padding: '7px 10px' }}>
+                      <div style={{ fontSize: 9, color: C.tx3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k}</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: C.ink, marginTop: 2 }}>{v}</div>
                     </div>
                   ))}
                 </>
@@ -1410,14 +1502,14 @@ export default function MathCanvasPage() {
                     ['Renderer', 'WebGL / Three.js'],
                     ['Coefficients', Object.entries(mc.result3D.surface.coefficients).map(([k, v]) => `${k}=${v}`).join(', ')],
                   ].map(([k, v]) => (
-                    <div key={k} style={{ background: T.bg, border: `1px solid ${T.bd}`, borderRadius: 6, padding: '7px 10px' }}>
-                      <div style={{ fontSize: 9, color: T.tx3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k}</div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: T.ink, marginTop: 2, fontFamily: typeof v === 'string' && v.includes('=') ? T.fm : T.fs }}>{v}</div>
+                    <div key={k} style={{ background: C.bg, border: `1px solid ${C.bd}`, borderRadius: 6, padding: '7px 10px' }}>
+                      <div style={{ fontSize: 9, color: C.tx3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k}</div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: C.ink, marginTop: 2, fontFamily: typeof v === 'string' && v.includes('=') ? C.fm : C.fs }}>{v}</div>
                     </div>
                   ))}
                 </>
               ) : (
-                <div style={{ fontSize: 11, color: T.tx3 }}>Visualise something to see session info.</div>
+                <div style={{ fontSize: 11, color: C.tx3 }}>Visualise something to see session info.</div>
               )}
             </div>
           )}
@@ -1429,33 +1521,17 @@ export default function MathCanvasPage() {
         gridColumn: '1 / -1',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         gap: 6,
-        fontSize: 10, color: T.tx3,
-        borderTop: `1px solid ${T.bd}`, background: T.sf,
+        fontSize: 10, color: C.tx3,
+        borderTop: `1px solid ${C.bd}`, background: C.sf,
         padding: '0 16px',
       }}>
         <span>&copy; 2026 Swotsmart Holdings All rights reserved</span>
         <span>&middot;</span>
-        <a href="/terms" style={{ color: T.tx3, textDecoration: 'none' }}>Terms of Use</a>
+        <a href="/terms" style={{ color: C.tx3, textDecoration: 'none' }}>Terms of Use</a>
         <span>|</span>
-        <a href="/privacy" style={{ color: T.tx3, textDecoration: 'none' }}>Privacy Policy</a>
+        <a href="/privacy" style={{ color: C.tx3, textDecoration: 'none' }}>Privacy Policy</a>
       </div>}
     </div>
   );
 }
 
-// =============================================================================
-// STYLE HELPERS
-// =============================================================================
-
-const btnStyle: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  width: 28, height: 28, border: `1px solid ${T.bd}`,
-  borderRadius: 6, background: T.sf, cursor: 'pointer', color: T.tx2,
-};
-
-const btnPrimaryStyle: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: 5,
-  padding: '6px 14px', fontSize: 11, fontWeight: 700,
-  background: T.bl, color: '#fff', border: 'none',
-  borderRadius: 7, cursor: 'pointer', fontFamily: "'Open Sans', system-ui, sans-serif",
-};
