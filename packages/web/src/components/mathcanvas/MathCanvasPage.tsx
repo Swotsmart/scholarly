@@ -828,7 +828,7 @@ function WelcomeOverlay({ mode, onChip, C }: { mode: ExtCanvasMode; onChip: (p: 
 // RIGHT PANEL TABS
 // =============================================================================
 
-type RightTab = 'params' | 'issy' | 'info' | 'steps' | 'dist' | 'prob' | 'table' | 'sheet';
+type RightTab = 'params' | 'issy' | 'info' | 'steps' | 'dist' | 'prob' | 'table';
 
 // =============================================================================
 // MAIN PAGE COMPONENT
@@ -859,6 +859,9 @@ export default function MathCanvasPage() {
 
   // ── Calculator floater state ───────────────────────────────────────────
   const [calcOpen, setCalcOpen] = useState(false);
+
+  // ── Spreadsheet canvas overlay state ─────────────────────────────────
+  const [showSheet, setShowSheet] = useState(false);
 
   // ── Fullscreen state ───────────────────────────────────────────────────
   // isFullscreen: canvas-only — all chrome (header, toolbar, panels, footer) hidden
@@ -1296,6 +1299,22 @@ export default function MathCanvasPage() {
           }}
         >
           <Calculator size={13} />
+        </button>
+
+        {/* Spreadsheet — data entry grid in the canvas */}
+        <button
+          onClick={() => setShowSheet(o => !o)}
+          title={showSheet ? 'Close spreadsheet' : 'Open spreadsheet [S]'}
+          style={{
+            ...btnStyle,
+            background: showSheet ? C.amLt : 'transparent',
+            color: showSheet ? C.am : C.tx2,
+            border: showSheet ? `1px solid ${C.amMid}` : '1px solid transparent',
+            borderRadius: 6, padding: '4px 8px',
+            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700,
+          }}
+        >
+          <LayoutGrid size={13} />
         </button>
 
         {/* Math Solver — camera/upload to extract equation from image [V] */}
@@ -2054,6 +2073,22 @@ export default function MathCanvasPage() {
           </div>
         )}
 
+        {/* ── SPREADSHEET VIEW — toggled from toolbar ──────────────────────── */}
+        {showSheet && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 15,
+            background: C.sf, overflow: 'auto',
+          }}>
+            <MathCanvasSpreadsheetPanel
+              onAnalyse={(prompt, _numericData) => {
+                setShowSheet(false);
+                mc.switchMode('stats');
+                mc.visualise(prompt);
+              }}
+            />
+          </div>
+        )}
+
         {/* ── ANNOTATION OVERLAY ─────────────────────────────────────────────
             Freehand SVG layer rendered above all canvas content.
             Session-local: strokes live in component state, cleared on reset.
@@ -2163,8 +2198,6 @@ export default function MathCanvasPage() {
             ...((mode === 'graphing' && mc.result2D) || (mode === 'stats' && mc.resultStats) || (mode === 'probability' && mc.probabilityState.setup)
               ? [{ id: 'table' as RightTab, label: 'Table', icon: <Table2 size={11} /> }]
               : []),
-            // Spreadsheet tab — always visible (data entry independent of mode)
-            { id: 'sheet' as RightTab, label: 'Sheet', icon: <LayoutGrid size={11} /> },
             { id: 'issy' as RightTab, label: 'Issy', icon: <Brain size={11} /> },
             { id: 'info' as RightTab, label: 'Info', icon: <Info size={11} /> },
           ] as const).map(tab => (
@@ -2175,10 +2208,10 @@ export default function MathCanvasPage() {
                 flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                 padding: '8px 4px', fontSize: 11, fontWeight: rightTab === tab.id ? 700 : 500,
                 border: 'none', borderBottom: rightTab === tab.id ? `2px solid ${
-                  tab.id === 'steps' ? C.ind : tab.id === 'dist' ? C.vl : tab.id === 'prob' ? C.rose : tab.id === 'table' ? C.em : tab.id === 'sheet' ? C.am : C.bl
+                  tab.id === 'steps' ? C.ind : tab.id === 'dist' ? C.vl : tab.id === 'prob' ? C.rose : tab.id === 'table' ? C.em : C.bl
                 }` : '2px solid transparent',
                 background: 'none', color: rightTab === tab.id ? (
-                  tab.id === 'steps' ? C.ind : tab.id === 'dist' ? C.vl : tab.id === 'prob' ? C.rose : tab.id === 'table' ? C.em : tab.id === 'sheet' ? C.am : C.bl
+                  tab.id === 'steps' ? C.ind : tab.id === 'dist' ? C.vl : tab.id === 'prob' ? C.rose : tab.id === 'table' ? C.em : C.bl
                 ) : C.tx2,
                 cursor: 'pointer', fontFamily: C.fs,
               }}
@@ -2248,19 +2281,6 @@ export default function MathCanvasPage() {
               paramValues={mc.paramValues}
               resultStats={mc.resultStats}
               probabilityState={mc.probabilityState}
-            />
-          )}
-
-          {/* ── Spreadsheet panel — always available, feeds Stats mode ── */}
-          {rightTab === 'sheet' && (
-            <MathCanvasSpreadsheetPanel
-              onAnalyse={(prompt, _numericData) => {
-                // Switch to stats mode and fire the prompt through the standard
-                // visualise() path — the stats system prompt picks it up exactly
-                // as if the student had typed it in the prompt bar.
-                mc.switchMode('stats');
-                mc.visualise(prompt);
-              }}
             />
           )}
 
